@@ -42,7 +42,7 @@ RUN chmod 755 /tmp/local/usr/bin/entrypoint \
 RUN chmod 644 /go/src/code.gitea.io/gitea/contrib/autocompletion/bash_autocomplete
 
 FROM docker.io/library/alpine:3.19
-LABEL maintainer="maintainers@gitea.io"
+LABEL maintainer="contact@forgejo.org"
 
 EXPOSE 22 3000
 
