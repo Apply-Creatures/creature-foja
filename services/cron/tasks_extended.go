@@ -146,7 +146,7 @@ func registerUpdateGiteaChecker() {
 	}
 	RegisterTaskFatal("update_checker", &UpdateCheckerConfig{
 		BaseConfig: BaseConfig{
-			Enabled:    true,
+			Enabled:    false,
 			RunAtStart: false,
 			Schedule:   "@every 168h",
 		},
