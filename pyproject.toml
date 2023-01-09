@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "gitea"
+name = "forgejo"
 version = "0.0.0"
 description = ""
 authors = []

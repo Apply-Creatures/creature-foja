@@ -72,7 +72,7 @@ func appGlobalFlags() []cli.Flag {
 		&cli.StringFlag{
 			Name:    "work-path",
 			Aliases: []string{"w"},
-			Usage:   "Set Gitea's working path (defaults to the Gitea's binary directory)",
+			Usage:   "Set Forgejo's working path (defaults to the directory of the Forgejo binary)",
 		},
 	}
 }

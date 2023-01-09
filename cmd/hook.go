@@ -172,9 +172,9 @@ func runHookPreReceive(c *cli.Context) error {
 
 	if len(os.Getenv("SSH_ORIGINAL_COMMAND")) == 0 {
 		if setting.OnlyAllowPushIfGiteaEnvironmentSet {
-			return fail(ctx, `Rejecting changes as Gitea environment not set.
+			return fail(ctx, `Rejecting changes as Forgejo environment not set.
 If you are pushing over SSH you must push with a key managed by
-Gitea or set your environment appropriately.`, "")
+Forgejo or set your environment appropriately.`, "")
 		}
 		return nil
 	}
@@ -316,9 +316,9 @@ func runHookPostReceive(c *cli.Context) error {
 
 	if len(os.Getenv("SSH_ORIGINAL_COMMAND")) == 0 {
 		if setting.OnlyAllowPushIfGiteaEnvironmentSet {
-			return fail(ctx, `Rejecting changes as Gitea environment not set.
+			return fail(ctx, `Rejecting changes as Forgejo environment not set.
 If you are pushing over SSH you must push with a key managed by
-Gitea or set your environment appropriately.`, "")
+Forgejo or set your environment appropriately.`, "")
 		}
 		return nil
 	}
@@ -487,9 +487,9 @@ func runHookProcReceive(c *cli.Context) error {
 
 	if len(os.Getenv("SSH_ORIGINAL_COMMAND")) == 0 {
 		if setting.OnlyAllowPushIfGiteaEnvironmentSet {
-			return fail(ctx, `Rejecting changes as Gitea environment not set.
+			return fail(ctx, `Rejecting changes as Forgejo environment not set.
 If you are pushing over SSH you must push with a key managed by
-Gitea or set your environment appropriately.`, "")
+Forgejo or set your environment appropriately.`, "")
 		}
 		return nil
 	}

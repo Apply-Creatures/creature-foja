@@ -1,7 +1,7 @@
-# Gitea - Docker
+# Forgejo - Docker
 
-Dockerfile is found in root of repository.
+The Dockerfile can be found in the root of repository. [Dockerfile](https://codeberg.org/forgejo/forgejo/src/branch/forgejo/Dockerfile) & [Dockerfile.rootless](https://codeberg.org/forgejo/forgejo/src/branch/forgejo/Dockerfile.rootless).
 
-Docker image can be found on [docker hub](https://hub.docker.com/r/gitea/gitea)
+The Docker image can be found on [Codeberg](https://codeberg.org/forgejo/-/packages/container/forgejo/).
 
-Documentation on using docker image can be found on [Gitea Docs site](https://docs.gitea.com/installation/install-with-docker-rootless)
+Documentation on how you can use the docker image can be found on the [Forgejo documentation website](https://forgejo.org/docs/latest/admin/installation/#installation-with-docker).
