@@ -2,8 +2,10 @@
 {{if .Size}}
 	{{$size = .Size}}
 {{end}}
-{{if eq .HookType "gitea"}}
-	<img width="{{$size}}" height="{{$size}}" src="{{AssetUrlPrefix}}/img/gitea.svg">
+{{if eq .HookType "forgejo"}}
+	<img width="{{$size}}" height="{{$size}}" src="{{AssetUrlPrefix}}/img/forgejo.svg">
+{{else if eq .HookType "gitea"}}
+	<img width="{{$size}}" height="{{$size}}" src="{{AssetUrlPrefix}}/img/gitea-original.svg">
 {{else if eq .HookType "gogs"}}
 	<img width="{{$size}}" height="{{$size}}" src="{{AssetUrlPrefix}}/img/gogs.ico">
 {{else if eq .HookType "slack"}}

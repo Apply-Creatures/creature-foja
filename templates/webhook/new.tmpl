@@ -5,6 +5,7 @@
 	</div>
 </h4>
 <div class="ui attached segment">
+	{{template "repo/settings/webhook/forgejo" .ctxData}}
 	{{template "repo/settings/webhook/gitea" .ctxData}}
 	{{template "repo/settings/webhook/gogs" .ctxData}}
 	{{template "repo/settings/webhook/slack" .ctxData}}

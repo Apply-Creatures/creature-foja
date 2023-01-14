@@ -45,7 +45,7 @@ func Webhooks(ctx *context.Context) {
 	ctx.Data["PageIsSettingsHooks"] = true
 	ctx.Data["BaseLink"] = ctx.Repo.RepoLink + "/settings/hooks"
 	ctx.Data["BaseLinkNew"] = ctx.Repo.RepoLink + "/settings/hooks"
-	ctx.Data["Description"] = ctx.Tr("repo.settings.hooks_desc", "https://docs.gitea.com/usage/webhooks")
+	ctx.Data["Description"] = ctx.Tr("repo.settings.hooks_desc", "https://forgejo.org/docs/latest/user/webhooks/")
 
 	ws, err := db.Find[webhook.Webhook](ctx, webhook.ListWebhookOptions{RepoID: ctx.Repo.Repository.ID})
 	if err != nil {
@@ -308,6 +308,34 @@ func editWebhook(ctx *context.Context, params webhookParams) {
 
 	ctx.Flash.Success(ctx.Tr("repo.settings.update_hook_success"))
 	ctx.Redirect(fmt.Sprintf("%s/%d", orCtx.Link, w.ID))
+}
+
+// ForgejoHooksNewPost response for creating Forgejo webhook
+func ForgejoHooksNewPost(ctx *context.Context) {
+	createWebhook(ctx, forgejoHookParams(ctx))
+}
+
+// ForgejoHooksEditPost response for editing Forgejo webhook
+func ForgejoHooksEditPost(ctx *context.Context) {
+	editWebhook(ctx, forgejoHookParams(ctx))
+}
+
+func forgejoHookParams(ctx *context.Context) webhookParams {
+	form := web.GetForm(ctx).(*forms.NewWebhookForm)
+
+	contentType := webhook.ContentTypeJSON
+	if webhook.HookContentType(form.ContentType) == webhook.ContentTypeForm {
+		contentType = webhook.ContentTypeForm
+	}
+
+	return webhookParams{
+		Type:        webhook_module.FORGEJO,
+		URL:         form.PayloadURL,
+		ContentType: contentType,
+		Secret:      form.Secret,
+		HTTPMethod:  form.HTTPMethod,
+		WebhookForm: form.WebhookForm,
+	}
 }
 
 // GiteaHooksNewPost response for creating Gitea webhook
