@@ -5,8 +5,11 @@ package updatechecker
 
 import (
 	"context"
+	"errors"
 	"io"
+	"net"
 	"net/http"
+	"strings"
 
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/proxy"
@@ -27,7 +30,51 @@ func (r *CheckerState) Name() string {
 }
 
 // GiteaUpdateChecker returns error when new version of Gitea is available
-func GiteaUpdateChecker(httpEndpoint string) error {
+func GiteaUpdateChecker(httpEndpoint, domainEndpoint string) error {
+	var version string
+	var err error
+	if domainEndpoint != "" {
+		version, err = getVersionDNS(domainEndpoint)
+	} else {
+		version, err = getVersionHTTP(httpEndpoint)
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return UpdateRemoteVersion(context.Background(), version)
+}
+
+// getVersionDNS will request the TXT records for the domain. If a record starts
+// with "forgejo_versions=" everything after that will be used as the latest
+// version available.
+func getVersionDNS(domainEndpoint string) (version string, err error) {
+	records, err := net.LookupTXT(domainEndpoint)
+	if err != nil {
+		return "", err
+	}
+
+	if len(records) == 0 {
+		return "", errors.New("no TXT records were found")
+	}
+
+	for _, record := range records {
+		if strings.HasPrefix(record, "forgejo_versions=") {
+			// Get all supported versions, separated by a comma.
+			supportedVersions := strings.Split(strings.TrimPrefix(record, "forgejo_versions="), ",")
+			// For now always return the latest supported version.
+			return supportedVersions[len(supportedVersions)-1], nil
+		}
+	}
+
+	return "", errors.New("there is no TXT record with a valid value")
+}
+
+// getVersionHTTP will make an HTTP request to the endpoint, and the returned
+// content is JSON. The "latest.version" path's value will be used as the latest
+// version available.
+func getVersionHTTP(httpEndpoint string) (version string, err error) {
 	httpClient := &http.Client{
 		Transport: &http.Transport{
 			Proxy: proxy.Proxy(),
@@ -36,16 +83,16 @@ func GiteaUpdateChecker(httpEndpoint string) error {
 
 	req, err := http.NewRequest("GET", httpEndpoint, nil)
 	if err != nil {
-		return err
+		return "", err
 	}
 	resp, err := httpClient.Do(req)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	type respType struct {
@@ -56,10 +103,9 @@ func GiteaUpdateChecker(httpEndpoint string) error {
 	respData := respType{}
 	err = json.Unmarshal(body, &respData)
 	if err != nil {
-		return err
+		return "", err
 	}
-
-	return UpdateRemoteVersion(req.Context(), respData.Latest.Version)
+	return respData.Latest.Version, nil
 }
 
 // UpdateRemoteVersion updates the latest available version of Gitea
