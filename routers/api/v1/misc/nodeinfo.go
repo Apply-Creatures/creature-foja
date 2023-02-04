@@ -63,10 +63,10 @@ func NodeInfo(ctx *context.APIContext) {
 	nodeInfo := &structs.NodeInfo{
 		Version: "2.1",
 		Software: structs.NodeInfoSoftware{
-			Name:       "gitea",
+			Name:       "forgejo",
 			Version:    setting.AppVer,
-			Repository: "https://github.com/go-gitea/gitea.git",
-			Homepage:   "https://gitea.io/",
+			Repository: "https://codeberg.org/forgejo/forgejo.git",
+			Homepage:   "https://forgejo.org/",
 		},
 		Protocols: []string{"activitypub"},
 		Services: structs.NodeInfoServices{
