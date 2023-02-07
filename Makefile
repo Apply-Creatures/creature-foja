@@ -92,7 +92,10 @@ else
 endif
 VERSION = ${GITEA_VERSION}
 
-LDFLAGS := $(LDFLAGS) -X "main.MakeVersion=$(MAKE_VERSION)" -X "main.Version=$(GITEA_VERSION)" -X "main.Tags=$(TAGS)"
+# SemVer
+FORGEJO_VERSION := 5.0.0+0-gitea-1.20.0
+
+LDFLAGS := $(LDFLAGS) -X "main.MakeVersion=$(MAKE_VERSION)" -X "main.Version=$(GITEA_VERSION)" -X "main.Tags=$(TAGS)" -X "code.gitea.io/gitea/routers/api/forgejo/v1.ForgejoVersion=$(FORGEJO_VERSION)"
 
 LINUX_ARCHS ?= linux/amd64,linux/386,linux/arm-5,linux/arm-6,linux/arm64
 
@@ -145,6 +148,8 @@ endif
 ifdef DEPS_PLAYWRIGHT
 	PLAYWRIGHT_FLAGS += --with-deps
 endif
+
+FORGEJO_API_SPEC := public/assets/forgejo/api.v1.yml
 
 SWAGGER_SPEC := templates/swagger/v1_json.tmpl
 SWAGGER_SPEC_S_TMPL := s|"basePath": *"/api/v1"|"basePath": "{{AppSubUrl \| JSEscape \| Safe}}/api/v1"|g
@@ -222,6 +227,8 @@ help:
 	@echo " - generate-license                 update license files"
 	@echo " - generate-gitignore               update gitignore files"
 	@echo " - generate-manpage                 generate manpage"
+	@echo " - generate-forgejo-api             generate the forgejo API from spec"
+	@echo " - forgejo-api-validate             check if the forgejo API matches the specs"
 	@echo " - generate-swagger                 generate the swagger spec from code comments"
 	@echo " - swagger-validate                 check if the swagger spec is valid"
 	@echo " - go-licenses                      regenerate go licenses"
@@ -306,6 +313,27 @@ ifneq "$(TAGS)" "$(shell cat $(TAGS_EVIDENCE) 2>/dev/null)"
 TAGS_PREREQ := $(TAGS_EVIDENCE)
 endif
 
+OAPI_CODEGEN_PACKAGE ?= github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.12.4
+KIN_OPENAPI_CODEGEN_PACKAGE ?= github.com/getkin/kin-openapi/cmd/validate@v0.114.0
+FORGEJO_API_SERVER = routers/api/forgejo/v1/generated.go
+
+.PHONY: generate-forgejo-api
+generate-forgejo-api: $(FORGEJO_API_SPEC)
+	$(GO) run $(OAPI_CODEGEN_PACKAGE) -package v1 -generate chi-server,types $< > $(FORGEJO_API_SERVER)
+
+.PHONY: forgejo-api-check
+forgejo-api-check: generate-forgejo-api
+	@diff=$$(git diff $(FORGEJO_API_SERVER) ; \
+	if [ -n "$$diff" ]; then \
+		echo "Please run 'make generate-forgejo-api' and commit the result:"; \
+		echo "$${diff}"; \
+		exit 1; \
+	fi
+
+.PHONY: forgejo-api-validate
+forgejo-api-validate:
+	$(GO) run $(KIN_OPENAPI_CODEGEN_PACKAGE) $(FORGEJO_API_SPEC)
+
 .PHONY: generate-swagger
 generate-swagger: $(SWAGGER_SPEC)
 
@@ -336,7 +364,7 @@ checks: checks-frontend checks-backend
 checks-frontend: lockfile-check svg-check
 
 .PHONY: checks-backend
-checks-backend: tidy-check swagger-check fmt-check misspell-check swagger-validate security-check
+checks-backend: tidy-check swagger-check fmt-check misspell-check forgejo-api-validate swagger-validate security-check
 
 .PHONY: lint
 lint: lint-frontend lint-backend
