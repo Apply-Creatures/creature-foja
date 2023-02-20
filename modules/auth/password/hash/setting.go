@@ -10,7 +10,7 @@ package hash
 //
 // It will be dealiased as per aliasAlgorithmNames whereas
 // defaultEmptyHashAlgorithmSpecification does not undergo dealiasing.
-const DefaultHashAlgorithmName = "pbkdf2"
+const DefaultHashAlgorithmName = "pbkdf2_hi"
 
 var DefaultHashAlgorithm *PasswordHashAlgorithm
 

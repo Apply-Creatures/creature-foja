@@ -28,11 +28,11 @@ func TestCheckSettingPasswordHashAlgorithm(t *testing.T) {
 		})
 	}
 
-	t.Run("pbkdf2_v2 is the default when default password hash algorithm is empty", func(t *testing.T) {
+	t.Run("pbkdf2_hi is the default when default password hash algorithm is empty", func(t *testing.T) {
 		emptyConfig, emptyAlgo := SetDefaultPasswordHashAlgorithm("")
-		pbkdf2v2Config, pbkdf2v2Algo := SetDefaultPasswordHashAlgorithm("pbkdf2_v2")
+		pbkdf2hiConfig, pbkdf2hiAlgo := SetDefaultPasswordHashAlgorithm("pbkdf2_hi")
 
-		assert.Equal(t, pbkdf2v2Config, emptyConfig)
-		assert.Equal(t, pbkdf2v2Algo.Specification, emptyAlgo.Specification)
+		assert.Equal(t, pbkdf2hiConfig, emptyConfig)
+		assert.Equal(t, pbkdf2hiAlgo.Specification, emptyAlgo.Specification)
 	})
 }
