@@ -147,10 +147,10 @@ func NewMainApp(version, versionExtra string) *cli.App {
 
 func innerNewMainApp(version, versionExtra string, subCmdsStandaloneArgs, subCmdWithConfigArgs []*cli.Command) *cli.App {
 	app := cli.NewApp()
-	app.Name = "Gitea"
-	app.HelpName = "gitea"
-	app.Usage = "A painless self-hosted Git service"
-	app.Description = `Gitea program contains "web" and other subcommands. If no subcommand is given, it starts the web server by default. Use "web" subcommand for more web server arguments, use other subcommands for other purposes.`
+	app.HelpName = "forgejo"
+	app.Name = "Forgejo"
+	app.Usage = "Beyond coding. We forge."
+	app.Description = `By default, forgejo will start serving using the web-server with no argument, which can alternatively be run by running the subcommand "web".`
 	app.Version = version + versionExtra
 	app.EnableBashCompletion = true
 
