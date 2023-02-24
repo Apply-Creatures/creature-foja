@@ -143,6 +143,14 @@ func (b *Basic) Verify(req *http.Request, w http.ResponseWriter, store DataStore
 	return u, nil
 }
 
+func getOtpHeader(header http.Header) string {
+	otpHeader := header.Get("X-Gitea-OTP")
+	if forgejoHeader := header.Get("X-Forgejo-OTP"); forgejoHeader != "" {
+		otpHeader = forgejoHeader
+	}
+	return otpHeader
+}
+
 func validateTOTP(req *http.Request, u *user_model.User) error {
 	twofa, err := auth_model.GetTwoFactorByUID(req.Context(), u.ID)
 	if err != nil {
@@ -152,7 +160,7 @@ func validateTOTP(req *http.Request, u *user_model.User) error {
 		}
 		return err
 	}
-	if ok, err := twofa.ValidateTOTP(req.Header.Get("X-Gitea-OTP")); err != nil {
+	if ok, err := twofa.ValidateTOTP(getOtpHeader(req.Header)); err != nil {
 		return err
 	} else if !ok {
 		return util.NewInvalidArgumentErrorf("invalid provided OTP")
