@@ -1,0 +1,189 @@
+name: testing
+
+on:
+  pull_request:
+  push:
+    branches:
+      - 'forgejo*'
+      - 'v*/forgejo*'
+
+jobs:
+  lint-backend:
+    runs-on: docker
+    container:
+      image: 'docker.io/node:20-bookworm'
+    steps:
+      - uses: https://code.forgejo.org/actions/checkout@v3
+      - uses: https://code.forgejo.org/actions/setup-go@v4
+        with:
+          go-version: ">=1.21"
+          check-latest: true
+      - run: make deps-backend deps-tools
+      - run: make lint-backend
+        env:
+          TAGS: bindata sqlite sqlite_unlock_notify
+  checks-backend:
+    runs-on: docker
+    container:
+      image: 'docker.io/node:20-bookworm'
+    steps:
+      - uses: https://code.forgejo.org/actions/checkout@v3
+      - uses: https://code.forgejo.org/actions/setup-go@v4
+        with:
+          go-version: ">=1.21"
+          check-latest: true
+      - run: make deps-backend deps-tools
+      - run: make --always-make checks-backend # ensure the "go-licenses" make target runs
+  test-unit:
+    runs-on: docker
+    needs: [lint-backend, checks-backend]
+    container:
+      image: 'docker.io/node:20-bookworm'
+    services:
+      minio:
+        image: 'docker.io/bitnami/minio:2023.8.31'
+        env:
+          MINIO_ROOT_USER: 123456
+          MINIO_ROOT_PASSWORD: 12345678
+    steps:
+      - uses: https://code.forgejo.org/actions/checkout@v3
+      - uses: https://code.forgejo.org/actions/setup-go@v4
+        with:
+          go-version: ">=1.21"
+      - run: |
+          git config --add safe.directory '*'
+          adduser --quiet --comment forgejo --disabled-password forgejo
+          chown -R forgejo:forgejo .
+      - run: |
+          su forgejo -c 'make deps-backend'
+      - run: |
+          su forgejo -c 'make backend'
+        env:
+          TAGS: bindata
+      - run: |
+          su forgejo -c 'make unit-test-coverage test-check'
+        timeout-minutes: 50
+        env:
+          RACE_ENABLED: 'true'
+          TAGS: bindata
+  test-mysql:
+    runs-on: docker
+    needs: [lint-backend, checks-backend]
+    container:
+      image: 'docker.io/node:20-bookworm'
+    services:
+      mysql:
+        image: 'docker.io/mysql:8-debian'
+        env:
+          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_DATABASE: testgitea
+        #
+        # See also https://codeberg.org/forgejo/forgejo/issues/976
+        #
+        cmd: ['mysqld', '--innodb-adaptive-flushing=OFF', '--innodb-buffer-pool-size=4G', '--innodb-log-buffer-size=128M', '--innodb-flush-log-at-trx-commit=0', '--innodb-flush-log-at-timeout=30', '--innodb-flush-method=nosync', '--innodb-fsync-threshold=1000000000']
+    steps:
+      - uses: https://code.forgejo.org/actions/checkout@v3
+      - uses: https://code.forgejo.org/actions/setup-go@v4
+        with:
+          go-version: "1.21"
+      - name: install dependencies
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update -qq
+          apt-get install --no-install-recommends -qq -y git-lfs
+      - name: setup user and permissions
+        run: |
+          git config --add safe.directory '*'
+          adduser --quiet --comment forgejo --disabled-password forgejo
+          chown -R forgejo:forgejo .
+      - run: |
+          su forgejo -c 'make deps-backend'
+      - run: |
+          su forgejo -c 'make backend'
+        env:
+          TAGS: bindata
+      - run: |
+          su forgejo -c 'make test-mysql-migration test-mysql'
+        timeout-minutes: 50
+        env:
+          TAGS: bindata
+          USE_REPO_TEST_DIR: 1
+  test-pgsql:
+    runs-on: docker
+    needs: [lint-backend, checks-backend]
+    container:
+      image: 'docker.io/node:20-bookworm'
+    services:
+      minio:
+        image: bitnami/minio:2021.3.17
+        env:
+          MINIO_ACCESS_KEY: 123456
+          MINIO_SECRET_KEY: 12345678
+      pgsql:
+        image: 'docker.io/postgres:15'
+        env:
+          POSTGRES_DB: test
+          POSTGRES_PASSWORD: postgres
+    steps:
+      - uses: https://code.forgejo.org/actions/checkout@v3
+      - uses: https://code.forgejo.org/actions/setup-go@v4
+        with:
+          go-version: "1.21"
+      - name: install dependencies
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update -qq
+          apt-get install --no-install-recommends -qq -y git-lfs
+      - name: setup user and permissions
+        run: |
+          git config --add safe.directory '*'
+          adduser --quiet --comment forgejo --disabled-password forgejo
+          chown -R forgejo:forgejo .
+      - run: |
+          su forgejo -c 'make deps-backend'
+      - run: |
+          su forgejo -c 'make backend'
+        env:
+          TAGS: bindata
+      - run: |
+          su forgejo -c 'make test-pgsql-migration test-pgsql'
+        timeout-minutes: 50
+        env:
+          TAGS: bindata gogit
+          RACE_ENABLED: true
+          TEST_TAGS: gogit
+          USE_REPO_TEST_DIR: 1
+  test-sqlite:
+    runs-on: docker
+    needs: [lint-backend, checks-backend]
+    container:
+      image: 'docker.io/node:20-bookworm'
+    steps:
+      - uses: https://code.forgejo.org/actions/checkout@v3
+      - uses: https://code.forgejo.org/actions/setup-go@v4
+        with:
+          go-version: "1.21"
+      - name: install dependencies
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update -qq
+          apt-get install --no-install-recommends -qq -y git-lfs
+      - name: setup user and permissions
+        run: |
+          git config --add safe.directory '*'
+          adduser --quiet --comment forgejo --disabled-password forgejo
+          chown -R forgejo:forgejo .
+      - run: |
+          su forgejo -c 'make deps-backend'
+      - run: |
+          su forgejo -c 'make backend'
+        env:
+          TAGS: bindata gogit sqlite sqlite_unlock_notify
+      - run: |
+          su forgejo -c 'make test-sqlite-migration test-sqlite'
+        timeout-minutes: 50
+        env:
+          TAGS: bindata gogit sqlite sqlite_unlock_notify
+          RACE_ENABLED: true
+          TEST_TAGS: gogit sqlite sqlite_unlock_notify
+          USE_REPO_TEST_DIR: 1
