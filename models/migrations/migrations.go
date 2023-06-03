@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 
+	"code.gitea.io/gitea/models/forgejo_migrations"
 	"code.gitea.io/gitea/models/migrations/v1_10"
 	"code.gitea.io/gitea/models/migrations/v1_11"
 	"code.gitea.io/gitea/models/migrations/v1_12"
@@ -603,7 +604,7 @@ func EnsureUpToDate(x *xorm.Engine) error {
 		return fmt.Errorf(`Current database version %d is not equal to the expected version %d. Please run "gitea [--config /path/to/app.ini] migrate" to update the database version`, currentDB, expected)
 	}
 
-	return nil
+	return forgejo_migrations.EnsureUpToDate(x)
 }
 
 // Migrate database to current version
@@ -667,5 +668,7 @@ Please try upgrading to a lower version first (suggested v1.6.4), then upgrade t
 			return err
 		}
 	}
-	return nil
+
+	// Execute Forgejo specific migrations.
+	return forgejo_migrations.Migrate(x)
 }
