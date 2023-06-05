@@ -23,7 +23,9 @@ import (
 	"time"
 
 	"code.gitea.io/gitea/models/auth"
+	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/unittest"
+	user_model "code.gitea.io/gitea/models/user"
 	gitea_context "code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/graceful"
 	"code.gitea.io/gitea/modules/json"
@@ -33,6 +35,7 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/routers"
+	user_service "code.gitea.io/gitea/services/user"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/PuerkitoBio/goquery"
@@ -229,6 +232,22 @@ func emptyTestSession(t testing.TB) *TestSession {
 
 func getUserToken(t testing.TB, userName string, scope ...auth.AccessTokenScope) string {
 	return getTokenForLoggedInUser(t, loginUser(t, userName), scope...)
+}
+
+func createUser(ctx context.Context, t testing.TB, user *user_model.User) func() {
+	user.MustChangePassword = false
+	user.LowerName = strings.ToLower(user.Name)
+
+	assert.NoError(t, db.Insert(ctx, user))
+
+	if len(user.Email) > 0 {
+		changePrimaryEmail := true
+		assert.NoError(t, user_model.UpdateUser(ctx, user, changePrimaryEmail))
+	}
+
+	return func() {
+		assert.NoError(t, user_service.DeleteUser(ctx, user, true))
+	}
 }
 
 func loginUser(t testing.TB, userName string) *TestSession {
