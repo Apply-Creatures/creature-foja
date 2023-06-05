@@ -39,6 +39,7 @@ import (
 	"code.gitea.io/gitea/tests"
 
 	"github.com/PuerkitoBio/goquery"
+	goth_gitlab "github.com/markbates/goth/providers/gitlab"
 	"github.com/stretchr/testify/assert"
 	"github.com/xeipuuv/gojsonschema"
 )
@@ -232,6 +233,39 @@ func emptyTestSession(t testing.TB) *TestSession {
 
 func getUserToken(t testing.TB, userName string, scope ...auth.AccessTokenScope) string {
 	return getTokenForLoggedInUser(t, loginUser(t, userName), scope...)
+}
+
+func addAuthSource(t *testing.T, payload map[string]string) *auth.Source {
+	session := loginUser(t, "user1")
+	payload["_csrf"] = GetCSRF(t, session, "/admin/auths/new")
+	req := NewRequestWithValues(t, "POST", "/admin/auths/new", payload)
+	session.MakeRequest(t, req, http.StatusSeeOther)
+	source, err := auth.GetSourceByName(context.Background(), payload["name"])
+	assert.NoError(t, err)
+	return source
+}
+
+func authSourcePayloadOAuth2(name string) map[string]string {
+	return map[string]string{
+		"type":      fmt.Sprintf("%d", auth.OAuth2),
+		"name":      name,
+		"is_active": "on",
+	}
+}
+
+func authSourcePayloadGitLab(name string) map[string]string {
+	payload := authSourcePayloadOAuth2(name)
+	payload["oauth2_provider"] = "gitlab"
+	return payload
+}
+
+func authSourcePayloadGitLabCustom(name string) map[string]string {
+	payload := authSourcePayloadGitLab(name)
+	payload["oauth2_use_custom_url"] = "on"
+	payload["oauth2_auth_url"] = goth_gitlab.AuthURL
+	payload["oauth2_token_url"] = goth_gitlab.TokenURL
+	payload["oauth2_profile_url"] = goth_gitlab.ProfileURL
+	return payload
 }
 
 func createUser(ctx context.Context, t testing.TB, user *user_model.User) func() {
