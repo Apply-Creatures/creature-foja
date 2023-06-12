@@ -117,13 +117,20 @@ func IsValidExternalTrackerURLFormat(uri string) bool {
 }
 
 var (
-	validUsernamePattern   = regexp.MustCompile(`^[\da-zA-Z][-.\w]*$`)
-	invalidUsernamePattern = regexp.MustCompile(`[-._]{2,}|[-._]$`) // No consecutive or trailing non-alphanumeric chars
+	validUsernamePatternWithDots    = regexp.MustCompile(`^[\da-zA-Z][-.\w]*$`)
+	validUsernamePatternWithoutDots = regexp.MustCompile(`^[\da-zA-Z][-\w]*$`)
+
+	// No consecutive or trailing non-alphanumeric chars, catches both cases
+	invalidUsernamePattern = regexp.MustCompile(`[-._]{2,}|[-._]$`)
 )
 
 // IsValidUsername checks if username is valid
 func IsValidUsername(name string) bool {
 	// It is difficult to find a single pattern that is both readable and effective,
 	// but it's easier to use positive and negative checks.
-	return validUsernamePattern.MatchString(name) && !invalidUsernamePattern.MatchString(name)
+	if setting.Service.AllowDotsInUsernames {
+		return validUsernamePatternWithDots.MatchString(name) && !invalidUsernamePattern.MatchString(name)
+	}
+
+	return validUsernamePatternWithoutDots.MatchString(name) && !invalidUsernamePattern.MatchString(name)
 }

@@ -68,6 +68,7 @@ var Service = struct {
 	DefaultKeepEmailPrivate                 bool
 	DefaultAllowCreateOrganization          bool
 	DefaultUserIsRestricted                 bool
+	AllowDotsInUsernames                    bool
 	EnableTimetracking                      bool
 	DefaultEnableTimetracking               bool
 	DefaultEnableDependencies               bool
@@ -180,6 +181,7 @@ func loadServiceFrom(rootCfg ConfigProvider) {
 	Service.DefaultKeepEmailPrivate = sec.Key("DEFAULT_KEEP_EMAIL_PRIVATE").MustBool()
 	Service.DefaultAllowCreateOrganization = sec.Key("DEFAULT_ALLOW_CREATE_ORGANIZATION").MustBool(true)
 	Service.DefaultUserIsRestricted = sec.Key("DEFAULT_USER_IS_RESTRICTED").MustBool(false)
+	Service.AllowDotsInUsernames = sec.Key("ALLOW_DOTS_IN_USERNAMES").MustBool(true)
 	Service.EnableTimetracking = sec.Key("ENABLE_TIMETRACKING").MustBool(true)
 	if Service.EnableTimetracking {
 		Service.DefaultEnableTimetracking = sec.Key("DEFAULT_ENABLE_TIMETRACKING").MustBool(true)
