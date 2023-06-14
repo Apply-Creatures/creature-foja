@@ -1,0 +1,190 @@
+name: Build release
+
+on:
+  push:
+    tags: 'v*'
+
+jobs:
+  release:
+    runs-on: self-hosted
+    # root is used for testing, allow it
+    if: secrets.ROLE == 'forgejo-integration' || github.repository_owner == 'root'
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Increase the verbosity when there are no secrets
+        id: verbose
+        run: |
+          if test -z "${{ secrets.TOKEN }}"; then
+            value=true
+          else
+            value=false
+          fi
+          echo "value=$value" >> "$GITHUB_OUTPUT"
+
+      - name: Sanitize the name of the repository
+        id: repository
+        run: |
+          set -x # comment out
+          repository="${{ github.repository }}"
+          echo "value=${repository##*/}" >> "$GITHUB_OUTPUT"
+
+      - name: When in a test environment, create a token
+        id: token
+        if: ${{ secrets.TOKEN == '' }}
+        run: |
+          apt-get -qq install -y jq
+          url="${{ env.GITHUB_SERVER_URL }}"
+          hostport=${url##http*://}
+          hostport=${hostport%%/}
+          doer=root
+          api=http://$doer:admin1234@$hostport/api/v1/users/$doer/tokens
+          curl -sS -X DELETE $api/release
+          token=$(curl -sS -X POST -H 'Content-Type: application/json' --data-raw '{"name": "release", "scopes": ["all"]}' $api | jq --raw-output .sha1)
+          echo "value=${token}" >> "$GITHUB_OUTPUT"
+
+      - uses: https://code.forgejo.org/actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - uses: https://code.forgejo.org/actions/setup-go@v4
+        with:
+          go-version: ">=1.20"
+          check-latest: true
+
+      - name: Create the version from ref_name
+        id: tag-version
+        run: |
+          version="${{ github.ref_name }}"
+          version=${version##*v}
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Create the release notes
+        id: release-notes
+        run: |
+          cat >> "$GITHUB_OUTPUT" <<EOF
+          value<<ENDVAR
+          See https://codeberg.org/forgejo/forgejo/src/branch/forgejo/RELEASE-NOTES.md#${{ steps.tag-version.outputs.value }}
+          ENDVAR
+          EOF
+
+      - name: Build sources
+        run: |
+          set -x
+          apt-get -qq install -y make
+          version=${{ steps.tag-version.outputs.value }}
+          #
+          # Make sure all files are owned by the current user.
+          # When run as root `npx webpack` will assume the identity
+          # of the owner of the current working directory and may
+          # fail to create files if some sub-directories are not owned
+          # by the same user.
+          #
+          #   Binaries:
+          #   Node: 18.17.0 - /usr/local/node-v18.17.0-linux-x64/bin/node
+          #   npm: 9.6.7 - /usr/local/node-v18.17.0-linux-x64/bin/npm
+          # Packages:
+          #   add-asset-webpack-plugin: 2.0.1 => 2.0.1
+          #   css-loader: 6.8.1 => 6.8.1
+          #   esbuild-loader: 3.0.1 => 3.0.1
+          #   license-checker-webpack-plugin: 0.2.1 => 0.2.1
+          #   monaco-editor-webpack-plugin: 7.0.1 => 7.0.1
+          #   vue-loader: 17.2.2 => 17.2.2
+          #   webpack: 5.87.0 => 5.87.0
+          #   webpack-cli: 5.1.4 => 5.1.4
+          #
+          chown -R $(id -u) .
+          make VERSION=$version TAGS=bindata sources-tarbal
+          mv dist/release release
+
+          (
+            tmp=$(mktemp -d)
+            tar --directory $tmp -zxvf release/*$version*.tar.gz
+            cd $tmp/*
+            #
+            # Verify `make frontend` files are available
+            #
+            test -d public/assets/css
+            test -d public/assets/fonts
+            test -d public/assets/js
+            #
+            # Verify `make generate` files are available
+            #
+            test -f modules/public/bindata.go
+            #
+            # Sanity check to verify that the source tarbal knows the
+            # version and is able to rebuild itself from it.
+            #
+            # When in sources the version is determined with git.
+            # When in the tarbal the version is determined from a VERSION file.
+            #
+            make sources-tarbal
+            tarbal=$(echo dist/release/*$version*.tar.gz)
+            if ! test -f $tarbal ; then
+              echo $tarbal does not exist
+              find dist release
+              exit 1
+            fi
+          )
+
+      - name: build container & release (when TOKEN secret is not set)
+        if: ${{ secrets.TOKEN == '' }}
+        uses: ./.forgejo/actions/build-release
+        with:
+          forgejo: "${{ env.GITHUB_SERVER_URL }}"
+          owner: "${{ env.GITHUB_REPOSITORY_OWNER }}"
+          repository: "${{ steps.repository.outputs.value }}"
+          doer: root
+          tag-version: "${{ steps.tag-version.outputs.value }}"
+          token: ${{ steps.token.outputs.value }}
+          platforms: linux/amd64,linux/arm64,linux/arm/v6
+          release-notes: "${{ steps.release-notes.outputs.value }}"
+          binary-name: forgejo
+          binary-path: /app/gitea/gitea
+          verbose: ${{ steps.verbose.outputs.value }}
+
+      - name: build rootless container (when TOKEN secret is not set)
+        if: ${{ secrets.TOKEN == '' }}
+        uses: ./.forgejo/actions/build-release
+        with:
+          forgejo: "${{ env.GITHUB_SERVER_URL }}"
+          owner: "${{ env.GITHUB_REPOSITORY_OWNER }}"
+          repository: "${{ steps.repository.outputs.value }}"
+          doer: root
+          tag-version: "${{ steps.tag-version.outputs.value }}"
+          token: ${{ steps.token.outputs.value }}
+          platforms: linux/amd64,linux/arm64,linux/arm/v6
+          suffix: -rootless
+          dockerfile: Dockerfile.rootless
+          verbose: ${{ steps.verbose.outputs.value }}
+
+      - name: build container & release (when TOKEN secret is set)
+        if: ${{ secrets.TOKEN != '' }}
+        uses: ./.forgejo/actions/build-release
+        with:
+          forgejo: "${{ env.GITHUB_SERVER_URL }}"
+          owner: "${{ env.GITHUB_REPOSITORY_OWNER }}"
+          repository: "${{ steps.repository.outputs.value }}"
+          doer: "${{ secrets.DOER }}"
+          tag-version: "${{ steps.tag-version.outputs.value }}"
+          token: "${{ secrets.TOKEN }}"
+          platforms: linux/amd64,linux/arm64,linux/arm/v6
+          release-notes: "${{ steps.release-notes.outputs.value }}"
+          binary-name: forgejo
+          binary-path: /app/gitea/gitea
+          verbose: ${{ steps.verbose.outputs.value }}
+
+      - name: build rootless container (when TOKEN secret is set)
+        if: ${{ secrets.TOKEN != '' }}
+        uses: ./.forgejo/actions/build-release
+        with:
+          forgejo: "${{ env.GITHUB_SERVER_URL }}"
+          owner: "${{ env.GITHUB_REPOSITORY_OWNER }}"
+          repository: "${{ steps.repository.outputs.value }}"
+          doer: "${{ secrets.DOER }}"
+          tag-version: "${{ steps.tag-version.outputs.value }}"
+          token: "${{ secrets.TOKEN }}"
+          platforms: linux/amd64,linux/arm64,linux/arm/v6
+          suffix: -rootless
+          dockerfile: Dockerfile.rootless
+          verbose: ${{ steps.verbose.outputs.value }}

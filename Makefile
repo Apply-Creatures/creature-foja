@@ -83,31 +83,14 @@ endif
 STORED_VERSION_FILE := VERSION
 HUGO_VERSION ?= 0.111.3
 
-GITHUB_REF_TYPE ?= branch
-GITHUB_REF_NAME ?= $(shell git rev-parse --abbrev-ref HEAD)
 
-ifneq ($(GITHUB_REF_TYPE),branch)
-	VERSION ?= $(subst v,,$(GITHUB_REF_NAME))
-	GITEA_VERSION ?= $(VERSION)
+STORED_VERSION=$(shell cat $(STORED_VERSION_FILE) 2>/dev/null)
+ifneq ($(STORED_VERSION),)
+  GITEA_VERSION ?= $(STORED_VERSION)
 else
-	ifneq ($(GITHUB_REF_NAME),)
-		VERSION ?= $(subst release/v,,$(GITHUB_REF_NAME))
-	else
-		VERSION ?= main
-	endif
-
-	STORED_VERSION=$(shell cat $(STORED_VERSION_FILE) 2>/dev/null)
-	ifneq ($(STORED_VERSION),)
-		GITEA_VERSION ?= $(STORED_VERSION)
-	else
-		GITEA_VERSION ?= $(shell git describe --tags --always | sed 's/-/+/' | sed 's/^v//')
-	endif
+  GITEA_VERSION ?= $(shell git describe --tags --always | sed 's/-/+/' | sed 's/^v//')
 endif
-
-# if version = "main" then update version to "nightly"
-ifeq ($(VERSION),main)
-	VERSION := main-nightly
-endif
+VERSION = ${GITEA_VERSION}
 
 LDFLAGS := $(LDFLAGS) -X "main.MakeVersion=$(MAKE_VERSION)" -X "main.Version=$(GITEA_VERSION)" -X "main.Tags=$(TAGS)"
 
@@ -788,8 +771,14 @@ security-check:
 $(EXECUTABLE): $(GO_SOURCES) $(TAGS_PREREQ)
 	CGO_CFLAGS="$(CGO_CFLAGS)" $(GO) build $(GOFLAGS) $(EXTRA_GOFLAGS) -tags '$(TAGS)' -ldflags '-s -w $(LDFLAGS)' -o $@
 
+static-executable: $(GO_SOURCES) $(TAGS_PREREQ)
+	CGO_CFLAGS="$(CGO_CFLAGS)" $(GO) build $(GOFLAGS) $(EXTRA_GOFLAGS) -tags 'netgo osusergo $(TAGS)' -ldflags '-s -w -linkmode external -extldflags "-static" $(LDFLAGS)' -o $(EXECUTABLE)
+
 .PHONY: release
 release: frontend generate release-windows release-linux release-darwin release-freebsd release-copy release-compress vendor release-sources release-docs release-check
+
+# just the sources, with all assets builtin and frontend resources generated
+sources-tarbal: frontend generate vendor release-sources release-check
 
 $(DIST_DIRS):
 	mkdir -p $(DIST_DIRS)

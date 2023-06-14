@@ -1,0 +1,99 @@
+name: Integration tests for the release process
+
+on:
+  push:
+    paths:
+      - Makefile
+      - Dockerfile
+      - Dockerfile.rootless
+      - docker/**
+      - .forgejo/actions/build-release/action.yml
+      - .forgejo/workflows/build-release.yml
+      - .forgejo/workflows/build-release-integration.yml
+
+jobs:
+  release-simulation:
+    runs-on: self-hosted
+    if: secrets.ROLE != 'forgejo-integration' && secrets.ROLE != 'forgejo-experimental' && secrets.ROLE != 'forgejo-release'
+    steps:
+      - uses: actions/checkout@v3
+
+      - id: forgejo
+        uses: https://code.forgejo.org/actions/setup-forgejo@v1
+        with:
+          user: root
+          password: admin1234
+          image-version: 1.19
+          lxc-ip-prefix: 10.0.9
+
+      - name: publish the forgejo release
+        run: |
+          set -x
+
+          version=1.2.3
+          cat > /etc/docker/daemon.json <<EOF
+            {
+              "insecure-registries" : ["${{ steps.forgejo.outputs.host-port }}"]
+            }
+          EOF
+          systemctl restart docker
+
+          apt-get install -qq -y xz-utils
+
+          dir=$(mktemp -d)
+          trap "rm -fr $dir" EXIT
+
+          url=http://root:admin1234@${{ steps.forgejo.outputs.host-port }}
+          export FORGEJO_RUNNER_LOGS="${{ steps.forgejo.outputs.runner-logs }}"
+
+          #
+          # Create a new project with a fake forgejo and the release workflow only
+          #
+          cp -a .forgejo/testdata/build-release/* $dir
+          mkdir -p $dir/.forgejo/workflows
+          cp .forgejo/workflows/build-release.yml $dir/.forgejo/workflows
+          cp -a .forgejo/actions $dir/.forgejo/actions
+          cp $dir/Dockerfile $dir/Dockerfile.rootless
+
+          forgejo-test-helper.sh push $dir $url root forgejo
+          sha=$(forgejo-test-helper.sh branch_tip $url root/forgejo main)
+
+          #
+          # Push a tag to trigger the release workflow and wait for it to complete
+          #
+          forgejo-curl.sh api_json --data-raw '{"tag_name": "v'$version'", "target": "'$sha'"}' $url/api/v1/repos/root/forgejo/tags
+          LOOPS=180 forgejo-test-helper.sh wait_success "$url" root/forgejo $sha
+
+          #
+          # uncomment to see the logs even when everything is reported to be working ok
+          #
+          #cat $FORGEJO_RUNNER_LOGS
+
+          #
+          # Minimal sanity checks. e2e test is for the setup-forgejo
+          # action and the infrastructure playbook. Since the binary
+          # is a script shell it does not test the sanity of the cross
+          # build, only the sanity of the naming of the binaries.
+          #
+          for arch in amd64 arm64 arm-6 ; do
+            binary=forgejo-$version-linux-$arch
+            for suffix in '' '.xz' ; do
+              curl --fail -L -sS $url/root/forgejo/releases/download/v$version/$binary$suffix > $binary$suffix
+              if test "$suffix" = .xz ; then
+                 unxz --keep $binary$suffix
+              fi
+              chmod +x $binary
+              ./$binary --version | grep $version
+              curl --fail -L -sS $url/root/forgejo/releases/download/v$version/$binary$suffix.sha256 > $binary$suffix.sha256
+              shasum -a 256 --check $binary$suffix.sha256
+              rm $binary$suffix
+            done
+          done
+
+          sources=forgejo-src-$version.tar.gz
+          curl --fail -L -sS $url/root/forgejo/releases/download/v$version/$sources > $sources
+          curl --fail -L -sS $url/root/forgejo/releases/download/v$version/$sources.sha256 > $sources.sha256
+          shasum -a 256 --check $sources.sha256
+
+          docker pull ${{ steps.forgejo.outputs.host-port }}/root/forgejo:$version
+          docker pull ${{ steps.forgejo.outputs.host-port }}/root/forgejo:$version-rootless
