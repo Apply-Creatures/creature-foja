@@ -39,6 +39,8 @@ import (
 	"code.gitea.io/gitea/tests"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/markbates/goth"
+	"github.com/markbates/goth/gothic"
 	goth_gitlab "github.com/markbates/goth/providers/gitlab"
 	"github.com/stretchr/testify/assert"
 	"github.com/xeipuuv/gojsonschema"
@@ -233,6 +235,14 @@ func emptyTestSession(t testing.TB) *TestSession {
 
 func getUserToken(t testing.TB, userName string, scope ...auth.AccessTokenScope) string {
 	return getTokenForLoggedInUser(t, loginUser(t, userName), scope...)
+}
+
+func mockCompleteUserAuth(mock func(res http.ResponseWriter, req *http.Request) (goth.User, error)) func() {
+	old := gothic.CompleteUserAuth
+	gothic.CompleteUserAuth = mock
+	return func() {
+		gothic.CompleteUserAuth = old
+	}
 }
 
 func addAuthSource(t *testing.T, payload map[string]string) *auth.Source {

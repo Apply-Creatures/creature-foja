@@ -5,15 +5,22 @@ package integration
 
 import (
 	"bytes"
+	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"testing"
 
+	auth_model "code.gitea.io/gitea/models/auth"
+	"code.gitea.io/gitea/models/unittest"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/test"
 	"code.gitea.io/gitea/routers/web/auth"
 	"code.gitea.io/gitea/tests"
 
+	"github.com/markbates/goth"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -418,4 +425,47 @@ func TestRefreshTokenInvalidation(t *testing.T) {
 	assert.NoError(t, json.Unmarshal(resp.Body.Bytes(), parsedError))
 	assert.Equal(t, "unauthorized_client", string(parsedError.ErrorCode))
 	assert.Equal(t, "token was already used", parsedError.ErrorDescription)
+}
+
+func TestSignInOAuthCallbackSignIn(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	//
+	// OAuth2 authentication source GitLab
+	//
+	gitlabName := "gitlab"
+	gitlab := addAuthSource(t, authSourcePayloadGitLabCustom(gitlabName))
+
+	//
+	// Create a user as if it had been previously been created by the GitLab
+	// authentication source.
+	//
+	userGitLabUserID := "5678"
+	userGitLab := &user_model.User{
+		Name:        "gitlabuser",
+		Email:       "gitlabuser@example.com",
+		Passwd:      "gitlabuserpassword",
+		Type:        user_model.UserTypeIndividual,
+		LoginType:   auth_model.OAuth2,
+		LoginSource: gitlab.ID,
+		LoginName:   userGitLabUserID,
+	}
+	defer createUser(context.Background(), t, userGitLab)()
+
+	//
+	// A request for user information sent to Goth will return a
+	// goth.User exactly matching the user created above.
+	//
+	defer mockCompleteUserAuth(func(res http.ResponseWriter, req *http.Request) (goth.User, error) {
+		return goth.User{
+			Provider: gitlabName,
+			UserID:   userGitLabUserID,
+			Email:    userGitLab.Email,
+		}, nil
+	})()
+	req := NewRequest(t, "GET", fmt.Sprintf("/user/oauth2/%s/callback?code=XYZ&state=XYZ", gitlabName))
+	resp := MakeRequest(t, req, http.StatusSeeOther)
+	assert.Equal(t, test.RedirectURL(resp), "/")
+	userAfterLogin := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: userGitLab.ID})
+	assert.Greater(t, userAfterLogin.LastLoginUnix, userGitLab.LastLoginUnix)
 }
