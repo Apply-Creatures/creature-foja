@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
-	"code.gitea.io/gitea/modules/log"
 )
 
 // Actions settings
@@ -25,7 +23,7 @@ var (
 		SkipWorkflowStrings   []string          `ìni:"SKIP_WORKFLOW_STRINGS"`
 	}{
 		Enabled:             true,
-		DefaultActionsURL:   defaultActionsURLGitHub,
+		DefaultActionsURL:   defaultActionsURLForgejo,
 		SkipWorkflowStrings: []string{"[skip ci]", "[ci skip]", "[no ci]", "[skip actions]", "[actions skip]"},
 	}
 )
@@ -39,18 +37,14 @@ func (url defaultActionsURL) URL() string {
 	case defaultActionsURLSelf:
 		return strings.TrimSuffix(AppURL, "/")
 	default:
-		// This should never happen, but just in case, use GitHub as fallback
-		return "https://github.com"
+		return string(url)
 	}
 }
 
 const (
-	defaultActionsURLGitHub = "github" // https://github.com
-	defaultActionsURLSelf   = "self"   // the root URL of the self-hosted Gitea instance
-	// DefaultActionsURL only supports GitHub and the self-hosted Gitea.
-	// It's intentionally not supported more, so please be cautious before adding more like "gitea" or "gitlab".
-	// If you get some trouble with `uses: username/action_name@version` in your workflow,
-	// please consider to use `uses: https://the_url_you_want_to_use/username/action_name@version` instead.
+	defaultActionsURLForgejo = "https://code.forgejo.org"
+	defaultActionsURLGitHub  = "github" // https://github.com
+	defaultActionsURLSelf    = "self"   // the root URL of the self-hosted instance
 )
 
 func loadActionsFrom(rootCfg ConfigProvider) error {
@@ -58,19 +52,6 @@ func loadActionsFrom(rootCfg ConfigProvider) error {
 	err := sec.MapTo(&Actions)
 	if err != nil {
 		return fmt.Errorf("failed to map Actions settings: %v", err)
-	}
-
-	if urls := string(Actions.DefaultActionsURL); urls != defaultActionsURLGitHub && urls != defaultActionsURLSelf {
-		url := strings.Split(urls, ",")[0]
-		if strings.HasPrefix(url, "https://") || strings.HasPrefix(url, "http://") {
-			log.Error("[actions] DEFAULT_ACTIONS_URL does not support %q as custom URL any longer, fallback to %q",
-				urls,
-				defaultActionsURLGitHub,
-			)
-			Actions.DefaultActionsURL = defaultActionsURLGitHub
-		} else {
-			return fmt.Errorf("unsupported [actions] DEFAULT_ACTIONS_URL: %q", urls)
-		}
 	}
 
 	// don't support to read configuration from [actions]

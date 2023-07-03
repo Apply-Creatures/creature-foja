@@ -110,7 +110,6 @@ func Test_getDefaultActionsURLForActions(t *testing.T) {
 	tests := []struct {
 		name    string
 		iniStr  string
-		wantErr assert.ErrorAssertionFunc
 		wantURL string
 	}{
 		{
@@ -118,8 +117,7 @@ func Test_getDefaultActionsURLForActions(t *testing.T) {
 			iniStr: `
 [actions]
 `,
-			wantErr: assert.NoError,
-			wantURL: "https://github.com",
+			wantURL: "https://code.forgejo.org",
 		},
 		{
 			name: "github",
@@ -127,7 +125,6 @@ func Test_getDefaultActionsURLForActions(t *testing.T) {
 [actions]
 DEFAULT_ACTIONS_URL = github
 `,
-			wantErr: assert.NoError,
 			wantURL: "https://github.com",
 		},
 		{
@@ -136,35 +133,15 @@ DEFAULT_ACTIONS_URL = github
 [actions]
 DEFAULT_ACTIONS_URL = self
 `,
-			wantErr: assert.NoError,
 			wantURL: "http://test_get_default_actions_url_for_actions:3000",
-		},
-		{
-			name: "custom url",
-			iniStr: `
-[actions]
-DEFAULT_ACTIONS_URL = https://gitea.com
-`,
-			wantErr: assert.NoError,
-			wantURL: "https://github.com",
 		},
 		{
 			name: "custom urls",
 			iniStr: `
 [actions]
-DEFAULT_ACTIONS_URL = https://gitea.com,https://github.com
+DEFAULT_ACTIONS_URL = https://example.com
 `,
-			wantErr: assert.NoError,
-			wantURL: "https://github.com",
-		},
-		{
-			name: "invalid",
-			iniStr: `
-[actions]
-DEFAULT_ACTIONS_URL = gitea
-`,
-			wantErr: assert.Error,
-			wantURL: "https://github.com",
+			wantURL: "https://example.com",
 		},
 	}
 
@@ -172,7 +149,7 @@ DEFAULT_ACTIONS_URL = gitea
 		t.Run(tt.name, func(t *testing.T) {
 			cfg, err := NewConfigProviderFromData(tt.iniStr)
 			require.NoError(t, err)
-			if !tt.wantErr(t, loadActionsFrom(cfg)) {
+			if !assert.NoError(t, loadActionsFrom(cfg)) {
 				return
 			}
 			assert.EqualValues(t, tt.wantURL, Actions.DefaultActionsURL.URL())
