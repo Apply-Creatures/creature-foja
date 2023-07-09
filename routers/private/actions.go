@@ -4,6 +4,7 @@
 package private
 
 import (
+	gocontext "context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -64,7 +65,11 @@ func GenerateActionsRunnerToken(ctx *context.PrivateContext) {
 	ctx.PlainText(http.StatusOK, token.Token)
 }
 
-func parseScope(ctx *context.PrivateContext, scope string) (ownerID, repoID int64, err error) {
+func ParseScope(ctx gocontext.Context, scope string) (ownerID, repoID int64, err error) {
+	return parseScope(ctx, scope)
+}
+
+func parseScope(ctx gocontext.Context, scope string) (ownerID, repoID int64, err error) {
 	ownerID = 0
 	repoID = 0
 	if scope == "" {
