@@ -1,6 +1,8 @@
-# This site is running a Gitea instance.
-# Gitea related security problems could be reported to Gitea community.
-# Site related security problems should be reported to this site's admin.
-Contact: https://github.com/go-gitea/gitea/blob/main/SECURITY.md
-Policy: https://github.com/go-gitea/gitea/blob/main/SECURITY.md
+# This site is running a Forgejo instance.
+# Forgejo-related security problems should be reported to the Forgejo security team.
+# Site-related security problems should be reported to this site's admin.
+Policy: https://codeberg.org/forgejo/forgejo/src/branch/forgejo/CONTRIBUTING.md
+Contact: mailto:security@forgejo.org
+Encryption: https://keys.openpgp.org/vks/v1/by-fingerprint/1B638BDF10969D627926B8D9F585D0F99E1FB56F
 Preferred-Languages: en
+Expires: 2025-06-25T00:00:00Z
