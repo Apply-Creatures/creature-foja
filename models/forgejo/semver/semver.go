@@ -14,6 +14,8 @@ func init() {
 	db.RegisterModel(new(ForgejoSemVer))
 }
 
+var DefaultVersionString = "1.0.0"
+
 type ForgejoSemVer struct {
 	Version string
 }
@@ -23,7 +25,8 @@ func GetVersion(ctx context.Context) (*version.Version, error) {
 }
 
 func GetVersionWithEngine(e db.Engine) (*version.Version, error) {
-	versionString := "v1.0.0"
+	versionString := DefaultVersionString
+
 	exists, err := e.IsTableExist("forgejo_sem_ver")
 	if err != nil {
 		return nil, err
