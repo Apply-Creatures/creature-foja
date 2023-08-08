@@ -15,6 +15,8 @@ import (
 	"code.gitea.io/gitea/modules/user"
 )
 
+var ForgejoVersion = "1.0.0"
+
 // settings
 var (
 	// AppVer is the version of the current build of Gitea. It is set in main.go from main.Version.

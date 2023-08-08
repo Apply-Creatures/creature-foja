@@ -68,6 +68,7 @@ func TestPrimaryKeys(t *testing.T) {
 
 	whitelist := map[string]string{
 		"the_table_name_to_skip_checking": "Write a note here to explain why",
+		"forgejo_sem_ver":                 "seriously dude",
 	}
 
 	for _, bean := range beans {

@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 
+	"code.gitea.io/gitea/models/forgejo/semver"
 	forgejo_v1_20 "code.gitea.io/gitea/models/forgejo_migrations/v1_20"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
@@ -141,5 +142,10 @@ func Migrate(x *xorm.Engine) error {
 			return err
 		}
 	}
-	return nil
+
+	if err := x.Sync(new(semver.ForgejoSemVer)); err != nil {
+		return fmt.Errorf("sync: %w", err)
+	}
+
+	return semver.SetVersionStringWithEngine(x, setting.ForgejoVersion)
 }

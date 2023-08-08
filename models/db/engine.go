@@ -44,6 +44,7 @@ type Engine interface {
 	Incr(column string, arg ...any) *xorm.Session
 	Insert(...any) (int64, error)
 	Iterate(any, xorm.IterFunc) error
+	IsTableExist(any) (bool, error)
 	Join(joinOperator string, tablename, condition any, args ...any) *xorm.Session
 	SQL(any, ...any) *xorm.Session
 	Where(any, ...any) *xorm.Session
