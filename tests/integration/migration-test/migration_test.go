@@ -98,7 +98,7 @@ func availableVersions() ([]string, error) {
 		return nil, err
 	}
 	defer migrationsDir.Close()
-	versionRE, err := regexp.Compile("gitea-v(?P<version>.+)\\." + regexp.QuoteMeta(setting.Database.Type.String()) + "\\.sql.gz")
+	versionRE, err := regexp.Compile(".*-v(?P<version>.+)\\." + regexp.QuoteMeta(setting.Database.Type.String()) + "\\.sql.gz")
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,10 @@ func readSQLFromFile(version string) (string, error) {
 	filename := fmt.Sprintf("tests/integration/migration-test/gitea-v%s.%s.sql.gz", version, setting.Database.Type)
 
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		return "", nil
+		filename = fmt.Sprintf("tests/integration/migration-test/forgejo-v%s.%s.sql.gz", version, setting.Database.Type)
+		if _, err := os.Stat(filename); os.IsNotExist(err) {
+			return "", nil
+		}
 	}
 
 	file, err := os.Open(filename)
