@@ -53,6 +53,7 @@ type ConfigProvider interface {
 	Save() error
 	SaveTo(filename string) error
 
+	GetFile() string
 	DisableSaving()
 	PrepareSaving() (ConfigProvider, error)
 	IsLoadedFromEmpty() bool
@@ -255,6 +256,10 @@ func (p *iniConfigProvider) GetSection(name string) (ConfigSection, error) {
 }
 
 var errDisableSaving = errors.New("this config can't be saved, developers should prepare a new config to save")
+
+func (p *iniConfigProvider) GetFile() string {
+	return p.file
+}
 
 // Save saves the content into file
 func (p *iniConfigProvider) Save() error {
