@@ -36,6 +36,8 @@ func NewMigration(desc string, fn func(*xorm.Engine) error) *Migration {
 // This is a sequence of additional Forgejo migrations.
 // Add new migrations to the bottom of the list.
 var migrations = []*Migration{
+	// v0 -> v1
+	NewMigration("Add Forgejo Blocked Users table", forgejo_v1_20.AddForgejoBlockedUser),
 	// v1 -> v2
 	NewMigration("create the forgejo_sem_ver table", forgejo_v1_20.CreateSemVerTable),
 }
