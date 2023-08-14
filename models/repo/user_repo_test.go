@@ -9,6 +9,7 @@ import (
 	"code.gitea.io/gitea/models/db"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
+	user_model "code.gitea.io/gitea/models/user"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -70,4 +71,16 @@ func TestRepoGetReviewers(t *testing.T) {
 	reviewers, err = repo_model.GetReviewers(ctx, repo3, 2, 2)
 	assert.NoError(t, err)
 	assert.Len(t, reviewers, 1)
+}
+
+func GetWatchedRepoIDsOwnedBy(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	user1 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 9})
+	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+
+	repoIDs, err := repo_model.GetWatchedRepoIDsOwnedBy(db.DefaultContext, user1.ID, user2.ID)
+	assert.NoError(t, err)
+	assert.Len(t, repoIDs, 1)
+	assert.EqualValues(t, 1, repoIDs[0])
 }

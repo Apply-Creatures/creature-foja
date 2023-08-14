@@ -19,7 +19,7 @@ func TestAPIFollow(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
 	user1 := "user4"
-	user2 := "user1"
+	user2 := "user10"
 
 	session1 := loginUser(t, user1)
 	token1 := getTokenForLoggedInUser(t, session1, auth_model.AccessTokenScopeReadUser)

@@ -136,6 +136,19 @@ func ChangeCollaborationAccessMode(ctx context.Context, repo *Repository, uid in
 	})
 }
 
+// GetCollaboratorWithUser returns all collaborator IDs of collabUserID on
+// repositories of ownerID.
+func GetCollaboratorWithUser(ctx context.Context, ownerID, collabUserID int64) ([]int64, error) {
+	collabsID := make([]int64, 0, 8)
+	err := db.GetEngine(ctx).Table("collaboration").Select("collaboration.`id`").
+		Join("INNER", "repository", "repository.id = collaboration.repo_id").
+		Where("repository.`owner_id` = ?", ownerID).
+		And("collaboration.`user_id` = ?", collabUserID).
+		Find(&collabsID)
+
+	return collabsID, err
+}
+
 // IsOwnerMemberCollaborator checks if a provided user is the owner, a collaborator or a member of a team in a repository
 func IsOwnerMemberCollaborator(ctx context.Context, repo *Repository, userID int64) (bool, error) {
 	if repo.OwnerID == userID {

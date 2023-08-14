@@ -10,6 +10,8 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/timeutil"
+
+	"xorm.io/builder"
 )
 
 // WatchMode specifies what kind of watch the user has on a repository
@@ -129,14 +131,18 @@ func WatchRepo(ctx context.Context, userID, repoID int64, doWatch bool) (err err
 	return err
 }
 
-// GetWatchers returns all watchers of given repository.
-func GetWatchers(ctx context.Context, repoID int64) ([]*Watch, error) {
+// GetWatchersExcludeBlocked returns all watchers of given repository, whereby
+// the doer isn't blocked by one of the watchers.
+func GetWatchersExcludeBlocked(ctx context.Context, repoID, doerID int64) ([]*Watch, error) {
 	watches := make([]*Watch, 0, 10)
-	return watches, db.GetEngine(ctx).Where("`watch`.repo_id=?", repoID).
+	return watches, db.GetEngine(ctx).
+		Join("INNER", "`user`", "`user`.id = `watch`.user_id").
+		Join("LEFT", "forgejo_blocked_user", "forgejo_blocked_user.user_id = `watch`.user_id").
+		Where("`watch`.repo_id=?", repoID).
 		And("`watch`.mode<>?", WatchModeDont).
 		And("`user`.is_active=?", true).
 		And("`user`.prohibit_login=?", false).
-		Join("INNER", "`user`", "`user`.id = `watch`.user_id").
+		And(builder.Or(builder.IsNull{"`forgejo_blocked_user`.block_id"}, builder.Neq{"`forgejo_blocked_user`.block_id": doerID})).
 		Find(&watches)
 }
 
@@ -181,4 +187,10 @@ func WatchIfAuto(ctx context.Context, userID, repoID int64, isWrite bool) error 
 		return nil
 	}
 	return watchRepoMode(ctx, watch, WatchModeAuto)
+}
+
+// UnwatchRepos will unwatch the user from all given repositories.
+func UnwatchRepos(ctx context.Context, userID int64, repoIDs []int64) error {
+	_, err := db.GetEngine(ctx).Where("user_id=?", userID).In("repo_id", repoIDs).Delete(&Watch{})
+	return err
 }

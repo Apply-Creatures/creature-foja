@@ -167,6 +167,22 @@
   border-bottom: 1px solid var(--color-secondary);
 }
 
+.organization.teams .repositories .item,
+.organization.teams .members .item {
+  padding: 10px 19px;
+}
+
+.organization.teams .repositories .item:not(:last-child),
+.organization.teams .members .item:not(:last-child) {
+  border-bottom: 1px solid var(--color-secondary);
+}
+
+.organization.teams .repositories .item .button,
+.organization.teams .members .item .button {
+  padding: 9px 10px;
+  margin: 0;
+}
+
 .org-team-navbar .active.item {
   background: var(--color-box-body) !important;
 }

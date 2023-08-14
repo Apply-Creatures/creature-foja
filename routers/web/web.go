@@ -648,6 +648,11 @@ func registerRoutes(m *web.Route) {
 			})
 			addWebhookEditRoutes()
 		}, webhooksEnabled)
+
+		m.Group("/blocked_users", func() {
+			m.Get("", user_setting.BlockedUsers)
+			m.Post("/unblock", user_setting.UnblockUser)
+		})
 	}, reqSignIn, ctxDataSet("PageIsUserSettings", true, "AllThemes", setting.UI.Themes, "EnablePackages", setting.Packages.Enabled))
 
 	m.Group("/user", func() {
@@ -925,6 +930,12 @@ func registerRoutes(m *web.Route) {
 				}, actions.MustEnableActions)
 
 				m.Methods("GET,POST", "/delete", org.SettingsDelete)
+
+				m.Group("/blocked_users", func() {
+					m.Get("", org_setting.BlockedUsers)
+					m.Post("/block", org_setting.BlockedUsersBlock)
+					m.Post("/unblock", org_setting.BlockedUsersUnblock)
+				})
 
 				m.Group("/packages", func() {
 					m.Get("", org.Packages)

@@ -103,13 +103,15 @@ func TestCollaborationPost(t *testing.T) {
 	ctx.Req.Form.Set("collaborator", "user4")
 
 	u := &user_model.User{
+		ID:        2,
 		LowerName: "user2",
 		Type:      user_model.UserTypeIndividual,
 	}
 
 	re := &repo_model.Repository{
-		ID:    2,
-		Owner: u,
+		ID:      2,
+		Owner:   u,
+		OwnerID: u.ID,
 	}
 
 	repo := &context.Repository{
@@ -161,13 +163,15 @@ func TestCollaborationPost_AddCollaboratorTwice(t *testing.T) {
 	ctx.Req.Form.Set("collaborator", "user4")
 
 	u := &user_model.User{
+		ID:        2,
 		LowerName: "user2",
 		Type:      user_model.UserTypeIndividual,
 	}
 
 	re := &repo_model.Repository{
-		ID:    2,
-		Owner: u,
+		ID:      2,
+		Owner:   u,
+		OwnerID: u.ID,
 	}
 
 	repo := &context.Repository{

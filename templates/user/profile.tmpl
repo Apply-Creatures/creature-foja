@@ -1,6 +1,7 @@
 {{template "base/head" .}}
 <div role="main" aria-label="{{.Title}}" class="page-content user profile">
 	<div class="ui container">
+		{{template "base/alert" .}}
 		<div class="ui stackable grid">
 			<div class="ui four wide column">
 				{{template "shared/user/profile_big_avatar" .}}
@@ -39,4 +40,20 @@
 		</div>
 	</div>
 </div>
+
+<div class="ui g-modal-confirm delete modal" id="block-user">
+	<div class="header">
+		{{ctx.Locale.Tr "user.block_user"}}
+	</div>
+	<div class="content">
+		<p>{{ctx.Locale.Tr "user.block_user.detail"}}</p>
+		<ul>
+			<li>{{ctx.Locale.Tr "user.block_user.detail_1"}}</li>
+			<li>{{ctx.Locale.Tr "user.block_user.detail_2"}}</li>
+			<li>{{ctx.Locale.Tr "user.block_user.detail_3"}}</li>
+		</ul>
+	</div>
+	{{template "base/modal_actions_confirm" .}}
+</div>
+
 {{template "base/footer" .}}

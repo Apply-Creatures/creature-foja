@@ -46,6 +46,11 @@ func CreateRefComment(ctx context.Context, doer *user_model.User, repo *repo_mod
 
 // CreateIssueComment creates a plain issue comment.
 func CreateIssueComment(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, issue *issues_model.Issue, content string, attachments []string) (*issues_model.Comment, error) {
+	// Check if doer is blocked by the poster of the issue.
+	if user_model.IsBlocked(ctx, issue.PosterID, doer.ID) {
+		return nil, user_model.ErrBlockedByUser
+	}
+
 	comment, err := issues_model.CreateComment(ctx, &issues_model.CreateCommentOptions{
 		Type:        issues_model.CommentTypeComment,
 		Doer:        doer,

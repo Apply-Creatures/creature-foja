@@ -224,6 +224,15 @@ func createOrUpdateIssueNotifications(ctx context.Context, issueID, commentID, n
 		for _, id := range issueUnWatches {
 			toNotify.Remove(id)
 		}
+
+		// Remove users who have the notification author blocked.
+		blockedAuthorIDs, err := user_model.ListBlockedByUsersID(ctx, notificationAuthorID)
+		if err != nil {
+			return err
+		}
+		for _, id := range blockedAuthorIDs {
+			toNotify.Remove(id)
+		}
 	}
 
 	err = issue.LoadRepo(ctx)

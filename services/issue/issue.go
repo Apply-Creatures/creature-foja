@@ -24,6 +24,11 @@ import (
 
 // NewIssue creates new issue with labels for repository.
 func NewIssue(ctx context.Context, repo *repo_model.Repository, issue *issues_model.Issue, labelIDs []int64, uuids []string, assigneeIDs []int64) error {
+	// Check if the user is not blocked by the repo's owner.
+	if user_model.IsBlocked(ctx, repo.OwnerID, issue.PosterID) {
+		return user_model.ErrBlockedByUser
+	}
+
 	if err := issues_model.NewIssue(ctx, repo, issue, labelIDs, uuids); err != nil {
 		return err
 	}

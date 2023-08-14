@@ -33,6 +33,33 @@ func TestRepository_AddCollaborator(t *testing.T) {
 	testSuccess(3, 4)
 }
 
+func TestRepository_AddCollaborator_IsBlocked(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	testSuccess := func(repoID, userID int64) {
+		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: repoID})
+		assert.NoError(t, repo.LoadOwner(db.DefaultContext))
+		user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: userID})
+
+		// Owner blocked user.
+		unittest.AssertSuccessfulInsert(t, &user_model.BlockedUser{UserID: repo.OwnerID, BlockID: userID})
+		assert.ErrorIs(t, AddCollaborator(db.DefaultContext, repo, user), user_model.ErrBlockedByUser)
+		unittest.CheckConsistencyFor(t, &repo_model.Repository{ID: repoID}, &user_model.User{ID: userID})
+		_, err := db.DeleteByBean(db.DefaultContext, &user_model.BlockedUser{UserID: repo.OwnerID, BlockID: userID})
+		assert.NoError(t, err)
+
+		// User has owner blocked.
+		unittest.AssertSuccessfulInsert(t, &user_model.BlockedUser{UserID: userID, BlockID: repo.OwnerID})
+		assert.ErrorIs(t, AddCollaborator(db.DefaultContext, repo, user), user_model.ErrBlockedByUser)
+		unittest.CheckConsistencyFor(t, &repo_model.Repository{ID: repoID}, &user_model.User{ID: userID})
+	}
+	// Ensure idempotency (public repository).
+	testSuccess(1, 4)
+	testSuccess(1, 4)
+	// Add collaborator to private repository.
+	testSuccess(3, 4)
+}
+
 func TestRepoPermissionPublicNonOrgRepo(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 

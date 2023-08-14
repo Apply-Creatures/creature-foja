@@ -407,7 +407,11 @@ func CreateIssueComment(ctx *context.APIContext) {
 
 	comment, err := issue_service.CreateIssueComment(ctx, ctx.Doer, ctx.Repo.Repository, issue, form.Body, nil)
 	if err != nil {
-		ctx.Error(http.StatusInternalServerError, "CreateIssueComment", err)
+		if errors.Is(err, user_model.ErrBlockedByUser) {
+			ctx.Error(http.StatusForbidden, "CreateIssueComment", err)
+		} else {
+			ctx.Error(http.StatusInternalServerError, "CreateIssueComment", err)
+		}
 		return
 	}
 

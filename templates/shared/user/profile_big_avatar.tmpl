@@ -121,6 +121,18 @@
 					</button>
 				{{end}}
 			</li>
+			<li class="block">
+				{{if $.IsBlocked}}
+					<button class="ui basic red button link-action" data-url="{{.ContextUser.HomeLink}}?action=unblock&redirect_to={{$.Link}}">
+						{{svg "octicon-person"}} {{ctx.Locale.Tr "user.unblock"}}
+					</button>
+				{{else}}
+					<button type="submit" class="ui basic orange button delete-button"
+					data-modal-id="block-user" data-url="{{.ContextUser.HomeLink}}?action=block">
+						{{svg "octicon-blocked"}} {{ctx.Locale.Tr "user.block"}}
+					</button>
+				{{end}}
+			</li>
 			{{end}}
 		</ul>
 	</div>

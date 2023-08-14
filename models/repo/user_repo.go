@@ -177,3 +177,16 @@ func GetIssuePostersWithSearch(ctx context.Context, repo *Repository, isPull boo
 		Limit(30).
 		Find(&users)
 }
+
+// GetWatchedRepoIDsOwnedBy returns the repos owned by a particular user watched by a particular user
+func GetWatchedRepoIDsOwnedBy(ctx context.Context, userID, ownedByUserID int64) ([]int64, error) {
+	repoIDs := make([]int64, 0, 10)
+	err := db.GetEngine(ctx).
+		Table("repository").
+		Select("`repository`.id").
+		Join("LEFT", "watch", "`repository`.id=`watch`.repo_id").
+		Where("`watch`.user_id=?", userID).
+		And("`watch`.mode<>?", WatchModeDont).
+		And("`repository`.owner_id=?", ownedByUserID).Find(&repoIDs)
+	return repoIDs, err
+}

@@ -1436,7 +1436,11 @@ func CompareAndPullRequestPost(ctx *context.Context) {
 	// instead of 500.
 
 	if err := pull_service.NewPullRequest(ctx, repo, pullIssue, labelIDs, attachments, pullRequest, assigneeIDs); err != nil {
-		if repo_model.IsErrUserDoesNotHaveAccessToRepo(err) {
+		if errors.Is(err, user_model.ErrBlockedByUser) {
+			ctx.Flash.Error(ctx.Tr("repo.pulls.blocked_by_user"))
+			ctx.Redirect(ctx.Link)
+			return
+		} else if repo_model.IsErrUserDoesNotHaveAccessToRepo(err) {
 			ctx.Error(http.StatusBadRequest, "UserDoesNotHaveAccessToRepo", err.Error())
 			return
 		} else if git.IsErrPushRejected(err) {

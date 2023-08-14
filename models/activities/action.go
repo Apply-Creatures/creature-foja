@@ -588,7 +588,7 @@ func NotifyWatchers(ctx context.Context, actions ...*Action) error {
 
 		if repoChanged {
 			// Add feeds for user self and all watchers.
-			watchers, err = repo_model.GetWatchers(ctx, act.RepoID)
+			watchers, err = repo_model.GetWatchersExcludeBlocked(ctx, act.RepoID, act.ActUserID)
 			if err != nil {
 				return fmt.Errorf("get watchers: %w", err)
 			}

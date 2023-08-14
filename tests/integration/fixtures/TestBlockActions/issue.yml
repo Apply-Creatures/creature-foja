@@ -1,0 +1,17 @@
+
+-
+  id: 1004
+  repo_id: 2
+  index: 1000
+  poster_id: 2
+  original_author_id: 0
+  name: issue1004
+  content: content for the 1000 fourth issue
+  milestone_id: 0
+  priority: 0
+  is_closed: true
+  is_pull: false
+  num_comments: 1
+  created_unix: 946684830
+  updated_unix: 978307200
+  is_locked: false

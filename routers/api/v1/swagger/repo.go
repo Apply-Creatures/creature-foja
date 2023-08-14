@@ -414,3 +414,10 @@ type swaggerRepoNewIssuePinsAllowed struct {
 	// in:body
 	Body api.NewIssuePinsAllowed `json:"body"`
 }
+
+// BlockedUserList
+// swagger:response BlockedUserList
+type swaggerBlockedUserList struct {
+	// in:body
+	Body []api.BlockedUser `json:"body"`
+}

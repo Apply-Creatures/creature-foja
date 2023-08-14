@@ -362,6 +362,10 @@ func ChangeRepositoryName(ctx context.Context, doer *user_model.User, repo *repo
 // StartRepositoryTransfer transfer a repo from one owner to a new one.
 // it make repository into pending transfer state, if doer can not create repo for new owner.
 func StartRepositoryTransfer(ctx context.Context, doer, newOwner *user_model.User, repo *repo_model.Repository, teams []*organization.Team) error {
+	if user_model.IsBlocked(ctx, newOwner.ID, doer.ID) {
+		return user_model.ErrBlockedByUser
+	}
+
 	if err := models.TestRepositoryReadyForTransfer(repo.Status); err != nil {
 		return err
 	}

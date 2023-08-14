@@ -19,11 +19,14 @@ import (
 func addReaction(t *testing.T, doerID, issueID, commentID int64, content string) {
 	var reaction *issues_model.Reaction
 	var err error
-	if commentID == 0 {
-		reaction, err = issues_model.CreateIssueReaction(db.DefaultContext, doerID, issueID, content)
-	} else {
-		reaction, err = issues_model.CreateCommentReaction(db.DefaultContext, doerID, issueID, commentID, content)
-	}
+	// NOTE: This doesn't do user blocking checking.
+	reaction, err = issues_model.CreateReaction(db.DefaultContext, &issues_model.ReactionOptions{
+		DoerID:    doerID,
+		IssueID:   issueID,
+		CommentID: commentID,
+		Type:      content,
+	})
+
 	assert.NoError(t, err)
 	assert.NotNil(t, reaction)
 }

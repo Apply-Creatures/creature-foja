@@ -4,10 +4,12 @@
 package integration
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 	"testing"
 
+	issues_model "code.gitea.io/gitea/models/issues"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/tests"
@@ -68,17 +70,22 @@ func makeRequest(t *testing.T, formData user_model.User, headerCode int) {
 }
 
 func TestAdminDeleteUser(t *testing.T) {
+	defer tests.AddFixtures("tests/integration/fixtures/TestAdminDeleteUser/")()
 	defer tests.PrepareTestEnv(t)()
 
 	session := loginUser(t, "user1")
 
-	csrf := GetCSRF(t, session, "/admin/users/8/edit")
-	req := NewRequestWithValues(t, "POST", "/admin/users/8/delete", map[string]string{
+	userID := int64(1000)
+
+	unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{PosterID: userID})
+
+	csrf := GetCSRF(t, session, fmt.Sprintf("/admin/users/%d/edit", userID))
+	req := NewRequestWithValues(t, "POST", fmt.Sprintf("/admin/users/%d/delete", userID), map[string]string{
 		"_csrf": csrf,
 		"purge": "true",
 	})
 	session.MakeRequest(t, req, http.StatusSeeOther)
 
-	assertUserDeleted(t, 8, true)
+	assertUserDeleted(t, userID, true)
 	unittest.CheckConsistencyFor(t, &user_model.User{})
 }

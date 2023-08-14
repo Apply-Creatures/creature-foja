@@ -619,9 +619,11 @@ func ResolveIssueMentionsByVisibility(ctx context.Context, issue *Issue, doer *u
 				teamusers := make([]*user_model.User, 0, 20)
 				if err := db.GetEngine(ctx).
 					Join("INNER", "team_user", "team_user.uid = `user`.id").
+					Join("LEFT", "forgejo_blocked_user", "forgejo_blocked_user.user_id = `user`.id").
 					In("`team_user`.team_id", checked).
 					And("`user`.is_active = ?", true).
 					And("`user`.prohibit_login = ?", false).
+					And(builder.Or(builder.IsNull{"`forgejo_blocked_user`.block_id"}, builder.Neq{"`forgejo_blocked_user`.block_id": doer.ID})).
 					Find(&teamusers); err != nil {
 					return nil, fmt.Errorf("get teams users: %w", err)
 				}
@@ -655,8 +657,10 @@ func ResolveIssueMentionsByVisibility(ctx context.Context, issue *Issue, doer *u
 
 	unchecked := make([]*user_model.User, 0, len(mentionUsers))
 	if err := db.GetEngine(ctx).
+		Join("LEFT", "forgejo_blocked_user", "forgejo_blocked_user.user_id = `user`.id").
 		Where("`user`.is_active = ?", true).
 		And("`user`.prohibit_login = ?", false).
+		And(builder.Or(builder.IsNull{"`forgejo_blocked_user`.block_id"}, builder.Neq{"`forgejo_blocked_user`.block_id": doer.ID})).
 		In("`user`.lower_name", mentionUsers).
 		Find(&unchecked); err != nil {
 		return nil, fmt.Errorf("find mentioned users: %w", err)

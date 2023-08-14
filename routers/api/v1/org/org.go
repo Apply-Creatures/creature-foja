@@ -5,6 +5,7 @@
 package org
 
 import (
+	"fmt"
 	"net/http"
 
 	activities_model "code.gitea.io/gitea/models/activities"
@@ -455,4 +456,100 @@ func ListOrgActivityFeeds(ctx *context.APIContext) {
 	ctx.SetTotalCountHeader(count)
 
 	ctx.JSON(http.StatusOK, convert.ToActivities(ctx, feeds, ctx.Doer))
+}
+
+// ListBlockedUsers list the organization's blocked users.
+func ListBlockedUsers(ctx *context.APIContext) {
+	// swagger:operation GET /orgs/{org}/list_blocked organization orgListBlockedUsers
+	// ---
+	// summary: List the organization's blocked users
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: org
+	//   in: path
+	//   description: name of the org
+	//   type: string
+	//   required: true
+	// - name: page
+	//   in: query
+	//   description: page number of results to return (1-based)
+	//   type: integer
+	// - name: limit
+	//   in: query
+	//   description: page size of results
+	//   type: integer
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/BlockedUserList"
+
+	utils.ListUserBlockedUsers(ctx, ctx.ContextUser)
+}
+
+// BlockUser blocks a user from the organization.
+func BlockUser(ctx *context.APIContext) {
+	// swagger:operation PUT /orgs/{org}/block/{username} organization orgBlockUser
+	// ---
+	// summary: Blocks a user from the organization
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: org
+	//   in: path
+	//   description: name of the org
+	//   type: string
+	//   required: true
+	// - name: username
+	//   in: path
+	//   description: username of the user
+	//   type: string
+	//   required: true
+	// responses:
+	//   "204":
+	//     "$ref": "#/responses/empty"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
+
+	if ctx.ContextUser.IsOrganization() {
+		ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("%s is an organization not a user", ctx.ContextUser.Name))
+		return
+	}
+
+	utils.BlockUser(ctx, ctx.Org.Organization.AsUser(), ctx.ContextUser)
+}
+
+// UnblockUser unblocks a user from the organization.
+func UnblockUser(ctx *context.APIContext) {
+	// swagger:operation PUT /orgs/{org}/unblock/{username} organization orgUnblockUser
+	// ---
+	// summary: Unblock a user from the organization
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: org
+	//   in: path
+	//   description: name of the org
+	//   type: string
+	//   required: true
+	// - name: username
+	//   in: path
+	//   description: username of the user
+	//   type: string
+	//   required: true
+	// responses:
+	//   "204":
+	//     "$ref": "#/responses/empty"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
+
+	if ctx.ContextUser.IsOrganization() {
+		ctx.Error(http.StatusUnprocessableEntity, "", fmt.Errorf("%s is an organization not a user", ctx.ContextUser.Name))
+		return
+	}
+
+	utils.UnblockUser(ctx, ctx.Org.Organization.AsUser(), ctx.ContextUser)
 }

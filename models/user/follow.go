@@ -34,6 +34,10 @@ func FollowUser(ctx context.Context, userID, followID int64) (err error) {
 		return nil
 	}
 
+	if IsBlocked(ctx, userID, followID) || IsBlocked(ctx, followID, userID) {
+		return ErrBlockedByUser
+	}
+
 	ctx, committer, err := db.TxContext(ctx)
 	if err != nil {
 		return err

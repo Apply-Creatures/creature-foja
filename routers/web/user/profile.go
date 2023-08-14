@@ -5,6 +5,7 @@
 package user
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"path"
@@ -25,6 +26,7 @@ import (
 	"code.gitea.io/gitea/routers/web/feed"
 	"code.gitea.io/gitea/routers/web/org"
 	shared_user "code.gitea.io/gitea/routers/web/shared/user"
+	user_service "code.gitea.io/gitea/services/user"
 )
 
 const (
@@ -305,16 +307,45 @@ func prepareUserProfileTabData(ctx *context.Context, showPrivate bool, profileDb
 // Action response for follow/unfollow user request
 func Action(ctx *context.Context) {
 	var err error
-	switch ctx.FormString("action") {
+	var redirectViaJSON bool
+	action := ctx.FormString("action")
+
+	if ctx.ContextUser.IsOrganization() && (action == "block" || action == "unblock") {
+		log.Error("Cannot perform this action on an organization %q", ctx.FormString("action"))
+		ctx.JSONError(fmt.Sprintf("Action %q failed", ctx.FormString("action")))
+		return
+	}
+
+	switch action {
 	case "follow":
 		err = user_model.FollowUser(ctx, ctx.Doer.ID, ctx.ContextUser.ID)
 	case "unfollow":
 		err = user_model.UnfollowUser(ctx, ctx.Doer.ID, ctx.ContextUser.ID)
+	case "block":
+		err = user_service.BlockUser(ctx, ctx.Doer.ID, ctx.ContextUser.ID)
+		redirectViaJSON = true
+	case "unblock":
+		err = user_model.UnblockUser(ctx, ctx.Doer.ID, ctx.ContextUser.ID)
 	}
 
 	if err != nil {
-		log.Error("Failed to apply action %q: %v", ctx.FormString("action"), err)
-		ctx.Error(http.StatusBadRequest, fmt.Sprintf("Action %q failed", ctx.FormString("action")))
+		if !errors.Is(err, user_model.ErrBlockedByUser) {
+			log.Error("Failed to apply action %q: %v", ctx.FormString("action"), err)
+			ctx.Error(http.StatusBadRequest, fmt.Sprintf("Action %q failed", ctx.FormString("action")))
+			return
+		}
+
+		if ctx.ContextUser.IsOrganization() {
+			ctx.Flash.Error(ctx.Tr("org.follow_blocked_user"))
+		} else {
+			ctx.Flash.Error(ctx.Tr("user.follow_blocked_user"))
+		}
+	}
+
+	if redirectViaJSON {
+		ctx.JSON(http.StatusOK, map[string]interface{}{
+			"redirect": ctx.ContextUser.HomeLink(),
+		})
 		return
 	}
 
