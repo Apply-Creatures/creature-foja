@@ -166,7 +166,7 @@ func renderDirectory(ctx *context.Context) {
 
 	if ctx.Repo.TreePath != "" {
 		ctx.Data["HideRepoInfo"] = true
-		ctx.Data["Title"] = ctx.Tr("repo.file.title", ctx.Repo.Repository.Name+"/"+path.Base(ctx.Repo.TreePath), ctx.Repo.RefName)
+		ctx.Data["Title"] = ctx.Tr("repo.file.title", ctx.Repo.Repository.Name+"/"+ctx.Repo.TreePath, ctx.Repo.RefName)
 	}
 
 	subfolder, readmeFile, err := findReadmeFileInEntries(ctx, entries, true)
@@ -381,7 +381,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 	}
 	defer dataRc.Close()
 
-	ctx.Data["Title"] = ctx.Tr("repo.file.title", ctx.Repo.Repository.Name+"/"+path.Base(ctx.Repo.TreePath), ctx.Repo.RefName)
+	ctx.Data["Title"] = ctx.Tr("repo.file.title", ctx.Repo.Repository.Name+"/"+ctx.Repo.TreePath, ctx.Repo.RefName)
 	ctx.Data["FileIsSymlink"] = entry.IsLink()
 	ctx.Data["FileName"] = blob.Name()
 	ctx.Data["RawFileLink"] = ctx.Repo.RepoLink + "/raw/" + ctx.Repo.BranchNameSubURL() + "/" + util.PathEscapeSegments(ctx.Repo.TreePath)

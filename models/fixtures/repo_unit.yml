@@ -608,6 +608,38 @@
   type: 1
   created_unix: 946684810
 
+# BEGIN Forgejo [GITEA] Improve HTML title on repositories
+-
+  id: 1093
+  repo_id: 1059
+  type: 1
+  created_unix: 946684810
+
+-
+  id: 1094
+  repo_id: 1059
+  type: 2
+  created_unix: 946684810
+
+-
+  id: 1095
+  repo_id: 1059
+  type: 3
+  created_unix: 946684810
+
+-
+  id: 1096
+  repo_id: 1059
+  type: 4
+  created_unix: 946684810
+
+-
+  id: 1097
+  repo_id: 1059
+  type: 5
+  created_unix: 946684810
+# END Forgejo [GITEA] Improve HTML title on repositories
+
 -
   id: 91
   repo_id: 58
