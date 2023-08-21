@@ -58,3 +58,22 @@ jobs:
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
           verbose: ${{ secrets.VERBOSE }}
+
+
+      - name: set up go for the DNS update below
+        uses: https://code.forgejo.org/actions/setup-go@v4
+        if: secrets.ROLE == 'forgejo-experimental'
+        with:
+          go-version: ">=1.21"
+          check-latest: true
+      - name: update the _release.experimental DNS record
+        if: secrets.ROLE == 'forgejo-experimental'
+        uses: https://code.forgejo.org/actions/ovh-dns-update@v1
+        with:
+          subdomain: _release.experimental
+          domain: forgejo.com # there is a CNAME from .org to .com (for security reasons)
+          record-id: 5283602601
+          value: v=${{ github.ref_name }}
+          ovh-app-key: ${{ secrets.OVH_APP_KEY }}
+          ovh-app-secret: ${{ secrets.OVH_APP_SECRET }}
+          ovh-consumer-key: ${{ secrets.OVH_CON_KEY }}
