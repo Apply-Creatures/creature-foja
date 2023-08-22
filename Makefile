@@ -396,8 +396,7 @@ lint-go-windows:
 .PHONY: lint-go-vet
 lint-go-vet:
 	@echo "Running go vet..."
-	@GOOS= GOARCH= $(GO) build code.gitea.io/gitea-vet
-	@$(GO) vet -vettool=gitea-vet $(GO_PACKAGES)
+	@$(GO) vet $(GO_PACKAGES)
 
 .PHONY: lint-editorconfig
 lint-editorconfig:
