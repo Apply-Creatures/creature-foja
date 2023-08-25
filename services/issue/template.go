@@ -23,6 +23,8 @@ import (
 var templateDirCandidates = []string{
 	"ISSUE_TEMPLATE",
 	"issue_template",
+	".forgejo/ISSUE_TEMPLATE",
+	".forgejo/issue_template",
 	".gitea/ISSUE_TEMPLATE",
 	".gitea/issue_template",
 	".github/ISSUE_TEMPLATE",
@@ -32,6 +34,8 @@ var templateDirCandidates = []string{
 }
 
 var templateConfigCandidates = []string{
+	".forgejo/ISSUE_TEMPLATE/config",
+	".forgejo/issue_template/config",
 	".gitea/ISSUE_TEMPLATE/config",
 	".gitea/issue_template/config",
 	".github/ISSUE_TEMPLATE/config",
