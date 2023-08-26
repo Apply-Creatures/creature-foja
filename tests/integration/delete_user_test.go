@@ -17,7 +17,7 @@ import (
 	"code.gitea.io/gitea/tests"
 )
 
-func assertUserDeleted(t *testing.T, userID int64) {
+func assertUserDeleted(t *testing.T, userID int64, purged bool) {
 	unittest.AssertNotExistsBean(t, &user_model.User{ID: userID})
 	unittest.AssertNotExistsBean(t, &user_model.Follow{UserID: userID})
 	unittest.AssertNotExistsBean(t, &user_model.Follow{FollowID: userID})
@@ -27,6 +27,9 @@ func assertUserDeleted(t *testing.T, userID int64) {
 	unittest.AssertNotExistsBean(t, &issues_model.IssueUser{UID: userID})
 	unittest.AssertNotExistsBean(t, &organization.TeamUser{UID: userID})
 	unittest.AssertNotExistsBean(t, &repo_model.Star{UID: userID})
+	if purged {
+		unittest.AssertNotExistsBean(t, &issues_model.Issue{PosterID: userID})
+	}
 }
 
 func TestUserDeleteAccount(t *testing.T) {
@@ -40,7 +43,7 @@ func TestUserDeleteAccount(t *testing.T) {
 	})
 	session.MakeRequest(t, req, http.StatusSeeOther)
 
-	assertUserDeleted(t, 8)
+	assertUserDeleted(t, 8, false)
 	unittest.CheckConsistencyFor(t, &user_model.User{})
 }
 

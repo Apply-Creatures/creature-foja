@@ -23,6 +23,7 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/setting"
+	issue_service "code.gitea.io/gitea/services/issue"
 
 	"xorm.io/builder"
 )
@@ -126,6 +127,31 @@ func deleteUser(ctx context.Context, u *user_model.User, purge bool) (err error)
 			return err
 		}
 	}
+
+	// ***** START: Issues *****
+	if purge {
+		const batchSize = 50
+
+		for {
+			issues := make([]*issues_model.Issue, 0, batchSize)
+			if err = e.Where("poster_id=?", u.ID).Limit(batchSize, 0).Find(&issues); err != nil {
+				return err
+			}
+			if len(issues) == 0 {
+				break
+			}
+
+			for _, issue := range issues {
+				// NOTE: Don't open git repositories just to remove the reference data,
+				// `git gc` is able to remove that reference which is run as a cron job
+				// by default. Also use the deleted user as doer to delete the issue.
+				if err = issue_service.DeleteIssue(ctx, u, nil, issue); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	// ***** END: Issues *****
 
 	// ***** START: Branch Protections *****
 	{
