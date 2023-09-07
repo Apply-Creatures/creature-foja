@@ -33,6 +33,7 @@ import (
 	"code.gitea.io/gitea/services/externalaccount"
 	"code.gitea.io/gitea/services/forms"
 	"code.gitea.io/gitea/services/mailer"
+	notify_service "code.gitea.io/gitea/services/notify"
 	user_service "code.gitea.io/gitea/services/user"
 
 	"github.com/markbates/goth"
@@ -606,6 +607,7 @@ func handleUserCreated(ctx *context.Context, u *user_model.User, gothUser *goth.
 		}
 	}
 
+	notify_service.NewUserSignUp(ctx, u)
 	// update external user information
 	if gothUser != nil {
 		if err := externalaccount.UpdateExternalUser(ctx, u, *gothUser); err != nil {
