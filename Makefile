@@ -382,11 +382,11 @@ lint-md: node_modules
 
 .PHONY: lint-go
 lint-go:
-	$(GO) run $(GOLANGCI_LINT_PACKAGE) run
+	$(GO) run $(GOLANGCI_LINT_PACKAGE) run $(GOLANGCI_LINT_ARGS)
 
 .PHONY: lint-go-fix
 lint-go-fix:
-	$(GO) run $(GOLANGCI_LINT_PACKAGE) run --fix
+	$(GO) run $(GOLANGCI_LINT_PACKAGE) run $(GOLANGCI_LINT_ARGS) --fix
 
 # workaround step for the lint-go-windows CI task because 'go run' can not
 # have distinct GOOS/GOARCH for its build and run steps
