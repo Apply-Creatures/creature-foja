@@ -244,6 +244,22 @@ func FileHistory(ctx *context.Context) {
 		ctx.ServerError("CommitsByFileAndRange", err)
 		return
 	}
+	oldestCommit := commits[len(commits)-1]
+
+	renamedFiles, err := git.GetCommitFileRenames(ctx, ctx.Repo.GitRepo.Path, oldestCommit.ID.String())
+	if err != nil {
+		ctx.ServerError("GetCommitFileRenames", err)
+		return
+	}
+
+	for _, renames := range renamedFiles {
+		if renames[1] == fileName {
+			ctx.Data["OldFilename"] = renames[0]
+			ctx.Data["OldFilenameHistory"] = fmt.Sprintf("%s/commits/commit/%s/%s", ctx.Repo.RepoLink, oldestCommit.ID.String(), renames[0])
+			break
+		}
+	}
+
 	ctx.Data["Commits"] = git_model.ConvertFromGitCommit(ctx, commits, ctx.Repo.Repository)
 
 	ctx.Data["Username"] = ctx.Repo.Owner.Name

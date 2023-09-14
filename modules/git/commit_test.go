@@ -278,3 +278,30 @@ func TestGetCommitFileStatusMerges(t *testing.T) {
 	assert.Equal(t, commitFileStatus.Removed, expected.Removed)
 	assert.Equal(t, commitFileStatus.Modified, expected.Modified)
 }
+
+func TestParseCommitRenames(t *testing.T) {
+	testcases := []struct {
+		output  string
+		renames [][2]string
+	}{
+		{
+			output:  "R090\x00renamed.txt\x00history.txt\x00",
+			renames: [][2]string{{"renamed.txt", "history.txt"}},
+		},
+		{
+			output:  "R090\x00renamed.txt\x00history.txt\x00R000\x00corruptedstdouthere",
+			renames: [][2]string{{"renamed.txt", "history.txt"}},
+		},
+		{
+			output:  "R100\x00renamed.txt\x00history.txt\x00R001\x00readme.md\x00README.md\x00",
+			renames: [][2]string{{"renamed.txt", "history.txt"}, {"readme.md", "README.md"}},
+		},
+	}
+
+	for _, testcase := range testcases {
+		renames := [][2]string{}
+		parseCommitRenames(&renames, strings.NewReader(testcase.output))
+
+		assert.Equal(t, testcase.renames, renames)
+	}
+}

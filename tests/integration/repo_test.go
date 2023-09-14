@@ -473,6 +473,36 @@ func TestViewRepoDirectoryReadme(t *testing.T) {
 	missing("symlink-loop", "/user2/readme-test/src/branch/symlink-loop/")
 }
 
+func TestRenamedFileHistory(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	t.Run("Renamed file", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", "/user2/repo59/commits/branch/master/license")
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		htmlDoc := NewHTMLParser(t, resp.Body)
+
+		renameNotice := htmlDoc.doc.Find(".ui.bottom.attached.header")
+		assert.Equal(t, 1, renameNotice.Length())
+		assert.Contains(t, renameNotice.Text(), "Renamed from licnse (Browse further)")
+
+		oldFileHistoryLink, ok := renameNotice.Find("a").Attr("href")
+		assert.True(t, ok)
+		assert.Equal(t, "/user2/repo59/commits/commit/80b83c5c8220c3aa3906e081f202a2a7563ec879/licnse", oldFileHistoryLink)
+	})
+
+	t.Run("Non renamed file", func(t *testing.T) {
+		req := NewRequest(t, "GET", "/user2/repo59/commits/branch/master/README.md")
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		htmlDoc := NewHTMLParser(t, resp.Body)
+
+		htmlDoc.AssertElement(t, ".ui.bottom.attached.header", false)
+	})
+}
+
 func TestMarkDownReadmeImage(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
