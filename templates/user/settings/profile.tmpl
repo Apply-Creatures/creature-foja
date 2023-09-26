@@ -37,9 +37,55 @@
 					<label for="location">{{ctx.Locale.Tr "settings.location"}}</label>
 					<input id="location" name="location" placeholder="{{ctx.Locale.Tr "settings.location_placeholder"}}" value="{{.SignedUser.Location}}" maxlength="50">
 				</div>
-				<div class="field">
-					<label for="pronouns">{{.locale.Tr "settings.pronouns"}}</label>
-					<input id="pronouns" name="pronouns" value="{{.SignedUser.Pronouns}}" maxlength="50">
+				<div class="inline field">
+					<span class="inline field"><label for="pronouns">{{.locale.Tr "settings.pronouns"}}</label></span>
+					<div id="pronouns-dropdown" style="display: none" class="ui selection dropdown">
+						<input type="hidden" name="pronouns" value="{{.SignedUser.Pronouns}}">
+						<div class="text">
+							{{if .PronounsAreCustom}}
+								{{.locale.Tr "settings.pronouns_custom"}}
+							{{else}}
+								{{.SignedUser.Pronouns}}
+							{{end}}
+						</div>
+						{{svg "octicon-triangle-down" 14 "dropdown icon"}}
+						<div class="menu">
+							<div class="item{{if eq "he/him" .SignedUser.Pronouns}} active selected{{end}}" data-value="he/him">he/him</div>
+							<div class="item{{if eq "she/her" .SignedUser.Pronouns}} active selected{{end}}" data-value="she/her">she/her</div>
+							<div class="item{{if eq "they/them" .SignedUser.Pronouns}} active selected{{end}}" data-value="they/them">they/them</div>
+							<div class="item{{if eq "it/its" .SignedUser.Pronouns}} active selected{{end}}" data-value="it/its">it/its</div>
+							{{if .PronounsAreCustom}}
+								<div class="item active selected" data-value="{{.SignedUser.Pronouns}}">{{.locale.Tr "settings.pronouns_custom"}}</div>
+							{{else}}
+								<div class="item" data-value="">{{.locale.Tr "settings.pronouns_custom"}}</div>
+							{{end}}
+						</div>
+					</div>
+					<input id="pronouns-custom" name="pronouns" value="{{.SignedUser.Pronouns}}" maxlength="50">
+					<script>
+						(() => {
+							const pronounsDropdown = document.getElementById('pronouns-dropdown')
+							const pronounsCustom = document.getElementById('pronouns-custom')
+							const pronounsInput = pronounsDropdown.querySelector('input')
+							pronounsCustom.removeAttribute('name')
+							pronounsDropdown.style.display = ''
+							function onPronounsDropdownUpdate() {
+								const isCustom = !(pronounsInput.value == 'he/him' || pronounsInput.value == 'she/her' || pronounsInput.value == 'they/them' || pronounsInput.value == 'it/its')
+								if (isCustom) {
+									pronounsCustom.value = pronounsInput.value
+									pronounsCustom.style.display = ''
+								} else {
+									pronounsCustom.style.display = 'none'
+								}
+							}
+							function onPronounsCustomUpdate() {
+								pronounsInput.value = pronounsCustom.value
+							}
+							onPronounsDropdownUpdate()
+							pronounsInput.addEventListener('change', onPronounsDropdownUpdate)
+							pronounsCustom.addEventListener('input', onPronounsCustomUpdate)
+						})()
+					</script>
 				</div>
 
 				<div class="divider"></div>
