@@ -44,12 +44,15 @@
 						<div class="text">
 							{{if .PronounsAreCustom}}
 								{{.locale.Tr "settings.pronouns_custom"}}
+							{{else if eq "" .SignedUser.Pronouns}}
+								{{.locale.Tr "settings.pronouns_unspecified"}}
 							{{else}}
 								{{.SignedUser.Pronouns}}
 							{{end}}
 						</div>
 						{{svg "octicon-triangle-down" 14 "dropdown icon"}}
 						<div class="menu">
+							<div class="item{{if eq "" .SignedUser.Pronouns}} active selected{{end}}" data-value=""><i>{{.locale.Tr "settings.pronouns_unspecified"}}</i></div>
 							<div class="item{{if eq "he/him" .SignedUser.Pronouns}} active selected{{end}}" data-value="he/him">he/him</div>
 							<div class="item{{if eq "she/her" .SignedUser.Pronouns}} active selected{{end}}" data-value="she/her">she/her</div>
 							<div class="item{{if eq "they/them" .SignedUser.Pronouns}} active selected{{end}}" data-value="they/them">they/them</div>
@@ -57,7 +60,7 @@
 							{{if .PronounsAreCustom}}
 								<div class="item active selected" data-value="{{.SignedUser.Pronouns}}">{{.locale.Tr "settings.pronouns_custom"}}</div>
 							{{else}}
-								<div class="item" data-value="">{{.locale.Tr "settings.pronouns_custom"}}</div>
+								<div class="item" data-value="!">{{.locale.Tr "settings.pronouns_custom"}}</div>
 							{{end}}
 						</div>
 					</div>
