@@ -37,6 +37,10 @@
 					<label for="location">{{ctx.Locale.Tr "settings.location"}}</label>
 					<input id="location" name="location" placeholder="{{ctx.Locale.Tr "settings.location_placeholder"}}" value="{{.SignedUser.Location}}" maxlength="50">
 				</div>
+				<div class="field">
+					<label for="pronouns">{{.locale.Tr "settings.pronouns"}}</label>
+					<input id="pronouns" name="pronouns" value="{{.SignedUser.Pronouns}}" maxlength="50">
+				</div>
 
 				<div class="divider"></div>
 				<!-- private block -->

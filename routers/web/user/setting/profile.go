@@ -90,6 +90,7 @@ func ProfilePost(ctx *context.Context) {
 		FullName:            optional.Some(form.FullName),
 		KeepEmailPrivate:    optional.Some(form.KeepEmailPrivate),
 		Description:         optional.Some(form.Description),
+		Pronouns:            optional.Some(form.Pronouns),
 		Website:             optional.Some(form.Website),
 		Location:            optional.Some(form.Location),
 		Visibility:          optional.Some(form.Visibility),
