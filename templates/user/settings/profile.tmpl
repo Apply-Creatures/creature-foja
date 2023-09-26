@@ -21,22 +21,6 @@
 					<label for="full_name">{{ctx.Locale.Tr "settings.full_name"}}</label>
 					<input id="full_name" name="full_name" value="{{.SignedUser.FullName}}" maxlength="100">
 				</div>
-				<div class="field {{if .Err_Email}}error{{end}}">
-					<label>{{ctx.Locale.Tr "email"}}</label>
-					<p id="signed-user-email">{{.SignedUser.Email}}</p>
-				</div>
-				<div class="field {{if .Err_Description}}error{{end}}">
-					<label for="description">{{ctx.Locale.Tr "user.user_bio"}}</label>
-					<textarea id="description" name="description" rows="2" placeholder="{{ctx.Locale.Tr "settings.biography_placeholder"}}" maxlength="255">{{.SignedUser.Description}}</textarea>
-				</div>
-				<div class="field {{if .Err_Website}}error{{end}}">
-					<label for="website">{{ctx.Locale.Tr "settings.website"}}</label>
-					<input id="website" name="website" type="url" value="{{.SignedUser.Website}}" maxlength="255">
-				</div>
-				<div class="field">
-					<label for="location">{{ctx.Locale.Tr "settings.location"}}</label>
-					<input id="location" name="location" placeholder="{{ctx.Locale.Tr "settings.location_placeholder"}}" value="{{.SignedUser.Location}}" maxlength="50">
-				</div>
 				<div class="inline field">
 					<span class="inline field"><label for="pronouns">{{.locale.Tr "settings.pronouns"}}</label></span>
 					<div id="pronouns-dropdown" style="display: none" class="ui selection dropdown">
@@ -66,6 +50,22 @@
 						</div>
 					</div>
 					<input id="pronouns-custom" name="pronouns" value="{{.SignedUser.Pronouns}}" maxlength="50">
+				</div>
+				<div class="field {{if .Err_Email}}error{{end}}">
+					<label>{{ctx.Locale.Tr "email"}}</label>
+					<p id="signed-user-email">{{.SignedUser.Email}}</p>
+				</div>
+				<div class="field {{if .Err_Description}}error{{end}}">
+					<label for="description">{{ctx.Locale.Tr "user.user_bio"}}</label>
+					<textarea id="description" name="description" rows="2" placeholder="{{ctx.Locale.Tr "settings.biography_placeholder"}}" maxlength="255">{{.SignedUser.Description}}</textarea>
+				</div>
+				<div class="field {{if .Err_Website}}error{{end}}">
+					<label for="website">{{ctx.Locale.Tr "settings.website"}}</label>
+					<input id="website" name="website" type="url" value="{{.SignedUser.Website}}" maxlength="255">
+				</div>
+				<div class="field">
+					<label for="location">{{ctx.Locale.Tr "settings.location"}}</label>
+					<input id="location" name="location" placeholder="{{ctx.Locale.Tr "settings.location_placeholder"}}" value="{{.SignedUser.Location}}" maxlength="50">
 				</div>
 
 				<div class="divider"></div>
