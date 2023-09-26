@@ -46,7 +46,7 @@ func Profile(ctx *context.Context) {
 	ctx.Data["PageIsSettingsProfile"] = true
 	ctx.Data["AllowedUserVisibilityModes"] = setting.Service.AllowedUserVisibilityModesSlice.ToVisibleTypeSlice()
 	ctx.Data["DisableGravatar"] = setting.Config().Picture.DisableGravatar.Value(ctx)
-	ctx.Data["PronounsAreCustom"] = ctx.Doer.Pronouns != "" && ctx.Doer.Pronouns != "he/him" && ctx.Doer.Pronouns != "she/her" && ctx.Doer.Pronouns != "they/them" && ctx.Doer.Pronouns != "it/its"
+	ctx.Data["PronounsAreCustom"] = ctx.Doer.Pronouns != "" && ctx.Doer.Pronouns != "he/him" && ctx.Doer.Pronouns != "she/her" && ctx.Doer.Pronouns != "they/them" && ctx.Doer.Pronouns != "it/its" && ctx.Doer.Pronouns != "any/all"
 
 	ctx.HTML(http.StatusOK, tplSettingsProfile)
 }
@@ -57,7 +57,7 @@ func ProfilePost(ctx *context.Context) {
 	ctx.Data["PageIsSettingsProfile"] = true
 	ctx.Data["AllowedUserVisibilityModes"] = setting.Service.AllowedUserVisibilityModesSlice.ToVisibleTypeSlice()
 	ctx.Data["DisableGravatar"] = setting.Config().Picture.DisableGravatar.Value(ctx)
-	ctx.Data["PronounsAreCustom"] = ctx.Doer.Pronouns != "" && ctx.Doer.Pronouns != "he/him" && ctx.Doer.Pronouns != "she/her" && ctx.Doer.Pronouns != "they/them" && ctx.Doer.Pronouns != "it/its"
+	ctx.Data["PronounsAreCustom"] = ctx.Doer.Pronouns != "" && ctx.Doer.Pronouns != "he/him" && ctx.Doer.Pronouns != "she/her" && ctx.Doer.Pronouns != "they/them" && ctx.Doer.Pronouns != "it/its" && ctx.Doer.Pronouns != "any/all"
 
 	if ctx.HasError() {
 		ctx.HTML(http.StatusOK, tplSettingsProfile)

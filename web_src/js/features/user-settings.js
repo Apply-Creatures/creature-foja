@@ -9,7 +9,8 @@ function onPronounsDropdownUpdate() {
     pronounsInput.value === 'he/him' ||
     pronounsInput.value === 'she/her' ||
     pronounsInput.value === 'they/them' ||
-    pronounsInput.value === 'it/its'
+    pronounsInput.value === 'it/its' ||
+    pronounsInput.value === 'any/all'
   );
   if (isCustom) {
     if (pronounsInput.value === '!') {

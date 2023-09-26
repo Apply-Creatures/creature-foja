@@ -57,6 +57,7 @@
 							<div class="item{{if eq "she/her" .SignedUser.Pronouns}} active selected{{end}}" data-value="she/her">she/her</div>
 							<div class="item{{if eq "they/them" .SignedUser.Pronouns}} active selected{{end}}" data-value="they/them">they/them</div>
 							<div class="item{{if eq "it/its" .SignedUser.Pronouns}} active selected{{end}}" data-value="it/its">it/its</div>
+							<div class="item{{if eq "any/all" .SignedUser.Pronouns}} active selected{{end}}" data-value="any/all">any/all</div>
 							{{if .PronounsAreCustom}}
 								<div class="item active selected" data-value="{{.SignedUser.Pronouns}}"><i>{{.locale.Tr "settings.pronouns_custom"}}</i></div>
 							{{else}}
