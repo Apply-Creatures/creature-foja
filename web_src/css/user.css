@@ -157,3 +157,7 @@
 .notifications-item:hover .notifications-updated {
   display: none;
 }
+
+#pronouns-dropdown, #pronouns-custom {
+  width: 140px;
+}
