@@ -62,30 +62,6 @@
 						</div>
 					</div>
 					<input id="pronouns-custom" name="pronouns" value="{{.SignedUser.Pronouns}}" maxlength="50">
-					<script>
-						(() => {
-							const pronounsDropdown = document.getElementById('pronouns-dropdown')
-							const pronounsCustom = document.getElementById('pronouns-custom')
-							const pronounsInput = pronounsDropdown.querySelector('input')
-							pronounsCustom.removeAttribute('name')
-							pronounsDropdown.style.display = ''
-							function onPronounsDropdownUpdate() {
-								const isCustom = !(pronounsInput.value == 'he/him' || pronounsInput.value == 'she/her' || pronounsInput.value == 'they/them' || pronounsInput.value == 'it/its')
-								if (isCustom) {
-									pronounsCustom.value = pronounsInput.value
-									pronounsCustom.style.display = ''
-								} else {
-									pronounsCustom.style.display = 'none'
-								}
-							}
-							function onPronounsCustomUpdate() {
-								pronounsInput.value = pronounsCustom.value
-							}
-							onPronounsDropdownUpdate()
-							pronounsInput.addEventListener('change', onPronounsDropdownUpdate)
-							pronounsCustom.addEventListener('input', onPronounsCustomUpdate)
-						})()
-					</script>
 				</div>
 
 				<div class="divider"></div>
