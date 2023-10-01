@@ -208,6 +208,8 @@ func MainTest(m *testing.M, testOpts ...*TestOptions) {
 type FixturesOptions struct {
 	Dir   string
 	Files []string
+	Dirs  []string
+	Base  string
 }
 
 // CreateTestEngine creates a memory database and loads the fixture data from fixturesDir

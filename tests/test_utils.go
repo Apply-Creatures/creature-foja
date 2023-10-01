@@ -267,3 +267,13 @@ func PrintCurrentTest(t testing.TB, skip ...int) func() {
 func Printf(format string, args ...any) {
 	testlogger.Printf(format, args...)
 }
+
+func AddFixtures(dirs ...string) func() {
+	return unittest.OverrideFixtures(
+		unittest.FixturesOptions{
+			Dir:  filepath.Join(filepath.Dir(setting.AppPath), "models/fixtures/"),
+			Base: filepath.Dir(setting.AppPath),
+			Dirs: dirs,
+		},
+	)
+}

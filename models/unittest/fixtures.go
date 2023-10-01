@@ -7,6 +7,7 @@ package unittest
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"code.gitea.io/gitea/models/db"
@@ -28,6 +29,16 @@ func GetXORMEngine(engine ...*xorm.Engine) (x *xorm.Engine) {
 	return db.DefaultContext.(*db.Context).Engine().(*xorm.Engine)
 }
 
+func OverrideFixtures(opts FixturesOptions, engine ...*xorm.Engine) func() {
+	old := fixturesLoader
+	if err := InitFixtures(opts, engine...); err != nil {
+		panic(err)
+	}
+	return func() {
+		fixturesLoader = old
+	}
+}
+
 // InitFixtures initialize test fixtures for a test database
 func InitFixtures(opts FixturesOptions, engine ...*xorm.Engine) (err error) {
 	e := GetXORMEngine(engine...)
@@ -36,6 +47,12 @@ func InitFixtures(opts FixturesOptions, engine ...*xorm.Engine) (err error) {
 		fixtureOptionFiles = testfixtures.Directory(opts.Dir)
 	} else {
 		fixtureOptionFiles = testfixtures.Files(opts.Files...)
+	}
+	var fixtureOptionDirs []func(*testfixtures.Loader) error
+	if opts.Dirs != nil {
+		for _, dir := range opts.Dirs {
+			fixtureOptionDirs = append(fixtureOptionDirs, testfixtures.Directory(filepath.Join(opts.Base, dir)))
+		}
 	}
 	dialect := "unknown"
 	switch e.Dialect().URI().DBType {
@@ -57,6 +74,7 @@ func InitFixtures(opts FixturesOptions, engine ...*xorm.Engine) (err error) {
 		testfixtures.DangerousSkipTestDatabaseCheck(),
 		fixtureOptionFiles,
 	}
+	loaderOptions = append(loaderOptions, fixtureOptionDirs...)
 
 	if e.Dialect().URI().DBType == schemas.POSTGRES {
 		loaderOptions = append(loaderOptions, testfixtures.SkipResetSequences())
