@@ -43,8 +43,8 @@ import (
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	goth_gitlab "github.com/markbates/goth/providers/gitlab"
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/stretchr/testify/assert"
-	"github.com/xeipuuv/gojsonschema"
 )
 
 var testWebRoutes *web.Route
@@ -543,16 +543,15 @@ func VerifyJSONSchema(t testing.TB, resp *httptest.ResponseRecorder, schemaFile 
 	_, schemaFileErr := os.Stat(schemaFilePath)
 	assert.Nil(t, schemaFileErr)
 
-	schema, schemaFileReadErr := os.ReadFile(schemaFilePath)
-	assert.Nil(t, schemaFileReadErr)
-	assert.True(t, len(schema) > 0)
+	schema, err := jsonschema.Compile(schemaFilePath)
+	assert.NoError(t, err)
 
-	nodeinfoSchema := gojsonschema.NewStringLoader(string(schema))
-	nodeinfoString := gojsonschema.NewStringLoader(resp.Body.String())
-	result, schemaValidationErr := gojsonschema.Validate(nodeinfoSchema, nodeinfoString)
-	assert.Nil(t, schemaValidationErr)
-	assert.Empty(t, result.Errors())
-	assert.True(t, result.Valid())
+	var data interface{}
+	err = json.Unmarshal(resp.Body.Bytes(), &data)
+	assert.NoError(t, err)
+
+	schemaValidation := schema.Validate(data)
+	assert.Nil(t, schemaValidation)
 }
 
 func GetCSRF(t testing.TB, session *TestSession, urlStr string) string {
