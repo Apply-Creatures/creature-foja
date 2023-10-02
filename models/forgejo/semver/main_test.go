@@ -3,7 +3,6 @@
 package semver
 
 import (
-	"path/filepath"
 	"testing"
 
 	"code.gitea.io/gitea/models/unittest"
@@ -14,7 +13,5 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	unittest.MainTest(m, &unittest.TestOptions{
-		GiteaRootPath: filepath.Join("..", "..", ".."),
-	})
+	unittest.MainTest(m)
 }
