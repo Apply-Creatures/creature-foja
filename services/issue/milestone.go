@@ -13,6 +13,32 @@ import (
 	notify_service "code.gitea.io/gitea/services/notify"
 )
 
+func updateMilestoneCounters(ctx context.Context, issue *issues_model.Issue, id int64) error {
+	if issue.NoAutoTime {
+		// We set the milestone's update date to the max of the
+		// milestone and issue update dates.
+		// Note: we can not call UpdateMilestoneCounters() if the
+		// milestone's update date is to be kept, because that function
+		// auto-updates the dates.
+		milestone, err := issues_model.GetMilestoneByRepoID(ctx, issue.RepoID, id)
+		if err != nil {
+			return fmt.Errorf("GetMilestoneByRepoID: %w", err)
+		}
+		updatedUnix := milestone.UpdatedUnix
+		if issue.UpdatedUnix > updatedUnix {
+			updatedUnix = issue.UpdatedUnix
+		}
+		if err := issues_model.UpdateMilestoneCountersWithDate(ctx, id, updatedUnix); err != nil {
+			return err
+		}
+	} else {
+		if err := issues_model.UpdateMilestoneCounters(ctx, id); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func changeMilestoneAssign(ctx context.Context, doer *user_model.User, issue *issues_model.Issue, oldMilestoneID int64) error {
 	// Only check if milestone exists if we don't remove it.
 	if issue.MilestoneID > 0 {
@@ -30,13 +56,13 @@ func changeMilestoneAssign(ctx context.Context, doer *user_model.User, issue *is
 	}
 
 	if oldMilestoneID > 0 {
-		if err := issues_model.UpdateMilestoneCounters(ctx, oldMilestoneID); err != nil {
+		if err := updateMilestoneCounters(ctx, issue, oldMilestoneID); err != nil {
 			return err
 		}
 	}
 
 	if issue.MilestoneID > 0 {
-		if err := issues_model.UpdateMilestoneCounters(ctx, issue.MilestoneID); err != nil {
+		if err := updateMilestoneCounters(ctx, issue, issue.MilestoneID); err != nil {
 			return err
 		}
 	}

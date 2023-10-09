@@ -802,6 +802,12 @@ func EditIssue(ctx *context.APIContext) {
 		return
 	}
 
+	err = issue_service.SetIssueUpdateDate(ctx, issue, form.Updated, ctx.Doer)
+	if err != nil {
+		ctx.Error(http.StatusForbidden, "SetIssueUpdateDate", err)
+		return
+	}
+
 	oldTitle := issue.Title
 	if len(form.Title) > 0 {
 		issue.Title = form.Title

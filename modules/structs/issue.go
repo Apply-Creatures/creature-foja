@@ -111,6 +111,8 @@ type EditIssueOption struct {
 	// swagger:strfmt date-time
 	Deadline       *time.Time `json:"due_date"`
 	RemoveDeadline *bool      `json:"unset_due_date"`
+	// swagger:strfmt date-time
+	Updated *time.Time `json:"updated_at"`
 }
 
 // EditDeadlineOption options for creating a deadline

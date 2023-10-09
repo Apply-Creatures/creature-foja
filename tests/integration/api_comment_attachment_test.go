@@ -11,6 +11,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"testing"
+	"time"
 
 	auth_model "code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/models/db"
@@ -119,6 +120,82 @@ func TestAPICreateCommentAttachment(t *testing.T) {
 	DecodeJSON(t, resp, &apiAttachment)
 
 	unittest.AssertExistsAndLoadBean(t, &repo_model.Attachment{ID: apiAttachment.ID, CommentID: comment.ID})
+}
+
+func TestAPICreateCommentAttachmentAutoDate(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	comment := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: 2})
+	issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: comment.IssueID})
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: issue.RepoID})
+	repoOwner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
+
+	session := loginUser(t, repoOwner.Name)
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteIssue)
+	urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/comments/%d/assets",
+		repoOwner.Name, repo.Name, comment.ID)
+
+	filename := "image.png"
+	buff := generateImg()
+	body := &bytes.Buffer{}
+
+	t.Run("WithAutoDate", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// Setup multi-part
+		writer := multipart.NewWriter(body)
+		part, err := writer.CreateFormFile("attachment", filename)
+		assert.NoError(t, err)
+		_, err = io.Copy(part, &buff)
+		assert.NoError(t, err)
+		err = writer.Close()
+		assert.NoError(t, err)
+
+		req := NewRequestWithBody(t, "POST", urlStr, body).AddTokenAuth(token)
+		req.Header.Add("Content-Type", writer.FormDataContentType())
+		resp := session.MakeRequest(t, req, http.StatusCreated)
+		apiAttachment := new(api.Attachment)
+		DecodeJSON(t, resp, &apiAttachment)
+
+		unittest.AssertExistsAndLoadBean(t, &repo_model.Attachment{ID: apiAttachment.ID})
+		// the execution of the API call supposedly lasted less than one minute
+		updatedSince := time.Since(apiAttachment.Created)
+		assert.LessOrEqual(t, updatedSince, time.Minute)
+
+		commentAfter := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: comment.ID})
+		updatedSince = time.Since(commentAfter.UpdatedUnix.AsTime())
+		assert.LessOrEqual(t, updatedSince, time.Minute)
+	})
+
+	t.Run("WithUpdateDate", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		updatedAt := time.Now().Add(-time.Hour).Truncate(time.Second)
+		urlStr += fmt.Sprintf("?updated_at=%s", updatedAt.UTC().Format(time.RFC3339))
+
+		// Setup multi-part
+		writer := multipart.NewWriter(body)
+		part, err := writer.CreateFormFile("attachment", filename)
+		assert.NoError(t, err)
+		_, err = io.Copy(part, &buff)
+		assert.NoError(t, err)
+		err = writer.Close()
+		assert.NoError(t, err)
+
+		req := NewRequestWithBody(t, "POST", urlStr, body).AddTokenAuth(token)
+		req.Header.Add("Content-Type", writer.FormDataContentType())
+		resp := session.MakeRequest(t, req, http.StatusCreated)
+		apiAttachment := new(api.Attachment)
+		DecodeJSON(t, resp, &apiAttachment)
+
+		// dates will be converted into the same tz, in order to compare them
+		utcTZ, _ := time.LoadLocation("UTC")
+		unittest.AssertExistsAndLoadBean(t, &repo_model.Attachment{ID: apiAttachment.ID})
+		assert.Equal(t, updatedAt.In(utcTZ), apiAttachment.Created.In(utcTZ))
+
+		commentAfter := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: comment.ID})
+		assert.Equal(t, updatedAt.In(utcTZ), commentAfter.UpdatedUnix.AsTime().In(utcTZ))
+	})
 }
 
 func TestAPIEditCommentAttachment(t *testing.T) {

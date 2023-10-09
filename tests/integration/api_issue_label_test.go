@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	auth_model "code.gitea.io/gitea/models/auth"
 	issues_model "code.gitea.io/gitea/models/issues"
@@ -15,6 +16,7 @@ import (
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
 	api "code.gitea.io/gitea/modules/structs"
+	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -112,6 +114,49 @@ func TestAPIAddIssueLabels(t *testing.T) {
 	assert.Len(t, apiLabels, unittest.GetCount(t, &issues_model.IssueLabel{IssueID: issue.ID}))
 
 	unittest.AssertExistsAndLoadBean(t, &issues_model.IssueLabel{IssueID: issue.ID, LabelID: 2})
+}
+
+func TestAPIAddIssueLabelsAutoDate(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	issueBefore := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 3})
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: issueBefore.RepoID})
+	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
+
+	session := loginUser(t, owner.Name)
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteIssue)
+	urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d/labels",
+		owner.Name, repo.Name, issueBefore.Index)
+
+	t.Run("WithAutoDate", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequestWithJSON(t, "POST", urlStr, &api.IssueLabelsOption{
+			Labels: []int64{1},
+		}).AddTokenAuth(token)
+		MakeRequest(t, req, http.StatusOK)
+
+		issueAfter := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: issueBefore.ID})
+		// the execution of the API call supposedly lasted less than one minute
+		updatedSince := time.Since(issueAfter.UpdatedUnix.AsTime())
+		assert.LessOrEqual(t, updatedSince, time.Minute)
+	})
+
+	t.Run("WithUpdatedDate", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		updatedAt := time.Now().Add(-time.Hour).Truncate(time.Second)
+		req := NewRequestWithJSON(t, "POST", urlStr, &api.IssueLabelsOption{
+			Labels:  []int64{2},
+			Updated: &updatedAt,
+		}).AddTokenAuth(token)
+		MakeRequest(t, req, http.StatusOK)
+
+		// dates will be converted into the same tz, in order to compare them
+		utcTZ, _ := time.LoadLocation("UTC")
+		issueAfter := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: issueBefore.ID})
+		assert.Equal(t, updatedAt.In(utcTZ), issueAfter.UpdatedUnix.AsTime().In(utcTZ))
+	})
 }
 
 func TestAPIReplaceIssueLabels(t *testing.T) {

@@ -6,6 +6,7 @@ package issue
 import (
 	"context"
 	"fmt"
+	"time"
 
 	activities_model "code.gitea.io/gitea/models/activities"
 	"code.gitea.io/gitea/models/db"
@@ -17,6 +18,7 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/storage"
+	"code.gitea.io/gitea/modules/timeutil"
 	notify_service "code.gitea.io/gitea/services/notify"
 )
 
@@ -289,4 +291,41 @@ func deleteIssue(ctx context.Context, issue *issues_model.Issue) error {
 	}
 
 	return committer.Commit()
+}
+
+// Set the UpdatedUnix date and the NoAutoTime field of an Issue if a non
+// nil 'updated' time is provided
+//
+// In order to set a specific update time, the DB will be updated with
+// NoAutoTime(). A 'NoAutoTime' boolean field in the Issue struct is used to
+// propagate down to the DB update calls the will to apply autoupdate or not.
+func SetIssueUpdateDate(ctx context.Context, issue *issues_model.Issue, updated *time.Time, doer *user_model.User) error {
+	issue.NoAutoTime = false
+	if updated == nil {
+		return nil
+	}
+
+	if err := issue.LoadRepo(ctx); err != nil {
+		return err
+	}
+
+	// Check if the poster is allowed to set an update date
+	perm, err := access_model.GetUserRepoPermission(ctx, issue.Repo, doer)
+	if err != nil {
+		return err
+	}
+	if !perm.IsAdmin() && !perm.IsOwner() {
+		return fmt.Errorf("user needs to have admin or owner right")
+	}
+
+	// A simple guard against potential inconsistent calls
+	updatedUnix := timeutil.TimeStamp(updated.Unix())
+	if updatedUnix < issue.CreatedUnix || updatedUnix > timeutil.TimeStampNow() {
+		return fmt.Errorf("unallowed update date")
+	}
+
+	issue.UpdatedUnix = updatedUnix
+	issue.NoAutoTime = true
+
+	return nil
 }

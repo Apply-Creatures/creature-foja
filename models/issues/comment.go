@@ -823,6 +823,14 @@ func CreateComment(ctx context.Context, opts *CreateCommentOptions) (_ *Comment,
 		IsForcePush:      opts.IsForcePush,
 		Invalidated:      opts.Invalidated,
 	}
+	if opts.Issue.NoAutoTime {
+		// Preload the comment with the Issue containing the forced update
+		// date. This is needed to propagate those data in AddCrossReferences()
+		comment.Issue = opts.Issue
+		comment.CreatedUnix = opts.Issue.UpdatedUnix
+		comment.UpdatedUnix = opts.Issue.UpdatedUnix
+		e.NoAutoTime()
+	}
 	if _, err = e.Insert(comment); err != nil {
 		return nil, err
 	}
@@ -1105,12 +1113,21 @@ func UpdateComment(ctx context.Context, c *Comment, doer *user_model.User) error
 		return err
 	}
 	defer committer.Close()
-	sess := db.GetEngine(ctx)
 
-	if _, err := sess.ID(c.ID).AllCols().Update(c); err != nil {
+	if err := c.LoadIssue(ctx); err != nil {
 		return err
 	}
-	if err := c.LoadIssue(ctx); err != nil {
+
+	sess := db.GetEngine(ctx).ID(c.ID).AllCols()
+	if c.Issue.NoAutoTime {
+		// update the DataBase
+		sess = sess.NoAutoTime().SetExpr("updated_unix", c.Issue.UpdatedUnix)
+		// the UpdatedUnix value of the Comment also has to be set,
+		// to return the adequate value
+		// see https://codeberg.org/forgejo/forgejo/pulls/764#issuecomment-1023801
+		c.UpdatedUnix = c.Issue.UpdatedUnix
+	}
+	if _, err := sess.Update(c); err != nil {
 		return err
 	}
 	if err := c.AddCrossReferences(ctx, doer, true); err != nil {

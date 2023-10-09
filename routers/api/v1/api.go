@@ -1337,8 +1337,8 @@ func Routes() *web.Route {
 							m.Combo("").Get(repo.ListIssueLabels).
 								Post(reqToken(), bind(api.IssueLabelsOption{}), repo.AddIssueLabels).
 								Put(reqToken(), bind(api.IssueLabelsOption{}), repo.ReplaceIssueLabels).
-								Delete(reqToken(), repo.ClearIssueLabels)
-							m.Delete("/{id}", reqToken(), repo.DeleteIssueLabel)
+								Delete(reqToken(), bind(api.DeleteLabelsOption{}), repo.ClearIssueLabels)
+							m.Delete("/{id}", reqToken(), bind(api.DeleteLabelsOption{}), repo.DeleteIssueLabel)
 						})
 						m.Group("/times", func() {
 							m.Combo("").

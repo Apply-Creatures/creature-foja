@@ -89,7 +89,11 @@ func UpdateComment(ctx context.Context, c *issues_model.Comment, doer *user_mode
 	}
 
 	if needsContentHistory {
-		err := issues_model.SaveIssueContentHistory(ctx, doer.ID, c.IssueID, c.ID, timeutil.TimeStampNow(), c.Content, false)
+		historyDate := timeutil.TimeStampNow()
+		if c.Issue.NoAutoTime {
+			historyDate = c.Issue.UpdatedUnix
+		}
+		err := issues_model.SaveIssueContentHistory(ctx, doer.ID, c.IssueID, c.ID, historyDate, c.Content, false)
 		if err != nil {
 			return err
 		}

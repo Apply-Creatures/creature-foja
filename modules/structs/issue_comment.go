@@ -28,12 +28,16 @@ type Comment struct {
 type CreateIssueCommentOption struct {
 	// required:true
 	Body string `json:"body" binding:"Required"`
+	// swagger:strfmt date-time
+	Updated *time.Time `json:"updated_at"`
 }
 
 // EditIssueCommentOption options for editing a comment
 type EditIssueCommentOption struct {
 	// required: true
 	Body string `json:"body" binding:"Required"`
+	// swagger:strfmt date-time
+	Updated *time.Time `json:"updated_at"`
 }
 
 // TimelineComment represents a timeline comment (comment of any type) on a commit or issue

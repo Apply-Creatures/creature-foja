@@ -32,7 +32,12 @@ func NewAttachment(ctx context.Context, attach *repo_model.Attachment, file io.R
 		}
 		attach.Size = size
 
-		return db.Insert(ctx, attach)
+		eng := db.GetEngine(ctx)
+		if attach.NoAutoTime {
+			eng.NoAutoTime()
+		}
+		_, err = eng.Insert(attach)
+		return err
 	})
 
 	return attach, err

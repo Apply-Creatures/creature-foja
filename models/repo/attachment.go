@@ -28,6 +28,7 @@ type Attachment struct {
 	Name              string
 	DownloadCount     int64              `xorm:"DEFAULT 0"`
 	Size              int64              `xorm:"DEFAULT 0"`
+	NoAutoTime        bool               `xorm:"-"`
 	CreatedUnix       timeutil.TimeStamp `xorm:"created"`
 	CustomDownloadURL string             `xorm:"-"`
 }

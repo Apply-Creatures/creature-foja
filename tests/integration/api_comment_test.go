@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"testing"
+	"time"
 
 	auth_model "code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/models/db"
@@ -15,6 +16,7 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/references"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/services/convert"
 	"code.gitea.io/gitea/tests"
@@ -108,6 +110,156 @@ func TestAPICreateComment(t *testing.T) {
 	DecodeJSON(t, resp, &updatedComment)
 	assert.EqualValues(t, commentBody, updatedComment.Body)
 	unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: updatedComment.ID, IssueID: issue.ID, Content: commentBody})
+}
+
+func TestAPICreateCommentAutoDate(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{})
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: issue.RepoID})
+	repoOwner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
+	token := getUserToken(t, repoOwner.Name, auth_model.AccessTokenScopeWriteIssue)
+
+	urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d/comments",
+		repoOwner.Name, repo.Name, issue.Index)
+	const commentBody = "Comment body"
+
+	t.Run("WithAutoDate", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequestWithValues(t, "POST", urlStr, map[string]string{
+			"body": commentBody,
+		}).AddTokenAuth(token)
+		resp := MakeRequest(t, req, http.StatusCreated)
+		var updatedComment api.Comment
+		DecodeJSON(t, resp, &updatedComment)
+
+		// the execution of the API call supposedly lasted less than one minute
+		updatedSince := time.Since(updatedComment.Updated)
+		assert.LessOrEqual(t, updatedSince, time.Minute)
+
+		commentAfter := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: updatedComment.ID, IssueID: issue.ID, Content: commentBody})
+		updatedSince = time.Since(commentAfter.UpdatedUnix.AsTime())
+		assert.LessOrEqual(t, updatedSince, time.Minute)
+	})
+
+	t.Run("WithUpdateDate", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		updatedAt := time.Now().Add(-time.Hour).Truncate(time.Second)
+
+		req := NewRequestWithJSON(t, "POST", urlStr, &api.CreateIssueCommentOption{
+			Body:    commentBody,
+			Updated: &updatedAt,
+		}).AddTokenAuth(token)
+		resp := MakeRequest(t, req, http.StatusCreated)
+		var updatedComment api.Comment
+		DecodeJSON(t, resp, &updatedComment)
+
+		// dates will be converted into the same tz, in order to compare them
+		utcTZ, _ := time.LoadLocation("UTC")
+		assert.Equal(t, updatedAt.In(utcTZ), updatedComment.Updated.In(utcTZ))
+		commentAfter := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: updatedComment.ID, IssueID: issue.ID, Content: commentBody})
+		assert.Equal(t, updatedAt.In(utcTZ), commentAfter.UpdatedUnix.AsTime().In(utcTZ))
+	})
+}
+
+func TestAPICommentXRefAutoDate(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 1})
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: issue.RepoID})
+	repoOwner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
+	token := getUserToken(t, repoOwner.Name, auth_model.AccessTokenScopeWriteIssue)
+
+	t.Run("WithAutoDate", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// Create a comment mentioning issue #2 and check that a xref comment was added
+		// in issue #2
+		urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d/comments",
+			repoOwner.Name, repo.Name, issue.Index)
+
+		commentBody := "mention #2"
+		req := NewRequestWithJSON(t, "POST", urlStr, &api.CreateIssueCommentOption{
+			Body: commentBody,
+		}).AddTokenAuth(token)
+		resp := MakeRequest(t, req, http.StatusCreated)
+		var createdComment api.Comment
+		DecodeJSON(t, resp, &createdComment)
+
+		ref := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{IssueID: 2, RefIssueID: 1, RefCommentID: createdComment.ID})
+		assert.Equal(t, issues_model.CommentTypeCommentRef, ref.Type)
+		assert.Equal(t, references.XRefActionNone, ref.RefAction)
+		// the execution of the API call supposedly lasted less than one minute
+		updatedSince := time.Since(ref.UpdatedUnix.AsTime())
+		assert.LessOrEqual(t, updatedSince, time.Minute)
+
+		// Remove the mention to issue #2 and check that the xref was neutered
+		urlStr = fmt.Sprintf("/api/v1/repos/%s/%s/issues/comments/%d",
+			repoOwner.Name, repo.Name, createdComment.ID)
+
+		newCommentBody := "no mention"
+		req = NewRequestWithJSON(t, "PATCH", urlStr, &api.EditIssueCommentOption{
+			Body: newCommentBody,
+		}).AddTokenAuth(token)
+		resp = MakeRequest(t, req, http.StatusOK)
+		var updatedComment api.Comment
+		DecodeJSON(t, resp, &updatedComment)
+
+		ref = unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{IssueID: 2, RefIssueID: 1, RefCommentID: updatedComment.ID})
+		assert.Equal(t, issues_model.CommentTypeCommentRef, ref.Type)
+		assert.Equal(t, references.XRefActionNeutered, ref.RefAction)
+		// the execution of the API call supposedly lasted less than one minute
+		updatedSince = time.Since(ref.UpdatedUnix.AsTime())
+		assert.LessOrEqual(t, updatedSince, time.Minute)
+	})
+
+	t.Run("WithUpdateDate", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// dates will be converted into the same tz, in order to compare them
+		utcTZ, _ := time.LoadLocation("UTC")
+
+		// Create a comment mentioning issue #2 and check that a xref comment was added
+		// in issue #2
+		urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d/comments",
+			repoOwner.Name, repo.Name, issue.Index)
+
+		commentBody := "re-mention #2"
+		updatedAt := time.Now().Add(-time.Hour).Truncate(time.Second)
+		req := NewRequestWithJSON(t, "POST", urlStr, &api.CreateIssueCommentOption{
+			Body:    commentBody,
+			Updated: &updatedAt,
+		}).AddTokenAuth(token)
+		resp := MakeRequest(t, req, http.StatusCreated)
+		var createdComment api.Comment
+		DecodeJSON(t, resp, &createdComment)
+
+		ref := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{IssueID: 2, RefIssueID: 1, RefCommentID: createdComment.ID})
+		assert.Equal(t, issues_model.CommentTypeCommentRef, ref.Type)
+		assert.Equal(t, references.XRefActionNone, ref.RefAction)
+		assert.Equal(t, updatedAt.In(utcTZ), ref.UpdatedUnix.AsTimeInLocation(utcTZ))
+
+		// Remove the mention to issue #2 and check that the xref was neutered
+		urlStr = fmt.Sprintf("/api/v1/repos/%s/%s/issues/comments/%d",
+			repoOwner.Name, repo.Name, createdComment.ID)
+
+		newCommentBody := "no mention"
+		updatedAt = time.Now().Add(-time.Hour).Truncate(time.Second)
+		req = NewRequestWithJSON(t, "PATCH", urlStr, &api.EditIssueCommentOption{
+			Body:    newCommentBody,
+			Updated: &updatedAt,
+		}).AddTokenAuth(token)
+		resp = MakeRequest(t, req, http.StatusOK)
+		var updatedComment api.Comment
+		DecodeJSON(t, resp, &updatedComment)
+
+		ref = unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{IssueID: 2, RefIssueID: 1, RefCommentID: updatedComment.ID})
+		assert.Equal(t, issues_model.CommentTypeCommentRef, ref.Type)
+		assert.Equal(t, references.XRefActionNeutered, ref.RefAction)
+		assert.Equal(t, updatedAt.In(utcTZ), ref.UpdatedUnix.AsTimeInLocation(utcTZ))
+	})
 }
 
 func TestAPIGetComment(t *testing.T) {
@@ -210,6 +362,60 @@ func TestAPIEditComment(t *testing.T) {
 	assert.EqualValues(t, comment.ID, updatedComment.ID)
 	assert.EqualValues(t, newCommentBody, updatedComment.Body)
 	unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: comment.ID, IssueID: issue.ID, Content: newCommentBody})
+}
+
+func TestAPIEditCommentWithDate(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	comment := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{},
+		unittest.Cond("type = ?", issues_model.CommentTypeComment))
+	issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: comment.IssueID})
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: issue.RepoID})
+	repoOwner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
+	token := getUserToken(t, repoOwner.Name, auth_model.AccessTokenScopeWriteIssue)
+
+	urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/comments/%d",
+		repoOwner.Name, repo.Name, comment.ID)
+	const newCommentBody = "This is the new comment body"
+
+	t.Run("WithAutoDate", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequestWithValues(t, "PATCH", urlStr, map[string]string{
+			"body": newCommentBody,
+		}).AddTokenAuth(token)
+		resp := MakeRequest(t, req, http.StatusOK)
+		var updatedComment api.Comment
+		DecodeJSON(t, resp, &updatedComment)
+
+		// the execution of the API call supposedly lasted less than one minute
+		updatedSince := time.Since(updatedComment.Updated)
+		assert.LessOrEqual(t, updatedSince, time.Minute)
+
+		commentAfter := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: comment.ID, IssueID: issue.ID, Content: newCommentBody})
+		updatedSince = time.Since(commentAfter.UpdatedUnix.AsTime())
+		assert.LessOrEqual(t, updatedSince, time.Minute)
+	})
+
+	t.Run("WithUpdateDate", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		updatedAt := time.Now().Add(-time.Hour).Truncate(time.Second)
+
+		req := NewRequestWithJSON(t, "PATCH", urlStr, &api.EditIssueCommentOption{
+			Body:    newCommentBody,
+			Updated: &updatedAt,
+		}).AddTokenAuth(token)
+		resp := MakeRequest(t, req, http.StatusOK)
+		var updatedComment api.Comment
+		DecodeJSON(t, resp, &updatedComment)
+
+		// dates will be converted into the same tz, in order to compare them
+		utcTZ, _ := time.LoadLocation("UTC")
+		assert.Equal(t, updatedAt.In(utcTZ), updatedComment.Updated.In(utcTZ))
+		commentAfter := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: comment.ID, IssueID: issue.ID, Content: newCommentBody})
+		assert.Equal(t, updatedAt.In(utcTZ), commentAfter.UpdatedUnix.AsTime().In(utcTZ))
+	})
 }
 
 func TestAPIDeleteComment(t *testing.T) {

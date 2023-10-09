@@ -126,6 +126,7 @@ type Issue struct {
 	CreatedUnix timeutil.TimeStamp `xorm:"INDEX created"`
 	UpdatedUnix timeutil.TimeStamp `xorm:"INDEX updated"`
 	ClosedUnix  timeutil.TimeStamp `xorm:"INDEX"`
+	NoAutoTime  bool               `xorm:"-"`
 
 	Attachments      []*repo_model.Attachment `xorm:"-"`
 	Comments         CommentList              `xorm:"-"`

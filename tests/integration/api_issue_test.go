@@ -213,6 +213,157 @@ func TestAPIEditIssue(t *testing.T) {
 	assert.Equal(t, title, issueAfter.Title)
 }
 
+func TestAPIEditIssueAutoDate(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	issueBefore := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 13})
+	repoBefore := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: issueBefore.RepoID})
+	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repoBefore.OwnerID})
+	assert.NoError(t, issueBefore.LoadAttributes(db.DefaultContext))
+
+	t.Run("WithAutoDate", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// User2 is not owner, but can update the 'public' issue with auto date
+		session := loginUser(t, "user2")
+		token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteIssue)
+		urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d", owner.Name, repoBefore.Name, issueBefore.Index)
+
+		body := "new content!"
+		req := NewRequestWithJSON(t, "PATCH", urlStr, api.EditIssueOption{
+			Body: &body,
+		}).AddTokenAuth(token)
+		resp := MakeRequest(t, req, http.StatusCreated)
+		var apiIssue api.Issue
+		DecodeJSON(t, resp, &apiIssue)
+
+		// the execution of the API call supposedly lasted less than one minute
+		updatedSince := time.Since(apiIssue.Updated)
+		assert.LessOrEqual(t, updatedSince, time.Minute)
+
+		issueAfter := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: issueBefore.ID})
+		updatedSince = time.Since(issueAfter.UpdatedUnix.AsTime())
+		assert.LessOrEqual(t, updatedSince, time.Minute)
+	})
+
+	t.Run("WithUpdateDate", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// User1 is admin, and so can update the issue without auto date
+		session := loginUser(t, "user1")
+		token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteIssue)
+		urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d", owner.Name, repoBefore.Name, issueBefore.Index)
+
+		body := "new content, with updated time"
+		updatedAt := time.Now().Add(-time.Hour).Truncate(time.Second)
+		req := NewRequestWithJSON(t, "PATCH", urlStr, api.EditIssueOption{
+			Body:    &body,
+			Updated: &updatedAt,
+		}).AddTokenAuth(token)
+		resp := MakeRequest(t, req, http.StatusCreated)
+		var apiIssue api.Issue
+		DecodeJSON(t, resp, &apiIssue)
+
+		// dates are converted into the same tz, in order to compare them
+		utcTZ, _ := time.LoadLocation("UTC")
+		assert.Equal(t, updatedAt.In(utcTZ), apiIssue.Updated.In(utcTZ))
+
+		issueAfter := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: issueBefore.ID})
+		assert.Equal(t, updatedAt.In(utcTZ), issueAfter.UpdatedUnix.AsTime().In(utcTZ))
+	})
+
+	t.Run("WithoutPermission", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// User2 is not owner nor admin, and so can't update the issue without auto date
+		session := loginUser(t, "user2")
+		token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteIssue)
+		urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d", owner.Name, repoBefore.Name, issueBefore.Index)
+
+		body := "new content, with updated time"
+		updatedAt := time.Now().Add(-time.Hour).Truncate(time.Second)
+		req := NewRequestWithJSON(t, "PATCH", urlStr, api.EditIssueOption{
+			Body:    &body,
+			Updated: &updatedAt,
+		}).AddTokenAuth(token)
+		resp := MakeRequest(t, req, http.StatusForbidden)
+		var apiError api.APIError
+		DecodeJSON(t, resp, &apiError)
+
+		assert.Equal(t, "user needs to have admin or owner right", apiError.Message)
+	})
+}
+
+func TestAPIEditIssueMilestoneAutoDate(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	issueBefore := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 1})
+	repoBefore := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: issueBefore.RepoID})
+
+	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repoBefore.OwnerID})
+	assert.NoError(t, issueBefore.LoadAttributes(db.DefaultContext))
+
+	session := loginUser(t, owner.Name)
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteIssue)
+	urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d", owner.Name, repoBefore.Name, issueBefore.Index)
+
+	t.Run("WithAutoDate", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		milestone := int64(1)
+		req := NewRequestWithJSON(t, "PATCH", urlStr, api.EditIssueOption{
+			Milestone: &milestone,
+		}).AddTokenAuth(token)
+		MakeRequest(t, req, http.StatusCreated)
+
+		// the execution of the API call supposedly lasted less than one minute
+		milestoneAfter := unittest.AssertExistsAndLoadBean(t, &issues_model.Milestone{ID: milestone})
+		updatedSince := time.Since(milestoneAfter.UpdatedUnix.AsTime())
+		assert.LessOrEqual(t, updatedSince, time.Minute)
+	})
+
+	t.Run("WithPostUpdateDate", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// Note: the updated_unix field of the test Milestones is set to NULL
+		// Hence, any date is higher than the Milestone's updated date
+		updatedAt := time.Now().Add(-time.Hour).Truncate(time.Second)
+		milestone := int64(2)
+		req := NewRequestWithJSON(t, "PATCH", urlStr, api.EditIssueOption{
+			Milestone: &milestone,
+			Updated:   &updatedAt,
+		}).AddTokenAuth(token)
+		MakeRequest(t, req, http.StatusCreated)
+
+		// the milestone date should be set to 'updatedAt'
+		// dates are converted into the same tz, in order to compare them
+		utcTZ, _ := time.LoadLocation("UTC")
+		milestoneAfter := unittest.AssertExistsAndLoadBean(t, &issues_model.Milestone{ID: milestone})
+		assert.Equal(t, updatedAt.In(utcTZ), milestoneAfter.UpdatedUnix.AsTime().In(utcTZ))
+	})
+
+	t.Run("WithPastUpdateDate", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// Note: This Milestone's updated_unix has been set to Now() by the first subtest
+		milestone := int64(1)
+		milestoneBefore := unittest.AssertExistsAndLoadBean(t, &issues_model.Milestone{ID: milestone})
+
+		updatedAt := time.Now().Add(-time.Hour).Truncate(time.Second)
+		req := NewRequestWithJSON(t, "PATCH", urlStr, api.EditIssueOption{
+			Milestone: &milestone,
+			Updated:   &updatedAt,
+		}).AddTokenAuth(token)
+		MakeRequest(t, req, http.StatusCreated)
+
+		// the milestone date should not change
+		// dates are converted into the same tz, in order to compare them
+		utcTZ, _ := time.LoadLocation("UTC")
+		milestoneAfter := unittest.AssertExistsAndLoadBean(t, &issues_model.Milestone{ID: milestone})
+		assert.Equal(t, milestoneAfter.UpdatedUnix.AsTime().In(utcTZ), milestoneBefore.UpdatedUnix.AsTime().In(utcTZ))
+	})
+}
+
 func TestAPISearchIssues(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 

@@ -5,6 +5,7 @@ package repo
 
 import (
 	"net/http"
+	"time"
 
 	issues_model "code.gitea.io/gitea/models/issues"
 	repo_model "code.gitea.io/gitea/models/repo"
@@ -141,6 +142,11 @@ func CreateIssueAttachment(ctx *context.APIContext) {
 	//   description: name of the attachment
 	//   type: string
 	//   required: false
+	// - name: updated_at
+	//   in: query
+	//   description: time of the attachment's creation. This is a timestamp in RFC 3339 format
+	//   type: string
+	//   format: date-time
 	// - name: attachment
 	//   in: formData
 	//   description: attachment to upload
@@ -165,6 +171,20 @@ func CreateIssueAttachment(ctx *context.APIContext) {
 		return
 	}
 
+	updatedAt := ctx.Req.FormValue("updated_at")
+	if len(updatedAt) != 0 {
+		updated, err := time.Parse(time.RFC3339, updatedAt)
+		if err != nil {
+			ctx.Error(http.StatusInternalServerError, "time.Parse", err)
+			return
+		}
+		err = issue_service.SetIssueUpdateDate(ctx, issue, &updated, ctx.Doer)
+		if err != nil {
+			ctx.Error(http.StatusForbidden, "SetIssueUpdateDate", err)
+			return
+		}
+	}
+
 	// Get uploaded file from request
 	file, header, err := ctx.Req.FormFile("attachment")
 	if err != nil {
@@ -179,10 +199,12 @@ func CreateIssueAttachment(ctx *context.APIContext) {
 	}
 
 	attachment, err := attachment.UploadAttachment(ctx, file, setting.Attachment.AllowedTypes, header.Size, &repo_model.Attachment{
-		Name:       filename,
-		UploaderID: ctx.Doer.ID,
-		RepoID:     ctx.Repo.Repository.ID,
-		IssueID:    issue.ID,
+		Name:        filename,
+		UploaderID:  ctx.Doer.ID,
+		RepoID:      ctx.Repo.Repository.ID,
+		IssueID:     issue.ID,
+		NoAutoTime:  issue.NoAutoTime,
+		CreatedUnix: issue.UpdatedUnix,
 	})
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "UploadAttachment", err)

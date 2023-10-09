@@ -48,6 +48,9 @@ type swaggerParameterBodies struct {
 	IssueLabelsOption api.IssueLabelsOption
 
 	// in:body
+	DeleteLabelsOption api.DeleteLabelsOption
+
+	// in:body
 	CreateKeyOption api.CreateKeyOption
 
 	// in:body

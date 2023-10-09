@@ -6532,6 +6532,13 @@
             "in": "query"
           },
           {
+            "type": "string",
+            "format": "date-time",
+            "description": "time of the attachment's creation. This is a timestamp in RFC 3339 format",
+            "name": "updated_at",
+            "in": "query"
+          },
+          {
             "type": "file",
             "description": "attachment to upload",
             "name": "attachment",
@@ -7148,6 +7155,13 @@
             "type": "string",
             "description": "name of the attachment",
             "name": "name",
+            "in": "query"
+          },
+          {
+            "type": "string",
+            "format": "date-time",
+            "description": "time of the attachment's creation. This is a timestamp in RFC 3339 format",
+            "name": "updated_at",
             "in": "query"
           },
           {
@@ -8125,6 +8139,13 @@
             "name": "index",
             "in": "path",
             "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/DeleteLabelsOption"
+            }
           }
         ],
         "responses": {
@@ -8180,6 +8201,13 @@
             "name": "id",
             "in": "path",
             "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/DeleteLabelsOption"
+            }
           }
         ],
         "responses": {
@@ -17924,6 +17952,11 @@
         "body": {
           "type": "string",
           "x-go-name": "Body"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Updated"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
@@ -18684,6 +18717,18 @@
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
+    "DeleteLabelsOption": {
+      "description": "DeleteLabelOption options for deleting a label",
+      "type": "object",
+      "properties": {
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Updated"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
     "DeployKey": {
       "description": "DeployKey a deploy key",
       "type": "object",
@@ -18941,6 +18986,11 @@
         "body": {
           "type": "string",
           "x-go-name": "Body"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Updated"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
@@ -18990,6 +19040,11 @@
         "unset_due_date": {
           "type": "boolean",
           "x-go-name": "RemoveDeadline"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Updated"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
@@ -20404,6 +20459,11 @@
             "format": "int64"
           },
           "x-go-name": "Labels"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time",
+          "x-go-name": "Updated"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"

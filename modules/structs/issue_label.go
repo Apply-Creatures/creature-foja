@@ -4,6 +4,10 @@
 
 package structs
 
+import (
+	"time"
+)
+
 // Label a label to an issue or a pr
 // swagger:model
 type Label struct {
@@ -45,10 +49,18 @@ type EditLabelOption struct {
 	IsArchived *bool `json:"is_archived"`
 }
 
+// DeleteLabelOption options for deleting a label
+type DeleteLabelsOption struct {
+	// swagger:strfmt date-time
+	Updated *time.Time `json:"updated_at"`
+}
+
 // IssueLabelsOption a collection of labels
 type IssueLabelsOption struct {
 	// list of label IDs
 	Labels []int64 `json:"labels"`
+	// swagger:strfmt date-time
+	Updated *time.Time `json:"updated_at"`
 }
 
 // LabelTemplate info of a Label template
