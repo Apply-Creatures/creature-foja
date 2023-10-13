@@ -21,6 +21,7 @@ import (
 	"code.gitea.io/gitea/modules/util"
 
 	"github.com/gorilla/feeds"
+	"github.com/jaytaylor/html2text"
 )
 
 func toBranchLink(ctx *context.Context, act *activities_model.Action) string {
@@ -240,8 +241,15 @@ func feedActionsToFeedItems(ctx *context.Context, actions activities_model.Actio
 			content = desc
 		}
 
+		// It's a common practice for feed generators to use plain text titles.
+		// See https://codeberg.org/forgejo/forgejo/pulls/1595
+		plainTitle, err := html2text.FromString(title, html2text.Options{OmitLinks: true})
+		if err != nil {
+			return nil, err
+		}
+
 		items = append(items, &feeds.Item{
-			Title:       title,
+			Title:       plainTitle,
 			Link:        link,
 			Description: desc,
 			IsPermaLink: "false",
