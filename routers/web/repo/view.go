@@ -794,12 +794,19 @@ func Home(ctx *context.Context) {
 	if setting.Other.EnableFeed {
 		isFeed, _, showFeedType := feed.GetFeedType(ctx.Params(":reponame"), ctx.Req)
 		if isFeed {
-			switch {
-			case ctx.Link == fmt.Sprintf("%s.%s", ctx.Repo.RepoLink, showFeedType):
+			if ctx.Link == fmt.Sprintf("%s.%s", ctx.Repo.RepoLink, showFeedType) {
 				feed.ShowRepoFeed(ctx, ctx.Repo.Repository, showFeedType)
-			case ctx.Repo.TreePath == "":
+				return
+			}
+
+			if ctx.Repo.Repository.IsEmpty {
+				ctx.NotFound("MustBeNotEmpty", nil)
+				return
+			}
+
+			if ctx.Repo.TreePath == "" {
 				feed.ShowBranchFeed(ctx, ctx.Repo.Repository, showFeedType)
-			case ctx.Repo.TreePath != "":
+			} else {
 				feed.ShowFileFeed(ctx, ctx.Repo.Repository, showFeedType)
 			}
 			return
