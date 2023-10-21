@@ -22,6 +22,7 @@ GO ?= go
 SHASUM ?= shasum -a 256
 HAS_GO := $(shell hash $(GO) > /dev/null 2>&1 && echo yes)
 COMMA := ,
+DIFF ?= diff --unified
 
 XGO_VERSION := go-1.21.x
 
@@ -36,6 +37,7 @@ XGO_PACKAGE ?= src.techknowlogick.com/xgo@latest
 GO_LICENSES_PACKAGE ?= github.com/google/go-licenses@v1.6.0
 GOVULNCHECK_PACKAGE ?= golang.org/x/vuln/cmd/govulncheck@v1.0.3
 ACTIONLINT_PACKAGE ?= github.com/rhysd/actionlint/cmd/actionlint@v1.6.26
+DEADCODE_PACKAGE ?= golang.org/x/tools/internal/cmd/deadcode@v0.14.0
 
 DOCKER_IMAGE ?= gitea/gitea
 DOCKER_TAG ?= latest
@@ -411,10 +413,17 @@ lint-md: node_modules
 .PHONY: lint-go
 lint-go:
 	$(GO) run $(GOLANGCI_LINT_PACKAGE) run $(GOLANGCI_LINT_ARGS)
+	$(GO) run $(DEADCODE_PACKAGE) -generated=false -test code.gitea.io/gitea > .cur-deadcode-out
+	@$(DIFF) .deadcode-out .cur-deadcode-out; \
+	if [ $$? -eq 1 ]; then \
+		echo "Please run 'make lint-go-fix' and commit the result"; \
+		exit 1; \
+	fi
 
 .PHONY: lint-go-fix
 lint-go-fix:
 	$(GO) run $(GOLANGCI_LINT_PACKAGE) run $(GOLANGCI_LINT_ARGS) --fix
+	$(GO) run $(DEADCODE_PACKAGE) -generated=false -test code.gitea.io/gitea > .deadcode-out
 
 # workaround step for the lint-go-windows CI task because 'go run' can not
 # have distinct GOOS/GOARCH for its build and run steps
