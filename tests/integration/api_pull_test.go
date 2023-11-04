@@ -209,6 +209,29 @@ func TestAPIEditPull(t *testing.T) {
 	MakeRequest(t, req, http.StatusNotFound)
 }
 
+func TestAPIForkDifferentName(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	// Step 1: get a repo and a user that can fork this repo
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 5})
+
+	session := loginUser(t, user.Name)
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser)
+
+	// Step 2: fork this repo with another name
+	forkName := "myfork"
+	req := NewRequestWithJSON(t, "POST", fmt.Sprintf("/api/v1/repos/%s/%s/forks", owner.Name, repo.Name),
+		&api.CreateForkOption{Name: &forkName}).AddTokenAuth(token)
+	MakeRequest(t, req, http.StatusAccepted)
+
+	// Step 3: make a PR onto the original repo, it should succeed
+	req = NewRequestWithJSON(t, "POST", fmt.Sprintf("/api/v1/repos/%s/%s/pulls?state=all", owner.Name, repo.Name),
+		&api.CreatePullRequestOption{Head: user.Name + ":master", Base: "master", Title: "hi"}).AddTokenAuth(token)
+	MakeRequest(t, req, http.StatusCreated)
+}
+
 func doAPIGetPullFiles(ctx APITestContext, pr *api.PullRequest, callback func(*testing.T, []*api.ChangedFile)) func(*testing.T) {
 	return func(t *testing.T) {
 		req := NewRequest(t, http.MethodGet, fmt.Sprintf("/api/v1/repos/%s/%s/pulls/%d/files", ctx.Username, ctx.Reponame, pr.Index)).
