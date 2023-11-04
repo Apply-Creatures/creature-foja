@@ -6,6 +6,8 @@ package pull
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
 	"code.gitea.io/gitea/models/db"
 	git_model "code.gitea.io/gitea/models/git"
@@ -16,7 +18,6 @@ import (
 	"code.gitea.io/gitea/modules/structs"
 
 	"github.com/gobwas/glob"
-	"github.com/pkg/errors"
 )
 
 // MergeRequiredContextsCommitStatus returns a commit status state for given required contexts
@@ -96,7 +97,7 @@ func IsCommitStatusContextSuccess(commitStatuses []*git_model.CommitStatus, requ
 func IsPullCommitStatusPass(ctx context.Context, pr *issues_model.PullRequest) (bool, error) {
 	pb, err := git_model.GetFirstMatchProtectedBranchRule(ctx, pr.BaseRepoID, pr.BaseBranch)
 	if err != nil {
-		return false, errors.Wrap(err, "GetLatestCommitStatus")
+		return false, fmt.Errorf("GetFirstMatchProtectedBranchRule: %w", err)
 	}
 	if pb == nil || !pb.EnableStatusCheck {
 		return true, nil
@@ -113,21 +114,21 @@ func IsPullCommitStatusPass(ctx context.Context, pr *issues_model.PullRequest) (
 func GetPullRequestCommitStatusState(ctx context.Context, pr *issues_model.PullRequest) (structs.CommitStatusState, error) {
 	// Ensure HeadRepo is loaded
 	if err := pr.LoadHeadRepo(ctx); err != nil {
-		return "", errors.Wrap(err, "LoadHeadRepo")
+		return "", fmt.Errorf("LoadHeadRepo: %w", err)
 	}
 
 	// check if all required status checks are successful
 	headGitRepo, closer, err := gitrepo.RepositoryFromContextOrOpen(ctx, pr.HeadRepo)
 	if err != nil {
-		return "", errors.Wrap(err, "OpenRepository")
+		return "", fmt.Errorf("RepositoryFromContextOrOpen: %w", err)
 	}
 	defer closer.Close()
 
 	if pr.Flow == issues_model.PullRequestFlowGithub && !headGitRepo.IsBranchExist(pr.HeadBranch) {
-		return "", errors.New("Head branch does not exist, can not merge")
+		return "", errors.New("head branch does not exist, can not merge")
 	}
 	if pr.Flow == issues_model.PullRequestFlowAGit && !git.IsReferenceExist(ctx, headGitRepo.Path, pr.GetGitRefName()) {
-		return "", errors.New("Head branch does not exist, can not merge")
+		return "", errors.New("head branch does not exist, can not merge")
 	}
 
 	var sha string
@@ -141,17 +142,17 @@ func GetPullRequestCommitStatusState(ctx context.Context, pr *issues_model.PullR
 	}
 
 	if err := pr.LoadBaseRepo(ctx); err != nil {
-		return "", errors.Wrap(err, "LoadBaseRepo")
+		return "", fmt.Errorf("LoadBaseRepo: %w", err)
 	}
 
 	commitStatuses, _, err := git_model.GetLatestCommitStatus(ctx, pr.BaseRepo.ID, sha, db.ListOptions{ListAll: true})
 	if err != nil {
-		return "", errors.Wrap(err, "GetLatestCommitStatus")
+		return "", fmt.Errorf("GetLatestCommitStatus: %w", err)
 	}
 
 	pb, err := git_model.GetFirstMatchProtectedBranchRule(ctx, pr.BaseRepoID, pr.BaseBranch)
 	if err != nil {
-		return "", errors.Wrap(err, "LoadProtectedBranch")
+		return "", fmt.Errorf("GetFirstMatchProtectedBranchRule: %w", err)
 	}
 	var requiredContexts []string
 	if pb != nil {
