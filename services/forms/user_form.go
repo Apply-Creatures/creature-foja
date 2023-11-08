@@ -277,7 +277,7 @@ func (f *AddEmailForm) Validate(req *http.Request, errs binding.Errors) binding.
 
 // UpdateThemeForm form for updating a users' theme
 type UpdateThemeForm struct {
-	Theme string `binding:"Required;MaxSize(30)"`
+	Theme string `binding:"Required;MaxSize(64)"`
 }
 
 // Validate validates the field
