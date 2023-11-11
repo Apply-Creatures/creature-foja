@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"testing"
 
-	"code.gitea.io/gitea/routers/api/forgejo/v1"
+	v1 "code.gitea.io/gitea/routers/api/forgejo/v1"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
@@ -21,5 +21,5 @@ func TestAPIForgejoVersion(t *testing.T) {
 
 	var version v1.Version
 	DecodeJSON(t, resp, &version)
-	assert.Equal(t, "development", *version.Version)
+	assert.Equal(t, "1.0.0", *version.Version)
 }
