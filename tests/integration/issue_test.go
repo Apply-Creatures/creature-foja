@@ -227,6 +227,56 @@ func TestIssueCommentDelete(t *testing.T) {
 	unittest.AssertNotExistsBean(t, &issues_model.Comment{ID: commentID})
 }
 
+func TestIssueCommentAttachment(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	const repoURL = "user2/repo1"
+	const content = "Test comment 4"
+	const status = ""
+	session := loginUser(t, "user2")
+	issueURL := testNewIssue(t, session, "user2", "repo1", "Title", "Description")
+
+	req := NewRequest(t, "GET", issueURL)
+	resp := session.MakeRequest(t, req, http.StatusOK)
+
+	htmlDoc := NewHTMLParser(t, resp.Body)
+	link, exists := htmlDoc.doc.Find("#comment-form").Attr("action")
+	assert.True(t, exists, "The template has changed")
+
+	uuid := createAttachment(t, session, repoURL, "image.png", generateImg(), http.StatusOK)
+
+	commentCount := htmlDoc.doc.Find(".comment-list .comment .render-content").Length()
+
+	req = NewRequestWithValues(t, "POST", link, map[string]string{
+		"_csrf":   htmlDoc.GetCSRF(),
+		"content": content,
+		"status":  status,
+		"files":   uuid,
+	})
+	resp = session.MakeRequest(t, req, http.StatusOK)
+
+	req = NewRequest(t, "GET", test.RedirectURL(resp))
+	resp = session.MakeRequest(t, req, http.StatusOK)
+
+	htmlDoc = NewHTMLParser(t, resp.Body)
+
+	val := htmlDoc.doc.Find(".comment-list .comment .render-content p").Eq(commentCount).Text()
+	assert.Equal(t, content, val)
+
+	idAttr, has := htmlDoc.doc.Find(".comment-list .comment").Eq(commentCount).Attr("id")
+	idStr := idAttr[strings.LastIndexByte(idAttr, '-')+1:]
+	assert.True(t, has)
+	id, err := strconv.Atoi(idStr)
+	assert.NoError(t, err)
+	assert.NotEqual(t, 0, id)
+
+	req = NewRequest(t, "GET", fmt.Sprintf("/%s/%s/comments/%d/attachments", "user2", "repo1", id))
+	session.MakeRequest(t, req, http.StatusOK)
+
+	// Using the ID of a comment that does not belong to the repository must fail
+	req = NewRequest(t, "GET", fmt.Sprintf("/%s/%s/comments/%d/attachments", "user5", "repo4", id))
+	session.MakeRequest(t, req, http.StatusNotFound)
+}
+
 func TestIssueCommentUpdate(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	session := loginUser(t, "user2")
