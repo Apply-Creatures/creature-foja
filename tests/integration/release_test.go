@@ -93,6 +93,44 @@ func TestCreateRelease(t *testing.T) {
 	checkLatestReleaseAndCount(t, session, "/user2/repo1", "v0.0.1", translation.NewLocale("en-US").Tr("repo.release.stable"), 4)
 }
 
+func TestDeleteRelease(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 57, OwnerName: "user2", LowerName: "repo-release"})
+	release := unittest.AssertExistsAndLoadBean(t, &repo_model.Release{TagName: "v2.0"})
+	assert.False(t, release.IsTag)
+
+	// Using the ID of a comment that does not belong to the repository must fail
+	session5 := loginUser(t, "user5")
+	otherRepo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{OwnerName: "user5", LowerName: "repo4"})
+
+	req := NewRequestWithValues(t, "POST", fmt.Sprintf("%s/releases/delete?id=%d", otherRepo.Link(), release.ID), map[string]string{
+		"_csrf": GetCSRF(t, session5, otherRepo.Link()),
+	})
+	session5.MakeRequest(t, req, http.StatusNotFound)
+
+	session := loginUser(t, "user2")
+	req = NewRequestWithValues(t, "POST", fmt.Sprintf("%s/releases/delete?id=%d", repo.Link(), release.ID), map[string]string{
+		"_csrf": GetCSRF(t, session, repo.Link()),
+	})
+	session.MakeRequest(t, req, http.StatusOK)
+	release = unittest.AssertExistsAndLoadBean(t, &repo_model.Release{ID: release.ID})
+
+	if assert.True(t, release.IsTag) {
+		req = NewRequestWithValues(t, "POST", fmt.Sprintf("%s/tags/delete?id=%d", otherRepo.Link(), release.ID), map[string]string{
+			"_csrf": GetCSRF(t, session5, otherRepo.Link()),
+		})
+		session5.MakeRequest(t, req, http.StatusNotFound)
+
+		req = NewRequestWithValues(t, "POST", fmt.Sprintf("%s/tags/delete?id=%d", repo.Link(), release.ID), map[string]string{
+			"_csrf": GetCSRF(t, session, repo.Link()),
+		})
+		session.MakeRequest(t, req, http.StatusOK)
+
+		unittest.AssertNotExistsBean(t, &repo_model.Release{ID: release.ID})
+	}
+}
+
 func TestCreateReleasePreRelease(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
