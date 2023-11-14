@@ -1231,7 +1231,7 @@ func registerRoutes(m *web.Route) {
 					Post(web.Bind(forms.UploadRepoFileForm{}), repo.UploadFilePost)
 				m.Combo("/_diffpatch/*").Get(repo.NewDiffPatch).
 					Post(web.Bind(forms.EditRepoFileForm{}), repo.NewDiffPatchPost)
-				m.Combo("/_cherrypick/{sha:([a-f0-9]{7,64})}/*").Get(repo.CherryPick).
+				m.Combo("/_cherrypick/{sha:([a-f0-9]{4,64})}/*").Get(repo.CherryPick).
 					Post(web.Bind(forms.CherryPickForm{}), repo.CherryPickPost)
 			}, repo.MustBeEditable)
 			m.Group("", func() {
@@ -1373,8 +1373,8 @@ func registerRoutes(m *web.Route) {
 			m.Combo("/*").
 				Get(repo.Wiki).
 				Post(context.RepoMustNotBeArchived(), reqSignIn, reqRepoWikiWriter, web.Bind(forms.NewWikiForm{}), repo.WikiPost)
-			m.Get("/commit/{sha:[a-f0-9]{7,64}}", repo.SetEditorconfigIfExists, repo.SetDiffViewStyle, repo.SetWhitespaceBehavior, repo.Diff)
-			m.Get("/commit/{sha:[a-f0-9]{7,64}}.{ext:patch|diff}", repo.RawDiff)
+			m.Get("/commit/{sha:[a-f0-9]{4,64}}", repo.SetEditorconfigIfExists, repo.SetDiffViewStyle, repo.SetWhitespaceBehavior, repo.Diff)
+			m.Get("/commit/{sha:[a-f0-9]{4,64}}.{ext:patch|diff}", repo.RawDiff)
 		}, repo.MustEnableWiki, func(ctx *context.Context) {
 			ctx.Data["PageIsWiki"] = true
 			ctx.Data["CloneButtonOriginLink"] = ctx.Repo.Repository.WikiCloneLink()
@@ -1434,7 +1434,7 @@ func registerRoutes(m *web.Route) {
 			m.Group("/commits", func() {
 				m.Get("", context.RepoRef(), repo.SetWhitespaceBehavior, repo.GetPullDiffStats, repo.ViewPullCommits)
 				m.Get("/list", context.RepoRef(), repo.GetPullCommits)
-				m.Get("/{sha:[a-f0-9]{7,40}}", context.RepoRef(), repo.SetEditorconfigIfExists, repo.SetDiffViewStyle, repo.SetWhitespaceBehavior, repo.SetShowOutdatedComments, repo.ViewPullFilesForSingleCommit)
+				m.Get("/{sha:[a-f0-9]{4,40}}", context.RepoRef(), repo.SetEditorconfigIfExists, repo.SetDiffViewStyle, repo.SetWhitespaceBehavior, repo.SetShowOutdatedComments, repo.ViewPullFilesForSingleCommit)
 			})
 			m.Post("/merge", context.RepoMustNotBeArchived(), web.Bind(forms.MergePullRequestForm{}), repo.MergePullRequest)
 			m.Post("/cancel_auto_merge", context.RepoMustNotBeArchived(), repo.CancelAutoMergePullRequest)
@@ -1443,8 +1443,8 @@ func registerRoutes(m *web.Route) {
 			m.Post("/cleanup", context.RepoMustNotBeArchived(), context.RepoRef(), repo.CleanUpPullRequest)
 			m.Group("/files", func() {
 				m.Get("", context.RepoRef(), repo.SetEditorconfigIfExists, repo.SetDiffViewStyle, repo.SetWhitespaceBehavior, repo.SetShowOutdatedComments, repo.ViewPullFilesForAllCommitsOfPr)
-				m.Get("/{sha:[a-f0-9]{7,40}}", context.RepoRef(), repo.SetEditorconfigIfExists, repo.SetDiffViewStyle, repo.SetWhitespaceBehavior, repo.SetShowOutdatedComments, repo.ViewPullFilesStartingFromCommit)
-				m.Get("/{shaFrom:[a-f0-9]{7,40}}..{shaTo:[a-f0-9]{7,40}}", context.RepoRef(), repo.SetEditorconfigIfExists, repo.SetDiffViewStyle, repo.SetWhitespaceBehavior, repo.SetShowOutdatedComments, repo.ViewPullFilesForRange)
+				m.Get("/{sha:[a-f0-9]{4,40}}", context.RepoRef(), repo.SetEditorconfigIfExists, repo.SetDiffViewStyle, repo.SetWhitespaceBehavior, repo.SetShowOutdatedComments, repo.ViewPullFilesStartingFromCommit)
+				m.Get("/{shaFrom:[a-f0-9]{4,40}}..{shaTo:[a-f0-9]{4,40}}", context.RepoRef(), repo.SetEditorconfigIfExists, repo.SetDiffViewStyle, repo.SetWhitespaceBehavior, repo.SetShowOutdatedComments, repo.ViewPullFilesForRange)
 				m.Group("/reviews", func() {
 					m.Get("/new_comment", repo.RenderNewCodeCommentForm)
 					m.Post("/comments", web.Bind(forms.CodeCommentForm{}), repo.SetShowOutdatedComments, repo.CreateCodeComment)
@@ -1494,9 +1494,9 @@ func registerRoutes(m *web.Route) {
 
 		m.Group("", func() {
 			m.Get("/graph", repo.Graph)
-			m.Get("/commit/{sha:([a-f0-9]{7,64})$}", repo.SetEditorconfigIfExists, repo.SetDiffViewStyle, repo.SetWhitespaceBehavior, repo.Diff)
-			m.Get("/commit/{sha:([a-f0-9]{7,64})$}/load-branches-and-tags", repo.LoadBranchesAndTags)
-			m.Get("/cherry-pick/{sha:([a-f0-9]{7,64})$}", repo.SetEditorconfigIfExists, repo.CherryPick)
+			m.Get("/commit/{sha:([a-f0-9]{4,64})$}", repo.SetEditorconfigIfExists, repo.SetDiffViewStyle, repo.SetWhitespaceBehavior, repo.Diff)
+			m.Get("/commit/{sha:([a-f0-9]{4,64})$}/load-branches-and-tags", repo.LoadBranchesAndTags)
+			m.Get("/cherry-pick/{sha:([a-f0-9]{4,64})$}", repo.SetEditorconfigIfExists, repo.CherryPick)
 		}, repo.MustBeNotEmpty, context.RepoRef(), reqRepoCodeReader)
 
 		m.Get("/rss/branch/*", repo.MustBeNotEmpty, context.RepoRefByType(context.RepoRefBranch), feedEnabled, feed.RenderBranchFeed("rss"))
@@ -1513,7 +1513,7 @@ func registerRoutes(m *web.Route) {
 		m.Group("", func() {
 			m.Get("/forks", repo.Forks)
 		}, context.RepoRef(), reqRepoCodeReader)
-		m.Get("/commit/{sha:([a-f0-9]{7,64})}.{ext:patch|diff}", repo.MustBeNotEmpty, reqRepoCodeReader, repo.RawDiff)
+		m.Get("/commit/{sha:([a-f0-9]{4,64})}.{ext:patch|diff}", repo.MustBeNotEmpty, reqRepoCodeReader, repo.RawDiff)
 	}, ignSignIn, context.RepoAssignment, context.UnitTypes())
 
 	m.Post("/{username}/{reponame}/lastcommit/*", ignSignInAndCsrf, context.RepoAssignment, context.UnitTypes(), context.RepoRefByType(context.RepoRefCommit), reqRepoCodeReader, repo.LastCommit)

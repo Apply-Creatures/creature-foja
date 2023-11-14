@@ -592,3 +592,43 @@ func TestViewCommit(t *testing.T) {
 	resp := MakeRequest(t, req, http.StatusNotFound)
 	assert.True(t, test.IsNormalPageCompleted(resp.Body.String()), "non-existing commit should render 404 page")
 }
+
+func TestCommitView(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	t.Run("Non-existent commit", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", "/user2/repo1/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+		MakeRequest(t, req, http.StatusNotFound)
+	})
+
+	t.Run("Too short commit ID", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", "/user2/repo1/commit/65f")
+		MakeRequest(t, req, http.StatusNotFound)
+	})
+
+	t.Run("Short commit ID", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", "/user2/repo1/commit/65f1")
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		doc := NewHTMLParser(t, resp.Body)
+		commitTitle := doc.Find(".commit-summary").Text()
+		assert.Contains(t, commitTitle, "Initial commit")
+	})
+
+	t.Run("Full commit ID", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", "/user2/repo1/commit/65f1bf27bc3bf70f64657658635e66094edbcb4d")
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		doc := NewHTMLParser(t, resp.Body)
+		commitTitle := doc.Find(".commit-summary").Text()
+		assert.Contains(t, commitTitle, "Initial commit")
+	})
+}
