@@ -50,10 +50,11 @@ func TestEmptyRepoAddFile(t *testing.T) {
 	doc := NewHTMLParser(t, resp.Body).Find(`input[name="commit_choice"]`)
 	assert.Empty(t, doc.AttrOr("checked", "_no_"))
 	req = NewRequestWithValues(t, "POST", "/user30/empty/_new/"+setting.Repository.DefaultBranch, map[string]string{
-		"_csrf":         GetCSRF(t, session, "/user/settings"),
-		"commit_choice": "direct",
-		"tree_path":     "test-file.md",
-		"content":       "newly-added-test-file",
+		"_csrf":          GetCSRF(t, session, "/user/settings"),
+		"commit_choice":  "direct",
+		"tree_path":      "test-file.md",
+		"content":        "newly-added-test-file",
+		"commit_mail_id": "32",
 	})
 
 	resp = session.MakeRequest(t, req, http.StatusSeeOther)

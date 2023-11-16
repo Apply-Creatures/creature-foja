@@ -123,6 +123,8 @@ func GetAuthorAndCommitterUsers(author, committer *IdentityOptions, doer *user_m
 			if committer.Name != "" {
 				committerUser.FullName = committer.Name
 			}
+			// Use the provided email and not revert to placeholder mail.
+			committerUser.KeepEmailPrivate = false
 		} else {
 			committerUser = &user_model.User{
 				FullName: committer.Name,
@@ -136,6 +138,8 @@ func GetAuthorAndCommitterUsers(author, committer *IdentityOptions, doer *user_m
 			if authorUser.Name != "" {
 				authorUser.FullName = author.Name
 			}
+			// Use the provided email and not revert to placeholder mail.
+			authorUser.KeepEmailPrivate = false
 		} else {
 			authorUser = &user_model.User{
 				FullName: author.Name,

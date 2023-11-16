@@ -231,6 +231,25 @@ func GetEmailAddresses(ctx context.Context, uid int64) ([]*EmailAddress, error) 
 	return emails, nil
 }
 
+type ActivatedEmailAddress struct {
+	ID    int64
+	Email string
+}
+
+func GetActivatedEmailAddresses(ctx context.Context, uid int64) ([]*ActivatedEmailAddress, error) {
+	emails := make([]*ActivatedEmailAddress, 0, 8)
+	if err := db.GetEngine(ctx).
+		Table("email_address").
+		Select("id, email").
+		Where("uid=?", uid).
+		And("is_activated=?", true).
+		Asc("id").
+		Find(&emails); err != nil {
+		return nil, err
+	}
+	return emails, nil
+}
+
 // GetEmailAddressByID gets a user's email address by ID
 func GetEmailAddressByID(ctx context.Context, uid, id int64) (*EmailAddress, error) {
 	// User ID is required for security reasons

@@ -66,6 +66,14 @@
 			</div>
 			{{end}}
 		</div>
+		<div class="field {{if .Err_CommitMailID}}error{{end}}">
+			<label for="commit_mail_id">Commit email</label>
+			<select class="ui selection dropdown" name="commit_mail_id">
+			{{range .CommitMails}}
+				<option{{if eq $.DefaultCommitMail .Email}} selected="selected"{{end}} value="{{.ID}}">{{.Email}}</option>
+			{{end}}
+			</select>
+		</div>
 	</div>
 	<button id="commit-button" type="submit" class="ui primary button">
 		{{if eq .commit_choice "commit-to-new-branch"}}{{ctx.Locale.Tr "repo.editor.propose_file_change"}}{{else}}{{ctx.Locale.Tr "repo.editor.commit_changes"}}{{end}}
