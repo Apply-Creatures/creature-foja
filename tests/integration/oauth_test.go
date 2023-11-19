@@ -469,3 +469,30 @@ func TestSignInOAuthCallbackSignIn(t *testing.T) {
 	userAfterLogin := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: userGitLab.ID})
 	assert.Greater(t, userAfterLogin.LastLoginUnix, userGitLab.LastLoginUnix)
 }
+
+func TestSignUpViaOAuthWithMissingFields(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	// enable auto-creation of accounts via OAuth2
+	enableAutoRegistration := setting.OAuth2Client.EnableAutoRegistration
+	setting.OAuth2Client.EnableAutoRegistration = true
+	defer func() {
+		setting.OAuth2Client.EnableAutoRegistration = enableAutoRegistration
+	}()
+
+	// OAuth2 authentication source GitLab
+	gitlabName := "gitlab"
+	addAuthSource(t, authSourcePayloadGitLabCustom(gitlabName))
+	userGitLabUserID := "5678"
+
+	// The Goth User returned by the oauth2 integration is missing
+	// an email address, so we won't be able to automatically create a local account for it.
+	defer mockCompleteUserAuth(func(res http.ResponseWriter, req *http.Request) (goth.User, error) {
+		return goth.User{
+			Provider: gitlabName,
+			UserID:   userGitLabUserID,
+		}, nil
+	})()
+	req := NewRequest(t, "GET", fmt.Sprintf("/user/oauth2/%s/callback?code=XYZ&state=XYZ", gitlabName))
+	resp := MakeRequest(t, req, http.StatusSeeOther)
+	assert.Equal(t, test.RedirectURL(resp), "/user/link_account")
+}
