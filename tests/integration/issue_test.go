@@ -579,6 +579,48 @@ func TestGetIssueInfo(t *testing.T) {
 	assert.EqualValues(t, issue.ID, apiIssue.ID)
 }
 
+func TestIssuePinMove(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	session := loginUser(t, "user2")
+	issueURL, issue := testIssueWithBean(t, "user2", 1, "Title", "Content")
+	assert.EqualValues(t, 0, issue.PinOrder)
+
+	req := NewRequestWithValues(t, "POST", fmt.Sprintf("%s/pin", issueURL), map[string]string{
+		"_csrf": GetCSRF(t, session, issueURL),
+	})
+	session.MakeRequest(t, req, http.StatusOK)
+	issue = unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: issue.ID})
+
+	position := 1
+	assert.EqualValues(t, position, issue.PinOrder)
+
+	newPosition := 2
+
+	// Using the ID of an issue that does not belong to the repository must fail
+	{
+		session5 := loginUser(t, "user5")
+		movePinURL := "/user5/repo4/issues/move_pin?_csrf=" + GetCSRF(t, session5, issueURL)
+		req = NewRequestWithJSON(t, "POST", movePinURL, map[string]any{
+			"id":       issue.ID,
+			"position": newPosition,
+		})
+		session5.MakeRequest(t, req, http.StatusNotFound)
+
+		issue = unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: issue.ID})
+		assert.EqualValues(t, position, issue.PinOrder)
+	}
+
+	movePinURL := issueURL[:strings.LastIndexByte(issueURL, '/')] + "/move_pin?_csrf=" + GetCSRF(t, session, issueURL)
+	req = NewRequestWithJSON(t, "POST", movePinURL, map[string]any{
+		"id":       issue.ID,
+		"position": newPosition,
+	})
+	session.MakeRequest(t, req, http.StatusNoContent)
+
+	issue = unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: issue.ID})
+	assert.EqualValues(t, newPosition, issue.PinOrder)
+}
+
 func TestUpdateIssueDeadline(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
