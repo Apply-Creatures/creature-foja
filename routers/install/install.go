@@ -27,14 +27,12 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/templates"
-	"code.gitea.io/gitea/modules/timeutil"
 	"code.gitea.io/gitea/modules/translation"
 	"code.gitea.io/gitea/modules/user"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/modules/web/middleware"
 	"code.gitea.io/gitea/routers/common"
-	auth_service "code.gitea.io/gitea/services/auth"
 	"code.gitea.io/gitea/services/forms"
 
 	"gitea.com/go-chi/session"
@@ -549,20 +547,13 @@ func SubmitInstall(ctx *context.Context) {
 			u, _ = user_model.GetUserByName(ctx, u.Name)
 		}
 
-		nt, token, err := auth_service.CreateAuthTokenForUserID(ctx, u.ID)
-		if err != nil {
-			ctx.ServerError("CreateAuthTokenForUserID", err)
-			return
-		}
-
-		ctx.SetSiteCookie(setting.CookieRememberName, nt.ID+":"+token, setting.LogInRememberDays*timeutil.Day)
-
-		// Auto-login for admin
-		if err = ctx.Session.Set("uid", u.ID); err != nil {
+		if err := ctx.SetLTACookie(u); err != nil {
 			ctx.RenderWithErr(ctx.Tr("install.save_config_failed", err), tplInstall, &form)
 			return
 		}
-		if err = ctx.Session.Set("uname", u.Name); err != nil {
+
+		// Auto-login for admin
+		if err = ctx.Session.Set("uid", u.ID); err != nil {
 			ctx.RenderWithErr(ctx.Tr("install.save_config_failed", err), tplInstall, &form)
 			return
 		}

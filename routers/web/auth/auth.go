@@ -5,6 +5,8 @@
 package auth
 
 import (
+	"crypto/subtle"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net/http"
@@ -54,23 +56,39 @@ func autoSignIn(ctx *context.Context) (bool, error) {
 		}
 	}()
 
-	if err := auth.DeleteExpiredAuthTokens(ctx); err != nil {
-		log.Error("Failed to delete expired auth tokens: %v", err)
+	authCookie := ctx.GetSiteCookie(setting.CookieRememberName)
+	if len(authCookie) == 0 {
+		return false, nil
 	}
 
-	t, err := auth_service.CheckAuthToken(ctx, ctx.GetSiteCookie(setting.CookieRememberName))
+	lookupKey, validator, found := strings.Cut(authCookie, ":")
+	if !found {
+		return false, nil
+	}
+
+	authToken, err := auth.FindAuthToken(ctx, lookupKey)
 	if err != nil {
-		switch err {
-		case auth_service.ErrAuthTokenInvalidFormat, auth_service.ErrAuthTokenExpired:
+		if errors.Is(err, util.ErrNotExist) {
 			return false, nil
 		}
 		return false, err
 	}
-	if t == nil {
+
+	if authToken.IsExpired() {
+		err = auth.DeleteAuthToken(ctx, authToken)
+		return false, err
+	}
+
+	rawValidator, err := hex.DecodeString(validator)
+	if err != nil {
+		return false, err
+	}
+
+	if subtle.ConstantTimeCompare([]byte(authToken.HashedValidator), []byte(auth.HashValidator(rawValidator))) == 0 {
 		return false, nil
 	}
 
-	u, err := user_model.GetUserByID(ctx, t.UserID)
+	u, err := user_model.GetUserByID(ctx, authToken.UID)
 	if err != nil {
 		if !user_model.IsErrUserNotExist(err) {
 			return false, fmt.Errorf("GetUserByID: %w", err)
@@ -80,17 +98,9 @@ func autoSignIn(ctx *context.Context) (bool, error) {
 
 	isSucceed = true
 
-	nt, token, err := auth_service.RegenerateAuthToken(ctx, t)
-	if err != nil {
-		return false, err
-	}
-
-	ctx.SetSiteCookie(setting.CookieRememberName, nt.ID+":"+token, setting.LogInRememberDays*timeutil.Day)
-
 	if err := updateSession(ctx, nil, map[string]any{
 		// Set session IDs
-		"uid":   u.ID,
-		"uname": u.Name,
+		"uid": u.ID,
 	}); err != nil {
 		return false, fmt.Errorf("unable to updateSession: %w", err)
 	}
@@ -128,10 +138,6 @@ func CheckAutoLogin(ctx *context.Context) bool {
 	// Check auto-login
 	isSucceed, err := autoSignIn(ctx)
 	if err != nil {
-		if errors.Is(err, auth_service.ErrAuthTokenInvalidHash) {
-			ctx.Flash.Error(ctx.Tr("auth.remember_me.compromised"), true)
-			return false
-		}
 		ctx.ServerError("autoSignIn", err)
 		return true
 	}
@@ -306,13 +312,10 @@ func handleSignIn(ctx *context.Context, u *user_model.User, remember bool) {
 
 func handleSignInFull(ctx *context.Context, u *user_model.User, remember, obeyRedirect bool) string {
 	if remember {
-		nt, token, err := auth_service.CreateAuthTokenForUserID(ctx, u.ID)
-		if err != nil {
-			ctx.ServerError("CreateAuthTokenForUserID", err)
+		if err := ctx.SetLTACookie(u); err != nil {
+			ctx.ServerError("GenerateAuthToken", err)
 			return setting.AppSubURL + "/"
 		}
-
-		ctx.SetSiteCookie(setting.CookieRememberName, nt.ID+":"+token, setting.LogInRememberDays*timeutil.Day)
 	}
 
 	if err := updateSession(ctx, []string{
@@ -325,8 +328,7 @@ func handleSignInFull(ctx *context.Context, u *user_model.User, remember, obeyRe
 		"twofaRemember",
 		"linkAccount",
 	}, map[string]any{
-		"uid":   u.ID,
-		"uname": u.Name,
+		"uid": u.ID,
 	}); err != nil {
 		ctx.ServerError("RegenerateSession", err)
 		return setting.AppSubURL + "/"
@@ -745,8 +747,7 @@ func handleAccountActivation(ctx *context.Context, user *user_model.User) {
 	log.Trace("User activated: %s", user.Name)
 
 	if err := updateSession(ctx, nil, map[string]any{
-		"uid":   user.ID,
-		"uname": user.Name,
+		"uid": user.ID,
 	}); err != nil {
 		log.Error("Unable to regenerate session for user: %-v with email: %s: %v", user, user.Email, err)
 		ctx.ServerError("ActivateUserEmail", err)

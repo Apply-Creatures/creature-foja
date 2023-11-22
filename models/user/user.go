@@ -366,6 +366,11 @@ func (u *User) NewGitSig() *git.Signature {
 // SetPassword hashes a password using the algorithm defined in the config value of PASSWORD_HASH_ALGO
 // change passwd, salt and passwd_hash_algo fields
 func (u *User) SetPassword(passwd string) (err error) {
+	// Invalidate all authentication tokens for this user.
+	if err := auth.DeleteAuthTokenByUser(db.DefaultContext, u.ID); err != nil {
+		return err
+	}
+
 	if u.Salt, err = GetUserSalt(); err != nil {
 		return err
 	}

@@ -79,6 +79,15 @@ func AccountPost(ctx *context.Context) {
 				return
 			}
 		} else {
+			// Re-generate LTA cookie.
+			if len(ctx.GetSiteCookie(setting.CookieRememberName)) != 0 {
+				if err := ctx.SetLTACookie(ctx.Doer); err != nil {
+					ctx.ServerError("SetLTACookie", err)
+					return
+				}
+			}
+
+			log.Trace("User password updated: %s", ctx.Doer.Name)
 			ctx.Flash.Success(ctx.Tr("settings.change_password_success"))
 		}
 	}

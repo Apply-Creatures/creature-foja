@@ -41,6 +41,8 @@ var migrations = []*Migration{
 	NewMigration("Add Forgejo Blocked Users table", forgejo_v1_20.AddForgejoBlockedUser),
 	// v1 -> v2
 	NewMigration("create the forgejo_sem_ver table", forgejo_v1_20.CreateSemVerTable),
+	// v2 -> v3
+	NewMigration("create the forgejo_auth_token table", forgejo_v1_20.CreateAuthorizationTokenTable),
 }
 
 // GetCurrentDBVersion returns the current Forgejo database version.

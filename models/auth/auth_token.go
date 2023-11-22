@@ -1,60 +1,96 @@
-// Copyright 2023 The Gitea Authors. All rights reserved.
+// Copyright 2023 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package auth
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"time"
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/modules/timeutil"
 	"code.gitea.io/gitea/modules/util"
-
-	"xorm.io/builder"
 )
 
-var ErrAuthTokenNotExist = util.NewNotExistErrorf("auth token does not exist")
+// AuthorizationToken represents a authorization token to a user.
+type AuthorizationToken struct {
+	ID              int64  `xorm:"pk autoincr"`
+	UID             int64  `xorm:"INDEX"`
+	LookupKey       string `xorm:"INDEX UNIQUE"`
+	HashedValidator string
+	Expiry          timeutil.TimeStamp
+}
 
-type AuthToken struct { //nolint:revive
-	ID          string `xorm:"pk"`
-	TokenHash   string
-	UserID      int64              `xorm:"INDEX"`
-	ExpiresUnix timeutil.TimeStamp `xorm:"INDEX"`
+// TableName provides the real table name.
+func (AuthorizationToken) TableName() string {
+	return "forgejo_auth_token"
 }
 
 func init() {
-	db.RegisterModel(new(AuthToken))
+	db.RegisterModel(new(AuthorizationToken))
 }
 
-func InsertAuthToken(ctx context.Context, t *AuthToken) error {
-	_, err := db.GetEngine(ctx).Insert(t)
-	return err
+// IsExpired returns if the authorization token is expired.
+func (authToken *AuthorizationToken) IsExpired() bool {
+	return authToken.Expiry.AsLocalTime().Before(time.Now())
 }
 
-func GetAuthTokenByID(ctx context.Context, id string) (*AuthToken, error) {
-	at := &AuthToken{}
+// GenerateAuthToken generates a new authentication token for the given user.
+// It returns the lookup key and validator values that should be passed to the
+// user via a long-term cookie.
+func GenerateAuthToken(ctx context.Context, userID int64, expiry timeutil.TimeStamp) (lookupKey, validator string, err error) {
+	// Request 64 random bytes. The first 32 bytes will be used for the lookupKey
+	// and the other 32 bytes will be used for the validator.
+	rBytes, err := util.CryptoRandomBytes(64)
+	if err != nil {
+		return "", "", err
+	}
+	hexEncoded := hex.EncodeToString(rBytes)
+	validator, lookupKey = hexEncoded[64:], hexEncoded[:64]
 
-	has, err := db.GetEngine(ctx).ID(id).Get(at)
+	_, err = db.GetEngine(ctx).Insert(&AuthorizationToken{
+		UID:             userID,
+		Expiry:          expiry,
+		LookupKey:       lookupKey,
+		HashedValidator: HashValidator(rBytes[32:]),
+	})
+	return lookupKey, validator, err
+}
+
+// FindAuthToken will find a authorization token via the lookup key.
+func FindAuthToken(ctx context.Context, lookupKey string) (*AuthorizationToken, error) {
+	var authToken AuthorizationToken
+	has, err := db.GetEngine(ctx).Where("lookup_key = ?", lookupKey).Get(&authToken)
 	if err != nil {
 		return nil, err
+	} else if !has {
+		return nil, fmt.Errorf("lookup key %q: %w", lookupKey, util.ErrNotExist)
 	}
-	if !has {
-		return nil, ErrAuthTokenNotExist
+	return &authToken, nil
+}
+
+// DeleteAuthToken will delete the authorization token.
+func DeleteAuthToken(ctx context.Context, authToken *AuthorizationToken) error {
+	_, err := db.DeleteByBean(ctx, authToken)
+	return err
+}
+
+// DeleteAuthTokenByUser will delete all authorization tokens for the user.
+func DeleteAuthTokenByUser(ctx context.Context, userID int64) error {
+	if userID == 0 {
+		return nil
 	}
-	return at, nil
-}
 
-func UpdateAuthTokenByID(ctx context.Context, t *AuthToken) error {
-	_, err := db.GetEngine(ctx).ID(t.ID).Cols("token_hash", "expires_unix").Update(t)
+	_, err := db.DeleteByBean(ctx, &AuthorizationToken{UID: userID})
 	return err
 }
 
-func DeleteAuthTokenByID(ctx context.Context, id string) error {
-	_, err := db.GetEngine(ctx).ID(id).Delete(&AuthToken{})
-	return err
-}
-
-func DeleteExpiredAuthTokens(ctx context.Context) error {
-	_, err := db.GetEngine(ctx).Where(builder.Lt{"expires_unix": timeutil.TimeStampNow()}).Delete(&AuthToken{})
-	return err
+// HashValidator will return a hexified hashed version of the validator.
+func HashValidator(validator []byte) string {
+	h := sha256.New()
+	h.Write(validator)
+	return hex.EncodeToString(h.Sum(nil))
 }
