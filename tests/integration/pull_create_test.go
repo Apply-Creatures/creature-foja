@@ -4,6 +4,7 @@
 package integration
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -142,7 +143,7 @@ func testDeleteRepository(t *testing.T, session *TestSession, ownerName, repoNam
 
 	req = NewRequestWithValues(t, "POST", relURL+"?action=delete", map[string]string{
 		"_csrf":     htmlDoc.GetCSRF(),
-		"repo_name": repoName,
+		"repo_name": fmt.Sprintf("%s/%s", ownerName, repoName),
 	})
 	session.MakeRequest(t, req, http.StatusSeeOther)
 }
