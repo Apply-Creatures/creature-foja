@@ -55,10 +55,7 @@ func (b *blockParser) Open(parent ast.Node, reader text.Reader, pc parser.Contex
 		return node, parser.Close | parser.NoChildren
 	}
 
-	reader.Advance(segment.Len() - 1)
-	segment.Start += 2
-	node.Lines().Append(segment)
-	return node, parser.NoChildren
+	return nil, parser.NoChildren
 }
 
 // Continue parses the current line and returns a result of parsing.
