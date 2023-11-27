@@ -28,6 +28,9 @@ _cgo_export.*
 
 _testmain.go
 
+# folder for project related local files
+/local/
+
 *.exe
 *.test
 *.prof
