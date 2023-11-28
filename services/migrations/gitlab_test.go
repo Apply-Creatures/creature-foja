@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"code.gitea.io/gitea/models/unittest"
 	"code.gitea.io/gitea/modules/json"
 	base "code.gitea.io/gitea/modules/migration"
 
@@ -21,18 +22,15 @@ import (
 )
 
 func TestGitlabDownloadRepo(t *testing.T) {
-	// Skip tests if Gitlab token is not found
+	// If a GitLab access token is provided, this test will make HTTP requests to the live gitlab.com instance.
+	// When doing so, the responses from gitlab.com will be saved as test data files.
+	// If no access token is available, those cached responses will be used instead.
 	gitlabPersonalAccessToken := os.Getenv("GITLAB_READ_TOKEN")
-	if gitlabPersonalAccessToken == "" {
-		t.Skip("skipped test because GITLAB_READ_TOKEN was not in the environment")
-	}
+	fixturePath := "./testdata/gitlab/full_download"
+	server := unittest.NewMockWebServer(t, "https://gitlab.com", fixturePath, gitlabPersonalAccessToken != "")
+	defer server.Close()
 
-	resp, err := http.Get("https://gitlab.com/gitea/test_repo")
-	if err != nil || resp.StatusCode != http.StatusOK {
-		t.Skipf("Can't access test repo, skipping %s", t.Name())
-	}
-
-	downloader, err := NewGitlabDownloader(context.Background(), "https://gitlab.com", "gitea/test_repo", "", "", gitlabPersonalAccessToken)
+	downloader, err := NewGitlabDownloader(context.Background(), server.URL, "gitea/test_repo", "", "", gitlabPersonalAccessToken)
 	if err != nil {
 		t.Fatalf("NewGitlabDownloader is nil: %v", err)
 	}
@@ -43,8 +41,8 @@ func TestGitlabDownloadRepo(t *testing.T) {
 		Name:          "test_repo",
 		Owner:         "",
 		Description:   "Test repository for testing migration from gitlab to gitea",
-		CloneURL:      "https://gitlab.com/gitea/test_repo.git",
-		OriginalURL:   "https://gitlab.com/gitea/test_repo",
+		CloneURL:      server.URL + "/gitea/test_repo.git",
+		OriginalURL:   server.URL + "/gitea/test_repo",
 		DefaultBranch: "master",
 	}, repo)
 
@@ -281,17 +279,17 @@ func TestGitlabDownloadRepo(t *testing.T) {
 				UserName: "real6543",
 				Content:  "tada",
 			}},
-			PatchURL: "https://gitlab.com/gitea/test_repo/-/merge_requests/2.patch",
+			PatchURL: server.URL + "/gitea/test_repo/-/merge_requests/2.patch",
 			Head: base.PullRequestBranch{
 				Ref:       "feat/test",
-				CloneURL:  "https://gitlab.com/gitea/test_repo/-/merge_requests/2",
+				CloneURL:  server.URL + "/gitea/test_repo/-/merge_requests/2",
 				SHA:       "9f733b96b98a4175276edf6a2e1231489c3bdd23",
 				RepoName:  "test_repo",
 				OwnerName: "lafriks",
 			},
 			Base: base.PullRequestBranch{
 				Ref:       "master",
-				SHA:       "",
+				SHA:       "c59c9b451acca9d106cc19d61d87afe3fbbb8b83",
 				OwnerName: "lafriks",
 				RepoName:  "test_repo",
 			},
@@ -309,16 +307,16 @@ func TestGitlabDownloadRepo(t *testing.T) {
 	assertReviewsEqual(t, []*base.Review{
 		{
 			IssueIndex:   1,
-			ReviewerID:   4102996,
-			ReviewerName: "zeripath",
-			CreatedAt:    time.Date(2019, 11, 28, 16, 2, 8, 377000000, time.UTC),
+			ReviewerID:   527793,
+			ReviewerName: "axifive",
+			CreatedAt:    time.Date(2019, 11, 28, 8, 54, 41, 34000000, time.UTC),
 			State:        "APPROVED",
 		},
 		{
 			IssueIndex:   1,
-			ReviewerID:   527793,
-			ReviewerName: "axifive",
-			CreatedAt:    time.Date(2019, 11, 28, 16, 2, 8, 377000000, time.UTC),
+			ReviewerID:   4102996,
+			ReviewerName: "zeripath",
+			CreatedAt:    time.Date(2019, 11, 28, 8, 54, 41, 34000000, time.UTC),
 			State:        "APPROVED",
 		},
 	}, rvs)
@@ -330,7 +328,7 @@ func TestGitlabDownloadRepo(t *testing.T) {
 			IssueIndex:   2,
 			ReviewerID:   4575606,
 			ReviewerName: "real6543",
-			CreatedAt:    time.Date(2020, 4, 19, 19, 24, 21, 108000000, time.UTC),
+			CreatedAt:    time.Date(2019, 11, 28, 15, 56, 54, 108000000, time.UTC),
 			State:        "APPROVED",
 		},
 	}, rvs)

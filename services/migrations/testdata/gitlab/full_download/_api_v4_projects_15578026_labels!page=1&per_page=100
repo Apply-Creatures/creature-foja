@@ -1,0 +1,29 @@
+Cache-Control: max-age=0, private, must-revalidate
+Strict-Transport-Security: max-age=31536000
+Gitlab-Lb: haproxy-main-28-lb-gprd
+Link: <https://gitlab.com/api/v4/projects/15578026/labels?id=15578026&include_ancestor_groups=true&page=1&per_page=100&with_counts=false>; rel="first", <https://gitlab.com/api/v4/projects/15578026/labels?id=15578026&include_ancestor_groups=true&page=1&per_page=100&with_counts=false>; rel="last"
+X-Per-Page: 100
+X-Runtime: 0.149464
+X-Total: 9
+Ratelimit-Observed: 6
+Gitlab-Sv: localhost
+X-Frame-Options: SAMEORIGIN
+X-Gitlab-Meta: {"correlation_id":"2ccddf20767704a98ed6b582db3b103e","version":"1"}
+X-Next-Page: 
+X-Prev-Page: 
+X-Total-Pages: 1
+Ratelimit-Remaining: 1994
+Etag: W/"5a3fb9bc7b1018070943f4aa1353f8b6"
+Ratelimit-Limit: 2000
+X-Page: 1
+Content-Type: application/json
+Vary: Origin, Accept-Encoding
+Set-Cookie: _cfuvid=geNpLvH8Cv5XeYfUVwtpaazw43v9lCcqHE.vyXGk3kU-1701333887126-0-604800000; path=/; domain=.gitlab.com; HttpOnly; Secure; SameSite=None
+X-Content-Type-Options: nosniff
+Ratelimit-Reset: 1701333947
+Ratelimit-Resettime: Thu, 30 Nov 2023 08:45:47 GMT
+Content-Security-Policy: default-src 'none'
+Referrer-Policy: strict-origin-when-cross-origin
+Cf-Cache-Status: MISS
+
+[{"id":12959095,"name":"bug","description":null,"description_html":"","text_color":"#FFFFFF","color":"#d9534f","subscribed":false,"priority":null,"is_project_label":true},{"id":12959097,"name":"confirmed","description":null,"description_html":"","text_color":"#FFFFFF","color":"#d9534f","subscribed":false,"priority":null,"is_project_label":true},{"id":12959096,"name":"critical","description":null,"description_html":"","text_color":"#FFFFFF","color":"#d9534f","subscribed":false,"priority":null,"is_project_label":true},{"id":12959100,"name":"discussion","description":null,"description_html":"","text_color":"#FFFFFF","color":"#428bca","subscribed":false,"priority":null,"is_project_label":true},{"id":12959098,"name":"documentation","description":null,"description_html":"","text_color":"#1F1E24","color":"#f0ad4e","subscribed":false,"priority":null,"is_project_label":true},{"id":12959554,"name":"duplicate","description":null,"description_html":"","text_color":"#FFFFFF","color":"#7F8C8D","subscribed":false,"priority":null,"is_project_label":true},{"id":12959102,"name":"enhancement","description":null,"description_html":"","text_color":"#FFFFFF","color":"#5cb85c","subscribed":false,"priority":null,"is_project_label":true},{"id":12959101,"name":"suggestion","description":null,"description_html":"","text_color":"#FFFFFF","color":"#428bca","subscribed":false,"priority":null,"is_project_label":true},{"id":12959099,"name":"support","description":null,"description_html":"","text_color":"#1F1E24","color":"#f0ad4e","subscribed":false,"priority":null,"is_project_label":true}]
