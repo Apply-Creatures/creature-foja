@@ -1,0 +1,31 @@
+Gitlab-Sv: localhost
+X-Content-Type-Options: nosniff
+Gitlab-Lb: haproxy-main-25-lb-gprd
+X-Total-Pages: 1
+Referrer-Policy: strict-origin-when-cross-origin
+Ratelimit-Observed: 5
+Ratelimit-Remaining: 1995
+Content-Security-Policy: default-src 'none'
+X-Gitlab-Meta: {"correlation_id":"eeab46d836341bd4cb18e3d2e82abf97","version":"1"}
+Ratelimit-Limit: 2000
+Accept-Ranges: bytes
+Content-Type: application/json
+X-Page: 1
+X-Frame-Options: SAMEORIGIN
+X-Prev-Page: 
+Cf-Cache-Status: MISS
+X-Total: 0
+Ratelimit-Resettime: Thu, 30 Nov 2023 08:24:54 GMT
+Link: <https://gitlab.com/api/v4/projects/6590996/issues/2/award_emoji?id=6590996&issue_iid=2&page=1&per_page=10>; rel="first", <https://gitlab.com/api/v4/projects/6590996/issues/2/award_emoji?id=6590996&issue_iid=2&page=1&per_page=10>; rel="last"
+X-Per-Page: 10
+Set-Cookie: _cfuvid=c5HuTPxOuSXdHSuVrXQALS.uV7WvAYfc5Mc_143EAB8-1701332634513-0-604800000; path=/; domain=.gitlab.com; HttpOnly; Secure; SameSite=None
+Content-Length: 2
+Vary: Origin, Accept-Encoding
+Cache-Control: max-age=0, private, must-revalidate
+Etag: W/"4f53cda18c2baa0c0354bb5f9a3ecbe5"
+X-Runtime: 0.069269
+Strict-Transport-Security: max-age=31536000
+Ratelimit-Reset: 1701332694
+X-Next-Page: 
+
+[]

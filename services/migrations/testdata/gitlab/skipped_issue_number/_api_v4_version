@@ -1,0 +1,22 @@
+Ratelimit-Observed: 1
+X-Gitlab-Meta: {"correlation_id":"aa75720bd9c597c7f2f886a4042d1f80","version":"1"}
+Etag: W/"4e5c0a031c3aacb6ba0a3c19e67d7592"
+X-Content-Type-Options: nosniff
+Ratelimit-Limit: 2000
+Ratelimit-Resettime: Thu, 30 Nov 2023 08:24:53 GMT
+X-Runtime: 0.039899
+Ratelimit-Remaining: 1999
+Set-Cookie: _cfuvid=7OAEitQ3J0BOxrXk2pMBApFg1KFnz5aBVqOY7mHwLRk-1701332633452-0-604800000; path=/; domain=.gitlab.com; HttpOnly; Secure; SameSite=None
+Content-Security-Policy: default-src 'none'
+Gitlab-Sv: localhost
+Cf-Cache-Status: MISS
+Vary: Origin, Accept-Encoding
+X-Frame-Options: SAMEORIGIN
+Cache-Control: max-age=0, private, must-revalidate
+Strict-Transport-Security: max-age=31536000
+Referrer-Policy: strict-origin-when-cross-origin
+Ratelimit-Reset: 1701332693
+Gitlab-Lb: haproxy-main-39-lb-gprd
+Content-Type: application/json
+
+{"version":"16.7.0-pre","revision":"acd848a9228","kas":{"enabled":true,"externalUrl":"wss://kas.gitlab.com","version":"v16.7.0-rc2"},"enterprise":true}

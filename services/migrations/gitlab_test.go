@@ -334,6 +334,49 @@ func TestGitlabDownloadRepo(t *testing.T) {
 	}, rvs)
 }
 
+func TestGitlabSkippedIssueNumber(t *testing.T) {
+	// If a GitLab access token is provided, this test will make HTTP requests to the live gitlab.com instance.
+	// When doing so, the responses from gitlab.com will be saved as test data files.
+	// If no access token is available, those cached responses will be used instead.
+	gitlabPersonalAccessToken := os.Getenv("GITLAB_READ_TOKEN")
+	fixturePath := "./testdata/gitlab/skipped_issue_number"
+	server := unittest.NewMockWebServer(t, "https://gitlab.com", fixturePath, gitlabPersonalAccessToken != "")
+	defer server.Close()
+
+	downloader, err := NewGitlabDownloader(context.Background(), server.URL, "troyengel/archbuild", "", "", gitlabPersonalAccessToken)
+	if err != nil {
+		t.Fatalf("NewGitlabDownloader is nil: %v", err)
+	}
+	repo, err := downloader.GetRepoInfo()
+	assert.NoError(t, err)
+	assertRepositoryEqual(t, &base.Repository{
+		Name:          "archbuild",
+		Owner:         "troyengel",
+		Description:   "Arch packaging and build files",
+		CloneURL:      server.URL + "/troyengel/archbuild.git",
+		OriginalURL:   server.URL + "/troyengel/archbuild",
+		DefaultBranch: "master",
+	}, repo)
+
+	issues, isEnd, err := downloader.GetIssues(1, 10)
+	assert.NoError(t, err)
+	assert.True(t, isEnd)
+
+	// the only issue in this repository has number 2
+	assert.EqualValues(t, 1, len(issues))
+	assert.EqualValues(t, 2, issues[0].Number)
+	assert.EqualValues(t, "vpn unlimited errors", issues[0].Title)
+
+	prs, _, err := downloader.GetPullRequests(1, 10)
+	assert.NoError(t, err)
+	// the only merge request in this repository has number 1,
+	// but we offset it by the maximum issue number so it becomes
+	// pull request 3 in Forgejo
+	assert.EqualValues(t, 1, len(prs))
+	assert.EqualValues(t, 3, prs[0].Number)
+	assert.EqualValues(t, "Review", prs[0].Title)
+}
+
 func gitlabClientMockSetup(t *testing.T) (*http.ServeMux, *httptest.Server, *gitlab.Client) {
 	// mux is the HTTP request multiplexer used with the test server.
 	mux := http.NewServeMux()

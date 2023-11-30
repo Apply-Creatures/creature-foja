@@ -1,0 +1,22 @@
+Ratelimit-Observed: 7
+Set-Cookie: _cfuvid=_b9GQEo3CBPMs9QmGE89dBdOmbSTfnYjZlzValULQPs-1701332635000-0-604800000; path=/; domain=.gitlab.com; HttpOnly; Secure; SameSite=None
+Strict-Transport-Security: max-age=31536000
+Ratelimit-Resettime: Thu, 30 Nov 2023 08:24:54 GMT
+Gitlab-Lb: haproxy-main-50-lb-gprd
+Gitlab-Sv: localhost
+X-Gitlab-Meta: {"correlation_id":"da44cd0303a4e62cc52ed8de3b2adf14","version":"1"}
+Referrer-Policy: strict-origin-when-cross-origin
+Ratelimit-Remaining: 1993
+Etag: W/"f6299e7e884cb8df8109256c086eb4e7"
+X-Runtime: 0.107573
+Content-Type: application/json
+Ratelimit-Reset: 1701332694
+X-Frame-Options: SAMEORIGIN
+Cache-Control: max-age=0, private, must-revalidate
+X-Content-Type-Options: nosniff
+Ratelimit-Limit: 2000
+Cf-Cache-Status: MISS
+Content-Security-Policy: default-src 'none'
+Vary: Origin, Accept-Encoding
+
+{"id":10518914,"iid":1,"project_id":6590996,"title":"Review","description":"*Created by: cgtx*\n\n### remove patch from makedepends\n- patch is in base-devel\n- The group base-devel is assumed to be already installed when building with makepkg. Members of \"base-devel\" should not be included in makedepends arrays.\n- https://wiki.archlinux.org/index.php/Pkgbuild#makedepends\n### remove python2 from makedepends\n- python2 is a dependency of python2-setuptools.  It is redundant to list it again.\n- You do not need to list packages that your software depends on if other packages your software depends on already have those packages listed in their dependency.\n- https://wiki.archlinux.org/index.php/Pkgbuild#depends\n### more simple find/delete command\n- just because\n","state":"merged","created_at":"2014-12-12T15:01:32.000Z","updated_at":"2014-12-12T15:28:38.000Z","merged_by":null,"merge_user":null,"merged_at":null,"closed_by":null,"closed_at":null,"target_branch":"master","source_branch":"cgtx:review","user_notes_count":1,"upvotes":0,"downvotes":0,"author":{"id":1215848,"username":"troyengel","name":"Troy Engel","state":"active","locked":false,"avatar_url":"https://secure.gravatar.com/avatar/b226c267929f1bcfcc446e75a025591c?s=80\u0026d=identicon","web_url":"https://gitlab.com/troyengel"},"assignees":[],"assignee":null,"reviewers":[],"source_project_id":6590996,"target_project_id":6590996,"labels":[],"draft":false,"work_in_progress":false,"milestone":null,"merge_when_pipeline_succeeds":false,"merge_status":"cannot_be_merged","detailed_merge_status":"not_open","sha":"9006fee398299beed8f5d5086f8e6008ffc02280","merge_commit_sha":null,"squash_commit_sha":null,"discussion_locked":null,"should_remove_source_branch":null,"force_remove_source_branch":null,"prepared_at":"2014-12-12T15:01:32.000Z","reference":"!1","references":{"short":"!1","relative":"!1","full":"troyengel/archbuild!1"},"web_url":"https://gitlab.com/troyengel/archbuild/-/merge_requests/1","time_stats":{"time_estimate":0,"total_time_spent":0,"human_time_estimate":null,"human_total_time_spent":null},"squash":false,"squash_on_merge":false,"task_completion_status":{"count":0,"completed_count":0},"has_conflicts":true,"blocking_discussions_resolved":true,"approvals_before_merge":null,"subscribed":false,"changes_count":"1","latest_build_started_at":null,"latest_build_finished_at":null,"first_deployed_to_production_at":null,"pipeline":null,"head_pipeline":null,"diff_refs":{"base_sha":"6edcf8fc09f6c44213c892f5108d34a5255a47e1","head_sha":"9006fee398299beed8f5d5086f8e6008ffc02280","start_sha":"6edcf8fc09f6c44213c892f5108d34a5255a47e1"},"merge_error":null,"first_contribution":false,"user":{"can_merge":false}}

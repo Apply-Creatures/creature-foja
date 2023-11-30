@@ -1,0 +1,29 @@
+Link: <https://gitlab.com/api/v4/projects/6590996/issues?id=6590996&order_by=created_at&page=1&per_page=10&sort=asc&state=all&with_labels_details=false>; rel="first", <https://gitlab.com/api/v4/projects/6590996/issues?id=6590996&order_by=created_at&page=1&per_page=10&sort=asc&state=all&with_labels_details=false>; rel="last"
+Ratelimit-Observed: 4
+Ratelimit-Remaining: 1996
+Gitlab-Lb: haproxy-main-04-lb-gprd
+Vary: Origin, Accept-Encoding
+Content-Security-Policy: default-src 'none'
+X-Next-Page: 
+Ratelimit-Reset: 1701332694
+Etag: W/"f50a70d0fc1465a289d231f80806ced7"
+X-Gitlab-Meta: {"correlation_id":"47afd74254dd7946d2b2bded87448c60","version":"1"}
+X-Page: 1
+X-Prev-Page: 
+Referrer-Policy: strict-origin-when-cross-origin
+Ratelimit-Resettime: Thu, 30 Nov 2023 08:24:54 GMT
+Cf-Cache-Status: MISS
+X-Total: 1
+X-Total-Pages: 1
+Strict-Transport-Security: max-age=31536000
+Content-Type: application/json
+X-Frame-Options: SAMEORIGIN
+Ratelimit-Limit: 2000
+Gitlab-Sv: localhost
+Set-Cookie: _cfuvid=YDWTZ5VoSuLBDZgKsBnXMyYxz.0rHJ9TBYXv5zBj24Q-1701332634294-0-604800000; path=/; domain=.gitlab.com; HttpOnly; Secure; SameSite=None
+Cache-Control: max-age=0, private, must-revalidate
+X-Content-Type-Options: nosniff
+X-Per-Page: 10
+X-Runtime: 0.179458
+
+[{"id":11201348,"iid":2,"project_id":6590996,"title":"vpn unlimited errors","description":"updated version to 2.8.0, build and tried running `vpnu-arch`:\n\n```\nvpn-unlimited: /usr/lib/libcurl.so.3: no version information available (required by /usr/lib/libvpnu_rpc.so.1)\nvpn-unlimited: /usr/lib/libssl.so.1.0.0: no version information available (required by /usr/lib/libvpnu_enc.so.1)\nvpn-unlimited: symbol lookup error: /usr/lib/libvpnu_rpc.so.1: undefined symbol: _ZNK4Json5Value8asStringEv\n```\n","state":"closed","created_at":"2016-03-26T16:41:12.000Z","updated_at":"2016-03-27T12:19:27.000Z","closed_at":null,"closed_by":null,"labels":[],"milestone":null,"assignees":[],"author":{"id":10273,"username":"brauliobo","name":"Bráulio Bhavamitra","state":"active","locked":false,"avatar_url":"https://secure.gravatar.com/avatar/cd3fcb7a417c8acb989fc320b604a2a8?s=80\u0026d=identicon","web_url":"https://gitlab.com/brauliobo"},"type":"ISSUE","assignee":null,"user_notes_count":1,"merge_requests_count":0,"upvotes":0,"downvotes":0,"due_date":null,"confidential":false,"discussion_locked":null,"issue_type":"issue","web_url":"https://gitlab.com/troyengel/archbuild/-/issues/2","time_stats":{"time_estimate":0,"total_time_spent":0,"human_time_estimate":null,"human_total_time_spent":null},"task_completion_status":{"count":0,"completed_count":0},"blocking_issues_count":0,"has_tasks":true,"task_status":"0 of 0 checklist items completed","_links":{"self":"https://gitlab.com/api/v4/projects/6590996/issues/2","notes":"https://gitlab.com/api/v4/projects/6590996/issues/2/notes","award_emoji":"https://gitlab.com/api/v4/projects/6590996/issues/2/award_emoji","project":"https://gitlab.com/api/v4/projects/6590996","closed_as_duplicate_of":null},"references":{"short":"#2","relative":"#2","full":"troyengel/archbuild#2"},"severity":"UNKNOWN","moved_to_id":null,"service_desk_reply_to":null}]
