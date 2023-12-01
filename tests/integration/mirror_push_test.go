@@ -19,6 +19,7 @@ import (
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/gitrepo"
 	"code.gitea.io/gitea/modules/setting"
+	doctor "code.gitea.io/gitea/services/doctor"
 	"code.gitea.io/gitea/services/migrations"
 	mirror_service "code.gitea.io/gitea/services/mirror"
 	repo_service "code.gitea.io/gitea/services/repository"
@@ -48,10 +49,11 @@ func testMirrorPush(t *testing.T, u *url.URL) {
 	ctx := NewAPITestContext(t, user.LowerName, srcRepo.Name)
 
 	doCreatePushMirror(ctx, fmt.Sprintf("%s%s/%s", u.String(), url.PathEscape(ctx.Username), url.PathEscape(mirrorRepo.Name)), user.LowerName, userPassword)(t)
+	doCreatePushMirror(ctx, fmt.Sprintf("%s%s/%s", u.String(), url.PathEscape(ctx.Username), url.PathEscape("does-not-matter")), user.LowerName, userPassword)(t)
 
 	mirrors, _, err := repo_model.GetPushMirrorsByRepoID(db.DefaultContext, srcRepo.ID, db.ListOptions{})
 	assert.NoError(t, err)
-	assert.Len(t, mirrors, 1)
+	assert.Len(t, mirrors, 2)
 
 	ok := mirror_service.SyncPushMirror(context.Background(), mirrors[0].ID)
 	assert.True(t, ok)
@@ -71,6 +73,30 @@ func testMirrorPush(t *testing.T, u *url.URL) {
 	assert.NoError(t, err)
 
 	assert.Equal(t, srcCommit.ID, mirrorCommit.ID)
+
+	// Test that we can "repair" push mirrors where the remote doesn't exist in git's state.
+	// To do that, we artificially remove the remote...
+	cmd := git.NewCommand(db.DefaultContext, "remote", "rm").AddDynamicArguments(mirrors[0].RemoteName)
+	_, _, err = cmd.RunStdString(&git.RunOpts{Dir: srcRepo.RepoPath()})
+	assert.NoError(t, err)
+
+	// ...then ensure that trying to get its remote address fails
+	_, err = repo_model.GetPushMirrorRemoteAddress(srcRepo.OwnerName, srcRepo.Name, mirrors[0].RemoteName)
+	assert.Error(t, err)
+
+	// ...and that we can fix it.
+	err = doctor.FixPushMirrorsWithoutGitRemote(db.DefaultContext, nil, true)
+	assert.NoError(t, err)
+
+	// ...and after fixing, we only have one remote
+	mirrors, _, err = repo_model.GetPushMirrorsByRepoID(db.DefaultContext, srcRepo.ID, db.ListOptions{})
+	assert.NoError(t, err)
+	assert.Len(t, mirrors, 1)
+
+	// ...one we can get the address of, and it's not the one we removed
+	remoteAddress, err := repo_model.GetPushMirrorRemoteAddress(srcRepo.OwnerName, srcRepo.Name, mirrors[0].RemoteName)
+	assert.NoError(t, err)
+	assert.Contains(t, remoteAddress, "does-not-matter")
 
 	// Cleanup
 	doRemovePushMirror(ctx, fmt.Sprintf("%s%s/%s", u.String(), url.PathEscape(ctx.Username), url.PathEscape(mirrorRepo.Name)), user.LowerName, userPassword, int(mirrors[0].ID))(t)
