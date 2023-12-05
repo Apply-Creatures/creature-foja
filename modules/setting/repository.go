@@ -151,7 +151,7 @@ var (
 		DefaultPrivate:                          RepoCreatingLastUserVisibility,
 		DefaultPushCreatePrivate:                true,
 		MaxCreationLimit:                        -1,
-		PreferredLicenses:                       []string{"Apache License 2.0", "MIT License"},
+		PreferredLicenses:                       []string{"Apache-2.0", "MIT"},
 		DisableHTTPGit:                          false,
 		AccessControlAllowOrigin:                "",
 		UseCompatSSHURI:                         false,
