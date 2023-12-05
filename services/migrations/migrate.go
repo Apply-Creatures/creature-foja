@@ -20,6 +20,7 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	base "code.gitea.io/gitea/modules/migration"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/util"
 )
 
@@ -139,19 +140,25 @@ func MigrateRepository(ctx context.Context, doer *user_model.User, ownerName str
 	return uploader.repo, nil
 }
 
+func getFactoryFromServiceType(serviceType structs.GitServiceType) base.DownloaderFactory {
+	for _, factory := range factories {
+		if factory.GitServiceType() == serviceType {
+			return factory
+		}
+	}
+	return nil
+}
+
 func newDownloader(ctx context.Context, ownerName string, opts base.MigrateOptions) (base.Downloader, error) {
 	var (
 		downloader base.Downloader
 		err        error
 	)
 
-	for _, factory := range factories {
-		if factory.GitServiceType() == opts.GitServiceType {
-			downloader, err = factory.New(ctx, opts)
-			if err != nil {
-				return nil, err
-			}
-			break
+	if factory := getFactoryFromServiceType(opts.GitServiceType); factory != nil {
+		downloader, err = factory.New(ctx, opts)
+		if err != nil {
+			return nil, err
 		}
 	}
 
