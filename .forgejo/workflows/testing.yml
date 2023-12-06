@@ -61,7 +61,7 @@ jobs:
         env:
           TAGS: bindata
       - run: |
-          su forgejo -c 'make unit-test-coverage test-check'
+          su forgejo -c 'make test-backend test-check'
         timeout-minutes: 50
         env:
           RACE_ENABLED: 'true'
