@@ -332,31 +332,7 @@ func updateActivation(ctx context.Context, email *EmailAddress, activate bool) e
 	return UpdateUserCols(ctx, user, "rands")
 }
 
-// MakeEmailPrimary sets primary email address of given user.
-func MakeEmailPrimary(ctx context.Context, email *EmailAddress) error {
-	has, err := db.GetEngine(ctx).Get(email)
-	if err != nil {
-		return err
-	} else if !has {
-		return ErrEmailAddressNotExist{Email: email.Email}
-	}
-
-	if !email.IsActivated {
-		return ErrEmailNotActivated
-	}
-
-	user := &User{}
-	has, err = db.GetEngine(ctx).ID(email.UID).Get(user)
-	if err != nil {
-		return err
-	} else if !has {
-		return ErrUserNotExist{
-			UID:   email.UID,
-			Name:  "",
-			KeyID: 0,
-		}
-	}
-
+func makeEmailPrimary(ctx context.Context, user *User, email *EmailAddress) error {
 	ctx, committer, err := db.TxContext(ctx)
 	if err != nil {
 		return err
@@ -384,6 +360,57 @@ func MakeEmailPrimary(ctx context.Context, email *EmailAddress) error {
 	}
 
 	return committer.Commit()
+}
+
+// ReplaceInactivePrimaryEmail replaces the primary email of a given user, even if the primary is not yet activated.
+func ReplaceInactivePrimaryEmail(ctx context.Context, oldEmail string, email *EmailAddress) error {
+	user := &User{}
+	has, err := db.GetEngine(ctx).ID(email.UID).Get(user)
+	if err != nil {
+		return err
+	} else if !has {
+		return ErrUserNotExist{
+			UID:   email.UID,
+			Name:  "",
+			KeyID: 0,
+		}
+	}
+
+	err = AddEmailAddress(ctx, email)
+	if err != nil {
+		return err
+	}
+
+	err = makeEmailPrimary(ctx, user, email)
+	if err != nil {
+		return err
+	}
+
+	return DeleteEmailAddress(ctx, &EmailAddress{UID: email.UID, Email: oldEmail})
+}
+
+// MakeEmailPrimary sets primary email address of given user.
+func MakeEmailPrimary(ctx context.Context, email *EmailAddress) error {
+	has, err := db.GetEngine(ctx).Get(email)
+	if err != nil {
+		return err
+	} else if !has {
+		return ErrEmailAddressNotExist{Email: email.Email}
+	}
+
+	if !email.IsActivated {
+		return ErrEmailNotActivated
+	}
+
+	user := &User{}
+	has, err = db.GetEngine(ctx).ID(email.UID).Get(user)
+	if err != nil {
+		return err
+	} else if !has {
+		return ErrUserNotExist{UID: email.UID}
+	}
+
+	return makeEmailPrimary(ctx, user, email)
 }
 
 // VerifyActiveEmailCode verifies active email code when active account
