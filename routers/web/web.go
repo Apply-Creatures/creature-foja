@@ -1347,22 +1347,25 @@ func registerRoutes(m *web.Route) {
 			m.Post("/disable", reqRepoAdmin, actions.DisableWorkflowFile)
 			m.Post("/enable", reqRepoAdmin, actions.EnableWorkflowFile)
 
-			m.Group("/runs/{run}", func() {
-				m.Combo("").
-					Get(actions.View).
-					Post(web.Bind(actions.ViewRequest{}), actions.ViewPost)
-				m.Group("/jobs/{job}", func() {
+			m.Group("/runs", func() {
+				m.Get("/latest", actions.ViewLatest)
+				m.Group("/{run}", func() {
 					m.Combo("").
 						Get(actions.View).
 						Post(web.Bind(actions.ViewRequest{}), actions.ViewPost)
+					m.Group("/jobs/{job}", func() {
+						m.Combo("").
+							Get(actions.View).
+							Post(web.Bind(actions.ViewRequest{}), actions.ViewPost)
+						m.Post("/rerun", reqRepoActionsWriter, actions.Rerun)
+						m.Get("/logs", actions.Logs)
+					})
+					m.Post("/cancel", reqRepoActionsWriter, actions.Cancel)
+					m.Post("/approve", reqRepoActionsWriter, actions.Approve)
+					m.Post("/artifacts", actions.ArtifactsView)
+					m.Get("/artifacts/{artifact_name}", actions.ArtifactsDownloadView)
 					m.Post("/rerun", reqRepoActionsWriter, actions.Rerun)
-					m.Get("/logs", actions.Logs)
 				})
-				m.Post("/cancel", reqRepoActionsWriter, actions.Cancel)
-				m.Post("/approve", reqRepoActionsWriter, actions.Approve)
-				m.Post("/artifacts", actions.ArtifactsView)
-				m.Get("/artifacts/{artifact_name}", actions.ArtifactsDownloadView)
-				m.Post("/rerun", reqRepoActionsWriter, actions.Rerun)
 			})
 		}, reqRepoActionsReader, actions.MustEnableActions)
 

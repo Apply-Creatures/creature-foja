@@ -312,6 +312,17 @@ func InsertRun(ctx context.Context, run *ActionRun, jobs []*jobparser.SingleWork
 	return commiter.Commit()
 }
 
+func GetLatestRun(ctx context.Context, repoID int64) (*ActionRun, error) {
+	var run ActionRun
+	has, err := db.GetEngine(ctx).Where("repo_id=?", repoID).OrderBy("id DESC").Limit(1).Get(&run)
+	if err != nil {
+		return nil, err
+	} else if !has {
+		return nil, fmt.Errorf("latest run: %w", util.ErrNotExist)
+	}
+	return &run, nil
+}
+
 func GetRunByID(ctx context.Context, id int64) (*ActionRun, error) {
 	var run ActionRun
 	has, err := db.GetEngine(ctx).Where("id=?", id).Get(&run)
