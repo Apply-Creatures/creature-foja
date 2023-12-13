@@ -29,12 +29,17 @@ func CleanValue(value []byte) []byte {
 	value = bytes.TrimSpace(value)
 	rs := bytes.Runes(value)
 	result := make([]rune, 0, len(rs))
+	needsDash := false
 	for _, r := range rs {
-		if unicode.IsLetter(r) || unicode.IsNumber(r) || r == '_' || r == '-' {
+		switch {
+		case unicode.IsLetter(r) || unicode.IsNumber(r) || r == '_':
+			if needsDash && len(result) > 0 {
+				result = append(result, '-')
+			}
+			needsDash = false
 			result = append(result, unicode.ToLower(r))
-		}
-		if unicode.IsSpace(r) {
-			result = append(result, '-')
+		default:
+			needsDash = true
 		}
 	}
 	return []byte(string(result))
