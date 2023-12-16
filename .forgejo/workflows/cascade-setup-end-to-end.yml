@@ -1,0 +1,82 @@
+# SPDX-License-Identifier: MIT
+on:
+  pull_request_target:
+    types:
+      - labeled
+
+env:
+  FEATURE_BRANCHES: "privacy i18n moderation branding dependency"
+
+jobs:
+  info:
+    runs-on: docker
+    container:
+      image: node:20-bookworm
+    steps:
+      - name: event
+        run: |
+          echo github.event.pull_request.head.repo.fork = ${{ github.event.pull_request.head.repo.fork }}
+          echo github.event.action = ${{ github.event.action }}
+          echo github.event.pull_request.merged = ${{ github.event.pull_request.merged }}
+          echo github.event.pull_request.labels.*.name
+          cat <<'EOF'
+          ${{ toJSON(github.event.pull_request.labels.*.name) }}
+          EOF
+
+  build:
+    if: github.event.action == 'label_updated' && contains(github.event.pull_request.labels.*.name, 'run-end-to-end-tests')
+    runs-on: docker
+    container:
+      image: 'docker.io/node:20-bookworm'
+    steps:
+      - uses: https://code.forgejo.org/actions/checkout@v3
+        with:
+          fetch-depth: '0'
+          show-progress: 'false'
+      - name: adduser forgejo
+        run: |
+          git config --add safe.directory '*'
+          git config user.email "you@example.com"
+          git config user.name "Your Name"
+          adduser --quiet --comment forgejo --disabled-password forgejo
+          chown -R forgejo:forgejo .
+      - name: merge feature branches
+        run: |
+          su forgejo -c 'set -ex ; for b in ${{ env.FEATURE_BRANCHES }} ; do git merge -m $b origin/forgejo-$b ; done'
+      - uses: https://code.forgejo.org/actions/setup-go@v4
+        with:
+          go-version: ">=1.21"
+      - name: make deps-backend
+        run: |
+          su forgejo -c 'make deps-backend'
+      - name: make forgejo
+        run: |
+          su forgejo -c 'make generate-backend static-executable && ln gitea forgejo'
+        env:
+          TAGS: bindata sqlite sqlite_unlock_notify
+      - uses: actions/upload-artifact@v3
+        with:
+          name: forgejo
+          path: forgejo
+
+  cascade:
+    if: github.event.action == 'label_updated' && contains(github.event.pull_request.labels.*.name, 'run-end-to-end-tests')
+    needs: [build]
+    runs-on: docker
+    container:
+      image: node:20-bookworm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cascading-pr@v1
+        with:
+          origin-url: ${{ env.GITHUB_SERVER_URL }}
+          origin-repo: ${{ github.repository }}
+          origin-token: ${{ secrets.END_TO_END_CASCADING_PR_ORIGIN }}
+          origin-pr: ${{ github.event.pull_request.number }}
+          destination-url: https://code.forgejo.org
+          destination-fork-repo: cascading-pr/end-to-end
+          destination-repo: forgejo/end-to-end
+          destination-branch: forgejo-pr
+          destination-token: ${{ secrets.END_TO_END_CASCADING_PR_DESTINATION }}
+          close-merge: true
+          update: .forgejo/cascading-pr-end-to-end

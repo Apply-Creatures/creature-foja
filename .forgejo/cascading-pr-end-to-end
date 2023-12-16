@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -ex
+
+end_to_end=$1
+end_to_end_pr=$2
+forgejo=$3
+forgejo_pr=$4
+
+head_url=$(jq --raw-output .head.repo.html_url < $forgejo_pr)
+test "$head_url" != null
+branch=$(jq --raw-output .head.ref < $forgejo_pr)
+test "$branch" != null
+cd $end_to_end
+echo $head_url $branch 7.0.0+0-gitea-1.22.0 > forgejo/sources/1.22
+date > last-upgrade
+
+base_url=$(jq --raw-output .base.repo.html_url < $forgejo_pr)
+test "$base_url" != null
+test "$GITHUB_RUN_NUMBER"
+echo $base_url/actions/runs/$GITHUB_RUN_NUMBER/artifacts/forgejo > forgejo/binary-url
