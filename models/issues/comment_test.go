@@ -12,6 +12,7 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/structs"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -96,4 +97,30 @@ func TestMigrate_InsertIssueComments(t *testing.T) {
 	assert.EqualValues(t, issue.NumComments+1, issueModified.NumComments)
 
 	unittest.CheckConsistencyFor(t, &issues_model.Issue{})
+}
+
+func TestUpdateCommentsMigrationsByType(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 1})
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: issue.RepoID})
+	comment := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: 1, IssueID: issue.ID})
+
+	// Set repository to migrated from Gitea.
+	repo.OriginalServiceType = structs.GiteaService
+	repo_model.UpdateRepositoryCols(db.DefaultContext, repo, "original_service_type")
+
+	// Set comment to have an original author.
+	comment.OriginalAuthor = "Example User"
+	comment.OriginalAuthorID = 1
+	comment.PosterID = 0
+	_, err := db.GetEngine(db.DefaultContext).ID(comment.ID).Cols("original_author", "original_author_id", "poster_id").Update(comment)
+	assert.NoError(t, err)
+
+	assert.NoError(t, issues_model.UpdateCommentsMigrationsByType(db.DefaultContext, structs.GiteaService, "1", 513))
+
+	comment = unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: 1, IssueID: issue.ID})
+	assert.Empty(t, comment.OriginalAuthor)
+	assert.Empty(t, comment.OriginalAuthorID)
+	assert.EqualValues(t, 513, comment.PosterID)
 }
