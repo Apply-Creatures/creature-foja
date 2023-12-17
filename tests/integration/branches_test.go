@@ -4,72 +4,55 @@
 package integration
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"testing"
 
-	"code.gitea.io/gitea/modules/translation"
-	"code.gitea.io/gitea/tests"
+	git_model "code.gitea.io/gitea/models/git"
+	repo_model "code.gitea.io/gitea/models/repo"
+	"code.gitea.io/gitea/models/unittest"
+	gitea_context "code.gitea.io/gitea/modules/context"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func TestViewBranches(t *testing.T) {
-	defer tests.PrepareTestEnv(t)()
-
-	req := NewRequest(t, "GET", "/user2/repo1/branches")
-	resp := MakeRequest(t, req, http.StatusOK)
-
-	htmlDoc := NewHTMLParser(t, resp.Body)
-	_, exists := htmlDoc.doc.Find(".delete-branch-button").Attr("data-url")
-	assert.False(t, exists, "The template has changed")
-}
-
-func TestDeleteBranch(t *testing.T) {
-	defer tests.PrepareTestEnv(t)()
-
-	deleteBranch(t)
-}
-
-func TestUndoDeleteBranch(t *testing.T) {
+func TestBranchActions(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, u *url.URL) {
-		deleteBranch(t)
-		htmlDoc, name := branchAction(t, ".restore-branch-button")
-		assert.Contains(t,
-			htmlDoc.doc.Find(".ui.positive.message").Text(),
-			translation.NewLocale("en-US").Tr("repo.branch.restore_success", name),
-		)
+		session := loginUser(t, "user2")
+		repo1 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+		branch3 := unittest.AssertExistsAndLoadBean(t, &git_model.Branch{ID: 3, RepoID: repo1.ID})
+		branchesLink := repo1.FullName() + "/branches"
+
+		t.Run("View", func(t *testing.T) {
+			req := NewRequest(t, "GET", branchesLink)
+			MakeRequest(t, req, http.StatusOK)
+		})
+
+		t.Run("Delete branch", func(t *testing.T) {
+			link := fmt.Sprintf("/%s/branches/delete?name=%s", repo1.FullName(), branch3.Name)
+			req := NewRequestWithValues(t, "POST", link, map[string]string{
+				"_csrf": GetCSRF(t, session, branchesLink),
+			})
+			session.MakeRequest(t, req, http.StatusOK)
+			flashCookie := session.GetCookie(gitea_context.CookieNameFlash)
+			assert.NotNil(t, flashCookie)
+			assert.Contains(t, flashCookie.Value, "success%3DBranch%2B%2522branch2%2522%2Bhas%2Bbeen%2Bdeleted.")
+
+			assert.True(t, unittest.AssertExistsAndLoadBean(t, &git_model.Branch{ID: 3, RepoID: repo1.ID}).IsDeleted)
+		})
+
+		t.Run("Restore branch", func(t *testing.T) {
+			link := fmt.Sprintf("/%s/branches/restore?branch_id=%d&name=%s", repo1.FullName(), branch3.ID, branch3.Name)
+			req := NewRequestWithValues(t, "POST", link, map[string]string{
+				"_csrf": GetCSRF(t, session, branchesLink),
+			})
+			session.MakeRequest(t, req, http.StatusOK)
+			flashCookie := session.GetCookie(gitea_context.CookieNameFlash)
+			assert.NotNil(t, flashCookie)
+			assert.Contains(t, flashCookie.Value, "success%3DBranch%2B%2522branch2%2522%2Bhas%2Bbeen%2Brestored")
+
+			assert.False(t, unittest.AssertExistsAndLoadBean(t, &git_model.Branch{ID: 3, RepoID: repo1.ID}).IsDeleted)
+		})
 	})
-}
-
-func deleteBranch(t *testing.T) {
-	htmlDoc, name := branchAction(t, ".delete-branch-button")
-	assert.Contains(t,
-		htmlDoc.doc.Find(".ui.positive.message").Text(),
-		translation.NewLocale("en-US").Tr("repo.branch.deletion_success", name),
-	)
-}
-
-func branchAction(t *testing.T, button string) (*HTMLDoc, string) {
-	session := loginUser(t, "user2")
-	req := NewRequest(t, "GET", "/user2/repo1/branches")
-	resp := session.MakeRequest(t, req, http.StatusOK)
-
-	htmlDoc := NewHTMLParser(t, resp.Body)
-	link, exists := htmlDoc.doc.Find(button).Attr("data-url")
-	if !assert.True(t, exists, "The template has changed") {
-		t.Skip()
-	}
-
-	req = NewRequestWithValues(t, "POST", link, map[string]string{
-		"_csrf": htmlDoc.GetCSRF(),
-	})
-	session.MakeRequest(t, req, http.StatusOK)
-
-	url, err := url.Parse(link)
-	assert.NoError(t, err)
-	req = NewRequest(t, "GET", "/user2/repo1/branches")
-	resp = session.MakeRequest(t, req, http.StatusOK)
-
-	return NewHTMLParser(t, resp.Body), url.Query().Get("name")
 }

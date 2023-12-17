@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 
+	git_model "code.gitea.io/gitea/models/git"
+	"code.gitea.io/gitea/models/unittest"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/test"
 	"code.gitea.io/gitea/modules/translation"
@@ -47,12 +49,14 @@ func testCreateBranches(t *testing.T, giteaURL *url.URL) {
 		CreateRelease  string
 		FlashMessage   string
 		ExpectedStatus int
+		CheckBranch    bool
 	}{
 		{
 			OldRefSubURL:   "branch/master",
 			NewBranch:      "feature/test1",
 			ExpectedStatus: http.StatusSeeOther,
 			FlashMessage:   translation.NewLocale("en-US").Tr("repo.branch.create_success", "feature/test1"),
+			CheckBranch:    true,
 		},
 		{
 			OldRefSubURL:   "branch/master",
@@ -65,6 +69,7 @@ func testCreateBranches(t *testing.T, giteaURL *url.URL) {
 			NewBranch:      "feature=test1",
 			ExpectedStatus: http.StatusSeeOther,
 			FlashMessage:   translation.NewLocale("en-US").Tr("repo.branch.create_success", "feature=test1"),
+			CheckBranch:    true,
 		},
 		{
 			OldRefSubURL:   "branch/master",
@@ -94,6 +99,7 @@ func testCreateBranches(t *testing.T, giteaURL *url.URL) {
 			NewBranch:      "feature/test3",
 			ExpectedStatus: http.StatusSeeOther,
 			FlashMessage:   translation.NewLocale("en-US").Tr("repo.branch.create_success", "feature/test3"),
+			CheckBranch:    true,
 		},
 		{
 			OldRefSubURL:   "branch/master",
@@ -108,10 +114,15 @@ func testCreateBranches(t *testing.T, giteaURL *url.URL) {
 			CreateRelease:  "v1.0.1",
 			ExpectedStatus: http.StatusSeeOther,
 			FlashMessage:   translation.NewLocale("en-US").Tr("repo.branch.create_success", "feature/test4"),
+			CheckBranch:    true,
 		},
 	}
+
+	session := loginUser(t, "user2")
 	for _, test := range tests {
-		session := loginUser(t, "user2")
+		if test.CheckBranch {
+			unittest.AssertNotExistsBean(t, &git_model.Branch{RepoID: 1, Name: test.NewBranch})
+		}
 		if test.CreateRelease != "" {
 			createNewRelease(t, session, "/user2/repo1", test.CreateRelease, test.CreateRelease, false, false)
 		}
@@ -124,6 +135,9 @@ func testCreateBranches(t *testing.T, giteaURL *url.URL) {
 				strings.TrimSpace(htmlDoc.doc.Find(".ui.message").Text()),
 				test.FlashMessage,
 			)
+		}
+		if test.CheckBranch {
+			unittest.AssertExistsAndLoadBean(t, &git_model.Branch{RepoID: 1, Name: test.NewBranch})
 		}
 	}
 }
