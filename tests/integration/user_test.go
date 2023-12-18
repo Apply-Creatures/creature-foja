@@ -243,16 +243,25 @@ func testExportUserGPGKeys(t *testing.T, user, expected string) {
 }
 
 func TestGetUserRss(t *testing.T) {
-	user34 := "the_34-user.with.all.allowedChars"
-	req := NewRequestf(t, "GET", "/%s.rss", user34)
-	resp := MakeRequest(t, req, http.StatusOK)
-	if assert.EqualValues(t, "application/rss+xml;charset=utf-8", resp.Header().Get("Content-Type")) {
-		rssDoc := NewHTMLParser(t, resp.Body).Find("channel")
-		title, _ := rssDoc.ChildrenFiltered("title").Html()
-		assert.EqualValues(t, "Feed of &#34;the_1-user.with.all.allowedChars&#34;", title)
-		description, _ := rssDoc.ChildrenFiltered("description").Html()
-		assert.EqualValues(t, "&lt;p dir=&#34;auto&#34;&gt;some &lt;a href=&#34;https://commonmark.org/&#34; rel=&#34;nofollow&#34;&gt;commonmark&lt;/a&gt;!&lt;/p&gt;\n", description)
-	}
+	defer tests.PrepareTestEnv(t)()
+
+	t.Run("Normal", func(t *testing.T) {
+		user34 := "the_34-user.with.all.allowedChars"
+		req := NewRequestf(t, "GET", "/%s.rss", user34)
+		resp := MakeRequest(t, req, http.StatusOK)
+		if assert.EqualValues(t, "application/rss+xml;charset=utf-8", resp.Header().Get("Content-Type")) {
+			rssDoc := NewHTMLParser(t, resp.Body).Find("channel")
+			title, _ := rssDoc.ChildrenFiltered("title").Html()
+			assert.EqualValues(t, "Feed of &#34;the_1-user.with.all.allowedChars&#34;", title)
+			description, _ := rssDoc.ChildrenFiltered("description").Html()
+			assert.EqualValues(t, "&lt;p dir=&#34;auto&#34;&gt;some &lt;a href=&#34;https://commonmark.org/&#34; rel=&#34;nofollow&#34;&gt;commonmark&lt;/a&gt;!&lt;/p&gt;\n", description)
+		}
+	})
+	t.Run("Non-existent user", func(t *testing.T) {
+		session := loginUser(t, "user2")
+		req := NewRequestf(t, "GET", "/non-existent-user.rss")
+		session.MakeRequest(t, req, http.StatusNotFound)
+	})
 }
 
 func TestListStopWatches(t *testing.T) {
