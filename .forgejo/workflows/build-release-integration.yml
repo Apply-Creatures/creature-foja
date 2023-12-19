@@ -80,7 +80,7 @@ jobs:
             for suffix in '' '.xz' ; do
               curl --fail -L -sS $url/root/forgejo/releases/download/v$version/$binary$suffix > $binary$suffix
               if test "$suffix" = .xz ; then
-                 unxz --keep $binary$suffix
+                unxz --keep $binary$suffix
               fi
               chmod +x $binary
               ./$binary --version | grep $version

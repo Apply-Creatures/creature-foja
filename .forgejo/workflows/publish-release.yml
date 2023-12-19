@@ -28,7 +28,7 @@
 #
 name: Pubish release
 
-on: 
+on:
   push:
     tags: 'v*'
 
