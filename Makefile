@@ -400,7 +400,7 @@ lint-go-vet:
 
 .PHONY: lint-editorconfig
 lint-editorconfig:
-	$(GO) run $(EDITORCONFIG_CHECKER_PACKAGE) templates .github/workflows
+	$(GO) run $(EDITORCONFIG_CHECKER_PACKAGE) templates .forgejo/workflows
 
 .PHONY: lint-actions
 lint-actions:
