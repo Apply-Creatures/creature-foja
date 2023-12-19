@@ -134,6 +134,6 @@ func doActionsUserPR(ctx, doerCtx APITestContext, baseBranch, headBranch string)
 		doerCtx.ExpectedCode = http.StatusCreated
 		t.Run("AutoMergePR", doAPIAutoMergePullRequest(doerCtx, ctx.Username, ctx.Reponame, pr.Index))
 		// Ensure the PR page works
-		t.Run("EnsureCanSeePull", doEnsureCanSeePull(ctx, pr))
+		t.Run("EnsureCanSeePull", doEnsureCanSeePull(ctx, pr, true))
 	}
 }
