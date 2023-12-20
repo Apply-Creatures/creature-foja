@@ -10,6 +10,7 @@ import (
 
 	"code.gitea.io/gitea/models/forgejo/semver"
 	forgejo_v1_20 "code.gitea.io/gitea/models/forgejo_migrations/v1_20"
+	forgejo_v1_22 "code.gitea.io/gitea/models/forgejo_migrations/v1_22"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
@@ -43,6 +44,8 @@ var migrations = []*Migration{
 	NewMigration("create the forgejo_sem_ver table", forgejo_v1_20.CreateSemVerTable),
 	// v2 -> v3
 	NewMigration("create the forgejo_auth_token table", forgejo_v1_20.CreateAuthorizationTokenTable),
+	// v3 -> v4
+	NewMigration("Add default_permissions to repo_unit", forgejo_v1_22.AddDefaultPermissionsToRepoUnit),
 }
 
 // GetCurrentDBVersion returns the current Forgejo database version.

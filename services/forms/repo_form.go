@@ -132,6 +132,7 @@ type RepoSettingForm struct {
 	// Advanced settings
 	EnableCode                            bool
 	EnableWiki                            bool
+	GloballyWriteableWiki                 bool
 	EnableExternalWiki                    bool
 	ExternalWikiURL                       string
 	EnableIssues                          bool

@@ -4,13 +4,18 @@
 package integration
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"net/http"
 	"testing"
 
 	auth_model "code.gitea.io/gitea/models/auth"
+	repo_model "code.gitea.io/gitea/models/repo"
+	unit_model "code.gitea.io/gitea/models/unit"
+	"code.gitea.io/gitea/models/unittest"
 	api "code.gitea.io/gitea/modules/structs"
+	repo_service "code.gitea.io/gitea/services/repository"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
@@ -207,6 +212,53 @@ func TestAPIEditWikiPage(t *testing.T) {
 		Message:       "",
 	}).AddTokenAuth(token)
 	MakeRequest(t, req, http.StatusOK)
+}
+
+func TestAPIEditOtherWikiPage(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	// (drive-by-user) user, session, and token for a drive-by wiki editor
+	username := "drive-by-user"
+	req := NewRequestWithValues(t, "POST", "/user/sign_up", map[string]string{
+		"user_name": username,
+		"email":     "drive-by@example.com",
+		"password":  "examplePassword!1",
+		"retype":    "examplePassword!1",
+	})
+	MakeRequest(t, req, http.StatusSeeOther)
+	session := loginUserWithPassword(t, username, "examplePassword!1")
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository)
+
+	// (user2) user for the user whose wiki we're going to edit (as drive-by-user)
+	otherUsername := "user2"
+
+	// Creating a new Wiki page on user2's repo as user1 fails
+	testCreateWiki := func(expectedStatusCode int) {
+		urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/wiki/new", otherUsername, "repo1")
+		req := NewRequestWithJSON(t, "POST", urlStr, &api.CreateWikiPageOptions{
+			Title:         "Globally Edited Page",
+			ContentBase64: base64.StdEncoding.EncodeToString([]byte("Wiki page content for API unit tests")),
+			Message:       "",
+		}).AddTokenAuth(token)
+		session.MakeRequest(t, req, expectedStatusCode)
+	}
+	testCreateWiki(http.StatusForbidden)
+
+	// Update the repo settings for user2's repo to enable globally writeable wiki
+	ctx := context.Background()
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+	var units []repo_model.RepoUnit
+	units = append(units, repo_model.RepoUnit{
+		RepoID:             repo.ID,
+		Type:               unit_model.TypeWiki,
+		Config:             new(repo_model.UnitConfig),
+		DefaultPermissions: repo_model.UnitAccessModeWrite,
+	})
+	err := repo_service.UpdateRepositoryUnits(ctx, repo, units, nil)
+	assert.NoError(t, err)
+
+	// Creating a new Wiki page on user2's repo works now
+	testCreateWiki(http.StatusCreated)
 }
 
 func TestAPIListPageRevisions(t *testing.T) {

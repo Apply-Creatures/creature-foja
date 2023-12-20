@@ -335,6 +335,16 @@
 							<label>{{ctx.Locale.Tr "repo.settings.use_internal_wiki"}}</label>
 						</div>
 					</div>
+					{{if (not .Repository.IsPrivate)}}
+					<div class="field {{if (.Repository.UnitEnabled $.Context $.UnitTypeExternalWiki)}}disabled{{end}}">
+						<div class="field">
+							<div class="ui checkbox">
+								<input name="globally_writeable_wiki" type="checkbox" {{if .Permission.IsGloballyWriteable $.UnitTypeWiki}}checked{{end}}>
+								<label>{{ctx.Locale.Tr "repo.settings.wiki_globally_editable"}}</label>
+							</div>
+						</div>
+					</div>
+					{{end}}
 					<div class="field">
 						<div class="ui radio checkbox{{if $isExternalWikiGlobalDisabled}} disabled{{end}}"{{if $isExternalWikiGlobalDisabled}} data-tooltip-content="{{ctx.Locale.Tr "repo.unit_disabled"}}"{{end}}>
 							<input class="enable-system-radio" name="enable_external_wiki" type="radio" value="true" data-target="#external_wiki_box" {{if .Repository.UnitEnabled $.Context $.UnitTypeExternalWiki}}checked{{end}}>
