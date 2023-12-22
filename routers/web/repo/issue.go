@@ -2501,7 +2501,8 @@ func UpdatePullReviewRequest(ctx *context.Context) {
 func SearchIssues(ctx *context.Context) {
 	before, since, err := context.GetQueryBeforeSince(ctx.Base)
 	if err != nil {
-		ctx.Error(http.StatusUnprocessableEntity, err.Error())
+		log.Error("GetQueryBeforeSince: %v", err)
+		ctx.Error(http.StatusUnprocessableEntity, "invalid before or since")
 		return
 	}
 
@@ -2538,10 +2539,11 @@ func SearchIssues(ctx *context.Context) {
 		if ctx.FormString("owner") != "" {
 			owner, err := user_model.GetUserByName(ctx, ctx.FormString("owner"))
 			if err != nil {
+				log.Error("GetUserByName: %v", err)
 				if user_model.IsErrUserNotExist(err) {
 					ctx.Error(http.StatusBadRequest, "Owner not found", err.Error())
 				} else {
-					ctx.Error(http.StatusInternalServerError, "GetUserByName", err.Error())
+					ctx.Error(http.StatusInternalServerError)
 				}
 				return
 			}
@@ -2552,15 +2554,16 @@ func SearchIssues(ctx *context.Context) {
 		}
 		if ctx.FormString("team") != "" {
 			if ctx.FormString("owner") == "" {
-				ctx.Error(http.StatusBadRequest, "", "Owner organisation is required for filtering on team")
+				ctx.Error(http.StatusBadRequest, "Owner organisation is required for filtering on team")
 				return
 			}
 			team, err := organization.GetTeam(ctx, opts.OwnerID, ctx.FormString("team"))
 			if err != nil {
+				log.Error("GetTeam: %v", err)
 				if organization.IsErrTeamNotExist(err) {
-					ctx.Error(http.StatusBadRequest, "Team not found", err.Error())
+					ctx.Error(http.StatusBadRequest)
 				} else {
-					ctx.Error(http.StatusInternalServerError, "GetUserByName", err.Error())
+					ctx.Error(http.StatusInternalServerError)
 				}
 				return
 			}
@@ -2573,7 +2576,8 @@ func SearchIssues(ctx *context.Context) {
 		}
 		repoIDs, _, err = repo_model.SearchRepositoryIDs(ctx, opts)
 		if err != nil {
-			ctx.Error(http.StatusInternalServerError, "SearchRepositoryIDs", err.Error())
+			log.Error("SearchRepositoryIDs: %v", err)
+			ctx.Error(http.StatusInternalServerError)
 			return
 		}
 		if len(repoIDs) == 0 {
@@ -2607,7 +2611,8 @@ func SearchIssues(ctx *context.Context) {
 		}
 		includedAnyLabels, err = issues_model.GetLabelIDsByNames(ctx, includedLabelNames)
 		if err != nil {
-			ctx.Error(http.StatusInternalServerError, "GetLabelIDsByNames", err.Error())
+			log.Error("GetLabelIDsByNames: %v", err)
+			ctx.Error(http.StatusInternalServerError)
 			return
 		}
 	}
@@ -2621,7 +2626,8 @@ func SearchIssues(ctx *context.Context) {
 		}
 		includedMilestones, err = issues_model.GetMilestoneIDsByNames(ctx, includedMilestoneNames)
 		if err != nil {
-			ctx.Error(http.StatusInternalServerError, "GetMilestoneIDsByNames", err.Error())
+			log.Error("GetMilestoneIDsByNames: %v", err)
+			ctx.Error(http.StatusInternalServerError)
 			return
 		}
 	}
@@ -2688,12 +2694,14 @@ func SearchIssues(ctx *context.Context) {
 
 	ids, total, err := issue_indexer.SearchIssues(ctx, searchOpt)
 	if err != nil {
-		ctx.Error(http.StatusInternalServerError, "SearchIssues", err.Error())
+		log.Error("SearchIssues: %v", err)
+		ctx.Error(http.StatusInternalServerError)
 		return
 	}
 	issues, err := issues_model.GetIssuesByIDs(ctx, ids, true)
 	if err != nil {
-		ctx.Error(http.StatusInternalServerError, "FindIssuesByIDs", err.Error())
+		log.Error("GetIssuesByIDs: %v", err)
+		ctx.Error(http.StatusInternalServerError)
 		return
 	}
 
