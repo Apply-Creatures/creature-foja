@@ -112,6 +112,7 @@ func CreateScheduleTask(ctx context.Context, cron *actions_model.ActionSchedule)
 		Ref:           cron.Ref,
 		CommitSHA:     cron.CommitSHA,
 		Event:         cron.Event,
+		TriggerEvent:  string(webhook_module.HookEventSchedule),
 		EventPayload:  cron.EventPayload,
 		ScheduleID:    cron.ID,
 		Status:        actions_model.StatusWaiting,
