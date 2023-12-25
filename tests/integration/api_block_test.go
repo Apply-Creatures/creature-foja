@@ -28,7 +28,7 @@ func TestAPIUserBlock(t *testing.T) {
 	t.Run("BlockUser", func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 
-		req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/user/block/user2?token=%s", token))
+		req := NewRequest(t, "PUT", "/api/v1/user/block/user2").AddTokenAuth(token)
 		MakeRequest(t, req, http.StatusNoContent)
 
 		unittest.AssertExistsAndLoadBean(t, &user_model.BlockedUser{UserID: 4, BlockID: 2})
@@ -37,7 +37,7 @@ func TestAPIUserBlock(t *testing.T) {
 	t.Run("ListBlocked", func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 
-		req := NewRequest(t, "GET", fmt.Sprintf("/api/v1/user/list_blocked?token=%s", token))
+		req := NewRequest(t, "GET", "/api/v1/user/list_blocked").AddTokenAuth(token)
 		resp := MakeRequest(t, req, http.StatusOK)
 
 		// One user just got blocked and the other one is defined in the fixtures.
@@ -53,7 +53,7 @@ func TestAPIUserBlock(t *testing.T) {
 	t.Run("UnblockUser", func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 
-		req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/user/unblock/user2?token=%s", token))
+		req := NewRequest(t, "PUT", "/api/v1/user/unblock/user2").AddTokenAuth(token)
 		MakeRequest(t, req, http.StatusNoContent)
 
 		unittest.AssertNotExistsBean(t, &user_model.BlockedUser{UserID: 4, BlockID: 2})
@@ -65,7 +65,7 @@ func TestAPIUserBlock(t *testing.T) {
 		t.Run("Block", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
-			req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/user/block/%s?token=%s", org.Name, token))
+			req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/user/block/%s", org.Name)).AddTokenAuth(token)
 			MakeRequest(t, req, http.StatusUnprocessableEntity)
 
 			unittest.AssertNotExistsBean(t, &user_model.BlockedUser{UserID: 4, BlockID: org.ID})
@@ -74,7 +74,7 @@ func TestAPIUserBlock(t *testing.T) {
 		t.Run("Unblock", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
-			req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/user/unblock/%s?token=%s", org.Name, token))
+			req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/user/unblock/%s", org.Name)).AddTokenAuth(token)
 			MakeRequest(t, req, http.StatusUnprocessableEntity)
 		})
 	})
@@ -91,7 +91,7 @@ func TestAPIOrgBlock(t *testing.T) {
 	t.Run("BlockUser", func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 
-		req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/orgs/%s/block/user2?token=%s", org, token))
+		req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/orgs/%s/block/user2", org)).AddTokenAuth(token)
 		MakeRequest(t, req, http.StatusNoContent)
 
 		unittest.AssertExistsAndLoadBean(t, &user_model.BlockedUser{UserID: 6, BlockID: 2})
@@ -100,7 +100,7 @@ func TestAPIOrgBlock(t *testing.T) {
 	t.Run("ListBlocked", func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 
-		req := NewRequest(t, "GET", fmt.Sprintf("/api/v1/orgs/%s/list_blocked?token=%s", org, token))
+		req := NewRequest(t, "GET", fmt.Sprintf("/api/v1/orgs/%s/list_blocked", org)).AddTokenAuth(token)
 		resp := MakeRequest(t, req, http.StatusOK)
 
 		assert.Equal(t, "1", resp.Header().Get("X-Total-Count"))
@@ -114,7 +114,7 @@ func TestAPIOrgBlock(t *testing.T) {
 	t.Run("UnblockUser", func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 
-		req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/orgs/%s/unblock/user2?token=%s", org, token))
+		req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/orgs/%s/unblock/user2", org)).AddTokenAuth(token)
 		MakeRequest(t, req, http.StatusNoContent)
 
 		unittest.AssertNotExistsBean(t, &user_model.BlockedUser{UserID: 6, BlockID: 2})
@@ -126,7 +126,7 @@ func TestAPIOrgBlock(t *testing.T) {
 		t.Run("Block", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
-			req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/orgs/%s/block/%s?token=%s", org, targetOrg.Name, token))
+			req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/orgs/%s/block/%s", org, targetOrg.Name)).AddTokenAuth(token)
 			MakeRequest(t, req, http.StatusUnprocessableEntity)
 
 			unittest.AssertNotExistsBean(t, &user_model.BlockedUser{UserID: 4, BlockID: targetOrg.ID})
@@ -135,7 +135,7 @@ func TestAPIOrgBlock(t *testing.T) {
 		t.Run("Unblock", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
-			req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/orgs/%s/unblock/%s?token=%s", org, targetOrg.Name, token))
+			req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/orgs/%s/unblock/%s", org, targetOrg.Name)).AddTokenAuth(token)
 			MakeRequest(t, req, http.StatusUnprocessableEntity)
 		})
 	})
@@ -146,7 +146,7 @@ func TestAPIOrgBlock(t *testing.T) {
 		t.Run("Write action", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
-			req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/orgs/%s/block/user2?token=%s", org, token))
+			req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/orgs/%s/block/user2", org)).AddTokenAuth(token)
 			MakeRequest(t, req, http.StatusForbidden)
 
 			unittest.AssertNotExistsBean(t, &user_model.BlockedUser{UserID: 6, BlockID: 2})
@@ -155,7 +155,7 @@ func TestAPIOrgBlock(t *testing.T) {
 		t.Run("Read action", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
-			req := NewRequest(t, "GET", fmt.Sprintf("/api/v1/orgs/%s/list_blocked?token=%s", org, token))
+			req := NewRequest(t, "GET", fmt.Sprintf("/api/v1/orgs/%s/list_blocked", org)).AddTokenAuth(token)
 			MakeRequest(t, req, http.StatusOK)
 		})
 	})
@@ -170,19 +170,19 @@ func TestAPIOrgBlock(t *testing.T) {
 		token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteOrganization)
 
 		t.Run("Block user", func(t *testing.T) {
-			req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/orgs/%s/block/user2?token=%s", org, token))
+			req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/orgs/%s/block/user2", org)).AddTokenAuth(token)
 			MakeRequest(t, req, http.StatusForbidden)
 
 			unittest.AssertNotExistsBean(t, &user_model.BlockedUser{UserID: 3, BlockID: 2})
 		})
 
 		t.Run("Unblock user", func(t *testing.T) {
-			req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/orgs/%s/unblock/user2?token=%s", org, token))
+			req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/orgs/%s/unblock/user2", org)).AddTokenAuth(token)
 			MakeRequest(t, req, http.StatusForbidden)
 		})
 
 		t.Run("List blocked users", func(t *testing.T) {
-			req := NewRequest(t, "GET", fmt.Sprintf("/api/v1/orgs/%s/list_blocked?token=%s", org, token))
+			req := NewRequest(t, "GET", fmt.Sprintf("/api/v1/orgs/%s/list_blocked", org)).AddTokenAuth(token)
 			MakeRequest(t, req, http.StatusForbidden)
 		})
 	})
@@ -202,7 +202,7 @@ func TestAPIBlock_AddCollaborator(t *testing.T) {
 	session := loginUser(t, user1)
 	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteUser, auth_model.AccessTokenScopeWriteRepository)
 
-	req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/user/block/%s?token=%s", user2, token))
+	req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/user/block/%s", user2)).AddTokenAuth(token)
 	MakeRequest(t, req, http.StatusNoContent)
 	unittest.AssertExistsAndLoadBean(t, &user_model.BlockedUser{UserID: 10, BlockID: 2})
 
@@ -212,7 +212,7 @@ func TestAPIBlock_AddCollaborator(t *testing.T) {
 		session := loginUser(t, user2)
 		token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository)
 
-		req := NewRequestWithJSON(t, "PUT", fmt.Sprintf("/api/v1/repos/%s/%s/collaborators/%s?token=%s", user2, repo.Name, user1, token), collabOption)
+		req := NewRequestWithJSON(t, "PUT", fmt.Sprintf("/api/v1/repos/%s/%s/collaborators/%s", user2, repo.Name, user1), collabOption).AddTokenAuth(token)
 		session.MakeRequest(t, req, http.StatusForbidden)
 	})
 
@@ -222,7 +222,7 @@ func TestAPIBlock_AddCollaborator(t *testing.T) {
 		session := loginUser(t, user1)
 		token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository)
 
-		req := NewRequestWithJSON(t, "PUT", fmt.Sprintf("/api/v1/repos/%s/%s/collaborators/%s?token=%s", user1, repo.Name, user2, token), collabOption)
+		req := NewRequestWithJSON(t, "PUT", fmt.Sprintf("/api/v1/repos/%s/%s/collaborators/%s", user1, repo.Name, user2), collabOption).AddTokenAuth(token)
 		session.MakeRequest(t, req, http.StatusForbidden)
 	})
 }
