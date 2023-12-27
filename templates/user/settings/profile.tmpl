@@ -22,30 +22,30 @@
 					<input id="full_name" name="full_name" value="{{.SignedUser.FullName}}" maxlength="100">
 				</div>
 				<div class="inline field">
-					<span class="inline field"><label for="pronouns">{{.locale.Tr "settings.pronouns"}}</label></span>
+					<span class="inline field"><label for="pronouns">{{ctx.Locale.Tr "settings.pronouns"}}</label></span>
 					<div id="pronouns-dropdown" style="display: none" class="ui selection dropdown">
 						<input type="hidden" name="pronouns" value="{{.SignedUser.Pronouns}}">
 						<div class="text">
 							{{if .PronounsAreCustom}}
-								{{.locale.Tr "settings.pronouns_custom"}}
+								{{ctx.Locale.Tr "settings.pronouns_custom"}}
 							{{else if eq "" .SignedUser.Pronouns}}
-								{{.locale.Tr "settings.pronouns_unspecified"}}
+								{{ctx.Locale.Tr "settings.pronouns_unspecified"}}
 							{{else}}
 								{{.SignedUser.Pronouns}}
 							{{end}}
 						</div>
 						{{svg "octicon-triangle-down" 14 "dropdown icon"}}
 						<div class="menu">
-							<div class="item{{if eq "" .SignedUser.Pronouns}} active selected{{end}}" data-value=""><i>{{.locale.Tr "settings.pronouns_unspecified"}}</i></div>
+							<div class="item{{if eq "" .SignedUser.Pronouns}} active selected{{end}}" data-value=""><i>{{ctx.Locale.Tr "settings.pronouns_unspecified"}}</i></div>
 							<div class="item{{if eq "he/him" .SignedUser.Pronouns}} active selected{{end}}" data-value="he/him">he/him</div>
 							<div class="item{{if eq "she/her" .SignedUser.Pronouns}} active selected{{end}}" data-value="she/her">she/her</div>
 							<div class="item{{if eq "they/them" .SignedUser.Pronouns}} active selected{{end}}" data-value="they/them">they/them</div>
 							<div class="item{{if eq "it/its" .SignedUser.Pronouns}} active selected{{end}}" data-value="it/its">it/its</div>
 							<div class="item{{if eq "any/all" .SignedUser.Pronouns}} active selected{{end}}" data-value="any/all">any/all</div>
 							{{if .PronounsAreCustom}}
-								<div class="item active selected" data-value="{{.SignedUser.Pronouns}}"><i>{{.locale.Tr "settings.pronouns_custom"}}</i></div>
+								<div class="item active selected" data-value="{{.SignedUser.Pronouns}}"><i>{{ctx.Locale.Tr "settings.pronouns_custom"}}</i></div>
 							{{else}}
-								<div class="item" data-value="!"><i>{{.locale.Tr "settings.pronouns_custom"}}</i></div>
+								<div class="item" data-value="!"><i>{{ctx.Locale.Tr "settings.pronouns_custom"}}</i></div>
 							{{end}}
 						</div>
 					</div>
