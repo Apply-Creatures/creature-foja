@@ -8,63 +8,40 @@ jobs:
   release:
     runs-on: self-hosted
     # root is used for testing, allow it
-    if: secrets.ROLE == 'forgejo-integration' || github.repository_owner == 'root'
+    if: vars.ROLE == 'forgejo-integration' || github.repository_owner == 'root'
     steps:
       - uses: actions/checkout@v3
-
-      - name: Increase the verbosity when there are no secrets
-        id: verbose
-        run: |
-          if test -z "${{ secrets.TOKEN }}"; then
-            value=true
-          else
-            value=false
-          fi
-          echo "value=$value" >> "$GITHUB_OUTPUT"
 
       - name: Sanitize the name of the repository
         id: repository
         run: |
-          set -x # comment out
           repository="${{ github.repository }}"
           echo "value=${repository##*/}" >> "$GITHUB_OUTPUT"
 
-      - name: When in a test environment, create a token
-        id: token
-        if: ${{ secrets.TOKEN == '' }}
-        run: |
-          apt-get -qq install -y jq
-          url="${{ env.GITHUB_SERVER_URL }}"
-          hostport=${url##http*://}
-          hostport=${hostport%%/}
-          doer=root
-          api=http://$doer:admin1234@$hostport/api/v1/users/$doer/tokens
-          curl -sS -X DELETE $api/release
-          token=$(curl -sS -X POST -H 'Content-Type: application/json' --data-raw '{"name": "release", "scopes": ["all"]}' $api | jq --raw-output .sha1)
-          echo "value=${token}" >> "$GITHUB_OUTPUT"
-
       - uses: https://code.forgejo.org/actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
 
       - uses: https://code.forgejo.org/actions/setup-go@v4
         with:
-          go-version: ">=1.20"
+          go-version: ">=1.21"
           check-latest: true
 
-      - name: Create the version from ref_name
+      - name: version from ref_name
         id: tag-version
         run: |
           version="${{ github.ref_name }}"
           version=${version##*v}
           echo "value=$version" >> "$GITHUB_OUTPUT"
 
-      - name: Create the release notes
+      - name: release notes
         id: release-notes
         run: |
+          anchor=${{ steps.tag-version.outputs.value }}
+          anchor=${anchor//./-}
           cat >> "$GITHUB_OUTPUT" <<EOF
           value<<ENDVAR
-          See https://codeberg.org/forgejo/forgejo/src/branch/forgejo/RELEASE-NOTES.md#${{ steps.tag-version.outputs.value }}
+          See https://codeberg.org/forgejo/forgejo/src/branch/forgejo/RELEASE-NOTES.md#$anchor
           ENDVAR
           EOF
 
@@ -127,40 +104,9 @@ jobs:
             fi
           )
 
-      - name: build container & release (when TOKEN secret is not set)
-        if: ${{ secrets.TOKEN == '' }}
-        uses: ./.forgejo/actions/build-release
-        with:
-          forgejo: "${{ env.GITHUB_SERVER_URL }}"
-          owner: "${{ env.GITHUB_REPOSITORY_OWNER }}"
-          repository: "${{ steps.repository.outputs.value }}"
-          doer: root
-          tag-version: "${{ steps.tag-version.outputs.value }}"
-          token: ${{ steps.token.outputs.value }}
-          platforms: linux/amd64,linux/arm64,linux/arm/v6
-          release-notes: "${{ steps.release-notes.outputs.value }}"
-          binary-name: forgejo
-          binary-path: /app/gitea/gitea
-          verbose: ${{ steps.verbose.outputs.value }}
-
-      - name: build rootless container (when TOKEN secret is not set)
-        if: ${{ secrets.TOKEN == '' }}
-        uses: ./.forgejo/actions/build-release
-        with:
-          forgejo: "${{ env.GITHUB_SERVER_URL }}"
-          owner: "${{ env.GITHUB_REPOSITORY_OWNER }}"
-          repository: "${{ steps.repository.outputs.value }}"
-          doer: root
-          tag-version: "${{ steps.tag-version.outputs.value }}"
-          token: ${{ steps.token.outputs.value }}
-          platforms: linux/amd64,linux/arm64,linux/arm/v6
-          suffix: -rootless
-          dockerfile: Dockerfile.rootless
-          verbose: ${{ steps.verbose.outputs.value }}
-
-      - name: build container & release (when TOKEN secret is set)
+      - name: build container & release
         if: ${{ secrets.TOKEN != '' }}
-        uses: ./.forgejo/actions/build-release
+        uses: https://code.forgejo.org/forgejo/forgejo-build-publish/build@v1
         with:
           forgejo: "${{ env.GITHUB_SERVER_URL }}"
           owner: "${{ env.GITHUB_REPOSITORY_OWNER }}"
@@ -172,11 +118,11 @@ jobs:
           release-notes: "${{ steps.release-notes.outputs.value }}"
           binary-name: forgejo
           binary-path: /app/gitea/gitea
-          verbose: ${{ steps.verbose.outputs.value }}
+          verbose: ${{ vars.VERBOSE || 'false' }}
 
-      - name: build rootless container (when TOKEN secret is set)
+      - name: build rootless container
         if: ${{ secrets.TOKEN != '' }}
-        uses: ./.forgejo/actions/build-release
+        uses: https://code.forgejo.org/forgejo/forgejo-build-publish/build@v1
         with:
           forgejo: "${{ env.GITHUB_SERVER_URL }}"
           owner: "${{ env.GITHUB_REPOSITORY_OWNER }}"
@@ -187,4 +133,4 @@ jobs:
           platforms: linux/amd64,linux/arm64,linux/arm/v6
           suffix: -rootless
           dockerfile: Dockerfile.rootless
-          verbose: ${{ steps.verbose.outputs.value }}
+          verbose: ${{ vars.VERBOSE || 'false' }}

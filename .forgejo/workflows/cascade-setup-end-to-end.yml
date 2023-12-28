@@ -9,6 +9,7 @@ env:
 
 jobs:
   info:
+    if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
     runs-on: docker
     container:
       image: node:20-bookworm
@@ -24,7 +25,7 @@ jobs:
           EOF
 
   build:
-    if: github.event.action == 'label_updated' && contains(github.event.pull_request.labels.*.name, 'run-end-to-end-tests')
+    if: ${{ !startsWith(vars.ROLE, 'forgejo-') && github.event.action == 'label_updated' && contains(github.event.pull_request.labels.*.name, 'run-end-to-end-tests') }}
     runs-on: docker
     container:
       image: 'docker.io/node:20-bookworm'
@@ -60,7 +61,7 @@ jobs:
           path: forgejo
 
   cascade:
-    if: github.event.action == 'label_updated' && contains(github.event.pull_request.labels.*.name, 'run-end-to-end-tests')
+    if: ${{ !startsWith(vars.ROLE, 'forgejo-') && github.event.action == 'label_updated' && contains(github.event.pull_request.labels.*.name, 'run-end-to-end-tests') }}
     needs: [build]
     runs-on: docker
     container:

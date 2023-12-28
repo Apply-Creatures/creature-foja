@@ -9,6 +9,7 @@ on:
 
 jobs:
   lint-backend:
+    if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
     runs-on: docker
     container:
       image: 'docker.io/node:20-bookworm'
@@ -23,6 +24,7 @@ jobs:
         env:
           TAGS: bindata sqlite sqlite_unlock_notify
   checks-backend:
+    if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
     runs-on: docker
     container:
       image: 'docker.io/node:20-bookworm'
@@ -35,6 +37,7 @@ jobs:
       - run: make deps-backend deps-tools
       - run: make --always-make checks-backend # ensure the "go-licenses" make target runs
   test-unit:
+    if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
     runs-on: docker
     needs: [lint-backend, checks-backend]
     container:
@@ -67,6 +70,7 @@ jobs:
           RACE_ENABLED: 'true'
           TAGS: bindata
   test-mysql:
+    if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
     runs-on: docker
     needs: [lint-backend, checks-backend]
     container:
@@ -109,6 +113,7 @@ jobs:
           TAGS: bindata
           USE_REPO_TEST_DIR: 1
   test-pgsql:
+    if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
     runs-on: docker
     needs: [lint-backend, checks-backend]
     container:
@@ -154,6 +159,7 @@ jobs:
           TEST_TAGS: gogit
           USE_REPO_TEST_DIR: 1
   test-sqlite:
+    if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
     runs-on: docker
     needs: [lint-backend, checks-backend]
     container:

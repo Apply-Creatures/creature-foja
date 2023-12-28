@@ -6,25 +6,27 @@
 #
 #  Copies a release from codeberg.org/forgejo-integration to codeberg.org/forgejo-experimental
 #
-#  ROLE: forgejo-experimental
-#  FORGEJO: https://codeberg.org
-#  FROM_OWNER: forgejo-integration
-#  TO_OWNER: forgejo-experimental
-#  DOER: forgejo-experimental-ci
-#  TOKEN: <generated from codeberg.org/forgejo-experimental-ci>
+#  vars.ROLE: forgejo-experimental
+#  vars.FORGEJO: https://codeberg.org
+#  vars.FROM_OWNER: forgejo-integration
+#  vars.TO_OWNER: forgejo-experimental
+#  vars.REPO: forgejo
+#  vars.DOER: forgejo-experimental-ci
+#  secrets.TOKEN: <generated from codeberg.org/forgejo-experimental-ci>
 #
-# https://forgejo.octopuce.forgejo.org/forgejo/forgejo
+# http://private.forgejo.org/forgejo/forgejo
 #
 #  Copies & sign a release from codeberg.org/forgejo-integration to codeberg.org/forgejo
 #
-#  ROLE: forgejo-release
-#  FORGEJO: https://codeberg.org
-#  FROM_OWNER: forgejo-integration
-#  TO_OWNER: forgejo
-#  DOER: release-team
-#  TOKEN: <generated from codeberg.org/release-team>
-#  GPG_PRIVATE_KEY: <XYZ>
-#  GPG_PASSPHRASE: <ABC>
+#  vars.ROLE: forgejo-release
+#  vars.FORGEJO: https://codeberg.org
+#  vars.FROM_OWNER: forgejo-integration
+#  vars.TO_OWNER: forgejo
+#  vars.REPO: forgejo
+#  vars.DOER: release-team
+#  secrets.TOKEN: <generated from codeberg.org/release-team>
+#  secrets.GPG_PRIVATE_KEY: <XYZ>
+#  secrets.GPG_PASSPHRASE: <ABC>
 #
 name: Pubish release
 
@@ -35,39 +37,34 @@ on:
 jobs:
   publish:
     runs-on: self-hosted
-    if: secrets.DOER != '' && secrets.FORGEJO != '' && secrets.TO_OWNER != '' && secrets.FROM_OWNER != '' && secrets.TOKEN != ''
+    if: vars.DOER != '' && vars.FORGEJO != '' && vars.TO_OWNER != '' && vars.FROM_OWNER != '' && secrets.TOKEN != ''
     steps:
-      - name: install the certificate authority
-        if: secrets.ROLE == 'forgejo-release'
-        run: |
-          apt-get install -qq -y wget
-          wget --no-check-certificate -O /usr/local/share/ca-certificates/enough.crt https://forgejo.octopuce.forgejo.org/forgejo/enough/raw/branch/main/certs/2023-05-13/ca.crt
-          update-ca-certificates --fresh
-
       - uses: actions/checkout@v3
 
-      - name: copy & sign binaries and container images from one owner to another
-        uses: ./.forgejo/actions/publish-release
+      - name: copy & sign
+        uses: https://code.forgejo.org/forgejo/forgejo-build-publish/publish@v1
         with:
-          forgejo: ${{ secrets.FORGEJO }}
-          from-owner: ${{ secrets.FROM_OWNER }}
-          to-owner: ${{ secrets.TO_OWNER }}
+          forgejo: ${{ vars.FORGEJO }}
+          from-owner: ${{ vars.FROM_OWNER }}
+          to-owner: ${{ vars.TO_OWNER }}
+          repo: ${{ vars.REPO }}
           ref-name: ${{ github.ref_name }}
-          doer: ${{ secrets.DOER }}
+          release-notes: "See https://codeberg.org/forgejo/forgejo/src/branch/forgejo/RELEASE-NOTES.md#{ANCHOR}"
+          doer: ${{ vars.DOER }}
           token: ${{ secrets.TOKEN }}
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
-          verbose: ${{ secrets.VERBOSE }}
+          verbose: ${{ vars.VERBOSE }}
 
 
       - name: set up go for the DNS update below
+        if: vars.ROLE == 'forgejo-experimental' && secrets.OVH_APP_KEY != ''
         uses: https://code.forgejo.org/actions/setup-go@v4
-        if: secrets.ROLE == 'forgejo-experimental'
         with:
           go-version: ">=1.21"
           check-latest: true
       - name: update the _release.experimental DNS record
-        if: secrets.ROLE == 'forgejo-experimental'
+        if: vars.ROLE == 'forgejo-experimental' && secrets.OVH_APP_KEY != ''
         uses: https://code.forgejo.org/actions/ovh-dns-update@v1
         with:
           subdomain: _release.experimental
