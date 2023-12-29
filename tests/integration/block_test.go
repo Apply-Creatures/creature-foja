@@ -168,6 +168,9 @@ func TestBlockActions(t *testing.T) {
 	repo7 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 7, OwnerID: blockedUser2.ID})
 	issue4 := unittest.AssertExistsAndLoadBean(t, &issue_model.Issue{ID: 4, RepoID: repo2.ID})
 	issue4URL := fmt.Sprintf("/%s/issues/%d", repo2.FullName(), issue4.Index)
+	repo42 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 42, OwnerID: doer.ID})
+	issue10 := unittest.AssertExistsAndLoadBean(t, &issue_model.Issue{ID: 10, RepoID: repo42.ID}, unittest.Cond("poster_id != ?", doer.ID))
+	issue10URL := fmt.Sprintf("/%s/issues/%d", repo42.FullName(), issue10.Index)
 	// NOTE: Sessions shouldn't be shared, because in some situations flash
 	// messages are persistent and that would interfere with accurate test
 	// results.
@@ -206,8 +209,8 @@ func TestBlockActions(t *testing.T) {
 
 			session := loginUser(t, blockedUser.Name)
 
-			req := NewRequestWithValues(t, "POST", path.Join(issue4URL, "/comments"), map[string]string{
-				"_csrf":   GetCSRF(t, session, issue4URL),
+			req := NewRequestWithValues(t, "POST", path.Join(issue10URL, "/comments"), map[string]string{
+				"_csrf":   GetCSRF(t, session, issue10URL),
 				"content": "Not a kind comment",
 			})
 			session.MakeRequest(t, req, http.StatusOK)
