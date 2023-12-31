@@ -53,6 +53,7 @@ func CommonTemplateContextData() ContextData {
 		"ShowMilestonesDashboardPage":   setting.Service.ShowMilestonesDashboardPage,
 		"ShowFooterVersion":             setting.Other.ShowFooterVersion,
 		"DisableDownloadSourceArchives": setting.Repository.DisableDownloadSourceArchives,
+		"DownloadOrCloneMethods":        setting.Repository.DownloadOrCloneMethods,
 
 		"EnableSwagger":      setting.API.EnableSwagger,
 		"EnableOpenIDSignIn": setting.Service.EnableOpenIDSignIn,

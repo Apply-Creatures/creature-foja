@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"code.gitea.io/gitea/modules/log"
@@ -18,6 +19,8 @@ const (
 	RepoCreatingPrivate            = "private"
 	RepoCreatingPublic             = "public"
 )
+
+var RecognisedRepositoryDownloadOrCloneMethods = []string{"download-zip", "download-targz", "download-bundle", "vscode-clone", "vscodium-clone", "cite"}
 
 // ItemsPerPage maximum items per page in forks, watchers and stars of a repo
 const ItemsPerPage = 40
@@ -43,6 +46,7 @@ var (
 		DisabledRepoUnits                       []string
 		DefaultRepoUnits                        []string
 		DefaultForkRepoUnits                    []string
+		DownloadOrCloneMethods                  []string
 		PrefixArchiveFiles                      bool
 		DisableMigrations                       bool
 		DisableStars                            bool `ini:"DISABLE_STARS"`
@@ -161,6 +165,7 @@ var (
 		DisabledRepoUnits:                       []string{},
 		DefaultRepoUnits:                        []string{},
 		DefaultForkRepoUnits:                    []string{},
+		DownloadOrCloneMethods:                  []string{"download-zip", "download-targz", "download-bundle", "vscode-clone"},
 		PrefixArchiveFiles:                      true,
 		DisableMigrations:                       false,
 		DisableStars:                            false,
@@ -360,5 +365,11 @@ func loadRepositoryFrom(rootCfg ConfigProvider) {
 
 	if err := loadRepoArchiveFrom(rootCfg); err != nil {
 		log.Fatal("loadRepoArchiveFrom: %v", err)
+	}
+
+	for _, method := range Repository.DownloadOrCloneMethods {
+		if !slices.Contains(RecognisedRepositoryDownloadOrCloneMethods, method) {
+			log.Error("Unrecognised repository download or clone method: %s", method)
+		}
 	}
 }

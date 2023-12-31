@@ -43,6 +43,84 @@ func TestViewRepo(t *testing.T) {
 	session.MakeRequest(t, req, http.StatusNotFound)
 }
 
+func TestViewRepoCloneMethods(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	getCloneMethods := func() []string {
+		req := NewRequest(t, "GET", "/user2/repo1")
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		htmlDoc := NewHTMLParser(t, resp.Body)
+		cloneMoreMethodsHTML := htmlDoc.doc.Find("#more-btn div a")
+
+		var methods []string
+		cloneMoreMethodsHTML.Each(func(i int, s *goquery.Selection) {
+			a, _ := s.Attr("href")
+			methods = append(methods, a)
+		})
+
+		return methods
+	}
+
+	testCloneMethods := func(expected []string) {
+		methods := getCloneMethods()
+
+		assert.Len(t, methods, len(expected))
+		for i, expectedMethod := range expected {
+			assert.Contains(t, methods[i], expectedMethod)
+		}
+	}
+
+	t.Run("Defaults", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		testCloneMethods([]string{"/master.zip", "/master.tar.gz", "/master.bundle", "vscode://"})
+	})
+
+	t.Run("Customized methods", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		defer test.MockVariableValue(&setting.Repository.DownloadOrCloneMethods, []string{"vscodium-clone", "download-targz"})()
+
+		testCloneMethods([]string{"vscodium://", "/master.tar.gz"})
+	})
+
+	t.Run("Individual methods", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		singleMethodTest := func(method, expectedURLPart string) {
+			t.Run(method, func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+				defer test.MockVariableValue(&setting.Repository.DownloadOrCloneMethods, []string{method})()
+
+				testCloneMethods([]string{expectedURLPart})
+			})
+		}
+
+		cases := map[string]string{
+			"download-zip":    "/master.zip",
+			"download-targz":  "/master.tar.gz",
+			"download-bundle": "/master.bundle",
+			"vscode-clone":    "vscode://",
+			"vscodium-clone":  "vscodium://",
+		}
+		for method, expectedURLPart := range cases {
+			singleMethodTest(method, expectedURLPart)
+		}
+	})
+
+	t.Run("All methods", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		defer test.MockVariableValue(&setting.Repository.DownloadOrCloneMethods, setting.RecognisedRepositoryDownloadOrCloneMethods)()
+
+		methods := getCloneMethods()
+		// We compare against
+		// len(setting.RecognisedRepositoryDownloadOrCloneMethods) - 1, because
+		// the test environment does not currently set things up for the cite
+		// method to display.
+		assert.GreaterOrEqual(t, len(methods), len(setting.RecognisedRepositoryDownloadOrCloneMethods)-1)
+	})
+}
+
 func testViewRepo(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
