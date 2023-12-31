@@ -11,8 +11,13 @@ import (
 	"testing"
 	"time"
 
+	"code.gitea.io/gitea/models/db"
+	repo_model "code.gitea.io/gitea/models/repo"
+	unit_model "code.gitea.io/gitea/models/unit"
+	"code.gitea.io/gitea/models/unittest"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/test"
+	repo_service "code.gitea.io/gitea/services/repository"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/PuerkitoBio/goquery"
@@ -708,5 +713,103 @@ func TestCommitView(t *testing.T) {
 		doc := NewHTMLParser(t, resp.Body)
 		commitTitle := doc.Find(".commit-summary").Text()
 		assert.Contains(t, commitTitle, "Initial commit")
+	})
+}
+
+func TestRepoHomeViewRedirect(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	t.Run("Code", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", "/user2/repo1")
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		doc := NewHTMLParser(t, resp.Body)
+		l := doc.Find("#repo-desc").Length()
+		assert.Equal(t, 1, l)
+	})
+
+	t.Run("No Code redirects to Issues", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// Disable the Code unit
+		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+		err := repo_service.UpdateRepositoryUnits(db.DefaultContext, repo, nil, []unit_model.Type{
+			unit_model.TypeCode,
+		})
+		assert.NoError(t, err)
+
+		// The repo home should redirect to the built-in issue tracker
+		req := NewRequest(t, "GET", "/user2/repo1")
+		resp := MakeRequest(t, req, http.StatusSeeOther)
+		redir := resp.Header().Get("Location")
+
+		assert.Equal(t, "/user2/repo1/issues", redir)
+	})
+
+	t.Run("No Code and ExternalTracker redirects to Pulls", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// Replace the internal tracker with an external one
+		// Disable Code, Projects, Packages, and Actions
+		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+		err := repo_service.UpdateRepositoryUnits(db.DefaultContext, repo, []repo_model.RepoUnit{{
+			RepoID: repo.ID,
+			Type:   unit_model.TypeExternalTracker,
+			Config: &repo_model.ExternalTrackerConfig{
+				ExternalTrackerURL: "https://example.com",
+			},
+		}}, []unit_model.Type{
+			unit_model.TypeCode,
+			unit_model.TypeIssues,
+			unit_model.TypeProjects,
+			unit_model.TypePackages,
+			unit_model.TypeActions,
+		})
+		assert.NoError(t, err)
+
+		// The repo home should redirect to pull requests
+		req := NewRequest(t, "GET", "/user2/repo1")
+		resp := MakeRequest(t, req, http.StatusSeeOther)
+		redir := resp.Header().Get("Location")
+
+		assert.Equal(t, "/user2/repo1/pulls", redir)
+	})
+
+	t.Run("Only external wiki results in 404", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// Replace the internal wiki with an external, and disable everything
+		// else.
+		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+		err := repo_service.UpdateRepositoryUnits(db.DefaultContext, repo, []repo_model.RepoUnit{{
+			RepoID: repo.ID,
+			Type:   unit_model.TypeExternalWiki,
+			Config: &repo_model.ExternalWikiConfig{
+				ExternalWikiURL: "https://example.com",
+			},
+		}}, []unit_model.Type{
+			unit_model.TypeCode,
+			unit_model.TypeIssues,
+			unit_model.TypeExternalTracker,
+			unit_model.TypeProjects,
+			unit_model.TypePackages,
+			unit_model.TypeActions,
+			unit_model.TypePullRequests,
+			unit_model.TypeReleases,
+			unit_model.TypeWiki,
+		})
+		assert.NoError(t, err)
+
+		// The repo home ends up being 404
+		req := NewRequest(t, "GET", "/user2/repo1")
+		req.Header.Set("Accept", "text/html")
+		resp := MakeRequest(t, req, http.StatusNotFound)
+
+		// The external wiki is linked to from the 404 page
+		doc := NewHTMLParser(t, resp.Body)
+		txt := strings.TrimSpace(doc.Find(`a[href="https://example.com"]`).Text())
+		assert.Equal(t, "Wiki", txt)
 	})
 }
