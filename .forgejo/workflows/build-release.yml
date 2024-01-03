@@ -1,3 +1,19 @@
+#
+# See also https://forgejo.org/docs/next/developer/RELEASE/#release-process
+#
+# https://codeberg.org/forgejo-integration/forgejo
+#
+#  Builds a release from a codeberg.org/forgejo-integration tag
+#
+#  vars.ROLE: forgejo-integration
+#
+#  secrets.DOER: forgejo-experimental-ci
+#  secrets.TOKEN: <generated from codeberg.org/forgejo-experimental-ci> scope read:user, write:repository, write:package
+#
+#  secrets.CASCADE_ORIGIN_TOKEN: <generated from codeberg.org/forgejo-experimental-ci> scope read:user, write:repository, write:issue
+#  secrets.CASCADE_DESTINATION_TOKEN: <generated from code.forgejo.org/forgejo-ci> scope read:user, write:repository, write:issue
+#  vars.CASCADE_DESTINATION_DOER: forgejo-ci
+#
 name: Build release
 
 on:
@@ -134,3 +150,20 @@ jobs:
           suffix: -rootless
           dockerfile: Dockerfile.rootless
           verbose: ${{ vars.VERBOSE || 'false' }}
+
+      - name: end-to-end tests
+        if: ${{ secrets.TOKEN != '' }}
+        uses: https://code.forgejo.org/actions/cascading-pr@v1
+        with:
+          origin-url: ${{ env.GITHUB_SERVER_URL }}
+          origin-repo: ${{ github.repository }}
+          origin-token: ${{ secrets.CASCADE_ORIGIN_TOKEN }}
+          origin-ref: refs/heads/forgejo
+          destination-url: https://code.forgejo.org
+          destination-fork-repo: ${{ vars.CASCADE_DESTINATION_DOER }}/end-to-end
+          destination-repo: forgejo/end-to-end
+          destination-branch: forgejo-pr
+          destination-token: ${{ secrets.CASCADE_DESTINATION_TOKEN }}
+          update: .forgejo/cascading-release-end-to-end
+        env:
+          FORGEJO_BINARY: "${{ env.GITHUB_SERVER_URL }}/${{ github.repository }}/releases/download/v${{ steps.tag-version.outputs.value }}/forgejo-${{ steps.tag-version.outputs.value }}-linux-amd64"

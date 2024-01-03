@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -ex
+
+end_to_end=$1
+end_to_end_pr=$2
+forgejo=$3
+forgejo_ref=$4
+
+cd $end_to_end
+date > last-upgrade
+echo $FORGEJO_BINARY > forgejo/binary-url
