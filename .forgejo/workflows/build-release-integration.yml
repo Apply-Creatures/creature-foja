@@ -9,6 +9,14 @@ on:
       - docker/**
       - .forgejo/workflows/build-release.yml
       - .forgejo/workflows/build-release-integration.yml
+  pull_request:
+    paths:
+      - Makefile
+      - Dockerfile
+      - Dockerfile.rootless
+      - docker/**
+      - .forgejo/workflows/build-release.yml
+      - .forgejo/workflows/build-release-integration.yml
 
 jobs:
   release-simulation:
