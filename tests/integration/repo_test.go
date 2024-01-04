@@ -683,7 +683,12 @@ func TestCommitView(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 
 		req := NewRequest(t, "GET", "/user2/repo1/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-		MakeRequest(t, req, http.StatusNotFound)
+		req.SetHeader("Accept", "text/html")
+		resp := MakeRequest(t, req, http.StatusNotFound)
+
+		// Really ensure that 404 is being sent back.
+		doc := NewHTMLParser(t, resp.Body)
+		doc.AssertElement(t, `[aria-label="Page Not Found"]`, true)
 	})
 
 	t.Run("Too short commit ID", func(t *testing.T) {
