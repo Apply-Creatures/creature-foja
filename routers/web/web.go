@@ -38,6 +38,7 @@ import (
 	"code.gitea.io/gitea/routers/web/repo"
 	"code.gitea.io/gitea/routers/web/repo/actions"
 	"code.gitea.io/gitea/routers/web/repo/badges"
+	repo_flags "code.gitea.io/gitea/routers/web/repo/flags"
 	repo_setting "code.gitea.io/gitea/routers/web/repo/setting"
 	"code.gitea.io/gitea/routers/web/user"
 	user_setting "code.gitea.io/gitea/routers/web/user/setting"
@@ -1574,6 +1575,13 @@ func registerRoutes(m *web.Route) {
 			gitHTTPRouters(m)
 		})
 	})
+
+	if setting.Repository.EnableFlags {
+		m.Group("/{username}/{reponame}/flags", func() {
+			m.Get("", repo_flags.Manage)
+			m.Post("", repo_flags.ManagePost)
+		}, adminReq, context.RepoAssignment, context.UnitTypes())
+	}
 	// ***** END: Repository *****
 
 	m.Group("/notifications", func() {

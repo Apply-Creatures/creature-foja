@@ -1,0 +1,242 @@
+// Copyright 2024 The Forgejo Authors c/o Codeberg e.V.. All rights reserved.
+// SPDX-License-Identifier: MIT
+
+package integration
+
+import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
+	"code.gitea.io/gitea/models/db"
+	repo_model "code.gitea.io/gitea/models/repo"
+	"code.gitea.io/gitea/models/unittest"
+	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/test"
+	"code.gitea.io/gitea/routers"
+	"code.gitea.io/gitea/tests"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestRepositoryFlagsUIDisabled(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	defer test.MockVariableValue(&setting.Repository.EnableFlags, false)()
+	defer test.MockVariableValue(&testWebRoutes, routers.NormalRoutes())()
+
+	admin := unittest.AssertExistsAndLoadBean(t, &user_model.User{IsAdmin: true})
+	session := loginUser(t, admin.Name)
+
+	// With the repo flags feature disabled, the /flags route is 404
+	req := NewRequest(t, "GET", "/user2/repo1/flags")
+	session.MakeRequest(t, req, http.StatusNotFound)
+
+	// With the repo flags feature disabled, the "Modify flags" tab does not
+	// appear for instance admins
+	req = NewRequest(t, "GET", "/user2/repo1")
+	resp := session.MakeRequest(t, req, http.StatusOK)
+	doc := NewHTMLParser(t, resp.Body)
+	flagsLinkCount := doc.Find(fmt.Sprintf(`a[href="%s/flags"]`, "/user2/repo1")).Length()
+	assert.Equal(t, 0, flagsLinkCount)
+}
+
+func TestRepositoryFlagsUI(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	defer test.MockVariableValue(&setting.Repository.EnableFlags, true)()
+	defer test.MockVariableValue(&testWebRoutes, routers.NormalRoutes())()
+
+	// *******************
+	//  ** Preparations **
+	// *******************
+	flaggedRepo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+	unflaggedRepo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 4})
+
+	// **************
+	//  ** Helpers **
+	// **************
+
+	adminUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{IsAdmin: true}).Name
+	flaggedOwner := "user2"
+	flaggedRepoURLStr := "/user2/repo1"
+	unflaggedOwner := "user5"
+	unflaggedRepoURLStr := "/user5/repo4"
+	otherUser := "user4"
+
+	ensureFlags := func(repo *repo_model.Repository, flags []string) func() {
+		repo.ReplaceAllFlags(db.DefaultContext, flags)
+
+		return func() {
+			repo.ReplaceAllFlags(db.DefaultContext, flags)
+		}
+	}
+
+	// Tests:
+	// - Presence of the link
+	// - Number of flags listed in the admin-only message box
+	// - Whether there's a link to /user/repo/flags
+	// - Whether /user/repo/flags is OK or Forbidden
+	assertFlagAccessAndCount := func(t *testing.T, user, repoURL string, hasAccess bool, expectedFlagCount int) {
+		t.Helper()
+
+		var expectedLinkCount int
+		var expectedStatus int
+		if hasAccess {
+			expectedLinkCount = 1
+			expectedStatus = http.StatusOK
+		} else {
+			expectedLinkCount = 0
+			if user != "" {
+				expectedStatus = http.StatusForbidden
+			} else {
+				expectedStatus = http.StatusSeeOther
+			}
+		}
+
+		var resp *httptest.ResponseRecorder
+		var session *TestSession
+		req := NewRequest(t, "GET", repoURL)
+		if user != "" {
+			session = loginUser(t, user)
+			resp = session.MakeRequest(t, req, http.StatusOK)
+		} else {
+			resp = MakeRequest(t, req, http.StatusOK)
+		}
+		doc := NewHTMLParser(t, resp.Body)
+
+		flagsLinkCount := doc.Find(fmt.Sprintf(`a[href="%s/flags"]`, repoURL)).Length()
+		assert.Equal(t, expectedLinkCount, flagsLinkCount)
+
+		flagCount := doc.Find(".ui.info.message .ui.label").Length()
+		assert.Equal(t, expectedFlagCount, flagCount)
+
+		req = NewRequest(t, "GET", fmt.Sprintf("%s/flags", repoURL))
+		if user != "" {
+			session.MakeRequest(t, req, expectedStatus)
+		} else {
+			MakeRequest(t, req, expectedStatus)
+		}
+	}
+
+	// Ensures that given a repo owner and a repo:
+	// - An instance admin has access to flags, and sees the list on the repo home
+	// - A repo admin does not have access to either, and does not see the list
+	// - A passer by has no access to either, and does not see the list
+	runTests := func(t *testing.T, ownerUser, repoURL string, expectedFlagCount int) {
+		t.Run("as instance admin", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			assertFlagAccessAndCount(t, adminUser, repoURL, true, expectedFlagCount)
+		})
+		t.Run("as owner", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			assertFlagAccessAndCount(t, ownerUser, repoURL, false, 0)
+		})
+		t.Run("as other user", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			assertFlagAccessAndCount(t, otherUser, repoURL, false, 0)
+		})
+		t.Run("as non-logged in user", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			assertFlagAccessAndCount(t, "", repoURL, false, 0)
+		})
+	}
+
+	// **************************
+	// ** The tests themselves **
+	// **************************
+	t.Run("unflagged repo", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		defer ensureFlags(unflaggedRepo, []string{})()
+
+		runTests(t, unflaggedOwner, unflaggedRepoURLStr, 0)
+	})
+
+	t.Run("flagged repo", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		defer ensureFlags(flaggedRepo, []string{"test-flag"})()
+
+		runTests(t, flaggedOwner, flaggedRepoURLStr, 1)
+	})
+
+	t.Run("modifying flags", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		session := loginUser(t, adminUser)
+		flaggedRepoManageURL := fmt.Sprintf("%s/flags", flaggedRepoURLStr)
+		unflaggedRepoManageURL := fmt.Sprintf("%s/flags", unflaggedRepoURLStr)
+
+		assertUIFlagStates := func(t *testing.T, url string, flagStates map[string]bool) {
+			t.Helper()
+
+			req := NewRequest(t, "GET", url)
+			resp := session.MakeRequest(t, req, http.StatusOK)
+
+			doc := NewHTMLParser(t, resp.Body)
+			flagBoxes := doc.Find(`input[name="flags"]`)
+			assert.Equal(t, len(flagStates), flagBoxes.Length())
+
+			for name, state := range flagStates {
+				_, checked := doc.Find(fmt.Sprintf(`input[value="%s"]`, name)).Attr("checked")
+				assert.Equal(t, state, checked)
+			}
+		}
+
+		t.Run("flag presence on the UI", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			defer ensureFlags(flaggedRepo, []string{"test-flag"})()
+
+			assertUIFlagStates(t, flaggedRepoManageURL, map[string]bool{"test-flag": true})
+		})
+
+		t.Run("setting.Repository.SettableFlags is respected", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			defer test.MockVariableValue(&setting.Repository.SettableFlags, []string{"featured", "no-license"})()
+			defer ensureFlags(flaggedRepo, []string{"test-flag"})()
+
+			assertUIFlagStates(t, flaggedRepoManageURL, map[string]bool{
+				"test-flag":  true,
+				"featured":   false,
+				"no-license": false,
+			})
+		})
+
+		t.Run("removing flags", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			defer ensureFlags(flaggedRepo, []string{"test-flag"})()
+
+			flagged := flaggedRepo.IsFlagged(db.DefaultContext)
+			assert.True(t, flagged)
+
+			req := NewRequestWithValues(t, "POST", flaggedRepoManageURL, map[string]string{
+				"_csrf": GetCSRF(t, session, flaggedRepoManageURL),
+			})
+			session.MakeRequest(t, req, http.StatusSeeOther)
+
+			flagged = flaggedRepo.IsFlagged(db.DefaultContext)
+			assert.False(t, flagged)
+
+			assertUIFlagStates(t, flaggedRepoManageURL, map[string]bool{})
+		})
+
+		t.Run("adding flags", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			defer ensureFlags(unflaggedRepo, []string{})()
+
+			flagged := unflaggedRepo.IsFlagged(db.DefaultContext)
+			assert.False(t, flagged)
+
+			req := NewRequestWithValues(t, "POST", unflaggedRepoManageURL, map[string]string{
+				"_csrf": GetCSRF(t, session, unflaggedRepoManageURL),
+				"flags": "test-flag",
+			})
+			session.MakeRequest(t, req, http.StatusSeeOther)
+
+			assertUIFlagStates(t, unflaggedRepoManageURL, map[string]bool{"test-flag": true})
+		})
+	})
+}

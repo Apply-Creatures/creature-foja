@@ -52,6 +52,14 @@
 			</div>
 		</div>
 		{{end}}
+
+		{{if RepoFlagsEnabled}}
+			{{template "custom/repo_flag_banners" .}}
+			{{if .SignedUser.IsAdmin}}
+				{{template "repo/admin_flags" .}}
+			{{end}}
+		{{end}}
+
 		{{if .Repository.IsArchived}}
 			<div class="ui warning message gt-text-center">
 				{{if .Repository.ArchivedUnix.IsZero}}

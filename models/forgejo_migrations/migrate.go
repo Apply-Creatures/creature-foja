@@ -46,6 +46,8 @@ var migrations = []*Migration{
 	NewMigration("create the forgejo_auth_token table", forgejo_v1_20.CreateAuthorizationTokenTable),
 	// v3 -> v4
 	NewMigration("Add default_permissions to repo_unit", forgejo_v1_22.AddDefaultPermissionsToRepoUnit),
+	// v4 -> v5
+	NewMigration("create the forgejo_repo_flag table", forgejo_v1_22.CreateRepoFlagTable),
 }
 
 // GetCurrentDBVersion returns the current Forgejo database version.

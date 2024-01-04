@@ -96,6 +96,9 @@ func NewFuncMap() template.FuncMap {
 		"AppDomain": func() string { // documented in mail-templates.md
 			return setting.Domain
 		},
+		"RepoFlagsEnabled": func() bool {
+			return setting.Repository.EnableFlags
+		},
 		"AssetVersion": func() string {
 			return setting.AssetVersion
 		},

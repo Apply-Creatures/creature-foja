@@ -212,6 +212,12 @@
 
 				{{template "custom/extra_tabs" .}}
 
+				{{if and RepoFlagsEnabled .SignedUser.IsAdmin}}
+					<a class="{{if .IsRepoFlagsPage}}active {{end}}item" href="{{.RepoLink}}/flags">
+						{{svg "octicon-milestone"}} {{ctx.Locale.Tr "repo.admin.manage_flags"}}
+					</a>
+				{{end}}
+
 				{{if .Permission.IsAdmin}}
 					<a class="{{if .PageIsRepoSettings}}active {{end}} item" href="{{.RepoLink}}/settings">
 						{{svg "octicon-tools"}} {{ctx.Locale.Tr "repo.settings"}}
