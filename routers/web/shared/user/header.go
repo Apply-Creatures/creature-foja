@@ -97,7 +97,7 @@ func FindUserProfileReadme(ctx *context.Context, doer *user_model.User) (profile
 				if commit, err := profileGitRepo.GetBranchCommit(profileDbRepo.DefaultBranch); err != nil {
 					log.Error("FindUserProfileReadme failed to GetBranchCommit: %v", err)
 				} else {
-					profileReadmeBlob, _ = commit.GetBlobByPath("README.md")
+					profileReadmeBlob, _ = commit.GetBlobByFoldedPath("README.md")
 				}
 			}
 		}
