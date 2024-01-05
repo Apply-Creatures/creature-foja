@@ -1096,6 +1096,18 @@ func Routes() *web.Route {
 						m.Get("/permission", repo.GetRepoPermissions)
 					})
 				}, reqToken())
+				if setting.Repository.EnableFlags {
+					m.Group("/flags", func() {
+						m.Combo("").Get(repo.ListFlags).
+							Put(bind(api.ReplaceFlagsOption{}), repo.ReplaceAllFlags).
+							Delete(repo.DeleteAllFlags)
+						m.Group("/{flag}", func() {
+							m.Combo("").Get(repo.HasFlag).
+								Put(repo.AddFlag).
+								Delete(repo.DeleteFlag)
+						})
+					}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryAdmin), reqToken(), reqSiteAdmin())
+				}
 				m.Get("/assignees", reqToken(), reqAnyRepoReader(), repo.GetAssignees)
 				m.Get("/reviewers", reqToken(), reqAnyRepoReader(), repo.GetReviewers)
 				m.Group("/teams", func() {

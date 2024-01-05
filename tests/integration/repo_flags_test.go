@@ -7,13 +7,16 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"testing"
 
+	auth_model "code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/models/db"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/setting"
+	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/test"
 	"code.gitea.io/gitea/routers"
 	"code.gitea.io/gitea/tests"
@@ -40,6 +43,152 @@ func TestRepositoryFlagsUIDisabled(t *testing.T) {
 	doc := NewHTMLParser(t, resp.Body)
 	flagsLinkCount := doc.Find(fmt.Sprintf(`a[href="%s/flags"]`, "/user2/repo1")).Length()
 	assert.Equal(t, 0, flagsLinkCount)
+}
+
+func TestRepositoryFlagsAPI(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	defer test.MockVariableValue(&setting.Repository.EnableFlags, true)()
+	defer test.MockVariableValue(&testWebRoutes, routers.NormalRoutes())()
+
+	// *************
+	// ** Helpers **
+	// *************
+
+	adminUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{IsAdmin: true}).Name
+	normalUserBean := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	assert.False(t, normalUserBean.IsAdmin)
+	normalUser := normalUserBean.Name
+
+	assertAccess := func(t *testing.T, user, method, uri string, expectedStatus int) {
+		session := loginUser(t, user)
+		token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeReadAdmin)
+
+		req := NewRequestf(t, method, "/api/v1/repos/user2/repo1/flags%s", uri).AddTokenAuth(token)
+		MakeRequest(t, req, expectedStatus)
+	}
+
+	// ***********
+	// ** Tests **
+	// ***********
+
+	t.Run("API access", func(t *testing.T) {
+		t.Run("as admin", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			assertAccess(t, adminUser, "GET", "", http.StatusOK)
+		})
+
+		t.Run("as normal user", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			assertAccess(t, normalUser, "GET", "", http.StatusForbidden)
+		})
+	})
+
+	t.Run("token scopes", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// Trying to access the API with a token that lacks permissions, will
+		// fail, even if the token owner is an instance admin.
+		session := loginUser(t, adminUser)
+		token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository)
+
+		req := NewRequest(t, "GET", "/api/v1/repos/user2/repo1/flags").AddTokenAuth(token)
+		MakeRequest(t, req, http.StatusForbidden)
+	})
+
+	t.Run("setting.Repository.EnableFlags is respected", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		defer test.MockVariableValue(&setting.Repository.EnableFlags, false)()
+		defer test.MockVariableValue(&testWebRoutes, routers.NormalRoutes())()
+
+		t.Run("as admin", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			assertAccess(t, adminUser, "GET", "", http.StatusNotFound)
+		})
+
+		t.Run("as normal user", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			assertAccess(t, normalUser, "GET", "", http.StatusNotFound)
+		})
+	})
+
+	t.Run("API functionality", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 4})
+		defer func() {
+			repo.ReplaceAllFlags(db.DefaultContext, []string{})
+		}()
+
+		baseURLFmtStr := "/api/v1/repos/user5/repo4/flags%s"
+
+		session := loginUser(t, adminUser)
+		token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteAdmin)
+
+		// Listing flags
+		req := NewRequestf(t, "GET", baseURLFmtStr, "").AddTokenAuth(token)
+		resp := MakeRequest(t, req, http.StatusOK)
+		var flags []string
+		DecodeJSON(t, resp, &flags)
+		assert.Empty(t, flags)
+
+		// Replacing all tags works, twice in a row
+		for i := 0; i < 2; i++ {
+			req = NewRequestWithJSON(t, "PUT", fmt.Sprintf(baseURLFmtStr, ""), &api.ReplaceFlagsOption{
+				Flags: []string{"flag-1", "flag-2", "flag-3"},
+			}).AddTokenAuth(token)
+			MakeRequest(t, req, http.StatusNoContent)
+		}
+
+		// The list now includes all three flags
+		req = NewRequestf(t, "GET", baseURLFmtStr, "").AddTokenAuth(token)
+		resp = MakeRequest(t, req, http.StatusOK)
+		DecodeJSON(t, resp, &flags)
+		assert.Len(t, flags, 3)
+		for _, flag := range []string{"flag-1", "flag-2", "flag-3"} {
+			assert.True(t, slices.Contains(flags, flag))
+		}
+
+		// Check a flag that is on the repo
+		req = NewRequestf(t, "GET", baseURLFmtStr, "/flag-1").AddTokenAuth(token)
+		MakeRequest(t, req, http.StatusNoContent)
+
+		// Check a flag that isn't on the repo
+		req = NewRequestf(t, "GET", baseURLFmtStr, "/no-such-flag").AddTokenAuth(token)
+		MakeRequest(t, req, http.StatusNotFound)
+
+		// We can add the same flag twice
+		for i := 0; i < 2; i++ {
+			req = NewRequestf(t, "PUT", baseURLFmtStr, "/brand-new-flag").AddTokenAuth(token)
+			MakeRequest(t, req, http.StatusNoContent)
+		}
+
+		// The new flag is there
+		req = NewRequestf(t, "GET", baseURLFmtStr, "/brand-new-flag").AddTokenAuth(token)
+		MakeRequest(t, req, http.StatusNoContent)
+
+		// We can delete a flag, twice
+		for i := 0; i < 2; i++ {
+			req = NewRequestf(t, "DELETE", baseURLFmtStr, "/flag-3").AddTokenAuth(token)
+			MakeRequest(t, req, http.StatusNoContent)
+		}
+
+		// We can delete a flag that wasn't there
+		req = NewRequestf(t, "DELETE", baseURLFmtStr, "/no-such-flag").AddTokenAuth(token)
+		MakeRequest(t, req, http.StatusNoContent)
+
+		// We can delete all of the flags in one go, too
+		req = NewRequestf(t, "DELETE", baseURLFmtStr, "").AddTokenAuth(token)
+		MakeRequest(t, req, http.StatusNoContent)
+
+		// ..once all flags are deleted, none are listed, either
+		req = NewRequestf(t, "GET", baseURLFmtStr, "").AddTokenAuth(token)
+		resp = MakeRequest(t, req, http.StatusOK)
+		DecodeJSON(t, resp, &flags)
+		assert.Empty(t, flags)
+	})
 }
 
 func TestRepositoryFlagsUI(t *testing.T) {
