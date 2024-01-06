@@ -407,6 +407,40 @@ func TestViewFileInRepo(t *testing.T) {
 	assert.EqualValues(t, 0, repoSummary.Length())
 }
 
+func TestViewFileInRepoRSSFeed(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	hasFileRSSFeed := func(t *testing.T, ref string) bool {
+		t.Helper()
+
+		req := NewRequestf(t, "GET", "/user2/repo1/src/%s/README.md", ref)
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		htmlDoc := NewHTMLParser(t, resp.Body)
+		fileFeed := htmlDoc.doc.Find(`a[href*="/user2/repo1/rss/"]`)
+
+		return fileFeed.Length() != 0
+	}
+
+	t.Run("branch", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		assert.True(t, hasFileRSSFeed(t, "branch/master"))
+	})
+
+	t.Run("tag", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		assert.False(t, hasFileRSSFeed(t, "tag/v1.1"))
+	})
+
+	t.Run("commit", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		assert.False(t, hasFileRSSFeed(t, "commit/65f1bf27bc3bf70f64657658635e66094edbcb4d"))
+	})
+}
+
 // TestBlameFileInRepo repo description, topics and summary should not be displayed when running blame on a file
 func TestBlameFileInRepo(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
