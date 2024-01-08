@@ -505,6 +505,11 @@ func Test_ValidateUser(t *testing.T) {
 }
 
 func Test_NormalizeUserFromEmail(t *testing.T) {
+	oldSetting := setting.Service.AllowDotsInUsernames
+	defer func() {
+		setting.Service.AllowDotsInUsernames = oldSetting
+	}()
+	setting.Service.AllowDotsInUsernames = true
 	testCases := []struct {
 		Input             string
 		Expected          string
