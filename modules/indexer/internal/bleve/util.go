@@ -12,7 +12,6 @@ import (
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/index/upsidedown"
-	"github.com/ethantkoenig/rupture"
 )
 
 // openIndexer open the index at the specified path, checking for metadata
@@ -26,7 +25,7 @@ func openIndexer(path string, latestVersion int) (bleve.Index, int, error) {
 		return nil, 0, err
 	}
 
-	metadata, err := rupture.ReadIndexMetadata(path)
+	metadata, err := readIndexMetadata(path)
 	if err != nil {
 		return nil, 0, err
 	}
