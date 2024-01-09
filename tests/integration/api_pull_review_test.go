@@ -18,7 +18,92 @@ import (
 	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func TestAPIPullReviewCreateComment(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	pullIssue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 3})
+	assert.NoError(t, pullIssue.LoadAttributes(db.DefaultContext))
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: pullIssue.RepoID})
+
+	username := "user2"
+	session := loginUser(t, username)
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository)
+
+	// as of e522e774cae2240279fc48c349fc513c9d3353ee
+	// There should be no reason for CreateComment to behave differently
+	// depending on the event associated with the review. But the logic of the implementation
+	// at this point in time is very involved and deserves these seemingly redundant
+	// test.
+	for _, event := range []api.ReviewStateType{
+		api.ReviewStatePending,
+		api.ReviewStateRequestChanges,
+		api.ReviewStateApproved,
+		api.ReviewStateComment,
+	} {
+		t.Run("Event_"+string(event), func(t *testing.T) {
+			path := "README.md"
+			var review api.PullReview
+			var reviewLine int64 = 1
+
+			{
+				req := NewRequestWithJSON(t, http.MethodPost, fmt.Sprintf("/api/v1/repos/%s/pulls/%d/reviews", repo.FullName(), pullIssue.Index), &api.CreatePullReviewOptions{
+					Body:  "body1",
+					Event: event,
+				}).AddTokenAuth(token)
+				resp := MakeRequest(t, req, http.StatusOK)
+				DecodeJSON(t, resp, &review)
+				require.EqualValues(t, string(event), review.State)
+				require.EqualValues(t, 0, review.CodeCommentsCount)
+			}
+
+			{
+				req := NewRequestf(t, http.MethodGet, "/api/v1/repos/%s/pulls/%d/reviews/%d", repo.FullName(), pullIssue.Index, review.ID).
+					AddTokenAuth(token)
+				resp := MakeRequest(t, req, http.StatusOK)
+				var getReview api.PullReview
+				DecodeJSON(t, resp, &getReview)
+				require.EqualValues(t, getReview, review)
+			}
+
+			newCommentBody := "first new line"
+
+			{
+				req := NewRequestWithJSON(t, http.MethodPost, fmt.Sprintf("/api/v1/repos/%s/pulls/%d/reviews/%d/comments", repo.FullName(), pullIssue.Index, review.ID), &api.CreatePullReviewCommentOptions{
+					Path:       path,
+					Body:       newCommentBody,
+					OldLineNum: reviewLine,
+				}).AddTokenAuth(token)
+				resp := MakeRequest(t, req, http.StatusOK)
+				var reviewComment *api.PullReviewComment
+				DecodeJSON(t, resp, &reviewComment)
+				assert.EqualValues(t, review.ID, reviewComment.ReviewID)
+			}
+
+			{
+				req := NewRequestf(t, http.MethodGet, "/api/v1/repos/%s/pulls/%d/reviews/%d/comments", repo.FullName(), pullIssue.Index, review.ID).
+					AddTokenAuth(token)
+				resp := MakeRequest(t, req, http.StatusOK)
+
+				var reviewComments []*api.PullReviewComment
+				DecodeJSON(t, resp, &reviewComments)
+				assert.Len(t, reviewComments, 2)
+				assert.EqualValues(t, existingCommentBody, reviewComments[0].Body)
+				assert.EqualValues(t, reviewComments[0].OldLineNum, reviewComments[1].OldLineNum)
+				assert.EqualValues(t, reviewComments[0].LineNum, reviewComments[1].LineNum)
+				assert.EqualValues(t, newCommentBody, reviewComments[1].Body)
+				assert.EqualValues(t, path, reviewComments[1].Path)
+			}
+
+			{
+				req := NewRequestf(t, http.MethodDelete, "/api/v1/repos/%s/pulls/%d/reviews/%d", repo.FullName(), pullIssue.Index, review.ID).
+					AddTokenAuth(token)
+				MakeRequest(t, req, http.StatusNoContent)
+			}
+		})
+	}
+}
 
 func TestAPIPullReview(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()

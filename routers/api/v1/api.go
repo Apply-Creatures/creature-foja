@@ -1228,7 +1228,8 @@ func Routes() *web.Route {
 									Delete(reqToken(), repo.DeletePullReview).
 									Post(reqToken(), bind(api.SubmitPullReviewOptions{}), repo.SubmitPullReview)
 								m.Combo("/comments").
-									Get(repo.GetPullReviewComments)
+									Get(repo.GetPullReviewComments).
+									Post(reqToken(), bind(api.CreatePullReviewCommentOptions{}), repo.CreatePullReviewComment)
 								m.Post("/dismissals", reqToken(), bind(api.DismissPullReviewOptions{}), repo.DismissPullReview)
 								m.Post("/undismissals", reqToken(), repo.UnDismissPullReview)
 							})

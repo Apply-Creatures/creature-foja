@@ -208,6 +208,89 @@ func GetPullReviewComments(ctx *context.APIContext) {
 	ctx.JSON(http.StatusOK, apiComments)
 }
 
+// CreatePullReviewComments add a new comment to a pull request review
+func CreatePullReviewComment(ctx *context.APIContext) {
+	// swagger:operation POST /repos/{owner}/{repo}/pulls/{index}/reviews/{id}/comments repository repoCreatePullReviewComment
+	// ---
+	// summary: Add a new comment to a pull request review
+	// produces:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: path
+	//   description: owner of the repo
+	//   type: string
+	//   required: true
+	// - name: repo
+	//   in: path
+	//   description: name of the repo
+	//   type: string
+	//   required: true
+	// - name: index
+	//   in: path
+	//   description: index of the pull request
+	//   type: integer
+	//   format: int64
+	//   required: true
+	// - name: id
+	//   in: path
+	//   description: id of the review
+	//   type: integer
+	//   format: int64
+	//   required: true
+	// - name: body
+	//   in: body
+	//   required: true
+	//   schema:
+	//     "$ref": "#/definitions/CreatePullReviewCommentOptions"
+	// responses:
+	//   "200":
+	//     "$ref": "#/responses/PullReviewComment"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
+	//   "422":
+	//     "$ref": "#/responses/validationError"
+
+	opts := web.GetForm(ctx).(*api.CreatePullReviewCommentOptions)
+
+	review, pr, statusSet := prepareSingleReview(ctx)
+	if statusSet {
+		return
+	}
+
+	if err := pr.Issue.LoadRepo(ctx); err != nil {
+		ctx.InternalServerError(err)
+		return
+	}
+
+	line := opts.NewLineNum
+	if opts.OldLineNum > 0 {
+		line = opts.OldLineNum * -1
+	}
+
+	comment, err := pull_service.CreateCodeCommentKnownReviewID(ctx,
+		ctx.Doer,
+		pr.Issue.Repo,
+		pr.Issue,
+		opts.Body,
+		opts.Path,
+		line,
+		review.ID,
+	)
+	if err != nil {
+		ctx.InternalServerError(err)
+		return
+	}
+
+	apiComment, err := convert.ToPullReviewComment(ctx, review, comment, ctx.Doer)
+	if err != nil {
+		ctx.InternalServerError(err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, apiComment)
+}
+
 // DeletePullReview delete a specific review from a pull request
 func DeletePullReview(ctx *context.APIContext) {
 	// swagger:operation DELETE /repos/{owner}/{repo}/pulls/{index}/reviews/{id} repository repoDeletePullReview
