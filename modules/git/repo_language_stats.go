@@ -13,6 +13,18 @@ const (
 	bigFileSize   int64 = 1024 * 1024 // 1 MiB
 )
 
+type LinguistBoolAttrib struct {
+	Value string
+}
+
+func (attrib *LinguistBoolAttrib) IsTrue() bool {
+	return attrib.Value == "set" || attrib.Value == "true"
+}
+
+func (attrib *LinguistBoolAttrib) IsFalse() bool {
+	return attrib.Value == "unset" || attrib.Value == "false"
+}
+
 // mergeLanguageStats mergers language names with different cases. The name with most upper case letters is used.
 func mergeLanguageStats(stats map[string]int64) map[string]int64 {
 	names := map[string]struct {
