@@ -68,6 +68,7 @@ func TestAPIPullReviewCreateComment(t *testing.T) {
 			}
 
 			newCommentBody := "first new line"
+			var reviewComment api.PullReviewComment
 
 			{
 				req := NewRequestWithJSON(t, http.MethodPost, fmt.Sprintf("/api/v1/repos/%s/pulls/%d/reviews/%d/comments", repo.FullName(), pullIssue.Index, review.ID), &api.CreatePullReviewCommentOptions{
@@ -76,24 +77,22 @@ func TestAPIPullReviewCreateComment(t *testing.T) {
 					OldLineNum: reviewLine,
 				}).AddTokenAuth(token)
 				resp := MakeRequest(t, req, http.StatusOK)
-				var reviewComment *api.PullReviewComment
 				DecodeJSON(t, resp, &reviewComment)
 				assert.EqualValues(t, review.ID, reviewComment.ReviewID)
+				assert.EqualValues(t, newCommentBody, reviewComment.Body)
+				assert.EqualValues(t, reviewLine, reviewComment.OldLineNum)
+				assert.EqualValues(t, 0, reviewComment.LineNum)
+				assert.EqualValues(t, path, reviewComment.Path)
 			}
 
 			{
-				req := NewRequestf(t, http.MethodGet, "/api/v1/repos/%s/pulls/%d/reviews/%d/comments", repo.FullName(), pullIssue.Index, review.ID).
+				req := NewRequestf(t, http.MethodGet, "/api/v1/repos/%s/pulls/%d/reviews/%d/comments/%d", repo.FullName(), pullIssue.Index, review.ID, reviewComment.ID).
 					AddTokenAuth(token)
 				resp := MakeRequest(t, req, http.StatusOK)
 
-				var reviewComments []*api.PullReviewComment
-				DecodeJSON(t, resp, &reviewComments)
-				assert.Len(t, reviewComments, 2)
-				assert.EqualValues(t, existingCommentBody, reviewComments[0].Body)
-				assert.EqualValues(t, reviewComments[0].OldLineNum, reviewComments[1].OldLineNum)
-				assert.EqualValues(t, reviewComments[0].LineNum, reviewComments[1].LineNum)
-				assert.EqualValues(t, newCommentBody, reviewComments[1].Body)
-				assert.EqualValues(t, path, reviewComments[1].Path)
+				var comment api.PullReviewComment
+				DecodeJSON(t, resp, &comment)
+				assert.EqualValues(t, reviewComment, comment)
 			}
 
 			{
