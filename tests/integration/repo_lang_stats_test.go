@@ -14,104 +14,13 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/indexer/stats"
 	"code.gitea.io/gitea/modules/queue"
-	repo_service "code.gitea.io/gitea/services/repository"
 	files_service "code.gitea.io/gitea/services/repository/files"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
 )
-
-func createLangStatTestRepo(t *testing.T) (*repo_model.Repository, func()) {
-	t.Helper()
-
-	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
-
-	// Create a new repository
-	repo, err := repo_service.CreateRepository(db.DefaultContext, user2, user2, repo_service.CreateRepoOptions{
-		Name:          "lang-stat-test",
-		Description:   "minimal repo for language stats testing",
-		AutoInit:      true,
-		Gitignores:    "Go",
-		License:       "MIT",
-		Readme:        "Default",
-		DefaultBranch: "main",
-		IsPrivate:     false,
-	})
-	assert.NoError(t, err)
-	assert.NotEmpty(t, repo)
-
-	return repo, func() {
-		repo_service.DeleteRepository(db.DefaultContext, user2, repo, false)
-	}
-}
-
-func addLangStatTestFiles(t *testing.T, repo *repo_model.Repository, contents string) string {
-	t.Helper()
-
-	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
-
-	addFilesResp, err := files_service.ChangeRepoFiles(git.DefaultContext, repo, owner, &files_service.ChangeRepoFilesOptions{
-		Files: []*files_service.ChangeRepoFile{
-			{
-				Operation:     "create",
-				TreePath:      ".gitattributes",
-				ContentReader: strings.NewReader(contents),
-			},
-			{
-				Operation:     "create",
-				TreePath:      "docs.md",
-				ContentReader: strings.NewReader("This **is** a `markdown` file.\n"),
-			},
-			{
-				Operation:     "create",
-				TreePath:      "foo.c",
-				ContentReader: strings.NewReader(`#include <stdio.h>\nint main() {\n  printf("Hello world!\n");\n  return 0;\n}\n`),
-			},
-			{
-				Operation:     "create",
-				TreePath:      "foo.nib",
-				ContentReader: strings.NewReader("Pinky promise, this is not a generated file!\n"),
-			},
-			{
-				Operation:     "create",
-				TreePath:      ".dot.pas",
-				ContentReader: strings.NewReader("program Hello;\nbegin\n  writeln('Hello, world.');\nend.\n"),
-			},
-			{
-				Operation:     "create",
-				TreePath:      "cpplint.py",
-				ContentReader: strings.NewReader(`#! /usr/bin/env python\n\nprint("Hello world!")\n`),
-			},
-			{
-				Operation:     "create",
-				TreePath:      "some-file.xml",
-				ContentReader: strings.NewReader(`<?xml version="1.0"?>\n<foo>\n <bar>Hello</bar>\n</foo>\n`),
-			},
-		},
-		Message:   "add files",
-		OldBranch: "main",
-		NewBranch: "main",
-		Author: &files_service.IdentityOptions{
-			Name:  owner.Name,
-			Email: owner.Email,
-		},
-		Committer: &files_service.IdentityOptions{
-			Name:  owner.Name,
-			Email: owner.Email,
-		},
-		Dates: &files_service.CommitDateOptions{
-			Author:    time.Now(),
-			Committer: time.Now(),
-		},
-	})
-	assert.NoError(t, err)
-	assert.NotEmpty(t, addFilesResp)
-
-	return addFilesResp.Commit.SHA
-}
 
 func TestRepoLangStats(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, u *url.URL) {
@@ -121,8 +30,46 @@ func TestRepoLangStats(t *testing.T) {
 		prep := func(t *testing.T, attribs string) (*repo_model.Repository, string, func()) {
 			t.Helper()
 
-			repo, f := createLangStatTestRepo(t)
-			sha := addLangStatTestFiles(t, repo, attribs)
+			user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+
+			repo, sha, f := CreateDeclarativeRepo(t, user2, "", nil, nil,
+				[]*files_service.ChangeRepoFile{
+					{
+						Operation:     "create",
+						TreePath:      ".gitattributes",
+						ContentReader: strings.NewReader(attribs),
+					},
+					{
+						Operation:     "create",
+						TreePath:      "docs.md",
+						ContentReader: strings.NewReader("This **is** a `markdown` file.\n"),
+					},
+					{
+						Operation:     "create",
+						TreePath:      "foo.c",
+						ContentReader: strings.NewReader(`#include <stdio.h>\nint main() {\n  printf("Hello world!\n");\n  return 0;\n}\n`),
+					},
+					{
+						Operation:     "create",
+						TreePath:      "foo.nib",
+						ContentReader: strings.NewReader("Pinky promise, this is not a generated file!\n"),
+					},
+					{
+						Operation:     "create",
+						TreePath:      ".dot.pas",
+						ContentReader: strings.NewReader("program Hello;\nbegin\n  writeln('Hello, world.');\nend.\n"),
+					},
+					{
+						Operation:     "create",
+						TreePath:      "cpplint.py",
+						ContentReader: strings.NewReader(`#! /usr/bin/env python\n\nprint("Hello world!")\n`),
+					},
+					{
+						Operation:     "create",
+						TreePath:      "some-file.xml",
+						ContentReader: strings.NewReader(`<?xml version="1.0"?>\n<foo>\n <bar>Hello</bar>\n</foo>\n`),
+					},
+				})
 
 			return repo, sha, f
 		}

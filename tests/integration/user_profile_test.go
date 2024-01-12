@@ -8,99 +8,46 @@ import (
 	"net/url"
 	"strings"
 	"testing"
-	"time"
 
-	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/git"
-	repo_service "code.gitea.io/gitea/services/repository"
 	files_service "code.gitea.io/gitea/services/repository/files"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
 )
 
-func createProfileRepo(t *testing.T, readmeName string) func() {
-	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
-
-	// Create a new repository
-	repo, err := repo_service.CreateRepository(db.DefaultContext, user2, user2, repo_service.CreateRepoOptions{
-		Name:          ".profile",
-		DefaultBranch: "main",
-		IsPrivate:     false,
-		AutoInit:      true,
-		Readme:        "Default",
-	})
-	assert.NoError(t, err)
-	assert.NotEmpty(t, repo)
-
-	deleteInitialReadmeResp, err := files_service.ChangeRepoFiles(git.DefaultContext, repo, user2,
-		&files_service.ChangeRepoFilesOptions{
-			Files: []*files_service.ChangeRepoFile{
-				{
-					Operation: "delete",
-					TreePath:  "README.md",
-				},
-			},
-			Message: "Delete the initial readme",
-			Author: &files_service.IdentityOptions{
-				Name:  user2.Name,
-				Email: user2.Email,
-			},
-			Committer: &files_service.IdentityOptions{
-				Name:  user2.Name,
-				Email: user2.Email,
-			},
-			Dates: &files_service.CommitDateOptions{
-				Author:    time.Now(),
-				Committer: time.Now(),
-			},
-		})
-	assert.NoError(t, err)
-	assert.NotEmpty(t, deleteInitialReadmeResp)
-
-	if readmeName != "" {
-		addReadmeResp, err := files_service.ChangeRepoFiles(git.DefaultContext, repo, user2,
-			&files_service.ChangeRepoFilesOptions{
-				Files: []*files_service.ChangeRepoFile{
-					{
-						Operation:     "create",
-						TreePath:      readmeName,
-						ContentReader: strings.NewReader("# Hi!\n"),
-					},
-				},
-				Message: "Add a readme",
-				Author: &files_service.IdentityOptions{
-					Name:  user2.Name,
-					Email: user2.Email,
-				},
-				Committer: &files_service.IdentityOptions{
-					Name:  user2.Name,
-					Email: user2.Email,
-				},
-				Dates: &files_service.CommitDateOptions{
-					Author:    time.Now(),
-					Committer: time.Now(),
-				},
-			})
-
-		assert.NoError(t, err)
-		assert.NotEmpty(t, addReadmeResp)
-	}
-
-	return func() {
-		repo_service.DeleteRepository(db.DefaultContext, user2, repo, false)
-	}
-}
-
 func TestUserProfile(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, u *url.URL) {
 		checkReadme := func(t *testing.T, title, readmeFilename string, expectedCount int) {
 			t.Run(title, func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
-				defer createProfileRepo(t, readmeFilename)()
 
+				// Prepare the test repository
+				user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+
+				var ops []*files_service.ChangeRepoFile
+				op := "create"
+				if readmeFilename != "README.md" {
+					ops = append(ops, &files_service.ChangeRepoFile{
+						Operation: "delete",
+						TreePath:  "README.md",
+					})
+				} else {
+					op = "update"
+				}
+				if readmeFilename != "" {
+					ops = append(ops, &files_service.ChangeRepoFile{
+						Operation:     op,
+						TreePath:      readmeFilename,
+						ContentReader: strings.NewReader("# Hi!\n"),
+					})
+				}
+
+				_, _, f := CreateDeclarativeRepo(t, user2, ".profile", nil, nil, ops)
+				defer f()
+
+				// Perform the test
 				req := NewRequest(t, "GET", "/user2")
 				resp := MakeRequest(t, req, http.StatusOK)
 
