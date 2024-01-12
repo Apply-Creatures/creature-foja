@@ -22,7 +22,7 @@ import (
 
 type DetectedWorkflow struct {
 	EntryName    string
-	TriggerEvent string
+	TriggerEvent *jobparser.Event
 	Content      []byte
 }
 
@@ -103,6 +103,7 @@ func DetectWorkflows(
 	commit *git.Commit,
 	triggedEvent webhook_module.HookEventType,
 	payload api.Payloader,
+	detectSchedule bool,
 ) ([]*DetectedWorkflow, []*DetectedWorkflow, error) {
 	entries, err := ListWorkflows(commit)
 	if err != nil {
@@ -117,6 +118,7 @@ func DetectWorkflows(
 			return nil, nil, err
 		}
 
+		// one workflow may have multiple events
 		events, err := GetEventsFromContent(content)
 		if err != nil {
 			log.Warn("ignore invalid workflow %q: %v", entry.Name(), err)
@@ -125,17 +127,18 @@ func DetectWorkflows(
 		for _, evt := range events {
 			log.Trace("detect workflow %q for event %#v matching %q", entry.Name(), evt, triggedEvent)
 			if evt.IsSchedule() {
-				dwf := &DetectedWorkflow{
-					EntryName:    entry.Name(),
-					TriggerEvent: evt.Name,
-					Content:      content,
+				if detectSchedule {
+					dwf := &DetectedWorkflow{
+						EntryName:    entry.Name(),
+						TriggerEvent: evt,
+						Content:      content,
+					}
+					schedules = append(schedules, dwf)
 				}
-				schedules = append(schedules, dwf)
-			}
-			if detectMatched(gitRepo, commit, triggedEvent, payload, evt) {
+			} else if detectMatched(gitRepo, commit, triggedEvent, payload, evt) {
 				dwf := &DetectedWorkflow{
 					EntryName:    entry.Name(),
-					TriggerEvent: evt.Name,
+					TriggerEvent: evt,
 					Content:      content,
 				}
 				workflows = append(workflows, dwf)
@@ -156,7 +159,8 @@ func detectMatched(gitRepo *git.Repository, commit *git.Commit, triggedEvent web
 		webhook_module.HookEventCreate,
 		webhook_module.HookEventDelete,
 		webhook_module.HookEventFork,
-		webhook_module.HookEventWiki:
+		webhook_module.HookEventWiki,
+		webhook_module.HookEventSchedule:
 		if len(evt.Acts()) != 0 {
 			log.Warn("Ignore unsupported %s event arguments %v", triggedEvent, evt.Acts())
 		}

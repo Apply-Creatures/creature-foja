@@ -12,8 +12,7 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/routers/web/repo"
-	"code.gitea.io/gitea/services/context"
-	notify_service "code.gitea.io/gitea/services/notify"
+	repo_service "code.gitea.io/gitea/services/repository"
 )
 
 // SetDefaultBranchPost set default branch
@@ -36,23 +35,14 @@ func SetDefaultBranchPost(ctx *context.Context) {
 		}
 
 		branch := ctx.FormString("branch")
-		if !ctx.Repo.GitRepo.IsBranchExist(branch) {
-			ctx.Status(http.StatusNotFound)
-			return
-		} else if repo.DefaultBranch != branch {
-			repo.DefaultBranch = branch
-			if err := gitrepo.SetDefaultBranch(ctx, repo, branch); err != nil {
-				if !git.IsErrUnsupportedVersion(err) {
-					ctx.ServerError("SetDefaultBranch", err)
-					return
-				}
-			}
-			if err := repo_model.UpdateDefaultBranch(ctx, repo); err != nil {
+		if err := repo_service.SetRepoDefaultBranch(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, branch); err != nil {
+			switch {
+			case ctx.Repo.GitRepo.IsErrBranchNotExist(err):
+				ctx.Status(http.StatusNotFound)
+			default:
 				ctx.ServerError("SetDefaultBranch", err)
-				return
 			}
-
-			notify_service.ChangeDefaultBranch(ctx, repo)
+			return
 		}
 
 		log.Trace("Repository basic settings updated: %s/%s", ctx.Repo.Owner.Name, repo.Name)

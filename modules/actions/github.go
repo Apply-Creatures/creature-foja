@@ -22,6 +22,7 @@ const (
 	GithubEventRelease                  = "release"
 	GithubEventPullRequestComment       = "pull_request_comment"
 	GithubEventGollum                   = "gollum"
+	GithubEventSchedule                 = "schedule"
 )
 
 // IsDefaultBranchWorkflow returns true if the event only triggers workflows on the default branch
@@ -114,6 +115,9 @@ func canGithubEventMatch(eventName string, triggedEvent webhook_module.HookEvent
 		// https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#pull_request_comment-use-issue_comment
 		return triggedEvent == webhook_module.HookEventIssueComment ||
 			triggedEvent == webhook_module.HookEventPullRequestComment
+
+	case GithubEventSchedule:
+		return triggedEvent == webhook_module.HookEventSchedule
 
 	default:
 		return eventName == string(triggedEvent)
