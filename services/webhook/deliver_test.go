@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"testing"
 	"time"
 
@@ -25,9 +26,15 @@ import (
 
 func TestWebhookProxy(t *testing.T) {
 	oldWebhook := setting.Webhook
+	oldHTTPProxy := os.Getenv("http_proxy")
+	oldHTTPSProxy := os.Getenv("https_proxy")
 	t.Cleanup(func() {
 		setting.Webhook = oldWebhook
+		os.Setenv("http_proxy", oldHTTPProxy)
+		os.Setenv("https_proxy", oldHTTPSProxy)
 	})
+	os.Unsetenv("http_proxy")
+	os.Unsetenv("https_proxy")
 
 	setting.Webhook.ProxyURL = "http://localhost:8080"
 	setting.Webhook.ProxyURLFixed, _ = url.Parse(setting.Webhook.ProxyURL)
