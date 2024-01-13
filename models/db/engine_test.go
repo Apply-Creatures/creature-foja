@@ -123,3 +123,31 @@ func TestSlowQuery(t *testing.T) {
 	_, stopped = lc.Check(100 * time.Millisecond)
 	assert.True(t, stopped)
 }
+
+func TestErrorQuery(t *testing.T) {
+	lc, cleanup := test.NewLogChecker("error-query")
+	lc.StopMark("[Error SQL Query]")
+	defer cleanup()
+
+	e := db.GetEngine(db.DefaultContext)
+	engine, ok := e.(*xorm.Engine)
+	assert.True(t, ok)
+
+	// It's not possible to clean this up with XORM, but it's luckily not harmful
+	// to leave around.
+	engine.AddHook(&db.ErrorQueryHook{
+		Logger: log.GetLogger("error-query"),
+	})
+
+	// Valid query.
+	e.Exec("SELECT 1 WHERE false;")
+
+	_, stopped := lc.Check(100 * time.Millisecond)
+	assert.False(t, stopped)
+
+	// Table doesn't exist.
+	e.Exec("SELECT column FROM table;")
+
+	_, stopped = lc.Check(100 * time.Millisecond)
+	assert.True(t, stopped)
+}

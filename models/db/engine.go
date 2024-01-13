@@ -153,6 +153,9 @@ func InitEngine(ctx context.Context) error {
 			Logger:   log.GetLogger("xorm"),
 		})
 	}
+	xormEngine.AddHook(&ErrorQueryHook{
+		Logger: log.GetLogger("xorm"),
+	})
 
 	SetDefaultEngine(ctx, xormEngine)
 	return nil
@@ -324,6 +327,23 @@ func (SlowQueryHook) BeforeProcess(c *contexts.ContextHook) (context.Context, er
 func (h *SlowQueryHook) AfterProcess(c *contexts.ContextHook) error {
 	if c.ExecuteTime >= h.Treshold {
 		h.Logger.Log(8, log.WARN, "[Slow SQL Query] %s %v - %v", c.SQL, c.Args, c.ExecuteTime)
+	}
+	return nil
+}
+
+type ErrorQueryHook struct {
+	Logger log.Logger
+}
+
+var _ contexts.Hook = &ErrorQueryHook{}
+
+func (ErrorQueryHook) BeforeProcess(c *contexts.ContextHook) (context.Context, error) {
+	return c.Ctx, nil
+}
+
+func (h *ErrorQueryHook) AfterProcess(c *contexts.ContextHook) error {
+	if c.Err != nil {
+		h.Logger.Log(8, log.ERROR, "[Error SQL Query] %s %v - %v", c.SQL, c.Args, c.Err)
 	}
 	return nil
 }
