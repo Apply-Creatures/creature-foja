@@ -718,3 +718,55 @@ func TestIssueReferenceURL(t *testing.T) {
 	ref, _ = htmlDoc.Find(`.timeline-item.comment:not(.first) .reference-issue`).Attr("data-reference")
 	assert.EqualValues(t, "/user2/repo1/issues/1#issuecomment-2", ref)
 }
+
+func TestGetContentHistory(t *testing.T) {
+	defer tests.AddFixtures("tests/integration/fixtures/TestGetContentHistory/")()
+	defer tests.PrepareTestEnv(t)()
+
+	issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 1})
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: issue.RepoID})
+	issueURL := fmt.Sprintf("%s/issues/%d", repo.FullName(), issue.Index)
+	contentHistory := unittest.AssertExistsAndLoadBean(t, &issues_model.ContentHistory{ID: 2, IssueID: issue.ID})
+	contentHistoryURL := fmt.Sprintf("%s/issues/%d/content-history/detail?comment_id=%d&history_id=%d", repo.FullName(), issue.Index, contentHistory.CommentID, contentHistory.ID)
+
+	type contentHistoryResp struct {
+		CanSoftDelete bool `json:"canSoftDelete"`
+		HistoryID     int  `json:"historyId"`
+		PrevHistoryID int  `json:"prevHistoryId"`
+	}
+
+	testCase := func(t *testing.T, session *TestSession, canDelete bool) {
+		t.Helper()
+		contentHistoryURL := contentHistoryURL + "&_csrf=" + GetCSRF(t, session, issueURL)
+
+		req := NewRequest(t, "GET", contentHistoryURL)
+		resp := session.MakeRequest(t, req, http.StatusOK)
+
+		var respJSON contentHistoryResp
+		DecodeJSON(t, resp, &respJSON)
+
+		assert.EqualValues(t, canDelete, respJSON.CanSoftDelete)
+		assert.EqualValues(t, contentHistory.ID, respJSON.HistoryID)
+		assert.EqualValues(t, contentHistory.ID-1, respJSON.PrevHistoryID)
+	}
+
+	t.Run("Anonymous", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		testCase(t, emptyTestSession(t), false)
+	})
+
+	t.Run("Another user", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		testCase(t, loginUser(t, "user8"), false)
+	})
+
+	t.Run("Repo owner", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		testCase(t, loginUser(t, "user2"), true)
+	})
+
+	t.Run("Poster", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		testCase(t, loginUser(t, "user5"), true)
+	})
+}
