@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"testing"
 
+	"code.gitea.io/gitea/models/activities"
+	"code.gitea.io/gitea/models/db"
 	issue_model "code.gitea.io/gitea/models/issues"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
@@ -388,5 +390,47 @@ func TestBlockActions(t *testing.T) {
 			htmlDoc.doc.Find(".ui.negative.message").Text(),
 			translation.NewLocale("en-US").Tr("repo.settings.new_owner_blocked_doer"),
 		)
+	})
+}
+
+func TestBlockedNotification(t *testing.T) {
+	defer tests.AddFixtures("tests/integration/fixtures/TestBlockedNotifications")()
+	defer tests.PrepareTestEnv(t)()
+
+	doer := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	normalUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+	blockedUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 10})
+	issue := unittest.AssertExistsAndLoadBean(t, &issue_model.Issue{ID: 1000})
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: issue.RepoID})
+	issueURL := fmt.Sprintf("%s/issues/%d", repo.FullName(), issue.Index)
+	notificationBean := &activities.Notification{UserID: doer.ID, RepoID: repo.ID, IssueID: issue.ID}
+
+	assert.False(t, user_model.IsBlocked(db.DefaultContext, doer.ID, normalUser.ID))
+	BlockUser(t, doer, blockedUser)
+
+	mentionDoer := func(t *testing.T, session *TestSession) {
+		t.Helper()
+
+		req := NewRequestWithValues(t, "POST", issueURL+"/comments", map[string]string{
+			"_csrf":   GetCSRF(t, session, issueURL),
+			"content": "I'm annoying. Pinging @" + doer.Name,
+		})
+		session.MakeRequest(t, req, http.StatusOK)
+	}
+
+	t.Run("Blocks notification of blocked user", func(t *testing.T) {
+		session := loginUser(t, blockedUser.Name)
+
+		unittest.AssertNotExistsBean(t, notificationBean)
+		mentionDoer(t, session)
+		unittest.AssertNotExistsBean(t, notificationBean)
+	})
+
+	t.Run("Do not block notifications of normal user", func(t *testing.T) {
+		session := loginUser(t, normalUser.Name)
+
+		unittest.AssertNotExistsBean(t, notificationBean)
+		mentionDoer(t, session)
+		unittest.AssertExistsAndLoadBean(t, notificationBean)
 	})
 }

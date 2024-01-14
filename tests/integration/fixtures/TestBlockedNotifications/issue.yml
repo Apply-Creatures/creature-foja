@@ -1,0 +1,16 @@
+-
+  id: 1000
+  repo_id: 4
+  index: 1000
+  poster_id: 10
+  original_author_id: 0
+  name: issue for moderation
+  content: Hello there!
+  milestone_id: 0
+  priority: 0
+  is_closed: false
+  is_pull: false
+  num_comments: 0
+  created_unix: 1705939088
+  updated_unix: 1705939088
+  is_locked: false

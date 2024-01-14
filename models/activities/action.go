@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -21,6 +22,7 @@ import (
 	"code.gitea.io/gitea/models/unit"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
+	"code.gitea.io/gitea/modules/container"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
@@ -588,9 +590,24 @@ func NotifyWatchers(ctx context.Context, actions ...*Action) error {
 
 		if repoChanged {
 			// Add feeds for user self and all watchers.
-			watchers, err = repo_model.GetWatchersExcludeBlocked(ctx, act.RepoID, act.ActUserID)
+			watchers, err = repo_model.GetWatchers(ctx, act.RepoID)
 			if err != nil {
 				return fmt.Errorf("get watchers: %w", err)
+			}
+
+			// Be aware that optimizing this correctly into the `GetWatchers` SQL
+			// query is for most cases less performant than doing this.
+			blockedDoerUserIDs, err := user_model.ListBlockedByUsersID(ctx, act.ActUserID)
+			if err != nil {
+				return fmt.Errorf("user_model.ListBlockedByUsersID: %w", err)
+			}
+
+			if len(blockedDoerUserIDs) > 0 {
+				excludeWatcherIDs := make(container.Set[int64], len(blockedDoerUserIDs))
+				excludeWatcherIDs.AddMultiple(blockedDoerUserIDs...)
+				watchers = slices.DeleteFunc(watchers, func(v *repo_model.Watch) bool {
+					return excludeWatcherIDs.Contains(v.UserID)
+				})
 			}
 		}
 
