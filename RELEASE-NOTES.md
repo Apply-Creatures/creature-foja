@@ -4,6 +4,74 @@ A Forgejo release is published shortly after a Gitea release is published and th
 
 The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.21.1-0 or v1.21.2-0) does not require manual actions but others might (e.g. v1.20, v1.21).
 
+## 1.21.4-0
+
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.4-0` release can be reviewed from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo/
+$ git -C forgejo log --oneline --no-merges v1.21.3-0..v1.21.4-0
+```
+
+This stable release includes security and bug fixes as well as documentation improvements.
+
+* Recommended Action
+
+  We recommend that all Forgejo installations are [upgraded](https://forgejo.org/docs/v1.21/admin/upgrade/) to the latest version.
+
+* Container image upgrades
+
+  In the Forgejo container images the ssh version was upgraded to [9.3_p2-r1](https://pkgs.alpinelinux.org/packages?name=openssh&branch=v3.18) which includes a fix for [CVE-2023-48795](https://nvd.nist.gov/vuln/detail/CVE-2023-48795).
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.21/user/semver/)
+
+  The semantic version was updated to `6.0.4+0-gitea-1.21.4`
+
+* Security fixes
+
+  * [Update github.com/cloudflare/circl](https://codeberg.org/forgejo/forgejo/commit/82ec85550e8604725e98c30e2d0f884db7514018)
+  * [Require token for GET subscription endpoint](https://codeberg.org/forgejo/forgejo/commit/0841fb63a198b416a66268d8104daa4299d40107)
+
+* Bug fixes
+
+  The most prominent ones are described here, others can be found in the list of commits included in the release as described above.
+
+  * [Gracefully handle missing branches](https://codeberg.org/forgejo/forgejo/commit/c2fa9c308f5cdb08dd84fb8ec6623a57e75d5152) when a branch is missing from Git but still lingering in the database.
+  * [Fix panic in `canSoftDeleteContentHistory`](https://codeberg.org/forgejo/forgejo/commit/ab1ccc55dca7fd05e59a01343e6dfe53be6195d0)
+  * [Check for Commit in opengraph](https://codeberg.org/forgejo/forgejo/commit/b473a44a2bb59591f3e24bfcdeed1d8fbb0f9204)
+  * [Handle non-existant commit in Archive request](https://codeberg.org/forgejo/forgejo/commit/0fbf761d1930f9336be6da8d17ae6032203a9381)
+  * [Fix NPE in `ToPullReviewList`](https://codeberg.org/forgejo/forgejo/commit/f5349b66b78968301d7dc4c45e8e08b46910aa6e)
+  * [Fix URL in the mail to include the host](https://codeberg.org/forgejo/forgejo/commit/ac889d42903b2ce2129a02ace620a10a6f940920)
+  * [Fix the event of a scheduled action](https://codeberg.org/forgejo/forgejo/commit/892a8e1f4a5cc09cc3136e0b0e6487c154c5ed2b) to be "schedule" instead of a semi-random event from the default branch.
+  * [Use refname:strip-2 instead of refname:short when syncing tags](https://codeberg.org/forgejo/forgejo/commit/4df056a14ecaad3ff9d963599fff8c8d7ebe87e9)
+  * [Fix button size in "attached header right"](https://codeberg.org/forgejo/forgejo/commit/10699872930005a79490dd47eb86438ff20f449d)
+  * [Fix `convert.ToTeams` on empty input](https://codeberg.org/forgejo/forgejo/commit/453d27853c18991c13b6e457032406664b07751b)
+  * [Hide code related setting options in repository when code unit is disabled](https://codeberg.org/forgejo/forgejo/commit/703ed272ccba55c08873f6a23e557cdc5cd498ee)
+  * [Fix incorrect URL for "Reference in New Issue"](https://codeberg.org/forgejo/forgejo/commit/01285dc47cd77e7c0755423af96ba6bf0e23650e)
+  * [Fix panic when parsing empty pgsql host](https://codeberg.org/forgejo/forgejo/commit/ad027c28181004cbf891be14bb383ed906b13521)
+  * [Fix alpine package files are not rebuilt](https://codeberg.org/forgejo/forgejo/commit/881159f593b8f848d52afe8d420f4f3ced34de7f)
+  * [Avoid cycle-redirecting user/login page](https://codeberg.org/forgejo/forgejo/commit/ea8ca5b5098d04bf5f6218ca099af32d20bb465f)
+  * [Fix the scroll behavior for emoji/mention list](https://codeberg.org/forgejo/forgejo/commit/fef19bcf94b2265870d21897e9bc55d6a07975d7)
+  * [Fix wrong due date rendering in issue list page](https://codeberg.org/forgejo/forgejo/commit/29a0e7738c0725ee8407e2714c3d890286a94fd0)
+  * [Fix `status_check_contexts` matching bug](https://codeberg.org/forgejo/forgejo/commit/3fe44b87627612705413e80abbe8af55fae36666)
+  * [Fix 405 method not allowed CORS / OIDC](https://codeberg.org/forgejo/forgejo/commit/9ad7a67fc127712f897a3c8348e9f55d7cb2f6ec)
+  * [Fix `GetCommitStatuses`](https://codeberg.org/forgejo/forgejo/commit/c287b1383f91024a8eba1a3f47912eecd66e19be)
+  * [Forbid removing the last admin user](https://codeberg.org/forgejo/forgejo/commit/5124be72aaac4ad814c1ec7a57a2e92c529d00f9)
+  * [Fix issue dependencies](https://codeberg.org/forgejo/forgejo/commit/2ab54a9c0671b70ab83bd3c643815ac7424a6a36)
+  * [Fix system webhooks API bug](https://codeberg.org/forgejo/forgejo/commit/f5764bbf269d82e7e344834a5eeb8de82356cfde)
+
+* Documentation
+
+  * The Forgejo Actions [user reference guide](https://forgejo.org/docs/v1.21/user/actions/) includes [event payload examples](https://forgejo.org/docs/v1.21/user/actions/#githubevent) for pull requests and push events. It also covers most of the [jobs](https://forgejo.org/docs/v1.21/user/actions/#jobs) syntax.
+  * The [Forgejo command line page](https://forgejo.org/docs/v1.21/admin/command-line/) was [entirely reworked](https://codeberg.org/forgejo/docs/pulls/340) and updates are now automated.
+
+* Improvements
+
+  * [Rework markup link rendering](https://codeberg.org/forgejo/forgejo/commit/875b398e5e0c53a615c861eba77d4e0ff50ff49d)
+  * [Modernize merge button](https://codeberg.org/forgejo/forgejo/commit/70c7ee54754e93fd2612287b1ccfc24006924651)
+  * [Assign pull request to project during creation](https://codeberg.org/forgejo/forgejo/commit/10b555a52b0541fa5e4bc3ddb43001abc2ce0c76)
+  * [Add download attribute to release attachments](https://codeberg.org/forgejo/forgejo/commit/fab93c6393f5365e2e985619f0b82e4c580874c9)
+
 ## 1.21.3-0
 
 The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.3-0` release can be reviewed from the command line with:
