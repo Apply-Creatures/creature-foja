@@ -29,8 +29,7 @@ This stable release includes security and bug fixes as well as documentation imp
 
 * Security fixes
 
-  * [Update github.com/cloudflare/circl](https://codeberg.org/forgejo/forgejo/commit/82ec85550e8604725e98c30e2d0f884db7514018)
-  * [Require token for GET subscription endpoint](https://codeberg.org/forgejo/forgejo/commit/0841fb63a198b416a66268d8104daa4299d40107)
+  * [Require token for GET subscription endpoint](https://codeberg.org/forgejo/forgejo/commit/6a66e8c7486b0be873dfc55dfdef9ba056970a90)
 
 * Bug fixes
 
