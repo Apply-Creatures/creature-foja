@@ -624,7 +624,7 @@ func DeleteIssueComment(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	deleteIssueComment(ctx)
+	deleteIssueComment(ctx, issues_model.CommentTypeComment)
 }
 
 // DeleteIssueCommentDeprecated delete a comment from an issue
@@ -663,16 +663,16 @@ func DeleteIssueCommentDeprecated(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	deleteIssueComment(ctx)
+	deleteIssueComment(ctx, issues_model.CommentTypeComment)
 }
 
-func deleteIssueComment(ctx *context.APIContext) {
+func deleteIssueComment(ctx *context.APIContext, commentType issues_model.CommentType) {
 	comment := ctx.Comment
 
 	if !ctx.IsSigned || (ctx.Doer.ID != comment.PosterID && !ctx.Repo.CanWriteIssuesOrPulls(comment.Issue.IsPull)) {
 		ctx.Status(http.StatusForbidden)
 		return
-	} else if comment.Type != issues_model.CommentTypeComment {
+	} else if comment.Type != commentType {
 		ctx.Status(http.StatusNoContent)
 		return
 	}

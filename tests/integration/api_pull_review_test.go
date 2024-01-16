@@ -21,7 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAPIPullReviewCreateComment(t *testing.T) {
+func TestAPIPullReviewCreateDeleteComment(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	pullIssue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 3})
 	assert.NoError(t, pullIssue.LoadAttributes(db.DefaultContext))
@@ -47,6 +47,30 @@ func TestAPIPullReviewCreateComment(t *testing.T) {
 			var review api.PullReview
 			var reviewLine int64 = 1
 
+			// cleanup
+			{
+				session := loginUser(t, "user1")
+				token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeAll)
+
+				req := NewRequestf(t, http.MethodGet, "/api/v1/repos/%s/pulls/%d/reviews", repo.FullName(), pullIssue.Index).AddTokenAuth(token)
+				resp := MakeRequest(t, req, http.StatusOK)
+				var reviews []*api.PullReview
+				DecodeJSON(t, resp, &reviews)
+				for _, review := range reviews {
+					req := NewRequestf(t, http.MethodDelete, "/api/v1/repos/%s/pulls/%d/reviews/%d", repo.FullName(), pullIssue.Index, review.ID).
+						AddTokenAuth(token)
+					MakeRequest(t, req, http.StatusNoContent)
+				}
+			}
+
+			requireReviewCount := func(count int) {
+				req := NewRequestf(t, http.MethodGet, "/api/v1/repos/%s/pulls/%d/reviews", repo.FullName(), pullIssue.Index).AddTokenAuth(token)
+				resp := MakeRequest(t, req, http.StatusOK)
+				var reviews []*api.PullReview
+				DecodeJSON(t, resp, &reviews)
+				require.EqualValues(t, count, len(reviews))
+			}
+
 			{
 				req := NewRequestWithJSON(t, http.MethodPost, fmt.Sprintf("/api/v1/repos/%s/pulls/%d/reviews", repo.FullName(), pullIssue.Index), &api.CreatePullReviewOptions{
 					Body:  "body1",
@@ -66,6 +90,7 @@ func TestAPIPullReviewCreateComment(t *testing.T) {
 				DecodeJSON(t, resp, &getReview)
 				require.EqualValues(t, getReview, review)
 			}
+			requireReviewCount(1)
 
 			newCommentBody := "first new line"
 			var reviewComment api.PullReviewComment
@@ -96,10 +121,23 @@ func TestAPIPullReviewCreateComment(t *testing.T) {
 			}
 
 			{
+				req := NewRequestf(t, http.MethodDelete, "/api/v1/repos/%s/pulls/%d/reviews/%d/comments/%d", repo.FullName(), pullIssue.Index, review.ID, reviewComment.ID).
+					AddTokenAuth(token)
+				MakeRequest(t, req, http.StatusNoContent)
+			}
+
+			{
+				req := NewRequestf(t, http.MethodGet, "/api/v1/repos/%s/pulls/%d/reviews/%d/comments/%d", repo.FullName(), pullIssue.Index, review.ID, reviewComment.ID).
+					AddTokenAuth(token)
+				MakeRequest(t, req, http.StatusNotFound)
+			}
+
+			{
 				req := NewRequestf(t, http.MethodDelete, "/api/v1/repos/%s/pulls/%d/reviews/%d", repo.FullName(), pullIssue.Index, review.ID).
 					AddTokenAuth(token)
 				MakeRequest(t, req, http.StatusNoContent)
 			}
+			requireReviewCount(0)
 		})
 	}
 }
