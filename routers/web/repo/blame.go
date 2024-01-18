@@ -8,7 +8,6 @@ import (
 	gotemplate "html/template"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 
 	user_model "code.gitea.io/gitea/models/user"
@@ -39,32 +38,15 @@ type blameRow struct {
 
 // RefBlame render blame page
 func RefBlame(ctx *context.Context) {
-	fileName := ctx.Repo.TreePath
-	if len(fileName) == 0 {
-		ctx.NotFound("Blame FileName", nil)
+	if ctx.Repo.TreePath == "" {
+		ctx.NotFound("No file specified", nil)
 		return
 	}
 
-	branchLink := ctx.Repo.RepoLink + "/src/" + ctx.Repo.BranchNameSubURL()
-	treeLink := branchLink
-	rawLink := ctx.Repo.RepoLink + "/raw/" + ctx.Repo.BranchNameSubURL()
-
-	if len(ctx.Repo.TreePath) > 0 {
-		treeLink += "/" + util.PathEscapeSegments(ctx.Repo.TreePath)
-	}
-
-	var treeNames []string
 	paths := make([]string, 0, 5)
-	if len(ctx.Repo.TreePath) > 0 {
-		treeNames = strings.Split(ctx.Repo.TreePath, "/")
-		for i := range treeNames {
-			paths = append(paths, strings.Join(treeNames[:i+1], "/"))
-		}
-
-		ctx.Data["HasParentPath"] = true
-		if len(paths)-2 >= 0 {
-			ctx.Data["ParentPath"] = "/" + paths[len(paths)-1]
-		}
+	treeNames := strings.Split(ctx.Repo.TreePath, "/")
+	for i := range treeNames {
+		paths = append(paths, strings.Join(treeNames[:i+1], "/"))
 	}
 
 	// Get current entry user currently looking at.
@@ -73,46 +55,34 @@ func RefBlame(ctx *context.Context) {
 		HandleGitError(ctx, "Repo.Commit.GetTreeEntryByPath", err)
 		return
 	}
-
 	blob := entry.Blob()
 
-	ctx.Data["Paths"] = paths
-	ctx.Data["TreeLink"] = treeLink
-	ctx.Data["TreeNames"] = treeNames
-	ctx.Data["BranchLink"] = branchLink
-
-	ctx.Data["RawFileLink"] = rawLink + "/" + util.PathEscapeSegments(ctx.Repo.TreePath)
 	ctx.Data["PageIsViewCode"] = true
-
 	ctx.Data["IsBlame"] = true
+
+	ctx.Data["BranchLink"] = ctx.Repo.RepoLink + "/src/" + ctx.Repo.BranchNameSubURL()
+	ctx.Data["RawFileLink"] = ctx.Repo.RepoLink + "/raw/" + ctx.Repo.BranchNameSubURL() + "/" + util.PathEscapeSegments(ctx.Repo.TreePath)
+	ctx.Data["Paths"] = paths
+	ctx.Data["TreeNames"] = treeNames
 
 	ctx.Data["FileSize"] = blob.Size()
 	ctx.Data["FileName"] = blob.Name()
 
-	ctx.Data["NumLines"], err = blob.GetBlobLineCount()
 	ctx.Data["NumLinesSet"] = true
-
+	ctx.Data["NumLines"], err = blob.GetBlobLineCount()
 	if err != nil {
-		ctx.NotFound("GetBlobLineCount", err)
+		ctx.ServerError("GetBlobLineCount", err)
 		return
 	}
 
-	bypassBlameIgnore, _ := strconv.ParseBool(ctx.FormString("bypass-blame-ignore"))
-
-	result, err := performBlame(ctx, ctx.Repo.Repository.RepoPath(), ctx.Repo.Commit, fileName, bypassBlameIgnore)
+	result, err := performBlame(ctx, ctx.Repo.Commit, ctx.Repo.TreePath, ctx.FormBool("bypass-blame-ignore"))
 	if err != nil {
-		ctx.NotFound("CreateBlameReader", err)
+		ctx.ServerError("performBlame", err)
 		return
 	}
 
 	ctx.Data["UsesIgnoreRevs"] = result.UsesIgnoreRevs
 	ctx.Data["FaultyIgnoreRevsFile"] = result.FaultyIgnoreRevsFile
-
-	// Get Topics of this repo
-	renderRepoTopics(ctx)
-	if ctx.Written() {
-		return
-	}
 
 	commitNames := processBlameParts(ctx, result.Parts)
 	if ctx.Written() {
@@ -130,12 +100,13 @@ type blameResult struct {
 	FaultyIgnoreRevsFile bool
 }
 
-func performBlame(ctx *context.Context, repoPath string, commit *git.Commit, file string, bypassBlameIgnore bool) (*blameResult, error) {
+func performBlame(ctx *context.Context, commit *git.Commit, file string, bypassBlameIgnore bool) (*blameResult, error) {
+	repoPath := ctx.Repo.Repository.RepoPath()
 	objectFormat, err := ctx.Repo.GitRepo.GetObjectFormat()
 	if err != nil {
-		ctx.NotFound("CreateBlameReader", err)
 		return nil, err
 	}
+
 	blameReader, err := git.CreateBlameReader(ctx, objectFormat, repoPath, commit, file, bypassBlameIgnore)
 	if err != nil {
 		return nil, err
