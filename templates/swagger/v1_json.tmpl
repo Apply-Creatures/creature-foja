@@ -3533,7 +3533,9 @@
     "/repos/{owner}/{repo}/archive/{archive}": {
       "get": {
         "produces": [
-          "application/json"
+          "application/octet-stream",
+          "application/zip",
+          "application/gzip"
         ],
         "tags": [
           "repository"
