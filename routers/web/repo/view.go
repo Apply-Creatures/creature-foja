@@ -1068,7 +1068,43 @@ func renderCode(ctx *context.Context) {
 			}
 		}
 
-		ctx.Data["RecentlyPushedNewBranches"] = branches
+		// Filter out branches that have no relation to the default branch of
+		// the repository.
+		var filteredBranches []*git_model.Branch
+		for _, branch := range branches {
+			repo, err := branch.GetRepo(ctx)
+			if err != nil {
+				continue
+			}
+			gitRepo, err := git.OpenRepository(ctx, repo.RepoPath())
+			if err != nil {
+				continue
+			}
+			defer gitRepo.Close()
+			head, err := gitRepo.GetCommit(branch.CommitID)
+			if err != nil {
+				continue
+			}
+			defaultBranch, err := gitRepo.GetDefaultBranch()
+			if err != nil {
+				continue
+			}
+			defaultBranchHead, err := gitRepo.GetCommit(defaultBranch)
+			if err != nil {
+				continue
+			}
+
+			hasMergeBase, err := head.HasPreviousCommit(defaultBranchHead.ID)
+			if err != nil {
+				continue
+			}
+
+			if hasMergeBase {
+				filteredBranches = append(filteredBranches, branch)
+			}
+		}
+
+		ctx.Data["RecentlyPushedNewBranches"] = filteredBranches
 	}
 
 PostRecentBranchCheck:

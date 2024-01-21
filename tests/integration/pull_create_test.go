@@ -16,8 +16,13 @@ import (
 	"code.gitea.io/gitea/models/db"
 	repo_model "code.gitea.io/gitea/models/repo"
 	unit_model "code.gitea.io/gitea/models/unit"
+	"code.gitea.io/gitea/models/unittest"
+	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/graceful"
 	"code.gitea.io/gitea/modules/test"
 	repo_service "code.gitea.io/gitea/services/repository"
+	files_service "code.gitea.io/gitea/services/repository/files"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
@@ -343,6 +348,59 @@ func TestRecentlyPushed(t *testing.T) {
 			assert.Equal(t, "/user1/repo1/src/branch/recent-push", forkBranchLink)
 			// PR link compares against the correct rep, and qualified branch name
 			assert.Equal(t, "/user2/repo1/compare/master...user1/repo1:recent-push", forkPRLink)
+		})
+
+		t.Run("unrelated branches are not shown", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			adminUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{IsAdmin: true})
+
+			// Create a new branch with no relation to the default branch.
+			// 1. Create a new Tree object
+			cmd := git.NewCommand(db.DefaultContext, "write-tree")
+			treeID, _, gitErr := cmd.RunStdString(&git.RunOpts{Dir: repo.RepoPath()})
+			assert.NoError(t, gitErr)
+			treeID = strings.TrimSpace(treeID)
+			// 2. Create a new (empty) commit
+			cmd = git.NewCommand(db.DefaultContext, "commit-tree", "-m", "Initial orphan commit").AddDynamicArguments(treeID)
+			commitID, _, gitErr := cmd.RunStdString(&git.RunOpts{Dir: repo.RepoPath()})
+			assert.NoError(t, gitErr)
+			commitID = strings.TrimSpace(commitID)
+			// 3. Create a new ref pointing to the orphaned commit
+			cmd = git.NewCommand(db.DefaultContext, "update-ref", "refs/heads/orphan1").AddDynamicArguments(commitID)
+			_, _, gitErr = cmd.RunStdString(&git.RunOpts{Dir: repo.RepoPath()})
+			assert.NoError(t, gitErr)
+			// 4. Sync the git repo to the database
+			syncErr := repo_service.AddAllRepoBranchesToSyncQueue(graceful.GetManager().ShutdownContext(), adminUser.ID)
+			assert.NoError(t, syncErr)
+			// 5. Add a fresh commit, so that FindRecentlyPushedBranches has
+			// something to find.
+			owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: "user1"})
+			changeResp, err := files_service.ChangeRepoFiles(git.DefaultContext, repo, owner,
+				&files_service.ChangeRepoFilesOptions{
+					Files: []*files_service.ChangeRepoFile{
+						{
+							Operation:     "create",
+							TreePath:      "README.md",
+							ContentReader: strings.NewReader("a readme file"),
+						},
+					},
+					Message:   "Add README.md",
+					OldBranch: "orphan1",
+					NewBranch: "orphan1",
+				})
+			assert.NoError(t, err)
+			assert.NotEmpty(t, changeResp)
+
+			// Check that we only have 1 message on the main repo, the orphaned
+			// one is not shown.
+			req := NewRequest(t, "GET", "/user1/repo1")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+
+			htmlDoc.AssertElement(t, ".ui.message", true)
+			link, _ := htmlDoc.Find(".ui.message a[href*='/src/branch/']").Attr("href")
+			assert.Equal(t, "/user1/repo1/src/branch/recent-push", link)
 		})
 	})
 }
