@@ -67,12 +67,12 @@
 					{{range .Branches}}
 						<div class="item {{if eq $.BaseBranch .}}selected{{end}}" data-url="{{$.RepoLink}}/compare/{{PathEscapeSegments .}}{{$.CompareSeparator}}{{if not $.PullRequestCtx.SameRepo}}{{PathEscape $.HeadUser.Name}}/{{PathEscape $.HeadRepo.Name}}:{{end}}{{PathEscapeSegments $.HeadBranch}}">{{$BaseCompareName}}:{{.}}</div>
 					{{end}}
-					{{if not .PullRequestCtx.SameRepo}}
+					{{if and (not .PullRequestCtx.SameRepo) ($.HeadRepo.AllowsPulls ctx)}}
 						{{range .HeadBranches}}
 							<div class="item" data-url="{{$.HeadRepo.Link}}/compare/{{PathEscapeSegments .}}{{$.CompareSeparator}}{{PathEscape $.HeadUser.Name}}/{{PathEscape $.HeadRepo.Name}}:{{PathEscapeSegments $.HeadBranch}}">{{$HeadCompareName}}:{{.}}</div>
 						{{end}}
 					{{end}}
-					{{if .OwnForkRepo}}
+					{{if and .OwnForkRepo (.OwnForkRepo.AllowsPulls ctx)}}
 						{{range .OwnForkRepoBranches}}
 							<div class="item" data-url="{{$.OwnForkRepo.Link}}/compare/{{PathEscapeSegments .}}{{$.CompareSeparator}}{{PathEscape $.HeadUser.Name}}/{{PathEscape $.HeadRepo.Name}}:{{PathEscapeSegments $.HeadBranch}}">{{$OwnForkCompareName}}:{{.}}</div>
 						{{end}}
@@ -87,17 +87,17 @@
 					{{range .Tags}}
 						<div class="item {{if eq $.BaseBranch .}}selected{{end}}" data-url="{{$.RepoLink}}/compare/{{PathEscapeSegments .}}{{$.CompareSeparator}}{{if not $.PullRequestCtx.SameRepo}}{{PathEscape $.HeadUser.Name}}/{{PathEscape $.HeadRepo.Name}}:{{end}}{{PathEscapeSegments $.HeadBranch}}">{{$BaseCompareName}}:{{.}}</div>
 					{{end}}
-					{{if not .PullRequestCtx.SameRepo}}
+					{{if and (not .PullRequestCtx.SameRepo) ($.HeadRepo.AllowsPulls ctx)}}
 						{{range .HeadTags}}
 							<div class="item" data-url="{{$.HeadRepo.Link}}/compare/{{PathEscapeSegments .}}{{$.CompareSeparator}}{{PathEscape $.HeadUser.Name}}/{{PathEscape $.HeadRepo.Name}}:{{PathEscapeSegments $.HeadBranch}}">{{$HeadCompareName}}:{{.}}</div>
 						{{end}}
 					{{end}}
-					{{if .OwnForkRepo}}
+					{{if and .OwnForkRepo (.OwnForkRepo.AllowsPulls ctx)}}
 						{{range .OwnForkRepoTags}}
 							<div class="item" data-url="{{$.OwnForkRepo.Link}}/compare/{{PathEscapeSegments .}}{{$.CompareSeparator}}{{PathEscape $.HeadUser.Name}}/{{PathEscape $.HeadRepo.Name}}:{{PathEscapeSegments $.HeadBranch}}">{{$OwnForkCompareName}}:{{.}}</div>
 						{{end}}
 					{{end}}
-					{{if .RootRepo}}
+					{{if and .RootRepo (.RootRepo.AllowsPulls ctx)}}
 						{{range .RootRepoTags}}
 							<div class="item" data-url="{{$.RootRepo.Link}}/compare/{{PathEscapeSegments .}}{{$.CompareSeparator}}{{PathEscape $.HeadUser.Name}}/{{PathEscape $.HeadRepo.Name}}:{{PathEscapeSegments $.HeadBranch}}">{{$RootRepoCompareName}}:{{.}}</div>
 						{{end}}
