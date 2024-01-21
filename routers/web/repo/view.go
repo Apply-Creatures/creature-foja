@@ -1035,20 +1035,43 @@ func renderCode(ctx *context.Context) {
 			return
 		}
 
-		showRecentlyPushedNewBranches := true
-		if ctx.Repo.Repository.IsMirror ||
-			!ctx.Repo.Repository.UnitEnabled(ctx, unit_model.TypePullRequests) {
-			showRecentlyPushedNewBranches = false
+		// If the repo is a mirror, don't display recently pushed branches.
+		if ctx.Repo.Repository.IsMirror {
+			goto PostRecentBranchCheck
 		}
-		if showRecentlyPushedNewBranches {
-			ctx.Data["RecentlyPushedNewBranches"], err = git_model.FindRecentlyPushedNewBranches(ctx, ctx.Repo.Repository.ID, ctx.Doer.ID, ctx.Repo.Repository.DefaultBranch)
-			if err != nil {
-				ctx.ServerError("GetRecentlyPushedBranches", err)
-				return
+
+		// If pull requests aren't enabled for either the current repo, or its
+		// base, don't display recently pushed branches.
+		if !(ctx.Repo.Repository.AllowsPulls(ctx) ||
+			(ctx.Repo.Repository.BaseRepo != nil && ctx.Repo.Repository.BaseRepo.AllowsPulls(ctx))) {
+			goto PostRecentBranchCheck
+		}
+
+		// Find recently pushed new branches to *this* repo.
+		branches, err := git_model.FindRecentlyPushedNewBranches(ctx, ctx.Repo.Repository.ID, ctx.Doer.ID, ctx.Repo.Repository.DefaultBranch)
+		if err != nil {
+			ctx.ServerError("FindRecentlyPushedBranches", err)
+			return
+		}
+
+		// If this is not a fork, check if the signed in user has a fork, and
+		// check branches there.
+		if !ctx.Repo.Repository.IsFork {
+			repo := repo_model.GetForkedRepo(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID)
+			if repo != nil {
+				baseBranches, err := git_model.FindRecentlyPushedNewBranches(ctx, repo.ID, ctx.Doer.ID, repo.DefaultBranch)
+				if err != nil {
+					ctx.ServerError("FindRecentlyPushedBranches", err)
+					return
+				}
+				branches = append(branches, baseBranches...)
 			}
 		}
+
+		ctx.Data["RecentlyPushedNewBranches"] = branches
 	}
 
+PostRecentBranchCheck:
 	var treeNames []string
 	paths := make([]string, 0, 5)
 	if len(ctx.Repo.TreePath) > 0 {

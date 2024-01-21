@@ -1,4 +1,5 @@
 // Copyright 2017 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors c/o Codeberg e.V.. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package integration
@@ -12,7 +13,11 @@ import (
 	"strings"
 	"testing"
 
+	"code.gitea.io/gitea/models/db"
+	repo_model "code.gitea.io/gitea/models/repo"
+	unit_model "code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/modules/test"
+	repo_service "code.gitea.io/gitea/services/repository"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
@@ -173,5 +178,171 @@ func TestPullBranchDelete(t *testing.T) {
 		testDeleteRepository(t, session, "user1", "repo1")
 		req = NewRequest(t, "GET", url)
 		session.MakeRequest(t, req, http.StatusOK)
+	})
+}
+
+func TestRecentlyPushed(t *testing.T) {
+	onGiteaRun(t, func(t *testing.T, u *url.URL) {
+		session := loginUser(t, "user1")
+		testRepoFork(t, session, "user2", "repo1", "user1", "repo1")
+
+		testCreateBranch(t, session, "user1", "repo1", "branch/master", "recent-push", http.StatusSeeOther)
+		testEditFile(t, session, "user1", "repo1", "recent-push", "README.md", "Hello recently!\n")
+
+		testCreateBranch(t, session, "user2", "repo1", "branch/master", "recent-push-base", http.StatusSeeOther)
+		testEditFile(t, session, "user2", "repo1", "recent-push-base", "README.md", "Hello, recently, from base!\n")
+
+		baseRepo, err := repo_model.GetRepositoryByOwnerAndName(db.DefaultContext, "user2", "repo1")
+		assert.NoError(t, err)
+		repo, err := repo_model.GetRepositoryByOwnerAndName(db.DefaultContext, "user1", "repo1")
+		assert.NoError(t, err)
+
+		enablePRs := func(t *testing.T, repo *repo_model.Repository) {
+			t.Helper()
+
+			err := repo_service.UpdateRepositoryUnits(db.DefaultContext, repo,
+				[]repo_model.RepoUnit{{
+					RepoID: repo.ID,
+					Type:   unit_model.TypePullRequests,
+				}},
+				nil)
+			assert.NoError(t, err)
+		}
+
+		disablePRs := func(t *testing.T, repo *repo_model.Repository) {
+			t.Helper()
+
+			err := repo_service.UpdateRepositoryUnits(db.DefaultContext, repo, nil,
+				[]unit_model.Type{unit_model.TypePullRequests})
+			assert.NoError(t, err)
+		}
+
+		testBanner := func(t *testing.T) {
+			t.Helper()
+
+			req := NewRequest(t, "GET", "/user1/repo1")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+
+			message := strings.TrimSpace(htmlDoc.Find(".ui.message").Text())
+			link, _ := htmlDoc.Find(".ui.message a").Attr("href")
+			expectedMessage := "You pushed on branch recent-push"
+
+			assert.Contains(t, message, expectedMessage)
+			assert.Equal(t, "/user1/repo1/src/branch/recent-push", link)
+		}
+
+		// Test that there's a recently pushed branches banner, and it contains
+		// a link to the branch.
+		t.Run("recently-pushed-banner", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			testBanner(t)
+		})
+
+		// Test that it is still there if the fork has PRs disabled, but the
+		// base repo still has them enabled.
+		t.Run("with-fork-prs-disabled", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			defer func() {
+				enablePRs(t, repo)
+			}()
+
+			disablePRs(t, repo)
+			testBanner(t)
+		})
+
+		// Test that it is still there if the fork has PRs enabled, but the base
+		// repo does not.
+		t.Run("with-base-prs-disabled", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			defer func() {
+				enablePRs(t, baseRepo)
+			}()
+
+			disablePRs(t, baseRepo)
+			testBanner(t)
+		})
+
+		// Test that the banner is not present if both the base and current
+		// repo have PRs disabled.
+		t.Run("with-prs-disabled", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			defer func() {
+				enablePRs(t, baseRepo)
+				enablePRs(t, repo)
+			}()
+
+			disablePRs(t, repo)
+			disablePRs(t, baseRepo)
+
+			req := NewRequest(t, "GET", "/user1/repo1")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+			htmlDoc.AssertElement(t, ".ui.message", false)
+		})
+
+		// Test that visiting the base repo has the banner too, and includes
+		// recent push notifications from both the fork, and the base repo.
+		t.Run("on the base repo", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			// Count recently pushed branches on the fork
+			req := NewRequest(t, "GET", "/user1/repo1")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+			htmlDoc.AssertElement(t, ".ui.message", true)
+
+			// Count recently pushed branches on the base repo
+			req = NewRequest(t, "GET", "/user2/repo1")
+			resp = session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc = NewHTMLParser(t, resp.Body)
+			messageCountOnBase := htmlDoc.Find(".ui.message").Length()
+
+			// We have two messages on the base: one from the fork, one on the
+			// base itself.
+			assert.Equal(t, 2, messageCountOnBase)
+		})
+
+		// Test that the banner's links point to the right repos
+		t.Run("link validity", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			// We're testing against the origin repo, because that has both
+			// local branches, and another from a fork, so we can test both in
+			// one test!
+
+			req := NewRequest(t, "GET", "/user2/repo1")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+			messages := htmlDoc.Find(".ui.message")
+
+			prButtons := messages.Find("a[role='button']")
+			branchLinks := messages.Find("a[href*='/src/branch/']")
+
+			// ** base repo tests **
+			basePRLink, _ := prButtons.First().Attr("href")
+			baseBranchLink, _ := branchLinks.First().Attr("href")
+			baseBranchName := branchLinks.First().Text()
+
+			// branch in the same repo does not have a `user/repo:` qualifier.
+			assert.Equal(t, "recent-push-base", baseBranchName)
+			// branch link points to the same repo
+			assert.Equal(t, "/user2/repo1/src/branch/recent-push-base", baseBranchLink)
+			// PR link compares against the correct rep, and unqualified branch name
+			assert.Equal(t, "/user2/repo1/compare/master...recent-push-base", basePRLink)
+
+			// ** forked repo tests **
+			forkPRLink, _ := prButtons.Last().Attr("href")
+			forkBranchLink, _ := branchLinks.Last().Attr("href")
+			forkBranchName := branchLinks.Last().Text()
+
+			// branch in the forked repo has a `user/repo:` qualifier.
+			assert.Equal(t, "user1/repo1:recent-push", forkBranchName)
+			// branch link points to the forked repo
+			assert.Equal(t, "/user1/repo1/src/branch/recent-push", forkBranchLink)
+			// PR link compares against the correct rep, and qualified branch name
+			assert.Equal(t, "/user2/repo1/compare/master...user1/repo1:recent-push", forkPRLink)
+		})
 	})
 }

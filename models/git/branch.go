@@ -128,6 +128,10 @@ func (b *Branch) LoadDeletedBy(ctx context.Context) (err error) {
 	return err
 }
 
+func (b *Branch) GetRepo(ctx context.Context) (*repo_model.Repository, error) {
+	return repo_model.GetRepositoryByID(ctx, b.RepoID)
+}
+
 func (b *Branch) LoadPusher(ctx context.Context) (err error) {
 	if b.Pusher == nil && b.PusherID > 0 {
 		b.Pusher, err = user_model.GetUserByID(ctx, b.PusherID)
