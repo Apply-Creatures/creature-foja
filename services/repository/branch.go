@@ -365,7 +365,7 @@ func DeleteBranch(ctx context.Context, doer *user_model.User, repo *repo_model.R
 
 	rawBranch, err := git_model.GetBranch(ctx, repo.ID, branchName)
 	if err != nil {
-		return fmt.Errorf("GetBranch: %vc", err)
+		return fmt.Errorf("GetBranch: %v", err)
 	}
 
 	objectFormat, err := gitRepo.GetObjectFormat()
