@@ -14,11 +14,53 @@ import (
 
 func PrepareOldRepository(t *testing.T) (*xorm.Engine, func()) {
 	type Repository struct { // old struct
-		ID int64 `xorm:"pk autoincr"`
+		ID               int64  `xorm:"pk autoincr"`
+		ObjectFormatName string `xorm:"VARCHAR(6) NOT NULL DEFAULT 'sha1'"`
+	}
+
+	type CommitStatus struct { // old struct
+		ID          int64  `xorm:"pk autoincr"`
+		ContextHash string `xorm:"char(40)"`
+	}
+
+	type Comment struct { // old struct
+		ID        int64  `xorm:"pk autoincr"`
+		CommitSHA string `xorm:"VARCHAR(40)"`
+	}
+
+	type PullRequest struct { // old struct
+		ID             int64  `xorm:"pk autoincr"`
+		MergeBase      string `xorm:"VARCHAR(40)"`
+		MergedCommitID string `xorm:"VARCHAR(40)"`
+	}
+
+	type Review struct { // old struct
+		ID       int64  `xorm:"pk autoincr"`
+		CommitID string `xorm:"VARCHAR(40)"`
+	}
+
+	type ReviewState struct { // old struct
+		ID        int64  `xorm:"pk autoincr"`
+		CommitSHA string `xorm:"VARCHAR(40)"`
+	}
+
+	type RepoArchiver struct { // old struct
+		ID       int64  `xorm:"pk autoincr"`
+		CommitID string `xorm:"VARCHAR(40)"`
+	}
+
+	type Release struct { // old struct
+		ID   int64  `xorm:"pk autoincr"`
+		Sha1 string `xorm:"VARCHAR(40)"`
+	}
+
+	type RepoIndexerStatus struct { // old struct
+		ID        int64  `xorm:"pk autoincr"`
+		CommitSha string `xorm:"VARCHAR(40)"`
 	}
 
 	// Prepare and load the testing database
-	return base.PrepareTestEnv(t, 0, new(Repository))
+	return base.PrepareTestEnv(t, 0, new(Repository), new(CommitStatus), new(Comment), new(PullRequest), new(Review), new(ReviewState), new(RepoArchiver), new(Release), new(RepoIndexerStatus))
 }
 
 func Test_RepositoryFormat(t *testing.T) {
