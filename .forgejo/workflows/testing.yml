@@ -57,6 +57,14 @@ jobs:
           git config --add safe.directory '*'
           adduser --quiet --comment forgejo --disabled-password forgejo
           chown -R forgejo:forgejo .
+      - name: install git >= 2.42
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          echo deb http://deb.debian.org/debian/ testing  main > /etc/apt/sources.list.d/testing.list
+          apt-get update -qq
+          apt-get -q install -qq -y git
+          rm /etc/apt/sources.list.d/testing.list
+          apt-get update -qq
       - run: |
           su forgejo -c 'make deps-backend'
       - run: |
@@ -90,11 +98,14 @@ jobs:
       - uses: https://code.forgejo.org/actions/setup-go@v4
         with:
           go-version: "1.21"
-      - name: install dependencies
+      - name: install dependencies & git >= 2.42
         run: |
           export DEBIAN_FRONTEND=noninteractive
+          echo deb http://deb.debian.org/debian/ testing  main > /etc/apt/sources.list.d/testing.list
           apt-get update -qq
-          apt-get install --no-install-recommends -qq -y git-lfs
+          apt-get install --no-install-recommends -qq -y git git-lfs
+          rm /etc/apt/sources.list.d/testing.list
+          apt-get update -qq
       - name: setup user and permissions
         run: |
           git config --add safe.directory '*'
@@ -134,11 +145,14 @@ jobs:
       - uses: https://code.forgejo.org/actions/setup-go@v4
         with:
           go-version: "1.21"
-      - name: install dependencies
+      - name: install dependencies & git >= 2.42
         run: |
           export DEBIAN_FRONTEND=noninteractive
+          echo deb http://deb.debian.org/debian/ testing  main > /etc/apt/sources.list.d/testing.list
           apt-get update -qq
-          apt-get install --no-install-recommends -qq -y git-lfs
+          apt-get install --no-install-recommends -qq -y git git-lfs
+          rm /etc/apt/sources.list.d/testing.list
+          apt-get update -qq
       - name: setup user and permissions
         run: |
           git config --add safe.directory '*'
@@ -154,9 +168,8 @@ jobs:
           su forgejo -c 'make test-pgsql-migration test-pgsql'
         timeout-minutes: 50
         env:
-          TAGS: bindata gogit
+          TAGS: bindata
           RACE_ENABLED: true
-          TEST_TAGS: gogit
           USE_REPO_TEST_DIR: 1
   test-sqlite:
     if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
@@ -169,11 +182,14 @@ jobs:
       - uses: https://code.forgejo.org/actions/setup-go@v4
         with:
           go-version: "1.21"
-      - name: install dependencies
+      - name: install dependencies & git >= 2.42
         run: |
           export DEBIAN_FRONTEND=noninteractive
+          echo deb http://deb.debian.org/debian/ testing  main > /etc/apt/sources.list.d/testing.list
           apt-get update -qq
-          apt-get install --no-install-recommends -qq -y git-lfs
+          apt-get install --no-install-recommends -qq -y git git-lfs
+          rm /etc/apt/sources.list.d/testing.list
+          apt-get update -qq
       - name: setup user and permissions
         run: |
           git config --add safe.directory '*'
@@ -184,12 +200,12 @@ jobs:
       - run: |
           su forgejo -c 'make backend'
         env:
-          TAGS: bindata gogit sqlite sqlite_unlock_notify
+          TAGS: bindata sqlite sqlite_unlock_notify
       - run: |
           su forgejo -c 'make test-sqlite-migration test-sqlite'
         timeout-minutes: 50
         env:
-          TAGS: bindata gogit sqlite sqlite_unlock_notify
+          TAGS: bindata sqlite sqlite_unlock_notify
           RACE_ENABLED: true
-          TEST_TAGS: gogit sqlite sqlite_unlock_notify
+          TEST_TAGS: sqlite sqlite_unlock_notify
           USE_REPO_TEST_DIR: 1
