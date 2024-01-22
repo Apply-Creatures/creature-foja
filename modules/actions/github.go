@@ -22,7 +22,6 @@ const (
 	GithubEventRelease                  = "release"
 	GithubEventPullRequestComment       = "pull_request_comment"
 	GithubEventGollum                   = "gollum"
-	GithubEventSchedule                 = "schedule"
 )
 
 // canGithubEventMatch check if the input Github event can match any Gitea event.
@@ -69,9 +68,6 @@ func canGithubEventMatch(eventName string, triggedEvent webhook_module.HookEvent
 		default:
 			return false
 		}
-
-	case GithubEventSchedule:
-		return triggedEvent == webhook_module.HookEventSchedule
 
 	default:
 		return eventName == string(triggedEvent)
