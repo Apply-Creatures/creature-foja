@@ -1,5 +1,7 @@
 cloud.google.com/go/compute/metadata v0.3.0 h1:Tz+eQXMEqDIKRsmY3cHTL6FVaynIjX2QxYC4trgAKZc=
 cloud.google.com/go/compute/metadata v0.3.0/go.mod h1:zFmK7XCadkQkj6TtorcaGlCW1hT1fIilQDwofLpJ20k=
+code.forgejo.org/f3/gof3/v3 v3.3.1 h1:lG7vT1Y/OIJDcZJE+mm5uycLyOQm0nVwGxnIWcBQ5XY=
+code.forgejo.org/f3/gof3/v3 v3.3.1/go.mod h1:Wk0xt06c72MPbEplc3TZYYOTTHDlCR15YpgFG0ggci8=
 code.forgejo.org/forgejo/archiver/v3 v3.5.1 h1:UmmbA7D5550uf71SQjarmrn6yKwOGxtEjb3jaYYtmSE=
 code.forgejo.org/forgejo/archiver/v3 v3.5.1/go.mod h1:e3dqJ7H78uzsRSEACH1joayhuSyhnonssnDhppzS1L4=
 code.forgejo.org/forgejo/reply v1.0.2 h1:dMhQCHV6/O3L5CLWNTol+dNzDAuyCK88z4J/lCdgFuQ=

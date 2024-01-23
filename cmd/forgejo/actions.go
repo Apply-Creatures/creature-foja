@@ -134,8 +134,8 @@ func validateSecret(secret string) error {
 }
 
 func RunRegister(ctx context.Context, cliCtx *cli.Context) error {
+	var cancel context.CancelFunc
 	if !ContextGetNoInit(ctx) {
-		var cancel context.CancelFunc
 		ctx, cancel = installSignals(ctx)
 		defer cancel()
 
