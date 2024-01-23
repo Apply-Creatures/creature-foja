@@ -219,6 +219,11 @@
 				{{end}}
 
 				{{if .Permission.IsAdmin}}
+					{{if not .AllUnitsEnabled}}
+						<a class="{{if .PageIsRepoSettingsUnits}}active {{end}}item" href="{{.RepoLink}}/settings/units">
+							{{svg "octicon-diff-added"}} {{ctx.Locale.Tr "repo.settings.units.add_more"}}
+						</a>
+					{{end}}
 					<a class="{{if .PageIsRepoSettings}}active {{end}} item" href="{{.RepoLink}}/settings">
 						{{svg "octicon-tools"}} {{ctx.Locale.Tr "repo.settings"}}
 					</a>

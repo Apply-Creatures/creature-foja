@@ -108,6 +108,10 @@ var (
 
 	// DisabledRepoUnits contains the units that have been globally disabled
 	DisabledRepoUnits = []Type{}
+
+	// AllowedRepoUnitGroups contains the units that have been globally enabled,
+	// with mutually exclusive units grouped together.
+	AllowedRepoUnitGroups = [][]Type{}
 )
 
 // Get valid set of default repository units from settings
@@ -162,6 +166,45 @@ func LoadUnitConfig() error {
 	if len(DefaultForkRepoUnits) == 0 {
 		return errors.New("no default fork repository units found")
 	}
+
+	// Collect the allowed repo unit groups. Mutually exclusive units are
+	// grouped together.
+	AllowedRepoUnitGroups = [][]Type{}
+	for _, unit := range []Type{
+		TypeCode,
+		TypePullRequests,
+		TypeProjects,
+		TypePackages,
+		TypeActions,
+	} {
+		// If unit is globally disabled, ignore it.
+		if unit.UnitGlobalDisabled() {
+			continue
+		}
+
+		// If it is allowed, add it to the group list.
+		AllowedRepoUnitGroups = append(AllowedRepoUnitGroups, []Type{unit})
+	}
+
+	addMutuallyExclusiveGroup := func(unit1, unit2 Type) {
+		var list []Type
+
+		if !unit1.UnitGlobalDisabled() {
+			list = append(list, unit1)
+		}
+
+		if !unit2.UnitGlobalDisabled() {
+			list = append(list, unit2)
+		}
+
+		if len(list) > 0 {
+			AllowedRepoUnitGroups = append(AllowedRepoUnitGroups, list)
+		}
+	}
+
+	addMutuallyExclusiveGroup(TypeIssues, TypeExternalTracker)
+	addMutuallyExclusiveGroup(TypeWiki, TypeExternalWiki)
+
 	return nil
 }
 
