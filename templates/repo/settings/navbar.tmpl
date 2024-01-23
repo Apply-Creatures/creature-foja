@@ -4,6 +4,23 @@
 		<a class="{{if .PageIsSettingsOptions}}active {{end}}item" href="{{.RepoLink}}/settings">
 			{{ctx.Locale.Tr "repo.settings.options"}}
 		</a>
+		<details class="item toggleable-item" {{if .PageIsRepoSettingsUnits}}open{{end}}>
+			<summary class="item{{if .PageIsRepoSettingsUnits}} active{{end}}">{{ctx.Locale.Tr "repo.settings.units.units"}}</summary>
+			<div class="menu">
+				<a class="item" href="{{.RepoLink}}/settings/units#overview">
+					{{ctx.Locale.Tr "repo.settings.units.overview"}}
+				</a>
+				<a class="item" href="{{.RepoLink}}/settings/units#issues">
+					{{ctx.Locale.Tr "repo.issues"}}
+				</a>
+				<a class="item" href="{{.RepoLink}}/settings/units#pulls">
+					{{ctx.Locale.Tr "repo.pulls"}}
+				</a>
+				<a class="item" href="{{.RepoLink}}/settings/units#wiki">
+					{{ctx.Locale.Tr "repo.wiki"}}
+				</a>
+			</div>
+		</details>
 		<a class="{{if .PageIsSettingsCollaboration}}active {{end}}item" href="{{.RepoLink}}/settings/collaboration">
 			{{ctx.Locale.Tr "repo.settings.collaboration"}}
 		</a>

@@ -1037,6 +1037,8 @@ func registerRoutes(m *web.Route) {
 				m.Combo("").Get(repo_setting.Settings).
 					Post(web.Bind(forms.RepoSettingForm{}), repo_setting.SettingsPost)
 			}, repo_setting.SettingsCtxData)
+			m.Combo("/units").Get(repo_setting.Units).
+				Post(web.Bind(forms.RepoUnitSettingForm{}), repo_setting.UnitsPost)
 			m.Post("/avatar", web.Bind(forms.AvatarForm{}), repo_setting.SettingsAvatar)
 			m.Post("/avatar/delete", repo_setting.SettingsDeleteAvatar)
 
