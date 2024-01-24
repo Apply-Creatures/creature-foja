@@ -38,22 +38,14 @@ func NewInternalToken() (string, error) {
 	return internalToken, nil
 }
 
-// NewJwtSecret generates a new value intended to be used for JWT secrets.
-func NewJwtSecret() ([]byte, error) {
+// NewJwtSecret generates a new base64 encoded value intended to be used for JWT secrets.
+func NewJwtSecret() ([]byte, string, error) {
 	bytes := make([]byte, 32)
-	_, err := io.ReadFull(rand.Reader, bytes)
-	if err != nil {
-		return nil, err
-	}
-	return bytes, nil
-}
-
-// NewJwtSecretBase64 generates a new base64 encoded value intended to be used for JWT secrets.
-func NewJwtSecretBase64() ([]byte, string, error) {
-	bytes, err := NewJwtSecret()
+	_, err := rand.Read(bytes)
 	if err != nil {
 		return nil, "", err
 	}
+
 	return bytes, base64.RawURLEncoding.EncodeToString(bytes), nil
 }
 

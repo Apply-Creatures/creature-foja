@@ -64,7 +64,7 @@ func loadLFSFrom(rootCfg ConfigProvider) error {
 	LFS.JWTSecretBase64 = loadSecret(rootCfg.Section("server"), "LFS_JWT_SECRET_URI", "LFS_JWT_SECRET")
 	LFS.JWTSecretBytes, err = util.Base64FixedDecode(base64.RawURLEncoding, []byte(LFS.JWTSecretBase64), 32)
 	if err != nil {
-		LFS.JWTSecretBytes, LFS.JWTSecretBase64, err = generate.NewJwtSecretBase64()
+		LFS.JWTSecretBytes, LFS.JWTSecretBase64, err = generate.NewJwtSecret()
 		if err != nil {
 			return fmt.Errorf("error generating JWT Secret for custom config: %v", err)
 		}
