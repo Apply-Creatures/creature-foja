@@ -147,9 +147,9 @@ func InitEngine(ctx context.Context) error {
 	xormEngine.SetConnMaxLifetime(setting.Database.ConnMaxLifetime)
 	xormEngine.SetDefaultContext(ctx)
 
-	if setting.Database.SlowQueryTreshold > 0 {
+	if setting.Database.SlowQueryThreshold > 0 {
 		xormEngine.AddHook(&SlowQueryHook{
-			Treshold: setting.Database.SlowQueryTreshold,
+			Treshold: setting.Database.SlowQueryThreshold,
 			Logger:   log.GetLogger("xorm"),
 		})
 	}
