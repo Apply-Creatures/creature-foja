@@ -496,7 +496,7 @@ func TestGiteaUploadUpdateGitForPullRequest(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			stopMark := fmt.Sprintf(">>>>>>>>>>>>>STOP: %s<<<<<<<<<<<<<<<", testCase.name)
 
-			logChecker, cleanup := test.NewLogChecker(log.DEFAULT)
+			logChecker, cleanup := test.NewLogChecker(log.DEFAULT, log.INFO)
 			logChecker.Filter(testCase.logFilter...).StopMark(stopMark)
 			defer cleanup()
 

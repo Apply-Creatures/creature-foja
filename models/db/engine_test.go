@@ -91,7 +91,7 @@ func TestPrimaryKeys(t *testing.T) {
 }
 
 func TestSlowQuery(t *testing.T) {
-	lc, cleanup := test.NewLogChecker("slow-query")
+	lc, cleanup := test.NewLogChecker("slow-query", log.INFO)
 	lc.StopMark("[Slow SQL Query]")
 	defer cleanup()
 
@@ -125,7 +125,7 @@ func TestSlowQuery(t *testing.T) {
 }
 
 func TestErrorQuery(t *testing.T) {
-	lc, cleanup := test.NewLogChecker("error-query")
+	lc, cleanup := test.NewLogChecker("error-query", log.INFO)
 	lc.StopMark("[Error SQL Query]")
 	defer cleanup()
 
