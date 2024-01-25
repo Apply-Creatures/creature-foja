@@ -21,12 +21,6 @@ DATADIR = tests/{{TEST_TYPE}}/gitea-{{TEST_TYPE}}-pgsql/indexers/issues.queue
 [queue]
 TYPE = immediate
 
-[queue.code_indexer]
-TYPE = immediate
-
-[queue.push_update]
-TYPE = immediate
-
 [repository]
 ROOT = {{REPO_TEST_DIR}}tests/{{TEST_TYPE}}/gitea-{{TEST_TYPE}}-pgsql/gitea-repositories
 
