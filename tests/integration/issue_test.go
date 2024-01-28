@@ -770,3 +770,30 @@ func TestGetContentHistory(t *testing.T) {
 		testCase(t, loginUser(t, "user5"), true)
 	})
 }
+
+func TestCommitRefComment(t *testing.T) {
+	defer tests.AddFixtures("tests/integration/fixtures/TestCommitRefComment/")()
+	defer tests.PrepareTestEnv(t)()
+
+	t.Run("Pull request", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", "/user2/repo1/pulls/2")
+		resp := MakeRequest(t, req, http.StatusOK)
+		htmlDoc := NewHTMLParser(t, resp.Body)
+
+		event := htmlDoc.Find("#issuecomment-1000 .text").Text()
+		assert.Contains(t, event, "referenced this pull request")
+	})
+
+	t.Run("Issue", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", "/user2/repo1/issues/1")
+		resp := MakeRequest(t, req, http.StatusOK)
+		htmlDoc := NewHTMLParser(t, resp.Body)
+
+		event := htmlDoc.Find("#issuecomment-1001 .text").Text()
+		assert.Contains(t, event, "referenced this issue")
+	})
+}
