@@ -1,4 +1,5 @@
 // Copyright 2019 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors c/o Codeberg e.V.. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package repository
@@ -99,7 +100,6 @@ func MigrateRepositoryGitData(ctx context.Context, u *user_model.User,
 				Mirror:        true,
 				Quiet:         true,
 				Timeout:       migrateTimeout,
-				Branch:        "master",
 				SkipTLSVerify: setting.Migrations.SkipTLSVerify,
 			}); err != nil {
 				log.Warn("Clone wiki: %v", err)
@@ -107,6 +107,30 @@ func MigrateRepositoryGitData(ctx context.Context, u *user_model.User,
 					return repo, fmt.Errorf("Failed to remove %s: %w", wikiPath, err)
 				}
 			} else {
+				// Figure out the branch of the wiki we just cloned. We assume
+				// that the default branch is to be used, and we'll use the same
+				// name as the source.
+				gitRepo, err := git.OpenRepository(ctx, wikiPath)
+				if err != nil {
+					log.Warn("Failed to open wiki repository during migration: %v", err)
+					if err := util.RemoveAll(wikiPath); err != nil {
+						return repo, fmt.Errorf("Failed to remove %s: %w", wikiPath, err)
+					}
+					return repo, err
+				}
+				defer gitRepo.Close()
+
+				branch, err := gitRepo.GetDefaultBranch()
+				if err != nil {
+					log.Warn("Failed to get the default branch of a migrated wiki repo: %v", err)
+					if err := util.RemoveAll(wikiPath); err != nil {
+						return repo, fmt.Errorf("Failed to remove %s: %w", wikiPath, err)
+					}
+
+					return repo, err
+				}
+				repo.WikiBranch = branch
+
 				if err := git.WriteCommitGraph(ctx, wikiPath); err != nil {
 					return repo, err
 				}

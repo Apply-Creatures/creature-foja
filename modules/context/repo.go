@@ -400,6 +400,7 @@ func repoAssignment(ctx *Context, repo *repo_model.Repository) {
 	ctx.Data["PushMirrors"] = pushMirrors
 	ctx.Data["RepoName"] = ctx.Repo.Repository.Name
 	ctx.Data["IsEmptyRepo"] = ctx.Repo.Repository.IsEmpty
+	ctx.Data["DefaultWikiBranchName"] = setting.Repository.DefaultBranch
 }
 
 // RepoIDAssignment returns a handler which assigns the repo to the context.

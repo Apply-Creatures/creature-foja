@@ -780,6 +780,17 @@
 					</div>
 				</div>
 				{{if .Permission.CanRead $.UnitTypeWiki}}
+					{{if ne $.Repository.GetWikiBranchName .DefaultWikiBranchName}}
+						<div class="flex-item">
+							<div class="flex-item-main">
+								<div class="flex-item-title">{{ctx.Locale.Tr "repo.settings.wiki_rename_branch_main"}}</div>
+								<div class="flex-item-body">{{ctx.Locale.Tr "repo.settings.wiki_rename_branch_main_desc" .DefaultWikiBranchName}}</div>
+							</div>
+							<div class="flex-item-trailing">
+								<button class="ui basic red show-modal button" data-modal="#rename-wiki-branch-modal">{{ctx.Locale.Tr "repo.settings.wiki_rename_branch_main"}}</button>
+							</div>
+						</div>
+					{{end}}
 					<div class="flex-item">
 						<div class="flex-item-main">
 							<div class="flex-item-title">{{ctx.Locale.Tr "repo.settings.wiki_delete"}}</div>
@@ -991,6 +1002,40 @@
 			</form>
 		</div>
 	</div>
+	{{if ne $.Repository.GetWikiBranchName .DefaultWikiBranchName}}
+		<div class="ui small modal" id="rename-wiki-branch-modal">
+			<div class="header">
+				{{ctx.Locale.Tr "repo.settings.wiki_rename_branch_main"}}
+			</div>
+			<div class="content">
+				<div class="ui warning message">
+					<ul>
+						<li>{{ctx.Locale.Tr "repo.settings.wiki_rename_branch_main_notices_1" | Safe}}</li>
+						<li>{{ctx.Locale.Tr "repo.settings.wiki_rename_branch_main_notices_2" .Repository.Name}}</li>
+					</ul>
+				</div>
+				<form class="ui form" action="{{.Link}}" method="post">
+					{{.CsrfTokenHtml}}
+					<input type="hidden" name="action" value="rename-wiki-branch">
+					<div class="field">
+						<label>
+							{{ctx.Locale.Tr "repo.settings.transfer_form_title"}}
+							<span class="text red">{{.Repository.FullName}}</span>
+						</label>
+					</div>
+					<div class="required field">
+						<label for="repo_name">{{ctx.Locale.Tr "repo.repo_name"}}</label>
+						<input id="repo_name" name="repo_name" required>
+					</div>
+
+					<div class="text right actions">
+						<button class="ui cancel button">{{ctx.Locale.Tr "settings.cancel"}}</button>
+						<button class="ui red button">{{ctx.Locale.Tr "repo.settings.confirm_wiki_branch_rename"}}</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	{{end}}
 	{{end}}
 
 	{{if not .Repository.IsMirror}}

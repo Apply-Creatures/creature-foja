@@ -34,6 +34,7 @@ import (
 	"code.gitea.io/gitea/services/convert"
 	"code.gitea.io/gitea/services/issue"
 	repo_service "code.gitea.io/gitea/services/repository"
+	wiki_service "code.gitea.io/gitea/services/wiki"
 )
 
 // Search repositories via options
@@ -738,6 +739,18 @@ func updateBasicProperties(ctx *context.APIContext, opts api.EditRepoOption) err
 			}
 		}
 		repo.DefaultBranch = *opts.DefaultBranch
+	}
+
+	// Wiki branch is updated if changed
+	if opts.WikiBranch != nil && repo.WikiBranch != *opts.WikiBranch {
+		if err := wiki_service.NormalizeWikiBranch(ctx, repo, *opts.WikiBranch); err != nil {
+			ctx.Error(http.StatusInternalServerError, "NormalizeWikiBranch", err)
+			return err
+		}
+		// While NormalizeWikiBranch updates the db, we need to update *this*
+		// instance of `repo`, so that the `UpdateRepository` below will not
+		// reset the branch back.
+		repo.WikiBranch = *opts.WikiBranch
 	}
 
 	if err := repo_service.UpdateRepository(ctx, repo, visibilityChanged); err != nil {

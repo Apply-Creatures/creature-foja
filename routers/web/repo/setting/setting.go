@@ -872,6 +872,27 @@ func SettingsPost(ctx *context.Context) {
 		ctx.Flash.Success(ctx.Tr("repo.settings.wiki_deletion_success"))
 		ctx.Redirect(ctx.Repo.RepoLink + "/settings")
 
+	case "rename-wiki-branch":
+		if !ctx.Repo.IsOwner() {
+			ctx.Error(http.StatusNotFound)
+			return
+		}
+		if repo.FullName() != form.RepoName {
+			ctx.RenderWithErr(ctx.Tr("form.enterred_invalid_repo_name"), tplSettingsOptions, nil)
+			return
+		}
+
+		if err := wiki_service.NormalizeWikiBranch(ctx, repo, setting.Repository.DefaultBranch); err != nil {
+			log.Error("Normalize Wiki branch: %v", err.Error())
+			ctx.Flash.Error(ctx.Tr("repo.settings.wiki_branch_rename_failure"))
+			ctx.Redirect(ctx.Repo.RepoLink + "/settings")
+			return
+		}
+		log.Trace("Repository wiki normalized: %s#%s", repo.FullName(), setting.Repository.DefaultBranch)
+
+		ctx.Flash.Success(ctx.Tr("repo.settings.wiki_branch_rename_success"))
+		ctx.Redirect(ctx.Repo.RepoLink + "/settings")
+
 	case "archive":
 		if !ctx.Repo.IsOwner() {
 			ctx.Error(http.StatusForbidden)

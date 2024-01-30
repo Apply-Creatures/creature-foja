@@ -89,6 +89,39 @@ func TestDangerZoneConfirmation(t *testing.T) {
 		})
 	})
 
+	t.Run("Rename wiki branch", func(t *testing.T) {
+		session := loginUser(t, "user2")
+
+		// NOTE: No need to rename the wiki branch here to make the form appear.
+		// We can submit it anyway, even if it doesn't appear on the web.
+
+		t.Run("Fail", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequestWithValues(t, "POST", "/user2/repo1/settings", map[string]string{
+				"_csrf":     GetCSRF(t, session, "/user2/repo1/settings"),
+				"action":    "rename-wiki-branch",
+				"repo_name": "repo1",
+			})
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			mustInvalidRepoName(resp)
+		})
+		t.Run("Pass", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequestWithValues(t, "POST", "/user2/repo1/settings", map[string]string{
+				"_csrf":     GetCSRF(t, session, "/user2/repo1/settings"),
+				"action":    "rename-wiki-branch",
+				"repo_name": "user2/repo1",
+			})
+			session.MakeRequest(t, req, http.StatusSeeOther)
+
+			flashCookie := session.GetCookie(gitea_context.CookieNameFlash)
+			assert.NotNil(t, flashCookie)
+			assert.EqualValues(t, "success%3DThe%2Brepository%2Bwiki%2527s%2Bbranch%2Bname%2Bhas%2Bbeen%2Bsuccessfully%2Bnormalized.", flashCookie.Value)
+		})
+	})
+
 	t.Run("Delete wiki", func(t *testing.T) {
 		session := loginUser(t, "user2")
 

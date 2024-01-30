@@ -19839,6 +19839,11 @@
           "description": "a URL with more information about the repository.",
           "type": "string",
           "x-go-name": "Website"
+        },
+        "wiki_branch": {
+          "description": "sets the branch used for this repository's wiki.",
+          "type": "string",
+          "x-go-name": "WikiBranch"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
@@ -22796,6 +22801,10 @@
         "website": {
           "type": "string",
           "x-go-name": "Website"
+        },
+        "wiki_branch": {
+          "type": "string",
+          "x-go-name": "WikiBranch"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"

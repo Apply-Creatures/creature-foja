@@ -1,4 +1,5 @@
 // Copyright 2021 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors c/o Codeberg e.V.. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package integration
@@ -20,6 +21,30 @@ import (
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestAPIRenameWikiBranch(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	username := "user2"
+	session := loginUser(t, username)
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository)
+
+	repoURLStr := fmt.Sprintf("/api/v1/repos/%s/%s", username, "repo1")
+	wikiBranch := "wiki"
+	req := NewRequestWithJSON(t, "PATCH", repoURLStr, &api.EditRepoOption{
+		WikiBranch: &wikiBranch,
+	}).AddTokenAuth(token)
+	MakeRequest(t, req, http.StatusOK)
+
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+	assert.Equal(t, "wiki", repo.WikiBranch)
+
+	req = NewRequest(t, "GET", repoURLStr)
+	resp := MakeRequest(t, req, http.StatusOK)
+	var repoData *api.Repository
+	DecodeJSON(t, resp, &repoData)
+	assert.Equal(t, "wiki", repoData.WikiBranch)
+}
 
 func TestAPIGetWikiPage(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()

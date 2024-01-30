@@ -135,6 +135,7 @@ type Repository struct {
 	OriginalServiceType api.GitServiceType `xorm:"index"`
 	OriginalURL         string             `xorm:"VARCHAR(2048)"`
 	DefaultBranch       string
+	WikiBranch          string
 
 	NumWatches          int
 	NumStars            int
@@ -202,6 +203,13 @@ func (repo *Repository) GetName() string {
 
 func (repo *Repository) GetOwnerName() string {
 	return repo.OwnerName
+}
+
+func (repo *Repository) GetWikiBranchName() string {
+	if repo.WikiBranch == "" {
+		return setting.Repository.DefaultBranch
+	}
+	return repo.WikiBranch
 }
 
 // SanitizedOriginalURL returns a sanitized OriginalURL

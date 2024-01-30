@@ -1,5 +1,6 @@
 // Copyright 2015 The Gogs Authors. All rights reserved.
 // Copyright 2019 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors c/o Codeberg e.V.. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package wiki
@@ -26,7 +27,6 @@ var wikiWorkingPool = sync.NewExclusivePool()
 
 const (
 	DefaultRemote = "origin"
-	DefaultBranch = "master"
 )
 
 // InitWiki initializes a wiki for repository,
@@ -36,26 +36,74 @@ func InitWiki(ctx context.Context, repo *repo_model.Repository) error {
 		return nil
 	}
 
+	branch := repo.GetWikiBranchName()
+
 	if err := git.InitRepository(ctx, repo.WikiPath(), true, repo.ObjectFormatName); err != nil {
 		return fmt.Errorf("InitRepository: %w", err)
 	} else if err = repo_module.CreateDelegateHooks(repo.WikiPath()); err != nil {
 		return fmt.Errorf("createDelegateHooks: %w", err)
-	} else if _, _, err = git.NewCommand(ctx, "symbolic-ref", "HEAD", git.BranchPrefix+DefaultBranch).RunStdString(&git.RunOpts{Dir: repo.WikiPath()}); err != nil {
-		return fmt.Errorf("unable to set default wiki branch to master: %w", err)
+	} else if _, _, err = git.NewCommand(ctx, "symbolic-ref", "HEAD").AddDynamicArguments(git.BranchPrefix + branch).RunStdString(&git.RunOpts{Dir: repo.WikiPath()}); err != nil {
+		return fmt.Errorf("unable to set default wiki branch to %s: %w", branch, err)
 	}
 	return nil
 }
 
+// NormalizeWikiBranch renames a repository wiki's branch to `setting.Repository.DefaultBranch`
+func NormalizeWikiBranch(ctx context.Context, repo *repo_model.Repository, to string) error {
+	from := repo.GetWikiBranchName()
+
+	if err := repo.MustNotBeArchived(); err != nil {
+		return err
+	}
+
+	updateDB := func() error {
+		repo.WikiBranch = to
+		return repo_model.UpdateRepositoryCols(ctx, repo, "wiki_branch")
+	}
+
+	if !repo.HasWiki() {
+		return updateDB()
+	}
+
+	if from == to {
+		return nil
+	}
+
+	gitRepo, err := git.OpenRepository(ctx, repo.WikiPath())
+	if err != nil {
+		return err
+	}
+	defer gitRepo.Close()
+
+	if gitRepo.IsBranchExist(to) {
+		return nil
+	}
+
+	if !gitRepo.IsBranchExist(from) {
+		return nil
+	}
+
+	if err := gitRepo.RenameBranch(from, to); err != nil {
+		return err
+	}
+
+	if err := gitRepo.SetDefaultBranch(to); err != nil {
+		return err
+	}
+
+	return updateDB()
+}
+
 // prepareGitPath try to find a suitable file path with file name by the given raw wiki name.
 // return: existence, prepared file path with name, error
-func prepareGitPath(gitRepo *git.Repository, wikiPath WebPath) (bool, string, error) {
+func prepareGitPath(gitRepo *git.Repository, branch string, wikiPath WebPath) (bool, string, error) {
 	unescaped := string(wikiPath) + ".md"
 	gitPath := WebPathToGitPath(wikiPath)
 
 	// Look for both files
-	filesInIndex, err := gitRepo.LsTree(DefaultBranch, unescaped, gitPath)
+	filesInIndex, err := gitRepo.LsTree(branch, unescaped, gitPath)
 	if err != nil {
-		if strings.Contains(err.Error(), "Not a valid object name master") {
+		if strings.Contains(err.Error(), "Not a valid object name "+branch) {
 			return false, gitPath, nil
 		}
 		log.Error("%v", err)
@@ -94,7 +142,7 @@ func updateWikiPage(ctx context.Context, doer *user_model.User, repo *repo_model
 		return fmt.Errorf("InitWiki: %w", err)
 	}
 
-	hasMasterBranch := git.IsBranchExist(ctx, repo.WikiPath(), DefaultBranch)
+	hasMasterBranch := git.IsBranchExist(ctx, repo.WikiPath(), repo.GetWikiBranchName())
 
 	basePath, err := repo_module.CreateTemporaryPath("update-wiki")
 	if err != nil {
@@ -112,7 +160,7 @@ func updateWikiPage(ctx context.Context, doer *user_model.User, repo *repo_model
 	}
 
 	if hasMasterBranch {
-		cloneOpts.Branch = DefaultBranch
+		cloneOpts.Branch = repo.GetWikiBranchName()
 	}
 
 	if err := git.Clone(ctx, repo.WikiPath(), basePath, cloneOpts); err != nil {
@@ -134,7 +182,7 @@ func updateWikiPage(ctx context.Context, doer *user_model.User, repo *repo_model
 		}
 	}
 
-	isWikiExist, newWikiPath, err := prepareGitPath(gitRepo, newWikiName)
+	isWikiExist, newWikiPath, err := prepareGitPath(gitRepo, repo.GetWikiBranchName(), newWikiName)
 	if err != nil {
 		return err
 	}
@@ -150,7 +198,7 @@ func updateWikiPage(ctx context.Context, doer *user_model.User, repo *repo_model
 		isOldWikiExist := true
 		oldWikiPath := newWikiPath
 		if oldWikiName != newWikiName {
-			isOldWikiExist, oldWikiPath, err = prepareGitPath(gitRepo, oldWikiName)
+			isOldWikiExist, oldWikiPath, err = prepareGitPath(gitRepo, repo.GetWikiBranchName(), oldWikiName)
 			if err != nil {
 				return err
 			}
@@ -211,7 +259,7 @@ func updateWikiPage(ctx context.Context, doer *user_model.User, repo *repo_model
 
 	if err := git.Push(gitRepo.Ctx, basePath, git.PushOptions{
 		Remote: DefaultRemote,
-		Branch: fmt.Sprintf("%s:%s%s", commitHash.String(), git.BranchPrefix, DefaultBranch),
+		Branch: fmt.Sprintf("%s:%s%s", commitHash.String(), git.BranchPrefix, repo.GetWikiBranchName()),
 		Env: repo_module.FullPushingEnvironment(
 			doer,
 			doer,
@@ -268,7 +316,7 @@ func DeleteWikiPage(ctx context.Context, doer *user_model.User, repo *repo_model
 	if err := git.Clone(ctx, repo.WikiPath(), basePath, git.CloneRepoOptions{
 		Bare:   true,
 		Shared: true,
-		Branch: DefaultBranch,
+		Branch: repo.GetWikiBranchName(),
 	}); err != nil {
 		log.Error("Failed to clone repository: %s (%v)", repo.FullName(), err)
 		return fmt.Errorf("failed to clone repository: %s (%w)", repo.FullName(), err)
@@ -286,7 +334,7 @@ func DeleteWikiPage(ctx context.Context, doer *user_model.User, repo *repo_model
 		return fmt.Errorf("unable to read HEAD tree to index in: %s %w", basePath, err)
 	}
 
-	found, wikiPath, err := prepareGitPath(gitRepo, wikiName)
+	found, wikiPath, err := prepareGitPath(gitRepo, repo.GetWikiBranchName(), wikiName)
 	if err != nil {
 		return err
 	}
@@ -330,7 +378,7 @@ func DeleteWikiPage(ctx context.Context, doer *user_model.User, repo *repo_model
 
 	if err := git.Push(gitRepo.Ctx, basePath, git.PushOptions{
 		Remote: DefaultRemote,
-		Branch: fmt.Sprintf("%s:%s%s", commitHash.String(), git.BranchPrefix, DefaultBranch),
+		Branch: fmt.Sprintf("%s:%s%s", commitHash.String(), git.BranchPrefix, repo.GetWikiBranchName()),
 		Env: repo_module.FullPushingEnvironment(
 			doer,
 			doer,
