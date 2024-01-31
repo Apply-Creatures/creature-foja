@@ -4,6 +4,47 @@ A Forgejo release is published shortly after a Gitea release is published and th
 
 The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.21.1-0 or v1.21.2-0) does not require manual actions but others might (e.g. v1.20, v1.21).
 
+## 1.21.5-0
+
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.5-0` release can be reviewed from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo/
+$ git -C forgejo log --oneline --no-merges v1.21.4-0..v1.21.5-0
+```
+
+This stable release includes security and bug fixes as well as documentation improvements.
+
+* Recommended Action
+
+  We recommend that all Forgejo installations are [upgraded](https://forgejo.org/docs/v1.21/admin/upgrade/) to the latest version.
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.21/user/semver/)
+
+  The semantic version was updated to `6.0.5+0-gitea-1.21.5`
+
+* Bug fixes
+
+  The most prominent ones are described here, others can be found in the list of commits included in the release as described above.
+
+  * [Fix markdown relative links rendering](https://codeberg.org/forgejo/forgejo/commit/f8c9ff55b98adfbfbcc24efd178c114006f28336)
+  * [Fix NPE in `UsernameSubRoute`](https://codeberg.org/forgejo/forgejo/commit/3c7a955f05ec4c29f3c4f7412c45129b74c33e5c)
+  * [Fix duplication when blocking multiple users](https://codeberg.org/forgejo/forgejo/commit/3d3790ef4c6cdbcbe0cf7ec80627596f44701977)
+  * [Render code block in activity tab](https://codeberg.org/forgejo/forgejo/commit/766305f47c87b0199986f22402a17526b2586eca)
+  * [Fix reverting a merge commit failing](https://codeberg.org/forgejo/forgejo/commit/c450df40f1be3ca22f64c062cbc6046a15a6a634)
+  * [Fix archive creating LFS hooks and breaking pull requests](https://codeberg.org/forgejo/forgejo/commit/fd1681019528e78b764f75d11910cbdf681bfbb1)
+  * [Avoid duplicate JS error messages on UI](https://codeberg.org/forgejo/forgejo/commit/367dd037d25d659aff3cd3bc5df5c7e4c168d58a)
+  * [Fix incorrect PostgreSQL connection string for Unix sockets](https://codeberg.org/forgejo/forgejo/commit/16dbd9f2003f22beff413cbf453d99f9099afeef)
+  * [Fix avatar storage migration](https://codeberg.org/forgejo/forgejo/commit/fcabc262f77bc285bf5f1e4e66cf5d601d8e1820)
+  * [Prevent anonymous container access if `RequireSignInView` is enabled](https://codeberg.org/forgejo/forgejo/commit/5a4a151209dc74257885a5a1f991163e26210602)
+  * [Fix uploaded artifacts that were not overwritten](https://codeberg.org/forgejo/forgejo/commit/5dbe9596ac3274026ef4fe46889b7d440652e420)
+  * [Update enable_prune even if mirror_interval is not provided](https://codeberg.org/forgejo/forgejo/commit/20c436ec922a7fcb40950b3ad48365e0bd2bf1fe)
+  * [Strip `/` from relative links](https://codeberg.org/forgejo/forgejo/commit/c6285052dd41342782b66c9e8e3c53dce492cba4)
+
+* Improvements
+
+  * [Don't remove repository's releases when mirroring](https://codeberg.org/forgejo/forgejo/commit/04904b933d138a184b361328c287487306c0f4c7)
+
 ## 1.21.4-0
 
 The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.4-0` release can be reviewed from the command line with:
