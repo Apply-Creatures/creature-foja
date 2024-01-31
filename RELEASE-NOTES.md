@@ -13,7 +13,7 @@ $ git clone https://codeberg.org/forgejo/forgejo/
 $ git -C forgejo log --oneline --no-merges v1.21.4-0..v1.21.5-0
 ```
 
-This stable release includes security and bug fixes as well as documentation improvements.
+This stable release includes bug fixes as well as documentation improvements.
 
 * Recommended Action
 
@@ -27,6 +27,7 @@ This stable release includes security and bug fixes as well as documentation imp
 
   The most prominent ones are described here, others can be found in the list of commits included in the release as described above.
 
+  * [Upgrade go-git to v5.11.0](https://codeberg.org/forgejo/forgejo/commit/faafccbcc7942b39cbc43f8014a435de4cc30f62). Although go-git is not used by Forgejo in a way that meets the requirements for the  [CVE-2023-49568](https://github.com/advisories/GHSA-mw99-9chc-xw7r) and [DoS](https://github.com/go-git/go-git/security/advisories/GHSA-mw99-9chc-xw7r) vulnerabilities to be possible, it is upgraded to v5.11.0 which mitigates the issue, as a precaution.
   * [Fix markdown relative links rendering](https://codeberg.org/forgejo/forgejo/commit/f8c9ff55b98adfbfbcc24efd178c114006f28336)
   * [Fix NPE in `UsernameSubRoute`](https://codeberg.org/forgejo/forgejo/commit/3c7a955f05ec4c29f3c4f7412c45129b74c33e5c)
   * [Fix duplication when blocking multiple users](https://codeberg.org/forgejo/forgejo/commit/3d3790ef4c6cdbcbe0cf7ec80627596f44701977)
