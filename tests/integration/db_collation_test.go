@@ -5,10 +5,12 @@ package integration
 
 import (
 	"testing"
+	"time"
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/test"
+	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
 	"xorm.io/xorm"
@@ -48,6 +50,8 @@ func TestDatabaseCollation(t *testing.T) {
 	}
 
 	t.Run("Default startup makes database collation case-sensitive", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
 		r, err := db.CheckCollations(x)
 		assert.NoError(t, err)
 		assert.True(t, r.IsCollationCaseSensitive(r.DatabaseCollation))
@@ -78,8 +82,12 @@ func TestDatabaseCollation(t *testing.T) {
 	}
 
 	t.Run("Convert tables to utf8mb4_bin", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
 		defer test.MockVariableValue(&setting.Database.CharsetCollation, "utf8mb4_bin")()
 		assert.NoError(t, db.ConvertDatabaseTable())
+		time.Sleep(5 * time.Second)
+
 		r, err := db.CheckCollations(x)
 		assert.NoError(t, err)
 		assert.Equal(t, "utf8mb4_bin", r.DatabaseCollation)
@@ -95,8 +103,12 @@ func TestDatabaseCollation(t *testing.T) {
 	})
 
 	t.Run("Convert tables to utf8mb4_general_ci", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
 		defer test.MockVariableValue(&setting.Database.CharsetCollation, "utf8mb4_general_ci")()
 		assert.NoError(t, db.ConvertDatabaseTable())
+		time.Sleep(5 * time.Second)
+
 		r, err := db.CheckCollations(x)
 		assert.NoError(t, err)
 		assert.Equal(t, "utf8mb4_general_ci", r.DatabaseCollation)
@@ -112,8 +124,12 @@ func TestDatabaseCollation(t *testing.T) {
 	})
 
 	t.Run("Convert tables to default case-sensitive collation", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
 		defer test.MockVariableValue(&setting.Database.CharsetCollation, "")()
 		assert.NoError(t, db.ConvertDatabaseTable())
+		time.Sleep(5 * time.Second)
+
 		r, err := db.CheckCollations(x)
 		assert.NoError(t, err)
 		assert.True(t, r.IsCollationCaseSensitive(r.DatabaseCollation))
