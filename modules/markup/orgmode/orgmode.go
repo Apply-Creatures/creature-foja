@@ -135,7 +135,12 @@ type Writer struct {
 
 const mailto = "mailto:"
 
-func (r *Writer) resolveLink(l org.RegularLink) string {
+func (r *Writer) resolveLink(node org.Node) string {
+	l, ok := node.(org.RegularLink)
+	if !ok {
+		l = org.RegularLink{URL: strings.TrimPrefix(org.String(node), "file:")}
+	}
+
 	link := html.EscapeString(l.URL)
 	if l.Protocol == "file" {
 		link = link[len("file:"):]
@@ -162,14 +167,14 @@ func (r *Writer) WriteRegularLink(l org.RegularLink) {
 		if l.Description == nil {
 			fmt.Fprintf(r, `<img src="%s" alt="%s" />`, link, link)
 		} else {
-			imageSrc := r.resolveLink(l.Description[0].(org.RegularLink))
+			imageSrc := r.resolveLink(l.Description[0])
 			fmt.Fprintf(r, `<a href="%s"><img src="%s" alt="%s" /></a>`, link, imageSrc, imageSrc)
 		}
 	case "video":
 		if l.Description == nil {
 			fmt.Fprintf(r, `<video src="%s">%s</video>`, link, link)
 		} else {
-			videoSrc := r.resolveLink(l.Description[0].(org.RegularLink))
+			videoSrc := r.resolveLink(l.Description[0])
 			fmt.Fprintf(r, `<a href="%s"><video src="%s">%s</video></a>`, link, videoSrc, videoSrc)
 		}
 	default:
