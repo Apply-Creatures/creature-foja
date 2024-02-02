@@ -516,6 +516,24 @@ func logUnexpectedResponse(t testing.TB, recorder *httptest.ResponseRecorder) {
 	t.Helper()
 	respBytes := recorder.Body.Bytes()
 	if len(respBytes) == 0 {
+		// log the content of the flash cookie
+		for _, cookie := range recorder.Result().Cookies() {
+			if cookie.Name != gitea_context.CookieNameFlash {
+				continue
+			}
+			flash, _ := url.ParseQuery(cookie.Value)
+			for key, value := range flash {
+				// the key is itself url-encoded
+				if flash, err := url.ParseQuery(key); err == nil {
+					for key, value := range flash {
+						t.Logf("FlashCookie %q: %q", key, value)
+					}
+				} else {
+					t.Logf("FlashCookie %q: %q", key, value)
+				}
+			}
+		}
+
 		return
 	} else if len(respBytes) < 500 {
 		// if body is short, just log the whole thing
