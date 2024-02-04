@@ -1,9 +1,11 @@
 // Copyright 2023 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors c/o Codeberg e.V.. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package integration
 
 import (
+	"net/http"
 	"testing"
 	"time"
 
@@ -19,6 +21,29 @@ import (
 type TestCollationTbl struct {
 	ID  int64
 	Txt string `xorm:"VARCHAR(10) UNIQUE"`
+}
+
+func TestDatabaseCollationSelfCheckUI(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	assertSelfCheckExists := func(exists bool) {
+		expectedHTTPResponse := http.StatusOK
+		if !exists {
+			expectedHTTPResponse = http.StatusNotFound
+		}
+		session := loginUser(t, "user1")
+		req := NewRequest(t, "GET", "/admin/self_check")
+		resp := session.MakeRequest(t, req, expectedHTTPResponse)
+		htmlDoc := NewHTMLParser(t, resp.Body)
+
+		htmlDoc.AssertElement(t, "a.item[href*='/admin/self_check']", exists)
+	}
+
+	if setting.Database.Type.IsMySQL() || setting.Database.Type.IsMSSQL() {
+		assertSelfCheckExists(true)
+	} else {
+		assertSelfCheckExists(false)
+	}
 }
 
 func TestDatabaseCollation(t *testing.T) {

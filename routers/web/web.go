@@ -676,7 +676,9 @@ func registerRoutes(m *web.Route) {
 		m.Get("", admin.Dashboard)
 		m.Post("", web.Bind(forms.AdminDashboardForm{}), admin.DashboardPost)
 
-		m.Get("/self_check", admin.SelfCheck)
+		if setting.Database.Type.IsMySQL() || setting.Database.Type.IsMSSQL() {
+			m.Get("/self_check", admin.SelfCheck)
+		}
 
 		m.Group("/config", func() {
 			m.Get("", admin.Config)
