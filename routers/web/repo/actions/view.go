@@ -22,6 +22,7 @@ import (
 	"code.gitea.io/gitea/modules/actions"
 	"code.gitea.io/gitea/modules/base"
 	context_module "code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/storage"
 	"code.gitea.io/gitea/modules/timeutil"
 	"code.gitea.io/gitea/modules/util"
@@ -52,6 +53,34 @@ func ViewLatest(ctx *context_module.Context) {
 		ctx.NotFound("GetLatestRun", err)
 		return
 	}
+	err = run.LoadAttributes(ctx)
+	if err != nil {
+		ctx.ServerError("LoadAttributes", err)
+		return
+	}
+	ctx.Redirect(run.HTMLURL(), http.StatusTemporaryRedirect)
+}
+
+func ViewLatestWorkflowRun(ctx *context_module.Context) {
+	branch := ctx.FormString("branch")
+	if branch == "" {
+		branch = ctx.Repo.Repository.DefaultBranch
+	}
+	branch = fmt.Sprintf("refs/heads/%s", branch)
+	event := ctx.FormString("event")
+
+	workflowFile := ctx.Params("workflow_name")
+	run, err := actions_model.GetLatestRunForBranchAndWorkflow(ctx, ctx.Repo.Repository.ID, branch, workflowFile, event)
+	if err != nil {
+		if errors.Is(err, util.ErrNotExist) {
+			ctx.NotFound("GetLatestRunForBranchAndWorkflow", err)
+		} else {
+			log.Error("GetLatestRunForBranchAndWorkflow: %v", err)
+			ctx.Error(http.StatusInternalServerError, "Unable to get latest run for workflow on branch")
+		}
+		return
+	}
+
 	err = run.LoadAttributes(ctx)
 	if err != nil {
 		ctx.ServerError("LoadAttributes", err)
