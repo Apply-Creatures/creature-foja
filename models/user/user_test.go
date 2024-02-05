@@ -408,6 +408,12 @@ func TestFollowUser(t *testing.T) {
 
 	assert.NoError(t, user_model.FollowUser(db.DefaultContext, 2, 2))
 
+	// Blocked user.
+	assert.ErrorIs(t, user_model.ErrBlockedByUser, user_model.FollowUser(db.DefaultContext, 1, 4))
+	assert.ErrorIs(t, user_model.ErrBlockedByUser, user_model.FollowUser(db.DefaultContext, 4, 1))
+	unittest.AssertNotExistsBean(t, &user_model.Follow{UserID: 1, FollowID: 4})
+	unittest.AssertNotExistsBean(t, &user_model.Follow{UserID: 4, FollowID: 1})
+
 	unittest.CheckConsistencyFor(t, &user_model.User{})
 }
 

@@ -1,5 +1,10 @@
 {{template "base/head" .}}
 <div role="main" aria-label="{{.Title}}" class="page-content organization profile">
+	{{if .Flash}}
+		<div class="ui container gt-mb-5">
+			{{template "base/alert" .}}
+		</div>
+	{{end}}
 	<div class="ui container gt-df">
 		{{ctx.AvatarUtils.Avatar .Org 140 "org-avatar"}}
 		<div id="org-info">

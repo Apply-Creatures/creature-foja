@@ -36,6 +36,19 @@
   width: 100%;
 }
 
+.user.profile .ui.card .extra.content > ul > li .svg {
+  margin-left: 1px;
+  margin-right: 5px;
+}
+
+.user.profile .ui.card .extra.content > ul > li.follow .ui.button,
+.user.profile .ui.card .extra.content > ul > li.block .ui.button {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
 .user.profile .ui.card #profile-avatar {
   padding: 1rem 1rem 0.25rem;
   justify-content: center;

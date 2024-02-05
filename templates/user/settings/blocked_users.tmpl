@@ -1,0 +1,10 @@
+{{template "user/settings/layout_head" (dict "ctxData" . "pageClass" "user settings blocked-users")}}
+<div class="user-setting-content">
+	<h4 class="ui top attached header">
+		{{ctx.Locale.Tr "settings.blocked_users"}}
+	</h4>
+	<div class="ui attached segment">
+		{{template "shared/blocked_users_list" .}}
+	</div>
+</div>
+{{template "user/settings/layout_footer" .}}

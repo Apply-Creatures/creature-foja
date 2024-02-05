@@ -11,6 +11,7 @@ import (
 	access_model "code.gitea.io/gitea/models/perm/access"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
+	user_model "code.gitea.io/gitea/models/user"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -161,4 +162,24 @@ func TestRepo_GetCollaboration(t *testing.T) {
 	collab, err = repo_model.GetCollaboration(db.DefaultContext, repo.ID, 1)
 	assert.NoError(t, err)
 	assert.Nil(t, collab)
+}
+
+func TestGetCollaboratorWithUser(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	user16 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 16})
+	user15 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 15})
+	user18 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 18})
+
+	collabs, err := repo_model.GetCollaboratorWithUser(db.DefaultContext, user16.ID, user15.ID)
+	assert.NoError(t, err)
+	assert.Len(t, collabs, 2)
+	assert.EqualValues(t, 5, collabs[0])
+	assert.EqualValues(t, 7, collabs[1])
+
+	collabs, err = repo_model.GetCollaboratorWithUser(db.DefaultContext, user16.ID, user18.ID)
+	assert.NoError(t, err)
+	assert.Len(t, collabs, 2)
+	assert.EqualValues(t, 6, collabs[0])
+	assert.EqualValues(t, 8, collabs[1])
 }

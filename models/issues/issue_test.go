@@ -281,6 +281,8 @@ func TestIssue_ResolveMentions(t *testing.T) {
 	testSuccess("user2", "repo1", "user1", []string{"nonexisting"}, []int64{})
 	// Public repo, doer
 	testSuccess("user2", "repo1", "user1", []string{"user1"}, []int64{})
+	// Public repo, blocked user
+	testSuccess("user2", "repo1", "user1", []string{"user4"}, []int64{})
 	// Private repo, team member
 	testSuccess("org17", "big_test_private_4", "user20", []string{"user2"}, []int64{2})
 	// Private repo, not a team member

@@ -4,6 +4,7 @@
 package repo
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -107,6 +108,11 @@ func Transfer(ctx *context.APIContext) {
 	oldFullname := ctx.Repo.Repository.FullName()
 
 	if err := repo_service.StartRepositoryTransfer(ctx, ctx.Doer, newOwner, ctx.Repo.Repository, teams); err != nil {
+		if errors.Is(err, user_model.ErrBlockedByUser) {
+			ctx.Error(http.StatusForbidden, "StartRepositoryTransfer", err)
+			return
+		}
+
 		if models.IsErrRepoTransferInProgress(err) {
 			ctx.Error(http.StatusConflict, "StartRepositoryTransfer", err)
 			return

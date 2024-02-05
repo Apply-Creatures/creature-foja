@@ -4,6 +4,7 @@
 package setting
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -101,7 +102,18 @@ func CollaborationPost(ctx *context.Context) {
 	}
 
 	if err = repo_module.AddCollaborator(ctx, ctx.Repo.Repository, u); err != nil {
-		ctx.ServerError("AddCollaborator", err)
+		if !errors.Is(err, user_model.ErrBlockedByUser) {
+			ctx.ServerError("AddCollaborator", err)
+			return
+		}
+
+		// To give an good error message, be precise on who has blocked who.
+		if blockedOurs := user_model.IsBlocked(ctx, ctx.Repo.Repository.OwnerID, u.ID); blockedOurs {
+			ctx.Flash.Error(ctx.Tr("repo.settings.add_collaborator_blocked_our"))
+		} else {
+			ctx.Flash.Error(ctx.Tr("repo.settings.add_collaborator_blocked_them"))
+		}
+		ctx.Redirect(ctx.Repo.RepoLink + "/settings/collaboration")
 		return
 	}
 

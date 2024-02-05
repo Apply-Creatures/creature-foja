@@ -64,7 +64,7 @@ func TestStartRepositoryTransferSetPermission(t *testing.T) {
 
 	doer := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 3})
 	recipient := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 5})
-	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 3})
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 5})
 	repo.Owner = unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
 
 	hasAccess, err := access_model.HasAccess(db.DefaultContext, recipient.ID, repo)

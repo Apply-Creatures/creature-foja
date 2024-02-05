@@ -163,6 +163,8 @@ func AddCollaborator(ctx *context.APIContext) {
 	//     "$ref": "#/responses/notFound"
 	//   "422":
 	//     "$ref": "#/responses/validationError"
+	//   "403":
+	//     "$ref": "#/responses/forbidden"
 
 	form := web.GetForm(ctx).(*api.AddCollaboratorOption)
 
@@ -182,7 +184,11 @@ func AddCollaborator(ctx *context.APIContext) {
 	}
 
 	if err := repo_module.AddCollaborator(ctx, ctx.Repo.Repository, collaborator); err != nil {
-		ctx.Error(http.StatusInternalServerError, "AddCollaborator", err)
+		if errors.Is(err, user_model.ErrBlockedByUser) {
+			ctx.Error(http.StatusForbidden, "AddCollaborator", err)
+		} else {
+			ctx.Error(http.StatusInternalServerError, "AddCollaborator", err)
+		}
 		return
 	}
 
