@@ -105,7 +105,7 @@ func checkDatabase(ctx context.Context, checks checks) status {
 		if !setting.EnableSQLite3 {
 			st.Status = fail
 			st.Time = getCheckTime()
-			log.Error("SQLite3 health check failed with error: %v", "this Gitea binary is built without SQLite3 enabled")
+			log.Error("SQLite3 health check failed with error: %v", "this Forgejo binary is built without SQLite3 enabled")
 		} else {
 			if _, err := os.Stat(setting.Database.Path); err != nil {
 				st.Status = fail

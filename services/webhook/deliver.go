@@ -123,6 +123,10 @@ func Deliver(ctx context.Context, t *webhook_model.HookTask) error {
 
 	event := t.EventType.Event()
 	eventType := string(t.EventType)
+	req.Header.Add("X-Forgejo-Delivery", t.UUID)
+	req.Header.Add("X-Forgejo-Event", event)
+	req.Header.Add("X-Forgejo-Event-Type", eventType)
+	req.Header.Add("X-Forgejo-Signature", signatureSHA256)
 	req.Header.Add("X-Gitea-Delivery", t.UUID)
 	req.Header.Add("X-Gitea-Event", event)
 	req.Header.Add("X-Gitea-Event-Type", eventType)

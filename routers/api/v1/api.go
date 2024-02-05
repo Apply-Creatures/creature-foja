@@ -58,7 +58,7 @@
 //	     description: Sudo API request as the user provided as the key. Admin privileges are required.
 //	TOTPHeader:
 //	     type: apiKey
-//	     name: X-GITEA-OTP
+//	     name: X-FORGEJO-OTP
 //	     in: header
 //	     description: Must be used in combination with BasicAuth if two-factor authentication is enabled.
 //
@@ -825,7 +825,7 @@ func Routes() *web.Route {
 			AllowedOrigins:   setting.CORSConfig.AllowDomain,
 			AllowedMethods:   setting.CORSConfig.Methods,
 			AllowCredentials: setting.CORSConfig.AllowCredentials,
-			AllowedHeaders:   append([]string{"Authorization", "X-Gitea-OTP"}, setting.CORSConfig.Headers...),
+			AllowedHeaders:   append([]string{"Authorization", "X-Gitea-OTP", "X-Forgejo-OTP"}, setting.CORSConfig.Headers...),
 			MaxAge:           int(setting.CORSConfig.MaxAge.Seconds()),
 		}))
 	}

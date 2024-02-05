@@ -4,6 +4,7 @@
 package integration
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -20,6 +21,7 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/services/migrations"
+	"code.gitea.io/gitea/services/repository"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -51,7 +53,7 @@ func TestMigrateLocalPath(t *testing.T) {
 	setting.ImportLocalPaths = old
 }
 
-func TestMigrateGiteaForm(t *testing.T) {
+func TestMigrate(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, u *url.URL) {
 		AllowLocalNetworks := setting.Migrations.AllowLocalNetworks
 		setting.Migrations.AllowLocalNetworks = true
@@ -71,34 +73,45 @@ func TestMigrateGiteaForm(t *testing.T) {
 		session := loginUser(t, ownerName)
 		token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeReadMisc)
 
-		// Step 0: verify the repo is available
-		req := NewRequestf(t, "GET", fmt.Sprintf("/%s/%s", ownerName, repoName))
-		_ = session.MakeRequest(t, req, http.StatusOK)
-		// Step 1: get the Gitea migration form
-		req = NewRequestf(t, "GET", "/repo/migrate/?service_type=%d", structs.GiteaService)
-		resp := session.MakeRequest(t, req, http.StatusOK)
-		// Step 2: load the form
-		htmlDoc := NewHTMLParser(t, resp.Body)
-		link, exists := htmlDoc.doc.Find(`form.ui.form[action^="/repo/migrate"]`).Attr("action")
-		assert.True(t, exists, "The template has changed")
-		// Step 4: submit the migration to only migrate issues
-		migratedRepoName := "otherrepo"
-		req = NewRequestWithValues(t, "POST", link, map[string]string{
-			"_csrf":       htmlDoc.GetCSRF(),
-			"service":     fmt.Sprintf("%d", structs.GiteaService),
-			"clone_addr":  fmt.Sprintf("%s%s/%s", u, ownerName, repoName),
-			"auth_token":  token,
-			"issues":      "on",
-			"repo_name":   migratedRepoName,
-			"description": "",
-			"uid":         fmt.Sprintf("%d", repoOwner.ID),
-		})
-		resp = session.MakeRequest(t, req, http.StatusSeeOther)
-		// Step 5: a redirection displays the migrated repository
-		loc := resp.Header().Get("Location")
-		assert.EqualValues(t, fmt.Sprintf("/%s/%s", ownerName, migratedRepoName), loc)
-		// Step 6: check the repo was created
-		unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{Name: migratedRepoName})
+		for _, s := range []struct {
+			svc structs.GitServiceType
+		}{
+			{svc: structs.GiteaService},
+			{svc: structs.ForgejoService},
+		} {
+			// Step 0: verify the repo is available
+			req := NewRequestf(t, "GET", fmt.Sprintf("/%s/%s", ownerName, repoName))
+			_ = session.MakeRequest(t, req, http.StatusOK)
+			// Step 1: get the Gitea migration form
+			req = NewRequestf(t, "GET", "/repo/migrate/?service_type=%d", s.svc)
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			// Step 2: load the form
+			htmlDoc := NewHTMLParser(t, resp.Body)
+			link, exists := htmlDoc.doc.Find(`form.ui.form[action^="/repo/migrate"]`).Attr("action")
+			assert.True(t, exists, "The template has changed")
+			// Step 4: submit the migration to only migrate issues
+			migratedRepoName := "otherrepo"
+			req = NewRequestWithValues(t, "POST", link, map[string]string{
+				"_csrf":       htmlDoc.GetCSRF(),
+				"service":     fmt.Sprintf("%d", s.svc),
+				"clone_addr":  fmt.Sprintf("%s%s/%s", u, ownerName, repoName),
+				"auth_token":  token,
+				"issues":      "on",
+				"repo_name":   migratedRepoName,
+				"description": "",
+				"uid":         fmt.Sprintf("%d", repoOwner.ID),
+			})
+			resp = session.MakeRequest(t, req, http.StatusSeeOther)
+			// Step 5: a redirection displays the migrated repository
+			loc := resp.Header().Get("Location")
+			assert.EqualValues(t, fmt.Sprintf("/%s/%s", ownerName, migratedRepoName), loc)
+			// Step 6: check the repo was created
+			repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{Name: migratedRepoName})
+
+			// Step 7: delete the repository, so we can test with other services
+			err := repository.DeleteRepository(context.Background(), repoOwner, repo, false)
+			assert.NoError(t, err)
+		}
 	})
 }
 

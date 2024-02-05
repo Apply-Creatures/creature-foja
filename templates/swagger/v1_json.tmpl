@@ -13,8 +13,8 @@
   ],
   "swagger": "2.0",
   "info": {
-    "description": "This documentation describes the Gitea API.",
-    "title": "Gitea API",
+    "description": "This documentation describes the Forgejo API.",
+    "title": "Forgejo API",
     "license": {
       "name": "MIT",
       "url": "http://opensource.org/licenses/MIT"
@@ -18152,6 +18152,7 @@
         "type": {
           "type": "string",
           "enum": [
+            "forgejo",
             "dingtalk",
             "discord",
             "gitea",
@@ -24515,7 +24516,7 @@
     "TOTPHeader": {
       "description": "Must be used in combination with BasicAuth if two-factor authentication is enabled.",
       "type": "apiKey",
-      "name": "X-GITEA-OTP",
+      "name": "X-FORGEJO-OTP",
       "in": "header"
     },
     "Token": {

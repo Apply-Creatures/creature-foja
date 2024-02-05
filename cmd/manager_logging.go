@@ -62,7 +62,7 @@ var (
 		Subcommands: []*cli.Command{
 			{
 				Name:  "pause",
-				Usage: "Pause logging (Gitea will buffer logs up to a certain point and will drop them after that point)",
+				Usage: "Pause logging (Forgejo will buffer logs up to a certain point and will drop them after that point)",
 				Flags: []cli.Flag{
 					&cli.BoolFlag{
 						Name: "debug",
@@ -80,7 +80,7 @@ var (
 				Action: runResumeLogging,
 			}, {
 				Name:  "release-and-reopen",
-				Usage: "Cause Gitea to release and re-open files used for logging",
+				Usage: "Cause Forgejo to release and re-open files used for logging",
 				Flags: []cli.Flag{
 					&cli.BoolFlag{
 						Name: "debug",

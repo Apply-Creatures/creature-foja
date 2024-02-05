@@ -16,15 +16,15 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "environment-to-ini"
 	app.Usage = "Use provided environment to update configuration ini"
-	app.Description = `As a helper to allow docker users to update the gitea configuration
+	app.Description = `As a helper to allow docker users to update the forgejo configuration
 	through the environment, this command allows environment variables to
 	be mapped to values in the ini.
 
-	Environment variables of the form "GITEA__SECTION_NAME__KEY_NAME"
+	Environment variables of the form "FORGEJO__SECTION_NAME__KEY_NAME"
 	will be mapped to the ini section "[section_name]" and the key
 	"KEY_NAME" with the value as provided.
 
-	Environment variables of the form "GITEA__SECTION_NAME__KEY_NAME__FILE"
+	Environment variables of the form "FORGEJO__SECTION_NAME__KEY_NAME__FILE"
 	will be mapped to the ini section "[section_name]" and the key
 	"KEY_NAME" with the value loaded from the specified file.
 
@@ -42,8 +42,8 @@ func main() {
 		...
 		"""
 
-	You would set the environment variables: "GITEA__LOG_0x2E_CONSOLE__COLORIZE=false"
-	and "GITEA__LOG_0x2E_CONSOLE__STDERR=false". Other examples can be found
+	You would set the environment variables: "FORGEJO__LOG_0x2E_CONSOLE__COLORIZE=false"
+	and "FORGEJO__LOG_0x2E_CONSOLE__STDERR=false". Other examples can be found
 	on the configuration cheat sheet.`
 	app.Flags = []cli.Flag{
 		&cli.StringFlag{
@@ -62,7 +62,7 @@ func main() {
 			Name:    "work-path",
 			Aliases: []string{"w"},
 			Value:   setting.AppWorkPath,
-			Usage:   "Set the gitea working path",
+			Usage:   "Set the forgejo working path",
 		},
 		&cli.StringFlag{
 			Name:    "out",

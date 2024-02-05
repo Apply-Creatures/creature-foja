@@ -5,6 +5,7 @@ package setting
 
 import (
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -33,7 +34,7 @@ func TestDecodeEnvSectionKey(t *testing.T) {
 }
 
 func TestDecodeEnvironmentKey(t *testing.T) {
-	prefix := "GITEA__"
+	prefix := regexp.MustCompile(EnvConfigKeyPrefixGitea)
 	suffix := "__FILE"
 
 	ok, section, key, file := decodeEnvironmentKey(prefix, suffix, "SEC__KEY")
@@ -55,6 +56,12 @@ func TestDecodeEnvironmentKey(t *testing.T) {
 	assert.False(t, file)
 
 	ok, section, key, file = decodeEnvironmentKey(prefix, suffix, "GITEA__SEC__KEY")
+	assert.True(t, ok)
+	assert.Equal(t, "sec", section)
+	assert.Equal(t, "KEY", key)
+	assert.False(t, file)
+
+	ok, section, key, file = decodeEnvironmentKey(prefix, suffix, "FORGEJO__SEC__KEY")
 	assert.True(t, ok)
 	assert.Equal(t, "sec", section)
 	assert.Equal(t, "KEY", key)

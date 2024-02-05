@@ -176,6 +176,36 @@ func TestLinksLogin(t *testing.T) {
 	testLinksAsUser("user2", t)
 }
 
+func TestRedirectsWebhooks(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	//
+	// A redirect means the route exists but not if it performs as intended.
+	//
+	for _, kind := range []string{"forgejo", "gitea"} {
+		redirects := []struct {
+			from string
+			to   string
+			verb string
+		}{
+			{from: "/user2/repo1/settings/hooks/" + kind + "/new", to: "/user/login", verb: "GET"},
+			{from: "/user/settings/hooks/" + kind + "/new", to: "/user/login", verb: "GET"},
+			{from: "/admin/system-hooks/" + kind + "/new", to: "/user/login", verb: "GET"},
+			{from: "/admin/default-hooks/" + kind + "/new", to: "/user/login", verb: "GET"},
+			{from: "/user2/repo1/settings/hooks/" + kind + "/new", to: "/", verb: "POST"},
+			{from: "/admin/system-hooks/" + kind + "/new", to: "/", verb: "POST"},
+			{from: "/admin/default-hooks/" + kind + "/new", to: "/", verb: "POST"},
+			{from: "/user2/repo1/settings/hooks/" + kind + "/1", to: "/", verb: "POST"},
+			{from: "/admin/hooks/" + kind + "/1", to: "/", verb: "POST"},
+		}
+		for _, info := range redirects {
+			req := NewRequest(t, info.verb, info.from)
+			resp := MakeRequest(t, req, http.StatusSeeOther)
+			assert.EqualValues(t, path.Join(setting.AppSubURL, info.to), test.RedirectURL(resp), info.from)
+		}
+	}
+}
+
 func TestRepoLinks(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 

@@ -26,7 +26,7 @@ if [ ! -f ${GITEA_APP_INI} ]; then
     fi
 
     # Substitute the environment variables in the template
-    APP_NAME=${APP_NAME:-"Gitea: Git with a cup of tea"} \
+    APP_NAME=${APP_NAME:-"Forgejo: Beyond coding. We forge."} \
     RUN_MODE=${RUN_MODE:-"prod"} \
     RUN_USER=${USER:-"git"} \
     SSH_DOMAIN=${SSH_DOMAIN:-"localhost"} \

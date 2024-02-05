@@ -60,7 +60,7 @@ func SendTestMail(email string) error {
 		// No mail service configured
 		return nil
 	}
-	return gomail.Send(Sender, NewMessage(email, "Gitea Test Email!", "Gitea Test Email!").ToMessage())
+	return gomail.Send(Sender, NewMessage(email, "Forgejo Test Email!", "Forgejo Test Email!").ToMessage())
 }
 
 // sendUserMail sends a mail to the user
@@ -408,6 +408,16 @@ func generateAdditionalHeaders(ctx *mailCommentContext, reason string, recipient
 		"X-Gitea-Repository-Link":   repo.HTMLURL(),
 		"X-Gitea-Issue-ID":          strconv.FormatInt(ctx.Issue.Index, 10),
 		"X-Gitea-Issue-Link":        ctx.Issue.HTMLURL(),
+
+		"X-Forgejo-Reason":            reason,
+		"X-Forgejo-Sender":            ctx.Doer.DisplayName(),
+		"X-Forgejo-Recipient":         recipient.DisplayName(),
+		"X-Forgejo-Recipient-Address": recipient.Email,
+		"X-Forgejo-Repository":        repo.Name,
+		"X-Forgejo-Repository-Path":   repo.FullName(),
+		"X-Forgejo-Repository-Link":   repo.HTMLURL(),
+		"X-Forgejo-Issue-ID":          strconv.FormatInt(ctx.Issue.Index, 10),
+		"X-Forgejo-Issue-Link":        ctx.Issue.HTMLURL(),
 
 		"X-GitHub-Reason":            reason,
 		"X-GitHub-Sender":            ctx.Doer.Name,
