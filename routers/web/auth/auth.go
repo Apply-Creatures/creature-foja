@@ -715,7 +715,7 @@ func ActivatePost(ctx *context.Context) {
 					ctx.Data["ResendLimited"] = true
 				} else {
 					ctx.Data["ActiveCodeLives"] = timeutil.MinutesToFriendly(setting.Service.ActiveCodeLives, ctx.Locale)
-					err := user_model.ReplaceInactivePrimaryEmail(ctx, ctx.Doer.Email, &user_model.EmailAddress{
+					err := user_service.ReplaceInactivePrimaryEmail(ctx, ctx.Doer.Email, &user_model.EmailAddress{
 						UID:   ctx.Doer.ID,
 						Email: email,
 					})

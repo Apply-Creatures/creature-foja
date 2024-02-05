@@ -77,28 +77,6 @@ func TestMakeEmailPrimary(t *testing.T) {
 	assert.Equal(t, "user101@example.com", user.Email)
 }
 
-func TestReplaceInactivePrimaryEmail(t *testing.T) {
-	assert.NoError(t, unittest.PrepareTestDatabase())
-
-	email := &user_model.EmailAddress{
-		Email: "user9999999@example.com",
-		UID:   9999999,
-	}
-	err := user_model.ReplaceInactivePrimaryEmail(db.DefaultContext, "user10@example.com", email)
-	assert.Error(t, err)
-	assert.True(t, user_model.IsErrUserNotExist(err))
-
-	email = &user_model.EmailAddress{
-		Email: "user201@example.com",
-		UID:   10,
-	}
-	err = user_model.ReplaceInactivePrimaryEmail(db.DefaultContext, "user10@example.com", email)
-	assert.NoError(t, err)
-
-	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 10})
-	assert.Equal(t, "user201@example.com", user.Email)
-}
-
 func TestActivate(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 
