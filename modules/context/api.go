@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strings"
 
+	issues_model "code.gitea.io/gitea/models/issues"
 	"code.gitea.io/gitea/models/unit"
 	user_model "code.gitea.io/gitea/models/user"
 	mc "code.gitea.io/gitea/modules/cache"
@@ -38,6 +39,7 @@ type APIContext struct {
 	ContextUser *user_model.User // the user which is being visited, in most cases it differs from Doer
 
 	Repo    *Repository
+	Comment *issues_model.Comment
 	Org     *APIOrganization
 	Package *Package
 }

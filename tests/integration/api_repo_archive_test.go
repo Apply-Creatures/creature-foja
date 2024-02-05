@@ -32,18 +32,21 @@ func TestAPIDownloadArchive(t *testing.T) {
 	bs, err := io.ReadAll(resp.Body)
 	assert.NoError(t, err)
 	assert.Len(t, bs, 320)
+	assert.EqualValues(t, "application/zip", resp.Header().Get("Content-Type"))
 
 	link, _ = url.Parse(fmt.Sprintf("/api/v1/repos/%s/%s/archive/master.tar.gz", user2.Name, repo.Name))
 	resp = MakeRequest(t, NewRequest(t, "GET", link.String()).AddTokenAuth(token), http.StatusOK)
 	bs, err = io.ReadAll(resp.Body)
 	assert.NoError(t, err)
 	assert.Len(t, bs, 266)
+	assert.EqualValues(t, "application/gzip", resp.Header().Get("Content-Type"))
 
 	link, _ = url.Parse(fmt.Sprintf("/api/v1/repos/%s/%s/archive/master.bundle", user2.Name, repo.Name))
 	resp = MakeRequest(t, NewRequest(t, "GET", link.String()).AddTokenAuth(token), http.StatusOK)
 	bs, err = io.ReadAll(resp.Body)
 	assert.NoError(t, err)
 	assert.Len(t, bs, 382)
+	assert.EqualValues(t, "application/octet-stream", resp.Header().Get("Content-Type"))
 
 	link, _ = url.Parse(fmt.Sprintf("/api/v1/repos/%s/%s/archive/master", user2.Name, repo.Name))
 	MakeRequest(t, NewRequest(t, "GET", link.String()).AddTokenAuth(token), http.StatusBadRequest)

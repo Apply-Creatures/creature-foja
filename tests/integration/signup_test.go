@@ -12,6 +12,7 @@ import (
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/test"
 	"code.gitea.io/gitea/modules/translation"
 	"code.gitea.io/gitea/tests"
 
@@ -90,4 +91,79 @@ func TestSignupEmail(t *testing.T) {
 			)
 		}
 	}
+}
+
+func TestSignupEmailChangeForInactiveUser(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	// Disable the captcha & enable email confirmation for registrations
+	defer test.MockVariableValue(&setting.Service.EnableCaptcha, false)()
+	defer test.MockVariableValue(&setting.Service.RegisterEmailConfirm, true)()
+
+	// Create user
+	req := NewRequestWithValues(t, "POST", "/user/sign_up", map[string]string{
+		"user_name": "exampleUserX",
+		"email":     "wrong-email@example.com",
+		"password":  "examplePassword!1",
+		"retype":    "examplePassword!1",
+	})
+	MakeRequest(t, req, http.StatusOK)
+
+	session := loginUserWithPassword(t, "exampleUserX", "examplePassword!1")
+
+	// Verify that the initial e-mail is the wrong one.
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: "exampleUserX"})
+	assert.Equal(t, "wrong-email@example.com", user.Email)
+
+	// Change the email address
+	req = NewRequestWithValues(t, "POST", "/user/activate", map[string]string{
+		"email": "fine-email@example.com",
+	})
+	session.MakeRequest(t, req, http.StatusSeeOther)
+
+	// Verify that the email was updated
+	user = unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: "exampleUserX"})
+	assert.Equal(t, "fine-email@example.com", user.Email)
+
+	// Try to change the email again
+	req = NewRequestWithValues(t, "POST", "/user/activate", map[string]string{
+		"email": "wrong-again@example.com",
+	})
+	session.MakeRequest(t, req, http.StatusSeeOther)
+	// Verify that the email was NOT updated
+	user = unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: "exampleUserX"})
+	assert.Equal(t, "fine-email@example.com", user.Email)
+}
+
+func TestSignupEmailChangeForActiveUser(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	// Disable the captcha & enable email confirmation for registrations
+	defer test.MockVariableValue(&setting.Service.EnableCaptcha, false)()
+	defer test.MockVariableValue(&setting.Service.RegisterEmailConfirm, false)()
+
+	// Create user
+	req := NewRequestWithValues(t, "POST", "/user/sign_up", map[string]string{
+		"user_name": "exampleUserY",
+		"email":     "wrong-email-2@example.com",
+		"password":  "examplePassword!1",
+		"retype":    "examplePassword!1",
+	})
+	MakeRequest(t, req, http.StatusSeeOther)
+
+	session := loginUserWithPassword(t, "exampleUserY", "examplePassword!1")
+
+	// Verify that the initial e-mail is the wrong one.
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: "exampleUserY"})
+	assert.Equal(t, "wrong-email-2@example.com", user.Email)
+
+	// Changing the email for a validated address is not available
+	req = NewRequestWithValues(t, "POST", "/user/activate", map[string]string{
+		"email": "fine-email-2@example.com",
+	})
+	session.MakeRequest(t, req, http.StatusNotFound)
+
+	// Verify that the email remained unchanged
+	user = unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: "exampleUserY"})
+	assert.Equal(t, "wrong-email-2@example.com", user.Email)
 }

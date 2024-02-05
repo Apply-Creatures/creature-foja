@@ -952,10 +952,16 @@ func SignInOAuthCallback(ctx *context.Context) {
 			return
 		} else if !setting.Service.AllowOnlyInternalRegistration && setting.OAuth2Client.EnableAutoRegistration {
 			// create new user with details from oauth2 provider
-			var missingFields []string
 			if gothUser.UserID == "" {
-				missingFields = append(missingFields, "sub")
+				log.Error("OAuth2 Provider %s returned empty or missing field: UserID", authSource.Name)
+				if authSource.IsOAuth2() && authSource.Cfg.(*oauth2.Source).Provider == "openidConnect" {
+					log.Error("You may need to change the 'OPENID_CONNECT_SCOPES' setting to request all required fields")
+				}
+				err = fmt.Errorf("OAuth2 Provider %s returned empty or missing field: UserID", authSource.Name)
+				ctx.ServerError("CreateUser", err)
+				return
 			}
+			var missingFields []string
 			if gothUser.Email == "" {
 				missingFields = append(missingFields, "email")
 			}
@@ -963,12 +969,10 @@ func SignInOAuthCallback(ctx *context.Context) {
 				missingFields = append(missingFields, "nickname")
 			}
 			if len(missingFields) > 0 {
-				log.Error("OAuth2 Provider %s returned empty or missing fields: %s", authSource.Name, missingFields)
-				if authSource.IsOAuth2() && authSource.Cfg.(*oauth2.Source).Provider == "openidConnect" {
-					log.Error("You may need to change the 'OPENID_CONNECT_SCOPES' setting to request all required fields")
-				}
-				err = fmt.Errorf("OAuth2 Provider %s returned empty or missing fields: %s", authSource.Name, missingFields)
-				ctx.ServerError("CreateUser", err)
+				// we don't have enough information to create an account automatically,
+				// so we prompt the user for the remaining bits
+				log.Trace("OAuth2 Provider %s returned empty or missing fields: %s, prompting the user for them", authSource.Name, missingFields)
+				showLinkingLogin(ctx, gothUser)
 				return
 			}
 			uname, err := getUserName(&gothUser)

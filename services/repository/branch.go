@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models"
-	actions_model "code.gitea.io/gitea/models/actions"
 	"code.gitea.io/gitea/models/db"
 	git_model "code.gitea.io/gitea/models/git"
 	issues_model "code.gitea.io/gitea/models/issues"
@@ -24,7 +23,6 @@ import (
 	repo_module "code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/timeutil"
 	"code.gitea.io/gitea/modules/util"
-	webhook_module "code.gitea.io/gitea/modules/webhook"
 	notify_service "code.gitea.io/gitea/services/notify"
 	files_service "code.gitea.io/gitea/services/repository/files"
 
@@ -97,7 +95,13 @@ func LoadBranches(ctx context.Context, repo *repo_model.Repository, gitRepo *git
 	for i := range dbBranches {
 		branch, err := loadOneBranch(ctx, repo, dbBranches[i], &rules, repoIDToRepo, repoIDToGitRepo)
 		if err != nil {
-			return nil, nil, 0, fmt.Errorf("loadOneBranch: %v", err)
+			log.Error("loadOneBranch() on repo #%d, branch '%s' failed: %v", repo.ID, dbBranches[i].Name, err)
+
+			// TODO: Ideally, we would only do this if the branch doesn't exist
+			// anymore. That is not practical to check here currently, so we do
+			// this for all kinds of errors.
+			totalNumOfBranches--
+			continue
 		}
 
 		branches = append(branches, branch)
@@ -133,7 +137,7 @@ func loadOneBranch(ctx context.Context, repo *repo_model.Repository, dbBranch *g
 		var err error
 		divergence, err = files_service.CountDivergingCommits(ctx, repo, git.BranchPrefix+branchName)
 		if err != nil {
-			log.Error("CountDivergingCommits: %v", err)
+			return nil, fmt.Errorf("CountDivergingCommits: %v", err)
 		}
 	}
 
@@ -306,28 +310,13 @@ func RenameBranch(ctx context.Context, repo *repo_model.Repository, doer *user_m
 		return "from_not_exist", nil
 	}
 
-	if err := git_model.RenameBranch(ctx, repo, from, to, func(ctx context.Context, isDefault bool) error {
+	if err := git_model.RenameBranch(ctx, repo, from, to, func(isDefault bool) error {
 		err2 := gitRepo.RenameBranch(from, to)
 		if err2 != nil {
 			return err2
 		}
 
 		if isDefault {
-			// if default branch changed, we need to delete all schedules and cron jobs
-			if err := actions_model.DeleteScheduleTaskByRepo(ctx, repo.ID); err != nil {
-				log.Error("DeleteCronTaskByRepo: %v", err)
-			}
-			// cancel running cron jobs of this repository and delete old schedules
-			if err := actions_model.CancelRunningJobs(
-				ctx,
-				repo.ID,
-				from,
-				"",
-				webhook_module.HookEventSchedule,
-			); err != nil {
-				log.Error("CancelRunningJobs: %v", err)
-			}
-
 			err2 = gitRepo.SetDefaultBranch(to)
 			if err2 != nil {
 				return err2
@@ -376,7 +365,7 @@ func DeleteBranch(ctx context.Context, doer *user_model.User, repo *repo_model.R
 
 	rawBranch, err := git_model.GetBranch(ctx, repo.ID, branchName)
 	if err != nil {
-		return fmt.Errorf("GetBranch: %vc", err)
+		return fmt.Errorf("GetBranch: %v", err)
 	}
 
 	objectFormat, err := gitRepo.GetObjectFormat()
@@ -461,52 +450,5 @@ func AddAllRepoBranchesToSyncQueue(ctx context.Context, doerID int64) error {
 	}); err != nil {
 		return fmt.Errorf("run sync all branches failed: %v", err)
 	}
-	return nil
-}
-
-func SetRepoDefaultBranch(ctx context.Context, repo *repo_model.Repository, gitRepo *git.Repository, newBranchName string) error {
-	if repo.DefaultBranch == newBranchName {
-		return nil
-	}
-
-	if !gitRepo.IsBranchExist(newBranchName) {
-		return git_model.ErrBranchNotExist{
-			BranchName: newBranchName,
-		}
-	}
-
-	oldDefaultBranchName := repo.DefaultBranch
-	repo.DefaultBranch = newBranchName
-	if err := db.WithTx(ctx, func(ctx context.Context) error {
-		if err := repo_model.UpdateDefaultBranch(ctx, repo); err != nil {
-			return err
-		}
-
-		if err := actions_model.DeleteScheduleTaskByRepo(ctx, repo.ID); err != nil {
-			log.Error("DeleteCronTaskByRepo: %v", err)
-		}
-		// cancel running cron jobs of this repository and delete old schedules
-		if err := actions_model.CancelRunningJobs(
-			ctx,
-			repo.ID,
-			oldDefaultBranchName,
-			"",
-			webhook_module.HookEventSchedule,
-		); err != nil {
-			log.Error("CancelRunningJobs: %v", err)
-		}
-
-		if err := gitRepo.SetDefaultBranch(newBranchName); err != nil {
-			if !git.IsErrUnsupportedVersion(err) {
-				return err
-			}
-		}
-		return nil
-	}); err != nil {
-		return err
-	}
-
-	notify_service.ChangeDefaultBranch(ctx, repo)
-
 	return nil
 }

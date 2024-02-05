@@ -8,8 +8,8 @@
     "text/html"
   ],
   "schemes": [
-    "http",
-    "https"
+    "https",
+    "http"
   ],
   "swagger": "2.0",
   "info": {
@@ -3649,7 +3649,9 @@
     "/repos/{owner}/{repo}/archive/{archive}": {
       "get": {
         "produces": [
-          "application/json"
+          "application/octet-stream",
+          "application/zip",
+          "application/gzip"
         ],
         "tags": [
           "repository"
@@ -5104,6 +5106,260 @@
         "responses": {
           "200": {
             "description": "success"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          }
+        }
+      }
+    },
+    "/repos/{owner}/{repo}/flags": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "repository"
+        ],
+        "summary": "List a repository's flags",
+        "operationId": "repoListFlags",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "owner of the repo",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/StringSlice"
+          },
+          "403": {
+            "$ref": "#/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          }
+        }
+      },
+      "put": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "repository"
+        ],
+        "summary": "Replace all flags of a repository",
+        "operationId": "repoReplaceAllFlags",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "owner of the repo",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ReplaceFlagsOption"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/empty"
+          },
+          "403": {
+            "$ref": "#/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "repository"
+        ],
+        "summary": "Remove all flags from a repository",
+        "operationId": "repoDeleteAllFlags",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "owner of the repo",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/empty"
+          },
+          "403": {
+            "$ref": "#/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          }
+        }
+      }
+    },
+    "/repos/{owner}/{repo}/flags/{flag}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "repository"
+        ],
+        "summary": "Check if a repository has a given flag",
+        "operationId": "repoCheckFlag",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "owner of the repo",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the flag",
+            "name": "flag",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/empty"
+          },
+          "403": {
+            "$ref": "#/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          }
+        }
+      },
+      "put": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "repository"
+        ],
+        "summary": "Add a flag to a repository",
+        "operationId": "repoAddFlag",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "owner of the repo",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the flag",
+            "name": "flag",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/empty"
+          },
+          "403": {
+            "$ref": "#/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "repository"
+        ],
+        "summary": "Remove a flag from a repository",
+        "operationId": "repoDeleteFlag",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "owner of the repo",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the flag",
+            "name": "flag",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/empty"
+          },
+          "403": {
+            "$ref": "#/responses/forbidden"
           },
           "404": {
             "$ref": "#/responses/notFound"
@@ -11407,6 +11663,191 @@
             "$ref": "#/responses/notFound"
           }
         }
+      },
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "repository"
+        ],
+        "summary": "Add a new comment to a pull request review",
+        "operationId": "repoCreatePullReviewComment",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "owner of the repo",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "index of the pull request",
+            "name": "index",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "id of the review",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CreatePullReviewCommentOptions"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/PullReviewComment"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          },
+          "422": {
+            "$ref": "#/responses/validationError"
+          }
+        }
+      }
+    },
+    "/repos/{owner}/{repo}/pulls/{index}/reviews/{id}/comments/{comment}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "repository"
+        ],
+        "summary": "Get a pull review comment",
+        "operationId": "repoGetPullReviewComment",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "owner of the repo",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "index of the pull request",
+            "name": "index",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "id of the review",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "id of the comment",
+            "name": "comment",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/PullReviewComment"
+          },
+          "403": {
+            "$ref": "#/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          }
+        }
+      },
+      "delete": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "repository"
+        ],
+        "summary": "Delete a pull review comment",
+        "operationId": "repoDeletePullReviewComment",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "owner of the repo",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "index of the pull request",
+            "name": "index",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "id of the review",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "description": "id of the comment",
+            "name": "comment",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/empty"
+          },
+          "403": {
+            "$ref": "#/responses/forbidden"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          }
+        }
       }
     },
     "/repos/{owner}/{repo}/pulls/{index}/reviews/{id}/dismissals": {
@@ -13027,7 +13468,7 @@
           }
         ],
         "responses": {
-          "200": {
+          "201": {
             "$ref": "#/responses/Tag"
           },
           "404": {
@@ -14847,7 +15288,7 @@
           "user"
         ],
         "summary": "List the authenticated user's oauth2 applications",
-        "operationId": "userGetOauth2Application",
+        "operationId": "userGetOAuth2Applications",
         "parameters": [
           {
             "type": "integer",
@@ -18509,6 +18950,10 @@
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
+    "CreatePullReviewCommentOptions": {
+      "description": "CreatePullReviewCommentOptions are options to create a pull review comment",
+      "$ref": "#/definitions/CreatePullReviewComment"
+    },
     "CreatePullReviewOptions": {
       "description": "CreatePullReviewOptions are options to create a pull review",
       "type": "object",
@@ -19629,6 +20074,11 @@
           "description": "a URL with more information about the repository.",
           "type": "string",
           "x-go-name": "Website"
+        },
+        "wiki_branch": {
+          "description": "sets the branch used for this repository's wiki.",
+          "type": "string",
+          "x-go-name": "WikiBranch"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
@@ -22247,6 +22697,20 @@
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
+    "ReplaceFlagsOption": {
+      "description": "ReplaceFlagsOption options when replacing the flags of a repository",
+      "type": "object",
+      "properties": {
+        "flags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "x-go-name": "Flags"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
     "RepoCollaboratorPermission": {
       "description": "RepoCollaboratorPermission to get repository permission for a collaborator",
       "type": "object",
@@ -22572,6 +23036,10 @@
         "website": {
           "type": "string",
           "x-go-name": "Website"
+        },
+        "wiki_branch": {
+          "type": "string",
+          "x-go-name": "WikiBranch"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
@@ -24161,7 +24629,7 @@
       }
     },
     "RegistrationToken": {
-      "description": "RegistrationToken is response related to registeration token",
+      "description": "RegistrationToken is a string used to register a runner with a server",
       "headers": {
         "token": {
           "type": "string"

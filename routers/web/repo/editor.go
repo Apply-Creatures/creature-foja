@@ -14,6 +14,7 @@ import (
 	git_model "code.gitea.io/gitea/models/git"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unit"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/charset"
 	"code.gitea.io/gitea/modules/context"
@@ -99,6 +100,27 @@ func getParentTreeFields(treePath string) (treeNames, treePaths []string) {
 	return treeNames, treePaths
 }
 
+// getSelectableEmailAddresses returns which emails can be used by the user as
+// email for a Git commiter.
+func getSelectableEmailAddresses(ctx *context.Context) ([]*user_model.ActivatedEmailAddress, error) {
+	// Retrieve emails that the user could use for commiter identity.
+	commitEmails, err := user_model.GetActivatedEmailAddresses(ctx, ctx.Doer.ID)
+	if err != nil {
+		return nil, fmt.Errorf("GetActivatedEmailAddresses: %w", err)
+	}
+
+	// Allow for the placeholder mail to be used. Use -1 as ID to identify
+	// this entry to be the placerholder mail of the user.
+	placeholderMail := &user_model.ActivatedEmailAddress{ID: -1, Email: ctx.Doer.GetPlaceholderEmail()}
+	if ctx.Doer.KeepEmailPrivate {
+		commitEmails = append([]*user_model.ActivatedEmailAddress{placeholderMail}, commitEmails...)
+	} else {
+		commitEmails = append(commitEmails, placeholderMail)
+	}
+
+	return commitEmails, nil
+}
+
 func editFile(ctx *context.Context, isNewFile bool) {
 	ctx.Data["PageIsEdit"] = true
 	ctx.Data["IsNewFile"] = isNewFile
@@ -177,6 +199,12 @@ func editFile(ctx *context.Context, isNewFile bool) {
 		treeNames = append(treeNames, fileName)
 	}
 
+	commitEmails, err := getSelectableEmailAddresses(ctx)
+	if err != nil {
+		ctx.ServerError("getSelectableEmailAddresses", err)
+		return
+	}
+
 	ctx.Data["TreeNames"] = treeNames
 	ctx.Data["TreePaths"] = treePaths
 	ctx.Data["BranchLink"] = ctx.Repo.RepoLink + "/src/" + ctx.Repo.BranchNameSubURL()
@@ -192,6 +220,8 @@ func editFile(ctx *context.Context, isNewFile bool) {
 	ctx.Data["PreviewableExtensions"] = strings.Join(markup.PreviewableExtensions(), ",")
 	ctx.Data["LineWrapExtensions"] = strings.Join(setting.Repository.Editor.LineWrapExtensions, ",")
 	ctx.Data["EditorconfigJson"] = GetEditorConfig(ctx, treePath)
+	ctx.Data["CommitMails"] = commitEmails
+	ctx.Data["DefaultCommitMail"] = ctx.Doer.GetEmail()
 
 	ctx.HTML(http.StatusOK, tplEditFile)
 }
@@ -227,6 +257,12 @@ func editFilePost(ctx *context.Context, form forms.EditRepoFileForm, isNewFile b
 		branchName = form.NewBranchName
 	}
 
+	commitEmails, err := getSelectableEmailAddresses(ctx)
+	if err != nil {
+		ctx.ServerError("getSelectableEmailAddresses", err)
+		return
+	}
+
 	ctx.Data["PageIsEdit"] = true
 	ctx.Data["PageHasPosted"] = true
 	ctx.Data["IsNewFile"] = isNewFile
@@ -243,6 +279,8 @@ func editFilePost(ctx *context.Context, form forms.EditRepoFileForm, isNewFile b
 	ctx.Data["PreviewableExtensions"] = strings.Join(markup.PreviewableExtensions(), ",")
 	ctx.Data["LineWrapExtensions"] = strings.Join(setting.Repository.Editor.LineWrapExtensions, ",")
 	ctx.Data["EditorconfigJson"] = GetEditorConfig(ctx, form.TreePath)
+	ctx.Data["CommitMails"] = commitEmails
+	ctx.Data["DefaultCommitMail"] = ctx.Doer.GetEmail()
 
 	if ctx.HasError() {
 		ctx.HTML(http.StatusOK, tplEditFile)
@@ -277,6 +315,30 @@ func editFilePost(ctx *context.Context, form forms.EditRepoFileForm, isNewFile b
 		operation = "create"
 	}
 
+	gitIdentity := &files_service.IdentityOptions{
+		Name: ctx.Doer.Name,
+	}
+
+	// -1 is defined as placeholder email.
+	if form.CommitMailID == -1 {
+		gitIdentity.Email = ctx.Doer.GetPlaceholderEmail()
+	} else {
+		// Check if the given email is activated.
+		email, err := user_model.GetEmailAddressByID(ctx, ctx.Doer.ID, form.CommitMailID)
+		if err != nil {
+			ctx.ServerError("GetEmailAddressByID", err)
+			return
+		}
+
+		if email == nil || !email.IsActivated {
+			ctx.Data["Err_CommitMailID"] = true
+			ctx.RenderWithErr(ctx.Tr("repo.editor.invalid_commit_mail"), tplEditFile, &form)
+			return
+		}
+
+		gitIdentity.Email = email.Email
+	}
+
 	if _, err := files_service.ChangeRepoFiles(ctx, ctx.Repo.Repository, ctx.Doer, &files_service.ChangeRepoFilesOptions{
 		LastCommitID: form.LastCommit,
 		OldBranch:    ctx.Repo.BranchName,
@@ -290,7 +352,9 @@ func editFilePost(ctx *context.Context, form forms.EditRepoFileForm, isNewFile b
 				ContentReader: strings.NewReader(strings.ReplaceAll(form.Content, "\r", "")),
 			},
 		},
-		Signoff: form.Signoff,
+		Signoff:   form.Signoff,
+		Author:    gitIdentity,
+		Committer: gitIdentity,
 	}); err != nil {
 		// This is where we handle all the errors thrown by files_service.ChangeRepoFiles
 		if git.IsErrNotExist(err) {

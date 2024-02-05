@@ -138,12 +138,11 @@ func loadOAuth2From(rootCfg ConfigProvider) {
 
 	if InstallLock {
 		if _, err := util.Base64FixedDecode(base64.RawURLEncoding, []byte(OAuth2.JWTSecretBase64), 32); err != nil {
-			key, err := generate.NewJwtSecret()
+			_, OAuth2.JWTSecretBase64, err = generate.NewJwtSecret()
 			if err != nil {
 				log.Fatal("error generating JWT secret: %v", err)
 			}
 
-			OAuth2.JWTSecretBase64 = base64.RawURLEncoding.EncodeToString(key)
 			saveCfg, err := rootCfg.PrepareSaving()
 			if err != nil {
 				log.Fatal("save oauth2.JWT_SECRET failed: %v", err)

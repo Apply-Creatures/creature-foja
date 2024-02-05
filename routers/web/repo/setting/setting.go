@@ -474,10 +474,17 @@ func SettingsPost(ctx *context.Context) {
 			})
 			deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeWiki)
 		} else if form.EnableWiki && !form.EnableExternalWiki && !unit_model.TypeWiki.UnitGlobalDisabled() {
+			var wikiPermissions repo_model.UnitAccessMode
+			if form.GloballyWriteableWiki {
+				wikiPermissions = repo_model.UnitAccessModeWrite
+			} else {
+				wikiPermissions = repo_model.UnitAccessModeRead
+			}
 			units = append(units, repo_model.RepoUnit{
-				RepoID: repo.ID,
-				Type:   unit_model.TypeWiki,
-				Config: new(repo_model.UnitConfig),
+				RepoID:             repo.ID,
+				Type:               unit_model.TypeWiki,
+				Config:             new(repo_model.UnitConfig),
+				DefaultPermissions: wikiPermissions,
 			})
 			deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeExternalWiki)
 		} else {
@@ -595,7 +602,7 @@ func SettingsPost(ctx *context.Context) {
 			return
 		}
 
-		if err := repo_service.UpdateRepositoryUnits(ctx, repo, units, deleteUnitTypes); err != nil {
+		if err := repo_model.UpdateRepositoryUnits(ctx, repo, units, deleteUnitTypes); err != nil {
 			ctx.ServerError("UpdateRepositoryUnits", err)
 			return
 		}
@@ -866,6 +873,27 @@ func SettingsPost(ctx *context.Context) {
 		log.Trace("Repository wiki deleted: %s/%s", ctx.Repo.Owner.Name, repo.Name)
 
 		ctx.Flash.Success(ctx.Tr("repo.settings.wiki_deletion_success"))
+		ctx.Redirect(ctx.Repo.RepoLink + "/settings")
+
+	case "rename-wiki-branch":
+		if !ctx.Repo.IsOwner() {
+			ctx.Error(http.StatusNotFound)
+			return
+		}
+		if repo.FullName() != form.RepoName {
+			ctx.RenderWithErr(ctx.Tr("form.enterred_invalid_repo_name"), tplSettingsOptions, nil)
+			return
+		}
+
+		if err := wiki_service.NormalizeWikiBranch(ctx, repo, setting.Repository.DefaultBranch); err != nil {
+			log.Error("Normalize Wiki branch: %v", err.Error())
+			ctx.Flash.Error(ctx.Tr("repo.settings.wiki_branch_rename_failure"))
+			ctx.Redirect(ctx.Repo.RepoLink + "/settings")
+			return
+		}
+		log.Trace("Repository wiki normalized: %s#%s", repo.FullName(), setting.Repository.DefaultBranch)
+
+		ctx.Flash.Success(ctx.Tr("repo.settings.wiki_branch_rename_success"))
 		ctx.Redirect(ctx.Repo.RepoLink + "/settings")
 
 	case "archive":

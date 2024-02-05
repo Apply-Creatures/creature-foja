@@ -33,6 +33,16 @@ func (p *Permission) IsAdmin() bool {
 	return p.AccessMode >= perm_model.AccessModeAdmin
 }
 
+// IsGloballyWriteable returns true if the unit is writeable by all users of the instance.
+func (p *Permission) IsGloballyWriteable(unitType unit.Type) bool {
+	for _, u := range p.Units {
+		if u.Type == unitType {
+			return u.DefaultPermissions == repo_model.UnitAccessModeWrite
+		}
+	}
+	return false
+}
+
 // HasAccess returns true if the current user has at least read access to any unit of this repository
 func (p *Permission) HasAccess() bool {
 	if p.UnitsMode == nil {
@@ -198,7 +208,19 @@ func GetUserRepoPermission(ctx context.Context, repo *repo_model.Repository, use
 	if err := repo.LoadOwner(ctx); err != nil {
 		return perm, err
 	}
+
 	if !repo.Owner.IsOrganization() {
+		// for a public repo, different repo units may have different default
+		// permissions for non-restricted users.
+		if !repo.IsPrivate && !user.IsRestricted && len(repo.Units) > 0 {
+			perm.UnitsMode = make(map[unit.Type]perm_model.AccessMode)
+			for _, u := range repo.Units {
+				if _, ok := perm.UnitsMode[u.Type]; !ok {
+					perm.UnitsMode[u.Type] = u.DefaultPermissions.ToAccessMode(perm.AccessMode)
+				}
+			}
+		}
+
 		return perm, nil
 	}
 
@@ -239,10 +261,12 @@ func GetUserRepoPermission(ctx context.Context, repo *repo_model.Repository, use
 			}
 		}
 
-		// for a public repo on an organization, a non-restricted user has read permission on non-team defined units.
+		// for a public repo on an organization, a non-restricted user should
+		// have the same permission on non-team defined units as the default
+		// permissions for the repo unit.
 		if !found && !repo.IsPrivate && !user.IsRestricted {
 			if _, ok := perm.UnitsMode[u.Type]; !ok {
-				perm.UnitsMode[u.Type] = perm_model.AccessModeRead
+				perm.UnitsMode[u.Type] = u.DefaultPermissions.ToAccessMode(perm_model.AccessModeRead)
 			}
 		}
 	}

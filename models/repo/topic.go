@@ -199,7 +199,7 @@ func FindTopics(ctx context.Context, opts *FindTopicOptions) ([]*Topic, int64, e
 		sess.Join("INNER", "repo_topic", "repo_topic.topic_id = topic.id")
 		orderBy = "topic.name" // when render topics for a repo, it's better to sort them by name, to get consistent result
 	}
-	if opts.PageSize != 0 && opts.Page != 0 {
+	if opts.PageSize > 0 {
 		sess = db.SetSessionPagination(sess, opts)
 	}
 	topics := make([]*Topic, 0, 10)

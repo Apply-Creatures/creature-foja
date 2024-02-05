@@ -99,7 +99,7 @@ func findWikiRepoCommit(ctx *context.Context) (*git.Repository, *git.Commit, err
 		return nil, nil, err
 	}
 
-	commit, err := wikiRepo.GetBranchCommit(wiki_service.DefaultBranch)
+	commit, err := wikiRepo.GetBranchCommit(ctx.Repo.Repository.GetWikiBranchName())
 	if err != nil {
 		return wikiRepo, nil, err
 	}
@@ -316,7 +316,7 @@ func renderViewPage(ctx *context.Context) (*git.Repository, *git.TreeEntry) {
 	}
 
 	// get commit count - wiki revisions
-	commitsCount, _ := wikiRepo.FileCommitsCount(wiki_service.DefaultBranch, pageFilename)
+	commitsCount, _ := wikiRepo.FileCommitsCount(ctx.Repo.Repository.GetWikiBranchName(), pageFilename)
 	ctx.Data["CommitCount"] = commitsCount
 
 	return wikiRepo, entry
@@ -368,7 +368,7 @@ func renderRevisionPage(ctx *context.Context) (*git.Repository, *git.TreeEntry) 
 	ctx.Data["footerContent"] = ""
 
 	// get commit count - wiki revisions
-	commitsCount, _ := wikiRepo.FileCommitsCount(wiki_service.DefaultBranch, pageFilename)
+	commitsCount, _ := wikiRepo.FileCommitsCount(ctx.Repo.Repository.GetWikiBranchName(), pageFilename)
 	ctx.Data["CommitCount"] = commitsCount
 
 	// get page
@@ -380,7 +380,7 @@ func renderRevisionPage(ctx *context.Context) (*git.Repository, *git.TreeEntry) 
 	// get Commit Count
 	commitsHistory, err := wikiRepo.CommitsByFileAndRange(
 		git.CommitsByFileAndRangeOptions{
-			Revision: wiki_service.DefaultBranch,
+			Revision: ctx.Repo.Repository.GetWikiBranchName(),
 			File:     pageFilename,
 			Page:     page,
 		})

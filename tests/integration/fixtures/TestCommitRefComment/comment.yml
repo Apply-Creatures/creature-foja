@@ -1,0 +1,17 @@
+-
+  id: 1000
+  type: 4 # commit ref
+  poster_id: 2
+  issue_id: 2 # in repo_id 2
+  content: 4a357436d925b5c974181ff12a994538ddc5a269
+  created_unix: 1706469348
+  updated_unix: 1706469348
+
+-
+  id: 1001
+  type: 4 # commit ref
+  poster_id: 2
+  issue_id: 1 # in repo_id 2
+  content: 4a357436d925b5c974181ff12a994538ddc5a269
+  created_unix: 1706469348
+  updated_unix: 1706469348

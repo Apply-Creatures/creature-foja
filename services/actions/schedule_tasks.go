@@ -10,7 +10,6 @@ import (
 
 	actions_model "code.gitea.io/gitea/models/actions"
 	"code.gitea.io/gitea/models/db"
-	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/timeutil"
@@ -60,21 +59,13 @@ func startTasks(ctx context.Context) error {
 					row.RepoID,
 					row.Schedule.Ref,
 					row.Schedule.WorkflowID,
-					webhook_module.HookEventSchedule,
 				); err != nil {
 					log.Error("CancelRunningJobs: %v", err)
 				}
 			}
 
-			cfg, err := row.Repo.GetUnit(ctx, unit.TypeActions)
-			if err != nil {
-				if repo_model.IsErrUnitTypeNotExist(err) {
-					// Skip the actions unit of this repo is disabled.
-					continue
-				}
-				return fmt.Errorf("GetUnit: %w", err)
-			}
-			if cfg.ActionsConfig().IsWorkflowDisabled(row.Schedule.WorkflowID) {
+			cfg := row.Repo.MustGetUnit(ctx, unit.TypeActions).ActionsConfig()
+			if cfg.IsWorkflowDisabled(row.Schedule.WorkflowID) {
 				continue
 			}
 
@@ -121,8 +112,8 @@ func CreateScheduleTask(ctx context.Context, cron *actions_model.ActionSchedule)
 		Ref:           cron.Ref,
 		CommitSHA:     cron.CommitSHA,
 		Event:         cron.Event,
-		EventPayload:  cron.EventPayload,
 		TriggerEvent:  string(webhook_module.HookEventSchedule),
+		EventPayload:  cron.EventPayload,
 		ScheduleID:    cron.ID,
 		Status:        actions_model.StatusWaiting,
 	}

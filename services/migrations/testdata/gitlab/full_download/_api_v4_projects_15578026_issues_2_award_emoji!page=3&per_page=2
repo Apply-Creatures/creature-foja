@@ -1,0 +1,29 @@
+Content-Type: application/json
+X-Content-Type-Options: nosniff
+X-Frame-Options: SAMEORIGIN
+Referrer-Policy: strict-origin-when-cross-origin
+Link: <https://gitlab.com/api/v4/projects/15578026/issues/2/award_emoji?id=15578026&issue_iid=2&page=2&per_page=2>; rel="prev", <https://gitlab.com/api/v4/projects/15578026/issues/2/award_emoji?id=15578026&issue_iid=2&page=1&per_page=2>; rel="first", <https://gitlab.com/api/v4/projects/15578026/issues/2/award_emoji?id=15578026&issue_iid=2&page=3&per_page=2>; rel="last"
+Cf-Cache-Status: MISS
+Etag: W/"165d37bf09a54bb31f4619cca8722cb4"
+Ratelimit-Observed: 13
+Ratelimit-Limit: 2000
+Set-Cookie: _cfuvid=W6F2uJSFkB3Iyl27_xtklVvP4Z_nSsjPqytClHPW9H8-1701333888913-0-604800000; path=/; domain=.gitlab.com; HttpOnly; Secure; SameSite=None
+X-Page: 3
+X-Total-Pages: 3
+Strict-Transport-Security: max-age=31536000
+Ratelimit-Resettime: Thu, 30 Nov 2023 08:45:48 GMT
+Cache-Control: max-age=0, private, must-revalidate
+Vary: Origin, Accept-Encoding
+X-Gitlab-Meta: {"correlation_id":"b805751aeb6f562dff684cec34dfdc0b","version":"1"}
+X-Per-Page: 2
+X-Prev-Page: 2
+X-Runtime: 0.061943
+Gitlab-Lb: haproxy-main-11-lb-gprd
+Gitlab-Sv: localhost
+X-Total: 6
+Ratelimit-Remaining: 1987
+Content-Security-Policy: default-src 'none'
+X-Next-Page: 
+Ratelimit-Reset: 1701333948
+
+[{"id":3009636,"name":"confused","user":{"id":1241334,"username":"lafriks","name":"Lauris BH","state":"active","locked":false,"avatar_url":"https://gitlab.com/uploads/-/system/user/avatar/1241334/avatar.png","web_url":"https://gitlab.com/lafriks"},"created_at":"2019-11-28T08:47:27.248Z","updated_at":"2019-11-28T08:47:27.248Z","awardable_id":27687706,"awardable_type":"Issue","url":null},{"id":3009640,"name":"hearts","user":{"id":1241334,"username":"lafriks","name":"Lauris BH","state":"active","locked":false,"avatar_url":"https://gitlab.com/uploads/-/system/user/avatar/1241334/avatar.png","web_url":"https://gitlab.com/lafriks"},"created_at":"2019-11-28T08:47:33.059Z","updated_at":"2019-11-28T08:47:33.059Z","awardable_id":27687706,"awardable_type":"Issue","url":null}]

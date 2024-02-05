@@ -2,9 +2,15 @@
 	<div class="ui positive message gt-df gt-ac">
 		<div class="gt-f1">
 			{{$timeSince := TimeSince .CommitTime.AsTime ctx.Locale}}
-			{{ctx.Locale.Tr "repo.pulls.recently_pushed_new_branches" (Escape .Name) $timeSince | Safe}}
+			{{$repo := .GetRepo $.Context}}
+			{{$name := .Name}}
+			{{if ne $repo.ID $.Repository.ID}}
+				{{$name = (print $repo.FullName ":" .Name)}}
+			{{end}}
+			{{$branchLink := (print ($repo.Link) "/src/branch/" (PathEscapeSegments .Name))}}
+			{{ctx.Locale.Tr "repo.pulls.recently_pushed_new_branches" (Escape $name) $timeSince $branchLink | Safe}}
 		</div>
-		<a role="button" class="ui compact positive button gt-m-0" href="{{$.Repository.ComposeBranchCompareURL $.Repository.BaseRepo .Name}}">
+		<a role="button" class="ui compact positive button gt-m-0" href="{{$.Repository.ComposeBranchCompareURL $.Repository.BaseRepo $name}}">
 			{{ctx.Locale.Tr "repo.pulls.compare_changes"}}
 		</a>
 	</div>

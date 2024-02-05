@@ -166,6 +166,9 @@
 										<a class="ui basic tiny button" rel="nofollow" href="{{$.BeforeSourcePath}}/{{PathEscapeSegments .Name}}">{{ctx.Locale.Tr "repo.diff.view_file"}}</a>
 									{{else}}
 										<a class="ui basic tiny button" rel="nofollow" href="{{$.SourcePath}}/{{PathEscapeSegments .Name}}">{{ctx.Locale.Tr "repo.diff.view_file"}}</a>
+										{{if and $.HeadBranchIsEditable (not $file.IsLFSFile)}}
+											<a class="ui basic tiny button" rel="nofollow" href="{{$.SourceRepoLink}}/_edit/{{PathEscapeSegments $.HeadBranch}}/{{PathEscapeSegments .Name}}">{{ctx.Locale.Tr "repo.editor.edit_this_file"}}</a>
+										{{end}}
 									{{end}}
 								{{end}}
 								{{if $isReviewFile}}

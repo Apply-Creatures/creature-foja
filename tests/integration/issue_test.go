@@ -227,6 +227,56 @@ func TestIssueCommentDelete(t *testing.T) {
 	unittest.AssertNotExistsBean(t, &issues_model.Comment{ID: commentID})
 }
 
+func TestIssueCommentAttachment(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	const repoURL = "user2/repo1"
+	const content = "Test comment 4"
+	const status = ""
+	session := loginUser(t, "user2")
+	issueURL := testNewIssue(t, session, "user2", "repo1", "Title", "Description")
+
+	req := NewRequest(t, "GET", issueURL)
+	resp := session.MakeRequest(t, req, http.StatusOK)
+
+	htmlDoc := NewHTMLParser(t, resp.Body)
+	link, exists := htmlDoc.doc.Find("#comment-form").Attr("action")
+	assert.True(t, exists, "The template has changed")
+
+	uuid := createAttachment(t, session, repoURL, "image.png", generateImg(), http.StatusOK)
+
+	commentCount := htmlDoc.doc.Find(".comment-list .comment .render-content").Length()
+
+	req = NewRequestWithValues(t, "POST", link, map[string]string{
+		"_csrf":   htmlDoc.GetCSRF(),
+		"content": content,
+		"status":  status,
+		"files":   uuid,
+	})
+	resp = session.MakeRequest(t, req, http.StatusOK)
+
+	req = NewRequest(t, "GET", test.RedirectURL(resp))
+	resp = session.MakeRequest(t, req, http.StatusOK)
+
+	htmlDoc = NewHTMLParser(t, resp.Body)
+
+	val := htmlDoc.doc.Find(".comment-list .comment .render-content p").Eq(commentCount).Text()
+	assert.Equal(t, content, val)
+
+	idAttr, has := htmlDoc.doc.Find(".comment-list .comment").Eq(commentCount).Attr("id")
+	idStr := idAttr[strings.LastIndexByte(idAttr, '-')+1:]
+	assert.True(t, has)
+	id, err := strconv.Atoi(idStr)
+	assert.NoError(t, err)
+	assert.NotEqual(t, 0, id)
+
+	req = NewRequest(t, "GET", fmt.Sprintf("/%s/%s/comments/%d/attachments", "user2", "repo1", id))
+	session.MakeRequest(t, req, http.StatusOK)
+
+	// Using the ID of a comment that does not belong to the repository must fail
+	req = NewRequest(t, "GET", fmt.Sprintf("/%s/%s/comments/%d/attachments", "user5", "repo4", id))
+	session.MakeRequest(t, req, http.StatusNotFound)
+}
+
 func TestIssueCommentUpdate(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	session := loginUser(t, "user2")
@@ -579,6 +629,48 @@ func TestGetIssueInfo(t *testing.T) {
 	assert.EqualValues(t, issue.ID, apiIssue.ID)
 }
 
+func TestIssuePinMove(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	session := loginUser(t, "user2")
+	issueURL, issue := testIssueWithBean(t, "user2", 1, "Title", "Content")
+	assert.EqualValues(t, 0, issue.PinOrder)
+
+	req := NewRequestWithValues(t, "POST", fmt.Sprintf("%s/pin", issueURL), map[string]string{
+		"_csrf": GetCSRF(t, session, issueURL),
+	})
+	session.MakeRequest(t, req, http.StatusOK)
+	issue = unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: issue.ID})
+
+	position := 1
+	assert.EqualValues(t, position, issue.PinOrder)
+
+	newPosition := 2
+
+	// Using the ID of an issue that does not belong to the repository must fail
+	{
+		session5 := loginUser(t, "user5")
+		movePinURL := "/user5/repo4/issues/move_pin?_csrf=" + GetCSRF(t, session5, issueURL)
+		req = NewRequestWithJSON(t, "POST", movePinURL, map[string]any{
+			"id":       issue.ID,
+			"position": newPosition,
+		})
+		session5.MakeRequest(t, req, http.StatusNotFound)
+
+		issue = unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: issue.ID})
+		assert.EqualValues(t, position, issue.PinOrder)
+	}
+
+	movePinURL := issueURL[:strings.LastIndexByte(issueURL, '/')] + "/move_pin?_csrf=" + GetCSRF(t, session, issueURL)
+	req = NewRequestWithJSON(t, "POST", movePinURL, map[string]any{
+		"id":       issue.ID,
+		"position": newPosition,
+	})
+	session.MakeRequest(t, req, http.StatusNoContent)
+
+	issue = unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: issue.ID})
+	assert.EqualValues(t, newPosition, issue.PinOrder)
+}
+
 func TestUpdateIssueDeadline(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
@@ -625,4 +717,83 @@ func TestIssueReferenceURL(t *testing.T) {
 
 	ref, _ = htmlDoc.Find(`.timeline-item.comment:not(.first) .reference-issue`).Attr("data-reference")
 	assert.EqualValues(t, "/user2/repo1/issues/1#issuecomment-2", ref)
+}
+
+func TestGetContentHistory(t *testing.T) {
+	defer tests.AddFixtures("tests/integration/fixtures/TestGetContentHistory/")()
+	defer tests.PrepareTestEnv(t)()
+
+	issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: 1})
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: issue.RepoID})
+	issueURL := fmt.Sprintf("%s/issues/%d", repo.FullName(), issue.Index)
+	contentHistory := unittest.AssertExistsAndLoadBean(t, &issues_model.ContentHistory{ID: 2, IssueID: issue.ID})
+	contentHistoryURL := fmt.Sprintf("%s/issues/%d/content-history/detail?comment_id=%d&history_id=%d", repo.FullName(), issue.Index, contentHistory.CommentID, contentHistory.ID)
+
+	type contentHistoryResp struct {
+		CanSoftDelete bool `json:"canSoftDelete"`
+		HistoryID     int  `json:"historyId"`
+		PrevHistoryID int  `json:"prevHistoryId"`
+	}
+
+	testCase := func(t *testing.T, session *TestSession, canDelete bool) {
+		t.Helper()
+		contentHistoryURL := contentHistoryURL + "&_csrf=" + GetCSRF(t, session, issueURL)
+
+		req := NewRequest(t, "GET", contentHistoryURL)
+		resp := session.MakeRequest(t, req, http.StatusOK)
+
+		var respJSON contentHistoryResp
+		DecodeJSON(t, resp, &respJSON)
+
+		assert.EqualValues(t, canDelete, respJSON.CanSoftDelete)
+		assert.EqualValues(t, contentHistory.ID, respJSON.HistoryID)
+		assert.EqualValues(t, contentHistory.ID-1, respJSON.PrevHistoryID)
+	}
+
+	t.Run("Anonymous", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		testCase(t, emptyTestSession(t), false)
+	})
+
+	t.Run("Another user", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		testCase(t, loginUser(t, "user8"), false)
+	})
+
+	t.Run("Repo owner", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		testCase(t, loginUser(t, "user2"), true)
+	})
+
+	t.Run("Poster", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		testCase(t, loginUser(t, "user5"), true)
+	})
+}
+
+func TestCommitRefComment(t *testing.T) {
+	defer tests.AddFixtures("tests/integration/fixtures/TestCommitRefComment/")()
+	defer tests.PrepareTestEnv(t)()
+
+	t.Run("Pull request", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", "/user2/repo1/pulls/2")
+		resp := MakeRequest(t, req, http.StatusOK)
+		htmlDoc := NewHTMLParser(t, resp.Body)
+
+		event := htmlDoc.Find("#issuecomment-1000 .text").Text()
+		assert.Contains(t, event, "referenced this pull request")
+	})
+
+	t.Run("Issue", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", "/user2/repo1/issues/1")
+		resp := MakeRequest(t, req, http.StatusOK)
+		htmlDoc := NewHTMLParser(t, resp.Body)
+
+		event := htmlDoc.Find("#issuecomment-1001 .text").Text()
+		assert.Contains(t, event, "referenced this issue")
+	})
 }

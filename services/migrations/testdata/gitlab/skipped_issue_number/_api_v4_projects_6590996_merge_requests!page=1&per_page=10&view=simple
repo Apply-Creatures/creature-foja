@@ -1,0 +1,29 @@
+Vary: Origin, Accept-Encoding
+Strict-Transport-Security: max-age=31536000
+Gitlab-Sv: localhost
+X-Content-Type-Options: nosniff
+X-Prev-Page: 
+Ratelimit-Reset: 1701332694
+Cache-Control: max-age=0, private, must-revalidate
+Ratelimit-Limit: 2000
+Referrer-Policy: strict-origin-when-cross-origin
+Ratelimit-Observed: 6
+Ratelimit-Resettime: Thu, 30 Nov 2023 08:24:54 GMT
+Cf-Cache-Status: MISS
+Content-Type: application/json
+Content-Security-Policy: default-src 'none'
+Etag: W/"1a50811aa3cccb2e6a404a976422a83a"
+X-Total: 1
+Ratelimit-Remaining: 1994
+Set-Cookie: _cfuvid=u.zumTkG1ayCnh_OwrT9Q1Fl3MXV9Gh98W.ma4WN2Xs-1701332634745-0-604800000; path=/; domain=.gitlab.com; HttpOnly; Secure; SameSite=None
+Link: <https://gitlab.com/api/v4/projects/6590996/merge_requests?id=6590996&order_by=created_at&page=1&per_page=10&sort=desc&state=all&view=simple&with_labels_details=false&with_merge_status_recheck=false>; rel="first", <https://gitlab.com/api/v4/projects/6590996/merge_requests?id=6590996&order_by=created_at&page=1&per_page=10&sort=desc&state=all&view=simple&with_labels_details=false&with_merge_status_recheck=false>; rel="last"
+X-Frame-Options: SAMEORIGIN
+X-Page: 1
+X-Total-Pages: 1
+Gitlab-Lb: haproxy-main-05-lb-gprd
+X-Gitlab-Meta: {"correlation_id":"907f9e1f94131ea7a6d1405100a8cc4b","version":"1"}
+X-Next-Page: 
+X-Per-Page: 10
+X-Runtime: 0.078413
+
+[{"id":10518914,"iid":1,"project_id":6590996,"title":"Review","description":"*Created by: cgtx*\n\n### remove patch from makedepends\n- patch is in base-devel\n- The group base-devel is assumed to be already installed when building with makepkg. Members of \"base-devel\" should not be included in makedepends arrays.\n- https://wiki.archlinux.org/index.php/Pkgbuild#makedepends\n### remove python2 from makedepends\n- python2 is a dependency of python2-setuptools.  It is redundant to list it again.\n- You do not need to list packages that your software depends on if other packages your software depends on already have those packages listed in their dependency.\n- https://wiki.archlinux.org/index.php/Pkgbuild#depends\n### more simple find/delete command\n- just because\n","state":"merged","created_at":"2014-12-12T15:01:32.000Z","updated_at":"2014-12-12T15:28:38.000Z","web_url":"https://gitlab.com/troyengel/archbuild/-/merge_requests/1"}]

@@ -515,6 +515,62 @@ func GetCommitFileStatus(ctx context.Context, repoPath, commitID string) (*Commi
 	return fileStatus, nil
 }
 
+func parseCommitRenames(renames *[][2]string, stdout io.Reader) {
+	rd := bufio.NewReader(stdout)
+	for {
+		// Skip (R || three digits || NULL byte)
+		_, err := rd.Discard(5)
+		if err != nil {
+			if err != io.EOF {
+				log.Error("Unexpected error whilst reading from git log --name-status. Error: %v", err)
+			}
+			return
+		}
+		oldFileName, err := rd.ReadString('\x00')
+		if err != nil {
+			if err != io.EOF {
+				log.Error("Unexpected error whilst reading from git log --name-status. Error: %v", err)
+			}
+			return
+		}
+		newFileName, err := rd.ReadString('\x00')
+		if err != nil {
+			if err != io.EOF {
+				log.Error("Unexpected error whilst reading from git log --name-status. Error: %v", err)
+			}
+			return
+		}
+		oldFileName = strings.TrimSuffix(oldFileName, "\x00")
+		newFileName = strings.TrimSuffix(newFileName, "\x00")
+		*renames = append(*renames, [2]string{oldFileName, newFileName})
+	}
+}
+
+// GetCommitFileRenames returns the renames that the commit contains.
+func GetCommitFileRenames(ctx context.Context, repoPath, commitID string) ([][2]string, error) {
+	renames := [][2]string{}
+	stdout, w := io.Pipe()
+	done := make(chan struct{})
+	go func() {
+		parseCommitRenames(&renames, stdout)
+		close(done)
+	}()
+
+	stderr := new(bytes.Buffer)
+	err := NewCommand(ctx, "show", "--name-status", "--pretty=format:", "-z", "--diff-filter=R").AddDynamicArguments(commitID).Run(&RunOpts{
+		Dir:    repoPath,
+		Stdout: w,
+		Stderr: stderr,
+	})
+	w.Close() // Close writer to exit parsing goroutine
+	if err != nil {
+		return nil, ConcatenateError(err, stderr.String())
+	}
+
+	<-done
+	return renames, nil
+}
+
 // GetFullCommitID returns full length (40) of commit ID by given short SHA in a repository.
 func GetFullCommitID(ctx context.Context, repoPath, shortID string) (string, error) {
 	commitID, _, err := NewCommand(ctx, "rev-parse").AddDynamicArguments(shortID).RunStdString(&RunOpts{Dir: repoPath})

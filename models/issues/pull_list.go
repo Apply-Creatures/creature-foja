@@ -50,6 +50,14 @@ func listPullRequestStatement(ctx context.Context, baseRepoID int64, opts *PullR
 	return sess, nil
 }
 
+func GetUnmergedPullRequestsByHeadInfoMax(ctx context.Context, repoID, maxIndex int64, branch string) ([]*PullRequest, error) {
+	prs := make([]*PullRequest, 0, 2)
+	sess := db.GetEngine(ctx).
+		Join("INNER", "issue", "issue.id = `pull_request`.issue_id").
+		Where("`pull_request`.head_repo_id = ? AND `pull_request`.head_branch = ? AND `pull_request`.has_merged = ? AND `issue`.is_closed = ? AND `pull_request`.flow = ? AND `issue`.`index` <= ?", repoID, branch, false, false, PullRequestFlowGithub, maxIndex)
+	return prs, sess.Find(&prs)
+}
+
 // GetUnmergedPullRequestsByHeadInfo returns all pull requests that are open and has not been merged
 func GetUnmergedPullRequestsByHeadInfo(ctx context.Context, repoID int64, branch string) ([]*PullRequest, error) {
 	prs := make([]*PullRequest, 0, 2)

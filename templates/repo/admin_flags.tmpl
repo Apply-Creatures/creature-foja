@@ -1,0 +1,8 @@
+{{if .Repository.IsFlagged $.Context}}
+	<div class="ui info message" style="text-align: left">
+		<strong>{{ctx.Locale.Tr "repo.admin.enabled_flags"}}</strong>
+		{{range .Repository.ListFlags $.Context}}
+			<span class="ui label">{{.Name}}</span>
+		{{end}}
+	</div>
+{{end}}

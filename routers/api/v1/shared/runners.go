@@ -12,7 +12,7 @@ import (
 	"code.gitea.io/gitea/modules/util"
 )
 
-// RegistrationToken is response related to registeration token
+// RegistrationToken is a string used to register a runner with a server
 // swagger:response RegistrationToken
 type RegistrationToken struct {
 	Token string `json:"token"`

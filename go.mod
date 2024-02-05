@@ -15,7 +15,6 @@ require (
 	gitea.com/lunny/levelqueue v0.4.2-0.20230414023320-3c0159fe0fe4
 	github.com/42wim/sshsig v0.0.0-20211121163825-841cf5bbc121
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358
-	github.com/NYTimes/gziphandler v1.1.1
 	github.com/PuerkitoBio/goquery v1.8.1
 	github.com/alecthomas/chroma/v2 v2.12.0
 	github.com/blakesmith/ar v0.0.0-20190502131153-809d4375e1fb
@@ -77,14 +76,12 @@ require (
 	github.com/mholt/archiver/v3 v3.5.1
 	github.com/microcosm-cc/bluemonday v1.0.26
 	github.com/minio/minio-go/v7 v7.0.66
-	github.com/minio/sha256-simd v1.0.1
 	github.com/msteinert/pam v1.2.0
 	github.com/nektos/act v0.2.52
 	github.com/niklasfasching/go-org v1.7.0
 	github.com/olivere/elastic/v7 v7.0.32
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.0-rc6
-	github.com/pkg/errors v0.9.1
 	github.com/pquerna/otp v1.4.0
 	github.com/prometheus/client_golang v1.18.0
 	github.com/quasoft/websspi v1.1.2
@@ -100,7 +97,6 @@ require (
 	github.com/ulikunitz/xz v0.5.11
 	github.com/urfave/cli/v2 v2.27.1
 	github.com/xanzy/go-gitlab v0.96.0
-	github.com/xeipuuv/gojsonschema v1.2.0
 	github.com/yohcop/openid-go v1.0.1
 	github.com/yuin/goldmark v1.6.0
 	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20230729083705-37449abec8cc
@@ -230,6 +226,7 @@ require (
 	github.com/mholt/acmez v1.2.0 // indirect
 	github.com/miekg/dns v1.1.58 // indirect
 	github.com/minio/md5-simd v1.1.2 // indirect
+	github.com/minio/sha256-simd v1.0.1 // indirect
 	github.com/mitchellh/copystructure v1.2.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
@@ -245,6 +242,7 @@ require (
 	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.21 // indirect
 	github.com/pjbgf/sha1cd v0.3.0 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect
 	github.com/prometheus/common v0.46.0 // indirect
@@ -275,8 +273,6 @@ require (
 	github.com/valyala/fastjson v1.6.4 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect
-	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
-	github.com/xeipuuv/gojsonreference v0.0.0-20180127040603-bd5ef7bd5415 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	github.com/xrash/smetrics v0.0.0-20231213231151-1d8dd44e695e // indirect
 	github.com/zeebo/blake3 v0.2.3 // indirect

@@ -4,13 +4,7 @@
 package v1_21 //nolint
 
 import (
-	"context"
-	"fmt"
-	"path/filepath"
-	"strings"
-
-	"code.gitea.io/gitea/modules/git"
-	giturl "code.gitea.io/gitea/modules/git/url"
+	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/setting"
 
 	"xorm.io/xorm"
@@ -73,7 +67,7 @@ func migratePullMirrors(x *xorm.Engine) error {
 		start += len(mirrors)
 
 		for _, m := range mirrors {
-			remoteAddress, err := getRemoteAddress(m.RepoOwner, m.RepoName, "origin")
+			remoteAddress, err := repo_model.GetPushMirrorRemoteAddress(m.RepoOwner, m.RepoName, "origin")
 			if err != nil {
 				return err
 			}
@@ -136,7 +130,7 @@ func migratePushMirrors(x *xorm.Engine) error {
 		start += len(mirrors)
 
 		for _, m := range mirrors {
-			remoteAddress, err := getRemoteAddress(m.RepoOwner, m.RepoName, m.RemoteName)
+			remoteAddress, err := repo_model.GetPushMirrorRemoteAddress(m.RepoOwner, m.RepoName, m.RemoteName)
 			if err != nil {
 				return err
 			}
@@ -159,21 +153,4 @@ func migratePushMirrors(x *xorm.Engine) error {
 	}
 
 	return sess.Commit()
-}
-
-func getRemoteAddress(ownerName, repoName, remoteName string) (string, error) {
-	repoPath := filepath.Join(setting.RepoRootPath, strings.ToLower(ownerName), strings.ToLower(repoName)+".git")
-
-	remoteURL, err := git.GetRemoteAddress(context.Background(), repoPath, remoteName)
-	if err != nil {
-		return "", fmt.Errorf("get remote %s's address of %s/%s failed: %v", remoteName, ownerName, repoName, err)
-	}
-
-	u, err := giturl.Parse(remoteURL)
-	if err != nil {
-		return "", err
-	}
-	u.User = nil
-
-	return u.String(), nil
 }

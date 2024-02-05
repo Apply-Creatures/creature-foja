@@ -454,29 +454,7 @@ func GetIssueComment(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	comment, err := issues_model.GetCommentByID(ctx, ctx.ParamsInt64(":id"))
-	if err != nil {
-		if issues_model.IsErrCommentNotExist(err) {
-			ctx.NotFound(err)
-		} else {
-			ctx.Error(http.StatusInternalServerError, "GetCommentByID", err)
-		}
-		return
-	}
-
-	if err = comment.LoadIssue(ctx); err != nil {
-		ctx.InternalServerError(err)
-		return
-	}
-	if comment.Issue.RepoID != ctx.Repo.Repository.ID {
-		ctx.Status(http.StatusNotFound)
-		return
-	}
-
-	if !ctx.Repo.CanReadIssuesOrPulls(comment.Issue.IsPull) {
-		ctx.NotFound()
-		return
-	}
+	comment := ctx.Comment
 
 	if comment.Type != issues_model.CommentTypeComment {
 		ctx.Status(http.StatusNoContent)
@@ -587,25 +565,7 @@ func EditIssueCommentDeprecated(ctx *context.APIContext) {
 }
 
 func editIssueComment(ctx *context.APIContext, form api.EditIssueCommentOption) {
-	comment, err := issues_model.GetCommentByID(ctx, ctx.ParamsInt64(":id"))
-	if err != nil {
-		if issues_model.IsErrCommentNotExist(err) {
-			ctx.NotFound(err)
-		} else {
-			ctx.Error(http.StatusInternalServerError, "GetCommentByID", err)
-		}
-		return
-	}
-
-	if err := comment.LoadIssue(ctx); err != nil {
-		ctx.Error(http.StatusInternalServerError, "LoadIssue", err)
-		return
-	}
-
-	if comment.Issue.RepoID != ctx.Repo.Repository.ID {
-		ctx.Status(http.StatusNotFound)
-		return
-	}
+	comment := ctx.Comment
 
 	if !ctx.IsSigned || (ctx.Doer.ID != comment.PosterID && !ctx.Repo.CanWriteIssuesOrPulls(comment.Issue.IsPull)) {
 		ctx.Status(http.StatusForbidden)
@@ -617,7 +577,7 @@ func editIssueComment(ctx *context.APIContext, form api.EditIssueCommentOption) 
 		return
 	}
 
-	err = comment.LoadIssue(ctx)
+	err := comment.LoadIssue(ctx)
 	if err != nil {
 		ctx.Error(http.StatusInternalServerError, "LoadIssue", err)
 		return
@@ -668,7 +628,7 @@ func DeleteIssueComment(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	deleteIssueComment(ctx)
+	deleteIssueComment(ctx, issues_model.CommentTypeComment)
 }
 
 // DeleteIssueCommentDeprecated delete a comment from an issue
@@ -707,39 +667,21 @@ func DeleteIssueCommentDeprecated(ctx *context.APIContext) {
 	//   "404":
 	//     "$ref": "#/responses/notFound"
 
-	deleteIssueComment(ctx)
+	deleteIssueComment(ctx, issues_model.CommentTypeComment)
 }
 
-func deleteIssueComment(ctx *context.APIContext) {
-	comment, err := issues_model.GetCommentByID(ctx, ctx.ParamsInt64(":id"))
-	if err != nil {
-		if issues_model.IsErrCommentNotExist(err) {
-			ctx.NotFound(err)
-		} else {
-			ctx.Error(http.StatusInternalServerError, "GetCommentByID", err)
-		}
-		return
-	}
-
-	if err := comment.LoadIssue(ctx); err != nil {
-		ctx.Error(http.StatusInternalServerError, "LoadIssue", err)
-		return
-	}
-
-	if comment.Issue.RepoID != ctx.Repo.Repository.ID {
-		ctx.Status(http.StatusNotFound)
-		return
-	}
+func deleteIssueComment(ctx *context.APIContext, commentType issues_model.CommentType) {
+	comment := ctx.Comment
 
 	if !ctx.IsSigned || (ctx.Doer.ID != comment.PosterID && !ctx.Repo.CanWriteIssuesOrPulls(comment.Issue.IsPull)) {
 		ctx.Status(http.StatusForbidden)
 		return
-	} else if comment.Type != issues_model.CommentTypeComment {
+	} else if comment.Type != commentType {
 		ctx.Status(http.StatusNoContent)
 		return
 	}
 
-	if err = issue_service.DeleteComment(ctx, ctx.Doer, comment); err != nil {
+	if err := issue_service.DeleteComment(ctx, ctx.Doer, comment); err != nil {
 		ctx.Error(http.StatusInternalServerError, "DeleteCommentByID", err)
 		return
 	}

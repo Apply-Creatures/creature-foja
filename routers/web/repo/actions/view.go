@@ -46,6 +46,20 @@ func View(ctx *context_module.Context) {
 	ctx.HTML(http.StatusOK, tplViewActions)
 }
 
+func ViewLatest(ctx *context_module.Context) {
+	run, err := actions_model.GetLatestRun(ctx, ctx.Repo.Repository.ID)
+	if err != nil {
+		ctx.NotFound("GetLatestRun", err)
+		return
+	}
+	err = run.LoadAttributes(ctx)
+	if err != nil {
+		ctx.ServerError("LoadAttributes", err)
+		return
+	}
+	ctx.Redirect(run.HTMLURL(), http.StatusTemporaryRedirect)
+}
+
 type ViewRequest struct {
 	LogCursors []struct {
 		Step     int   `json:"step"`

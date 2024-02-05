@@ -157,6 +157,8 @@
 				<dd>{{if .Service.DefaultKeepEmailPrivate}}{{svg "octicon-check"}}{{else}}{{svg "octicon-x"}}{{end}}</dd>
 				<dt>{{ctx.Locale.Tr "admin.config.default_allow_create_organization"}}</dt>
 				<dd>{{if .Service.DefaultAllowCreateOrganization}}{{svg "octicon-check"}}{{else}}{{svg "octicon-x"}}{{end}}</dd>
+				<dt>{{ctx.Locale.Tr "admin.config.allow_dots_in_usernames"}}</dt>
+				<dd>{{if .Service.AllowDotsInUsernames}}{{svg "octicon-check"}}{{else}}{{svg "octicon-x"}}{{end}}</dd>
 				<dt>{{ctx.Locale.Tr "admin.config.enable_timetracking"}}</dt>
 				<dd>{{if .Service.EnableTimetracking}}{{svg "octicon-check"}}{{else}}{{svg "octicon-x"}}{{end}}</dd>
 				{{if .Service.EnableTimetracking}}

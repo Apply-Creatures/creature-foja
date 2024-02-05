@@ -171,14 +171,13 @@ func updateRepoRunsNumbers(ctx context.Context, repo *repo_model.Repository) err
 }
 
 // CancelRunningJobs cancels all running and waiting jobs associated with a specific workflow.
-func CancelRunningJobs(ctx context.Context, repoID int64, ref, workflowID string, event webhook_module.HookEventType) error {
+func CancelRunningJobs(ctx context.Context, repoID int64, ref, workflowID string) error {
 	// Find all runs in the specified repository, reference, and workflow with statuses 'Running' or 'Waiting'.
 	runs, total, err := db.FindAndCount[ActionRun](ctx, FindRunOptions{
-		RepoID:       repoID,
-		Ref:          ref,
-		WorkflowID:   workflowID,
-		TriggerEvent: event,
-		Status:       []Status{StatusRunning, StatusWaiting},
+		RepoID:     repoID,
+		Ref:        ref,
+		WorkflowID: workflowID,
+		Status:     []Status{StatusRunning, StatusWaiting},
 	})
 	if err != nil {
 		return err
@@ -310,6 +309,32 @@ func InsertRun(ctx context.Context, run *ActionRun, jobs []*jobparser.SingleWork
 	}
 
 	return commiter.Commit()
+}
+
+func GetLatestRun(ctx context.Context, repoID int64) (*ActionRun, error) {
+	var run ActionRun
+	has, err := db.GetEngine(ctx).Where("repo_id=?", repoID).OrderBy("id DESC").Limit(1).Get(&run)
+	if err != nil {
+		return nil, err
+	} else if !has {
+		return nil, fmt.Errorf("latest run: %w", util.ErrNotExist)
+	}
+	return &run, nil
+}
+
+func GetLatestRunForBranchAndWorkflow(ctx context.Context, repoID int64, branch, workflowFile, event string) (*ActionRun, error) {
+	var run ActionRun
+	q := db.GetEngine(ctx).Where("repo_id=?", repoID).And("ref=?", branch).And("workflow_id=?", workflowFile)
+	if event != "" {
+		q = q.And("event=?", event)
+	}
+	has, err := q.Desc("id").Get(&run)
+	if err != nil {
+		return nil, err
+	} else if !has {
+		return nil, util.NewNotExistErrorf("run with repo_id %d, ref %s, workflow_id %s", repoID, branch, workflowFile)
+	}
+	return &run, nil
 }
 
 func GetRunByID(ctx context.Context, id int64) (*ActionRun, error) {

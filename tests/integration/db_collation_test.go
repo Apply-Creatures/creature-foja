@@ -1,14 +1,18 @@
 // Copyright 2023 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors c/o Codeberg e.V.. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package integration
 
 import (
+	"net/http"
 	"testing"
+	"time"
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/test"
+	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
 	"xorm.io/xorm"
@@ -17,6 +21,29 @@ import (
 type TestCollationTbl struct {
 	ID  int64
 	Txt string `xorm:"VARCHAR(10) UNIQUE"`
+}
+
+func TestDatabaseCollationSelfCheckUI(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	assertSelfCheckExists := func(exists bool) {
+		expectedHTTPResponse := http.StatusOK
+		if !exists {
+			expectedHTTPResponse = http.StatusNotFound
+		}
+		session := loginUser(t, "user1")
+		req := NewRequest(t, "GET", "/admin/self_check")
+		resp := session.MakeRequest(t, req, expectedHTTPResponse)
+		htmlDoc := NewHTMLParser(t, resp.Body)
+
+		htmlDoc.AssertElement(t, "a.item[href*='/admin/self_check']", exists)
+	}
+
+	if setting.Database.Type.IsMySQL() || setting.Database.Type.IsMSSQL() {
+		assertSelfCheckExists(true)
+	} else {
+		assertSelfCheckExists(false)
+	}
 }
 
 func TestDatabaseCollation(t *testing.T) {
@@ -48,6 +75,8 @@ func TestDatabaseCollation(t *testing.T) {
 	}
 
 	t.Run("Default startup makes database collation case-sensitive", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
 		r, err := db.CheckCollations(x)
 		assert.NoError(t, err)
 		assert.True(t, r.IsCollationCaseSensitive(r.DatabaseCollation))
@@ -78,8 +107,12 @@ func TestDatabaseCollation(t *testing.T) {
 	}
 
 	t.Run("Convert tables to utf8mb4_bin", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
 		defer test.MockVariableValue(&setting.Database.CharsetCollation, "utf8mb4_bin")()
 		assert.NoError(t, db.ConvertDatabaseTable())
+		time.Sleep(5 * time.Second)
+
 		r, err := db.CheckCollations(x)
 		assert.NoError(t, err)
 		assert.Equal(t, "utf8mb4_bin", r.DatabaseCollation)
@@ -95,8 +128,12 @@ func TestDatabaseCollation(t *testing.T) {
 	})
 
 	t.Run("Convert tables to utf8mb4_general_ci", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
 		defer test.MockVariableValue(&setting.Database.CharsetCollation, "utf8mb4_general_ci")()
 		assert.NoError(t, db.ConvertDatabaseTable())
+		time.Sleep(5 * time.Second)
+
 		r, err := db.CheckCollations(x)
 		assert.NoError(t, err)
 		assert.Equal(t, "utf8mb4_general_ci", r.DatabaseCollation)
@@ -112,8 +149,12 @@ func TestDatabaseCollation(t *testing.T) {
 	})
 
 	t.Run("Convert tables to default case-sensitive collation", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
 		defer test.MockVariableValue(&setting.Database.CharsetCollation, "")()
 		assert.NoError(t, db.ConvertDatabaseTable())
+		time.Sleep(5 * time.Second)
+
 		r, err := db.CheckCollations(x)
 		assert.NoError(t, err)
 		assert.True(t, r.IsCollationCaseSensitive(r.DatabaseCollation))

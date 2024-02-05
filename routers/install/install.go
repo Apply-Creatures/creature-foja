@@ -358,6 +358,12 @@ func SubmitInstall(ctx *context.Context) {
 			ctx.RenderWithErr(ctx.Tr("form.password_not_match"), tplInstall, form)
 			return
 		}
+		if len(form.AdminPasswd) < setting.MinPasswordLength {
+			ctx.Data["Err_Admin"] = true
+			ctx.Data["Err_AdminPasswd"] = true
+			ctx.RenderWithErr(ctx.Tr("auth.password_too_short", setting.MinPasswordLength), tplInstall, form)
+			return
+		}
 	}
 
 	// Init the engine with migration
@@ -407,7 +413,7 @@ func SubmitInstall(ctx *context.Context) {
 		cfg.Section("server").Key("LFS_START_SERVER").SetValue("true")
 		cfg.Section("lfs").Key("PATH").SetValue(form.LFSRootPath)
 		var lfsJwtSecret string
-		if _, lfsJwtSecret, err = generate.NewJwtSecretBase64(); err != nil {
+		if _, lfsJwtSecret, err = generate.NewJwtSecret(); err != nil {
 			ctx.RenderWithErr(ctx.Tr("install.lfs_jwt_secret_failed", err), tplInstall, &form)
 			return
 		}

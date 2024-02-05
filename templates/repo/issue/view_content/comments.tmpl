@@ -152,7 +152,11 @@
 				{{template "shared/user/avatarlink" dict "user" .Poster}}
 				<span class="text grey muted-links">
 					{{template "shared/user/authorlink" .Poster}}
-					{{ctx.Locale.Tr "repo.issues.commit_ref_at" .EventTag $createdStr | Safe}}
+					{{if .Issue.IsPull}}
+						{{ctx.Locale.Tr "repo.pulls.commit_ref_at" .EventTag $createdStr | Safe}}
+					{{else}}
+						{{ctx.Locale.Tr "repo.issues.commit_ref_at" .EventTag $createdStr | Safe}}
+					{{end}}
 				</span>
 				<div class="detail">
 					{{svg "octicon-git-commit"}}

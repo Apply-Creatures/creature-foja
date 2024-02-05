@@ -1,0 +1,17 @@
+-
+  id: 1
+  issue_id: 1
+  comment_id: 3
+  edited_unix: 1687612839
+  content_text: Original Text
+  is_first_created: true
+  is_deleted: false
+
+-
+  id: 2
+  issue_id: 1
+  comment_id: 3
+  edited_unix: 1687612840
+  content_text: "meh..." # This has to be consistent with comment.yml
+  is_first_created: false
+  is_deleted: false

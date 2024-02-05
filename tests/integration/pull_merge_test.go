@@ -30,7 +30,6 @@ import (
 	"code.gitea.io/gitea/modules/test"
 	"code.gitea.io/gitea/modules/translation"
 	"code.gitea.io/gitea/services/pull"
-	repo_service "code.gitea.io/gitea/services/repository"
 	files_service "code.gitea.io/gitea/services/repository/files"
 
 	"github.com/stretchr/testify/assert"
@@ -370,18 +369,11 @@ func TestConflictChecking(t *testing.T) {
 		user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
 
 		// Create new clean repo to test conflict checking.
-		baseRepo, err := repo_service.CreateRepository(db.DefaultContext, user, user, repo_service.CreateRepoOptions{
-			Name:          "conflict-checking",
-			Description:   "Tempo repo",
-			AutoInit:      true,
-			Readme:        "Default",
-			DefaultBranch: "main",
-		})
-		assert.NoError(t, err)
-		assert.NotEmpty(t, baseRepo)
+		baseRepo, _, f := CreateDeclarativeRepo(t, user, "conflict-checking", nil, nil, nil)
+		defer f()
 
 		// create a commit on new branch.
-		_, err = files_service.ChangeRepoFiles(git.DefaultContext, baseRepo, user, &files_service.ChangeRepoFilesOptions{
+		_, err := files_service.ChangeRepoFiles(git.DefaultContext, baseRepo, user, &files_service.ChangeRepoFilesOptions{
 			Files: []*files_service.ChangeRepoFile{
 				{
 					Operation:     "create",

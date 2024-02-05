@@ -455,8 +455,19 @@ func doMergeFork(ctx, baseCtx APITestContext, baseBranch, headBranch string) fun
 			assert.NoError(t, err)
 		})
 
-		// Ensure the PR page works
-		t.Run("EnsureCanSeePull", doEnsureCanSeePull(baseCtx, pr))
+		// Ensure the PR page works.
+		// For the base repository owner, the PR is not editable (maintainer edits are not enabled):
+		t.Run("EnsureCanSeePull", doEnsureCanSeePull(baseCtx, pr, false))
+		// For the head repository owner, the PR is editable:
+		headSession := loginUser(t, "user2")
+		headToken := getTokenForLoggedInUser(t, headSession, auth_model.AccessTokenScopeReadRepository, auth_model.AccessTokenScopeReadUser)
+		headCtx := APITestContext{
+			Session:  headSession,
+			Token:    headToken,
+			Username: baseCtx.Username,
+			Reponame: baseCtx.Reponame,
+		}
+		t.Run("EnsureCanSeePull", doEnsureCanSeePull(headCtx, pr, true))
 
 		// Then get the diff string
 		var diffHash string
@@ -470,7 +481,9 @@ func doMergeFork(ctx, baseCtx APITestContext, baseBranch, headBranch string) fun
 
 		// Now: Merge the PR & make sure that doesn't break the PR page or change its diff
 		t.Run("MergePR", doAPIMergePullRequest(baseCtx, baseCtx.Username, baseCtx.Reponame, pr.Index))
-		t.Run("EnsureCanSeePull", doEnsureCanSeePull(baseCtx, pr))
+		// for both users the PR is still visible but not editable anymore after it was merged
+		t.Run("EnsureCanSeePull", doEnsureCanSeePull(baseCtx, pr, false))
+		t.Run("EnsureCanSeePull", doEnsureCanSeePull(headCtx, pr, false))
 		t.Run("CheckPR", func(t *testing.T) {
 			oldMergeBase := pr.MergeBase
 			pr2, err := doAPIGetPullRequest(baseCtx, baseCtx.Username, baseCtx.Reponame, pr.Index)(t)
@@ -481,12 +494,12 @@ func doMergeFork(ctx, baseCtx APITestContext, baseBranch, headBranch string) fun
 
 		// Then: Delete the head branch & make sure that doesn't break the PR page or change its diff
 		t.Run("DeleteHeadBranch", doBranchDelete(baseCtx, baseCtx.Username, baseCtx.Reponame, headBranch))
-		t.Run("EnsureCanSeePull", doEnsureCanSeePull(baseCtx, pr))
+		t.Run("EnsureCanSeePull", doEnsureCanSeePull(baseCtx, pr, false))
 		t.Run("EnsureDiffNoChange", doEnsureDiffNoChange(baseCtx, pr, diffHash, diffLength))
 
 		// Delete the head repository & make sure that doesn't break the PR page or change its diff
 		t.Run("DeleteHeadRepository", doAPIDeleteRepository(ctx))
-		t.Run("EnsureCanSeePull", doEnsureCanSeePull(baseCtx, pr))
+		t.Run("EnsureCanSeePull", doEnsureCanSeePull(baseCtx, pr, false))
 		t.Run("EnsureDiffNoChange", doEnsureDiffNoChange(baseCtx, pr, diffHash, diffLength))
 	}
 }
@@ -520,12 +533,19 @@ func doCreatePRAndSetManuallyMerged(ctx, baseCtx APITestContext, dstPath, baseBr
 	}
 }
 
-func doEnsureCanSeePull(ctx APITestContext, pr api.PullRequest) func(t *testing.T) {
+func doEnsureCanSeePull(ctx APITestContext, pr api.PullRequest, editable bool) func(t *testing.T) {
 	return func(t *testing.T) {
 		req := NewRequest(t, "GET", fmt.Sprintf("/%s/%s/pulls/%d", url.PathEscape(ctx.Username), url.PathEscape(ctx.Reponame), pr.Index))
 		ctx.Session.MakeRequest(t, req, http.StatusOK)
 		req = NewRequest(t, "GET", fmt.Sprintf("/%s/%s/pulls/%d/files", url.PathEscape(ctx.Username), url.PathEscape(ctx.Reponame), pr.Index))
-		ctx.Session.MakeRequest(t, req, http.StatusOK)
+		resp := ctx.Session.MakeRequest(t, req, http.StatusOK)
+		doc := NewHTMLParser(t, resp.Body)
+		editButtonCount := doc.doc.Find("div.diff-file-header-actions a[href*='/_edit/']").Length()
+		if editable {
+			assert.Greater(t, editButtonCount, 0, "Expected to find a button to edit a file in the PR diff view but there were none")
+		} else {
+			assert.Equal(t, 0, editButtonCount, "Expected not to find any buttons to edit files in PR diff view but there were some")
+		}
 		req = NewRequest(t, "GET", fmt.Sprintf("/%s/%s/pulls/%d/commits", url.PathEscape(ctx.Username), url.PathEscape(ctx.Reponame), pr.Index))
 		ctx.Session.MakeRequest(t, req, http.StatusOK)
 	}

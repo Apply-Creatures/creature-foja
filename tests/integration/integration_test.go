@@ -1,4 +1,5 @@
 // Copyright 2017 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors c/o Codeberg e.V.. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 //nolint:forbidigo
@@ -25,9 +26,12 @@ import (
 
 	"code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/models/db"
+	repo_model "code.gitea.io/gitea/models/repo"
+	unit_model "code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
 	gitea_context "code.gitea.io/gitea/modules/context"
+	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/graceful"
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
@@ -36,15 +40,18 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/routers"
+	repo_service "code.gitea.io/gitea/services/repository"
+	files_service "code.gitea.io/gitea/services/repository/files"
 	user_service "code.gitea.io/gitea/services/user"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/PuerkitoBio/goquery"
+	gouuid "github.com/google/uuid"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
 	goth_gitlab "github.com/markbates/goth/providers/gitlab"
+	"github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/stretchr/testify/assert"
-	"github.com/xeipuuv/gojsonschema"
 )
 
 var testWebRoutes *web.Route
@@ -509,6 +516,24 @@ func logUnexpectedResponse(t testing.TB, recorder *httptest.ResponseRecorder) {
 	t.Helper()
 	respBytes := recorder.Body.Bytes()
 	if len(respBytes) == 0 {
+		// log the content of the flash cookie
+		for _, cookie := range recorder.Result().Cookies() {
+			if cookie.Name != gitea_context.CookieNameFlash {
+				continue
+			}
+			flash, _ := url.ParseQuery(cookie.Value)
+			for key, value := range flash {
+				// the key is itself url-encoded
+				if flash, err := url.ParseQuery(key); err == nil {
+					for key, value := range flash {
+						t.Logf("FlashCookie %q: %q", key, value)
+					}
+				} else {
+					t.Logf("FlashCookie %q: %q", key, value)
+				}
+			}
+		}
+
 		return
 	} else if len(respBytes) < 500 {
 		// if body is short, just log the whole thing
@@ -543,16 +568,15 @@ func VerifyJSONSchema(t testing.TB, resp *httptest.ResponseRecorder, schemaFile 
 	_, schemaFileErr := os.Stat(schemaFilePath)
 	assert.Nil(t, schemaFileErr)
 
-	schema, schemaFileReadErr := os.ReadFile(schemaFilePath)
-	assert.Nil(t, schemaFileReadErr)
-	assert.True(t, len(schema) > 0)
+	schema, err := jsonschema.Compile(schemaFilePath)
+	assert.NoError(t, err)
 
-	nodeinfoSchema := gojsonschema.NewStringLoader(string(schema))
-	nodeinfoString := gojsonschema.NewStringLoader(resp.Body.String())
-	result, schemaValidationErr := gojsonschema.Validate(nodeinfoSchema, nodeinfoString)
-	assert.Nil(t, schemaValidationErr)
-	assert.Empty(t, result.Errors())
-	assert.True(t, result.Valid())
+	var data interface{}
+	err = json.Unmarshal(resp.Body.Bytes(), &data)
+	assert.NoError(t, err)
+
+	schemaValidation := schema.Validate(data)
+	assert.Nil(t, schemaValidation)
 }
 
 func GetCSRF(t testing.TB, session *TestSession, urlStr string) string {
@@ -561,4 +585,84 @@ func GetCSRF(t testing.TB, session *TestSession, urlStr string) string {
 	resp := session.MakeRequest(t, req, http.StatusOK)
 	doc := NewHTMLParser(t, resp.Body)
 	return doc.GetCSRF()
+}
+
+func GetHTMLTitle(t testing.TB, session *TestSession, urlStr string) string {
+	t.Helper()
+
+	req := NewRequest(t, "GET", urlStr)
+	var resp *httptest.ResponseRecorder
+	if session == nil {
+		resp = MakeRequest(t, req, http.StatusOK)
+	} else {
+		resp = session.MakeRequest(t, req, http.StatusOK)
+	}
+
+	doc := NewHTMLParser(t, resp.Body)
+	return doc.Find("head title").Text()
+}
+
+func CreateDeclarativeRepo(t *testing.T, owner *user_model.User, name string, enabledUnits, disabledUnits []unit_model.Type, files []*files_service.ChangeRepoFile) (*repo_model.Repository, string, func()) {
+	t.Helper()
+
+	repoName := name
+	if repoName == "" {
+		repoName = gouuid.NewString()
+	}
+
+	// Create a new repository
+	repo, err := repo_service.CreateRepository(db.DefaultContext, owner, owner, repo_service.CreateRepoOptions{
+		Name:          repoName,
+		Description:   "Temporary Repo",
+		AutoInit:      true,
+		Gitignores:    "",
+		License:       "WTFPL",
+		Readme:        "Default",
+		DefaultBranch: "main",
+	})
+	assert.NoError(t, err)
+	assert.NotEmpty(t, repo)
+
+	if enabledUnits != nil || disabledUnits != nil {
+		units := make([]repo_model.RepoUnit, len(enabledUnits))
+		for i, unitType := range enabledUnits {
+			units[i] = repo_model.RepoUnit{
+				RepoID: repo.ID,
+				Type:   unitType,
+			}
+		}
+
+		err := repo_model.UpdateRepositoryUnits(db.DefaultContext, repo, units, disabledUnits)
+		assert.NoError(t, err)
+	}
+
+	var sha string
+	if len(files) > 0 {
+		resp, err := files_service.ChangeRepoFiles(git.DefaultContext, repo, owner, &files_service.ChangeRepoFilesOptions{
+			Files:     files,
+			Message:   "add files",
+			OldBranch: "main",
+			NewBranch: "main",
+			Author: &files_service.IdentityOptions{
+				Name:  owner.Name,
+				Email: owner.Email,
+			},
+			Committer: &files_service.IdentityOptions{
+				Name:  owner.Name,
+				Email: owner.Email,
+			},
+			Dates: &files_service.CommitDateOptions{
+				Author:    time.Now(),
+				Committer: time.Now(),
+			},
+		})
+		assert.NoError(t, err)
+		assert.NotEmpty(t, resp)
+
+		sha = resp.Commit.SHA
+	}
+
+	return repo, sha, func() {
+		repo_service.DeleteRepository(db.DefaultContext, owner, repo, false)
+	}
 }

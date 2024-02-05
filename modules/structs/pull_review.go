@@ -89,6 +89,9 @@ type CreatePullReviewComment struct {
 	NewLineNum int64 `json:"new_position"`
 }
 
+// CreatePullReviewCommentOptions are options to create a pull review comment
+type CreatePullReviewCommentOptions CreatePullReviewComment
+
 // SubmitPullReviewOptions are options to submit a pending pull review
 type SubmitPullReviewOptions struct {
 	Event ReviewStateType `json:"event"`

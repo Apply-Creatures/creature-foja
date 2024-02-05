@@ -100,6 +100,8 @@ package "code.gitea.io/gitea/models/unittest"
 	func LoadFixtures
 	func Copy
 	func CopyDir
+	func NewMockWebServer
+	func NormalizedFullPath
 	func FixturesDir
 	func fatalTestError
 	func InitSettings
@@ -322,6 +324,7 @@ package "code.gitea.io/gitea/services/pull"
 
 package "code.gitea.io/gitea/services/repository"
 	func IsErrForkAlreadyExist
+	func UpdateRepositoryUnits
 
 package "code.gitea.io/gitea/services/repository/archiver"
 	func ArchiveRepository

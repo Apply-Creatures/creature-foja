@@ -11,8 +11,13 @@ import (
 	"testing"
 	"time"
 
+	"code.gitea.io/gitea/models/db"
+	repo_model "code.gitea.io/gitea/models/repo"
+	unit_model "code.gitea.io/gitea/models/unit"
+	"code.gitea.io/gitea/models/unittest"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/test"
+	repo_service "code.gitea.io/gitea/services/repository"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/PuerkitoBio/goquery"
@@ -41,6 +46,84 @@ func TestViewRepo(t *testing.T) {
 
 	session = loginUser(t, "user1")
 	session.MakeRequest(t, req, http.StatusNotFound)
+}
+
+func TestViewRepoCloneMethods(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	getCloneMethods := func() []string {
+		req := NewRequest(t, "GET", "/user2/repo1")
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		htmlDoc := NewHTMLParser(t, resp.Body)
+		cloneMoreMethodsHTML := htmlDoc.doc.Find("#more-btn div a")
+
+		var methods []string
+		cloneMoreMethodsHTML.Each(func(i int, s *goquery.Selection) {
+			a, _ := s.Attr("href")
+			methods = append(methods, a)
+		})
+
+		return methods
+	}
+
+	testCloneMethods := func(expected []string) {
+		methods := getCloneMethods()
+
+		assert.Len(t, methods, len(expected))
+		for i, expectedMethod := range expected {
+			assert.Contains(t, methods[i], expectedMethod)
+		}
+	}
+
+	t.Run("Defaults", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		testCloneMethods([]string{"/master.zip", "/master.tar.gz", "/master.bundle", "vscode://"})
+	})
+
+	t.Run("Customized methods", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		defer test.MockVariableValue(&setting.Repository.DownloadOrCloneMethods, []string{"vscodium-clone", "download-targz"})()
+
+		testCloneMethods([]string{"vscodium://", "/master.tar.gz"})
+	})
+
+	t.Run("Individual methods", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		singleMethodTest := func(method, expectedURLPart string) {
+			t.Run(method, func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+				defer test.MockVariableValue(&setting.Repository.DownloadOrCloneMethods, []string{method})()
+
+				testCloneMethods([]string{expectedURLPart})
+			})
+		}
+
+		cases := map[string]string{
+			"download-zip":    "/master.zip",
+			"download-targz":  "/master.tar.gz",
+			"download-bundle": "/master.bundle",
+			"vscode-clone":    "vscode://",
+			"vscodium-clone":  "vscodium://",
+		}
+		for method, expectedURLPart := range cases {
+			singleMethodTest(method, expectedURLPart)
+		}
+	})
+
+	t.Run("All methods", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		defer test.MockVariableValue(&setting.Repository.DownloadOrCloneMethods, setting.RecognisedRepositoryDownloadOrCloneMethods)()
+
+		methods := getCloneMethods()
+		// We compare against
+		// len(setting.RecognisedRepositoryDownloadOrCloneMethods) - 1, because
+		// the test environment does not currently set things up for the cite
+		// method to display.
+		assert.GreaterOrEqual(t, len(methods), len(setting.RecognisedRepositoryDownloadOrCloneMethods)-1)
+	})
 }
 
 func testViewRepo(t *testing.T) {
@@ -201,6 +284,110 @@ func TestViewAsRepoAdmin(t *testing.T) {
 	}
 }
 
+func TestRepoHTMLTitle(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	t.Run("Repository homepage", func(t *testing.T) {
+		t.Run("Without description", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			htmlTitle := GetHTMLTitle(t, nil, "/user2/repo1")
+			assert.EqualValues(t, "user2/repo1 - Gitea: Git with a cup of tea", htmlTitle)
+		})
+		t.Run("With description", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			htmlTitle := GetHTMLTitle(t, nil, "/user27/repo49")
+			assert.EqualValues(t, "user27/repo49: A wonderful repository with more than just a README.md - Gitea: Git with a cup of tea", htmlTitle)
+		})
+	})
+
+	t.Run("Code view", func(t *testing.T) {
+		t.Run("Directory", func(t *testing.T) {
+			t.Run("Default branch", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				htmlTitle := GetHTMLTitle(t, nil, "/user2/repo59/src/branch/master/deep/nesting")
+				assert.EqualValues(t, "repo59/deep/nesting at master - user2/repo59 - Gitea: Git with a cup of tea", htmlTitle)
+			})
+			t.Run("Non-default branch", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				htmlTitle := GetHTMLTitle(t, nil, "/user2/repo59/src/branch/cake-recipe/deep/nesting")
+				assert.EqualValues(t, "repo59/deep/nesting at cake-recipe - user2/repo59 - Gitea: Git with a cup of tea", htmlTitle)
+			})
+			t.Run("Commit", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				htmlTitle := GetHTMLTitle(t, nil, "/user2/repo59/src/commit/d8f53dfb33f6ccf4169c34970b5e747511c18beb/deep/nesting/")
+				assert.EqualValues(t, "repo59/deep/nesting at d8f53dfb33f6ccf4169c34970b5e747511c18beb - user2/repo59 - Gitea: Git with a cup of tea", htmlTitle)
+			})
+			t.Run("Tag", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				htmlTitle := GetHTMLTitle(t, nil, "/user2/repo59/src/tag/v1.0/deep/nesting/")
+				assert.EqualValues(t, "repo59/deep/nesting at v1.0 - user2/repo59 - Gitea: Git with a cup of tea", htmlTitle)
+			})
+		})
+		t.Run("File", func(t *testing.T) {
+			t.Run("Default branch", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				htmlTitle := GetHTMLTitle(t, nil, "/user2/repo59/src/branch/master/deep/nesting/folder/secret_sauce_recipe.txt")
+				assert.EqualValues(t, "repo59/deep/nesting/folder/secret_sauce_recipe.txt at master - user2/repo59 - Gitea: Git with a cup of tea", htmlTitle)
+			})
+			t.Run("Non-default branch", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				htmlTitle := GetHTMLTitle(t, nil, "/user2/repo59/src/branch/cake-recipe/deep/nesting/folder/secret_sauce_recipe.txt")
+				assert.EqualValues(t, "repo59/deep/nesting/folder/secret_sauce_recipe.txt at cake-recipe - user2/repo59 - Gitea: Git with a cup of tea", htmlTitle)
+			})
+			t.Run("Commit", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				htmlTitle := GetHTMLTitle(t, nil, "/user2/repo59/src/commit/d8f53dfb33f6ccf4169c34970b5e747511c18beb/deep/nesting/folder/secret_sauce_recipe.txt")
+				assert.EqualValues(t, "repo59/deep/nesting/folder/secret_sauce_recipe.txt at d8f53dfb33f6ccf4169c34970b5e747511c18beb - user2/repo59 - Gitea: Git with a cup of tea", htmlTitle)
+			})
+			t.Run("Tag", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				htmlTitle := GetHTMLTitle(t, nil, "/user2/repo59/src/tag/v1.0/deep/nesting/folder/secret_sauce_recipe.txt")
+				assert.EqualValues(t, "repo59/deep/nesting/folder/secret_sauce_recipe.txt at v1.0 - user2/repo59 - Gitea: Git with a cup of tea", htmlTitle)
+			})
+		})
+	})
+
+	t.Run("Issues view", func(t *testing.T) {
+		t.Run("Overview page", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			htmlTitle := GetHTMLTitle(t, nil, "/user2/repo1/issues")
+			assert.EqualValues(t, "Issues - user2/repo1 - Gitea: Git with a cup of tea", htmlTitle)
+		})
+		t.Run("View issue page", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			htmlTitle := GetHTMLTitle(t, nil, "/user2/repo1/issues/1")
+			assert.EqualValues(t, "#1 - issue1 - user2/repo1 - Gitea: Git with a cup of tea", htmlTitle)
+		})
+	})
+
+	t.Run("Pull requests view", func(t *testing.T) {
+		t.Run("Overview page", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			htmlTitle := GetHTMLTitle(t, nil, "/user2/repo1/pulls")
+			assert.EqualValues(t, "Pull Requests - user2/repo1 - Gitea: Git with a cup of tea", htmlTitle)
+		})
+		t.Run("View pull request", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			htmlTitle := GetHTMLTitle(t, nil, "/user2/repo1/pulls/2")
+			assert.EqualValues(t, "#2 - issue2 - user2/repo1 - Gitea: Git with a cup of tea", htmlTitle)
+		})
+	})
+}
+
 // TestViewFileInRepo repo description, topics and summary should not be displayed when viewing a file
 func TestViewFileInRepo(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
@@ -218,6 +405,40 @@ func TestViewFileInRepo(t *testing.T) {
 	assert.EqualValues(t, 0, description.Length())
 	assert.EqualValues(t, 0, repoTopics.Length())
 	assert.EqualValues(t, 0, repoSummary.Length())
+}
+
+func TestViewFileInRepoRSSFeed(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	hasFileRSSFeed := func(t *testing.T, ref string) bool {
+		t.Helper()
+
+		req := NewRequestf(t, "GET", "/user2/repo1/src/%s/README.md", ref)
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		htmlDoc := NewHTMLParser(t, resp.Body)
+		fileFeed := htmlDoc.doc.Find(`a[href*="/user2/repo1/rss/"]`)
+
+		return fileFeed.Length() != 0
+	}
+
+	t.Run("branch", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		assert.True(t, hasFileRSSFeed(t, "branch/master"))
+	})
+
+	t.Run("tag", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		assert.False(t, hasFileRSSFeed(t, "tag/v1.1"))
+	})
+
+	t.Run("commit", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		assert.False(t, hasFileRSSFeed(t, "commit/65f1bf27bc3bf70f64657658635e66094edbcb4d"))
+	})
 }
 
 // TestBlameFileInRepo repo description, topics and summary should not be displayed when running blame on a file
@@ -369,6 +590,36 @@ func TestViewRepoDirectoryReadme(t *testing.T) {
 	missing("symlink-loop", "/user2/readme-test/src/branch/symlink-loop/")
 }
 
+func TestRenamedFileHistory(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	t.Run("Renamed file", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", "/user2/repo59/commits/branch/master/license")
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		htmlDoc := NewHTMLParser(t, resp.Body)
+
+		renameNotice := htmlDoc.doc.Find(".ui.bottom.attached.header")
+		assert.Equal(t, 1, renameNotice.Length())
+		assert.Contains(t, renameNotice.Text(), "Renamed from licnse (Browse further)")
+
+		oldFileHistoryLink, ok := renameNotice.Find("a").Attr("href")
+		assert.True(t, ok)
+		assert.Equal(t, "/user2/repo59/commits/commit/80b83c5c8220c3aa3906e081f202a2a7563ec879/licnse", oldFileHistoryLink)
+	})
+
+	t.Run("Non renamed file", func(t *testing.T) {
+		req := NewRequest(t, "GET", "/user2/repo59/commits/branch/master/README.md")
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		htmlDoc := NewHTMLParser(t, resp.Body)
+
+		htmlDoc.AssertElement(t, ".ui.bottom.attached.header", false)
+	})
+}
+
 func TestMarkDownReadmeImage(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
@@ -457,4 +708,147 @@ func TestViewCommit(t *testing.T) {
 	req.Header.Add("Accept", "text/html")
 	resp := MakeRequest(t, req, http.StatusNotFound)
 	assert.True(t, test.IsNormalPageCompleted(resp.Body.String()), "non-existing commit should render 404 page")
+}
+
+func TestCommitView(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	t.Run("Non-existent commit", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", "/user2/repo1/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+		req.SetHeader("Accept", "text/html")
+		resp := MakeRequest(t, req, http.StatusNotFound)
+
+		// Really ensure that 404 is being sent back.
+		doc := NewHTMLParser(t, resp.Body)
+		doc.AssertElement(t, `[aria-label="Page Not Found"]`, true)
+	})
+
+	t.Run("Too short commit ID", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", "/user2/repo1/commit/65f")
+		MakeRequest(t, req, http.StatusNotFound)
+	})
+
+	t.Run("Short commit ID", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", "/user2/repo1/commit/65f1")
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		doc := NewHTMLParser(t, resp.Body)
+		commitTitle := doc.Find(".commit-summary").Text()
+		assert.Contains(t, commitTitle, "Initial commit")
+	})
+
+	t.Run("Full commit ID", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", "/user2/repo1/commit/65f1bf27bc3bf70f64657658635e66094edbcb4d")
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		doc := NewHTMLParser(t, resp.Body)
+		commitTitle := doc.Find(".commit-summary").Text()
+		assert.Contains(t, commitTitle, "Initial commit")
+	})
+}
+
+func TestRepoHomeViewRedirect(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	t.Run("Code", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", "/user2/repo1")
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		doc := NewHTMLParser(t, resp.Body)
+		l := doc.Find("#repo-desc").Length()
+		assert.Equal(t, 1, l)
+	})
+
+	t.Run("No Code redirects to Issues", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// Disable the Code unit
+		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+		err := repo_service.UpdateRepositoryUnits(db.DefaultContext, repo, nil, []unit_model.Type{
+			unit_model.TypeCode,
+		})
+		assert.NoError(t, err)
+
+		// The repo home should redirect to the built-in issue tracker
+		req := NewRequest(t, "GET", "/user2/repo1")
+		resp := MakeRequest(t, req, http.StatusSeeOther)
+		redir := resp.Header().Get("Location")
+
+		assert.Equal(t, "/user2/repo1/issues", redir)
+	})
+
+	t.Run("No Code and ExternalTracker redirects to Pulls", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// Replace the internal tracker with an external one
+		// Disable Code, Projects, Packages, and Actions
+		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+		err := repo_service.UpdateRepositoryUnits(db.DefaultContext, repo, []repo_model.RepoUnit{{
+			RepoID: repo.ID,
+			Type:   unit_model.TypeExternalTracker,
+			Config: &repo_model.ExternalTrackerConfig{
+				ExternalTrackerURL: "https://example.com",
+			},
+		}}, []unit_model.Type{
+			unit_model.TypeCode,
+			unit_model.TypeIssues,
+			unit_model.TypeProjects,
+			unit_model.TypePackages,
+			unit_model.TypeActions,
+		})
+		assert.NoError(t, err)
+
+		// The repo home should redirect to pull requests
+		req := NewRequest(t, "GET", "/user2/repo1")
+		resp := MakeRequest(t, req, http.StatusSeeOther)
+		redir := resp.Header().Get("Location")
+
+		assert.Equal(t, "/user2/repo1/pulls", redir)
+	})
+
+	t.Run("Only external wiki results in 404", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// Replace the internal wiki with an external, and disable everything
+		// else.
+		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+		err := repo_service.UpdateRepositoryUnits(db.DefaultContext, repo, []repo_model.RepoUnit{{
+			RepoID: repo.ID,
+			Type:   unit_model.TypeExternalWiki,
+			Config: &repo_model.ExternalWikiConfig{
+				ExternalWikiURL: "https://example.com",
+			},
+		}}, []unit_model.Type{
+			unit_model.TypeCode,
+			unit_model.TypeIssues,
+			unit_model.TypeExternalTracker,
+			unit_model.TypeProjects,
+			unit_model.TypePackages,
+			unit_model.TypeActions,
+			unit_model.TypePullRequests,
+			unit_model.TypeReleases,
+			unit_model.TypeWiki,
+		})
+		assert.NoError(t, err)
+
+		// The repo home ends up being 404
+		req := NewRequest(t, "GET", "/user2/repo1")
+		req.Header.Set("Accept", "text/html")
+		resp := MakeRequest(t, req, http.StatusNotFound)
+
+		// The external wiki is linked to from the 404 page
+		doc := NewHTMLParser(t, resp.Body)
+		txt := strings.TrimSpace(doc.Find(`a[href="https://example.com"]`).Text())
+		assert.Equal(t, "Wiki", txt)
+	})
 }

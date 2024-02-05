@@ -80,6 +80,12 @@ func TestRender_Media(t *testing.T) {
 		`<p><img src="https://example.com/example.svg" alt="https://example.com/example.svg" /></p>`)
 	test("[[https://example.com/example.mp4]]",
 		`<p><video src="https://example.com/example.mp4">https://example.com/example.mp4</video></p>`)
+
+	// Text description.
+	test("[[file:./lem-post.png][file:./lem-post.png]]",
+		`<p><a href="http://localhost:3000/gogits/gogs/lem-post.png"><img src="http://localhost:3000/gogits/gogs/lem-post.png" alt="http://localhost:3000/gogits/gogs/lem-post.png" /></a></p>`)
+	test("[[file:./lem-post.mp4][file:./lem-post.mp4]]",
+		`<p><a href="http://localhost:3000/gogits/gogs/lem-post.mp4"><video src="http://localhost:3000/gogits/gogs/lem-post.mp4">http://localhost:3000/gogits/gogs/lem-post.mp4</video></a></p>`)
 }
 
 func TestRender_Source(t *testing.T) {

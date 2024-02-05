@@ -1,4 +1,5 @@
 // Copyright 2022 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors c/o Codeberg e.V.. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package integration
@@ -8,6 +9,10 @@ import (
 	"net/url"
 	"testing"
 
+	auth_model "code.gitea.io/gitea/models/auth"
+	repo_model "code.gitea.io/gitea/models/repo"
+	"code.gitea.io/gitea/models/unittest"
+	user_model "code.gitea.io/gitea/models/user"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/tests"
 
@@ -44,4 +49,33 @@ func TestTopicSearch(t *testing.T) {
 		assert.EqualValues(t, "database", topics.TopicNames[0].Name)
 		assert.EqualValues(t, 1, topics.TopicNames[0].RepoCount)
 	}
+}
+
+func TestTopicSearchPaging(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	var topics struct {
+		TopicNames []*api.TopicResponse `json:"topics"`
+	}
+
+	// Add 20 unique topics to user2/repo2, and 20 unique ones to user2/repo3
+	user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	token2 := getUserToken(t, user2.Name, auth_model.AccessTokenScopeWriteRepository)
+	repo2 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+	repo3 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 2})
+	for i := 0; i < 20; i++ {
+		req := NewRequestf(t, "PUT", "/api/v1/repos/%s/%s/topics/paging-topic-%d", user2.Name, repo2.Name, i).
+			AddTokenAuth(token2)
+		MakeRequest(t, req, http.StatusNoContent)
+		req = NewRequestf(t, "PUT", "/api/v1/repos/%s/%s/topics/paging-topic-%d", user2.Name, repo3.Name, i+30).
+			AddTokenAuth(token2)
+		MakeRequest(t, req, http.StatusNoContent)
+	}
+
+	res := MakeRequest(t, NewRequest(t, "GET", "/explore/topics/search"), http.StatusOK)
+	DecodeJSON(t, res, &topics)
+	assert.Len(t, topics.TopicNames, 30)
+
+	res = MakeRequest(t, NewRequest(t, "GET", "/explore/topics/search?page=2"), http.StatusOK)
+	DecodeJSON(t, res, &topics)
+	assert.Greater(t, len(topics.TopicNames), 0)
 }

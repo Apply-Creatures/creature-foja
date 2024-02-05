@@ -244,7 +244,7 @@ func CreateOauth2Application(ctx *context.APIContext) {
 
 // ListOauth2Applications list all the Oauth2 application
 func ListOauth2Applications(ctx *context.APIContext) {
-	// swagger:operation GET /user/applications/oauth2 user userGetOauth2Application
+	// swagger:operation GET /user/applications/oauth2 user userGetOAuth2Applications
 	// ---
 	// summary: List the authenticated user's oauth2 applications
 	// produces:

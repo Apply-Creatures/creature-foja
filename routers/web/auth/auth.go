@@ -33,6 +33,7 @@ import (
 	"code.gitea.io/gitea/services/externalaccount"
 	"code.gitea.io/gitea/services/forms"
 	"code.gitea.io/gitea/services/mailer"
+	notify_service "code.gitea.io/gitea/services/notify"
 	user_service "code.gitea.io/gitea/services/user"
 
 	"github.com/markbates/goth"
@@ -606,6 +607,7 @@ func handleUserCreated(ctx *context.Context, u *user_model.User, gothUser *goth.
 		}
 	}
 
+	notify_service.NewUserSignUp(ctx, u)
 	// update external user information
 	if gothUser != nil {
 		if err := externalaccount.UpdateExternalUser(ctx, u, *gothUser); err != nil {
@@ -651,13 +653,22 @@ func Activate(ctx *context.Context) {
 		}
 		// Resend confirmation email.
 		if setting.Service.RegisterEmailConfirm {
-			if ctx.Cache.IsExist("MailResendLimit_" + ctx.Doer.LowerName) {
+			var cacheKey string
+			if ctx.Cache.IsExist("MailChangedJustNow_" + ctx.Doer.LowerName) {
+				cacheKey = "MailChangedLimit_"
+				if err := ctx.Cache.Delete("MailChangedJustNow_" + ctx.Doer.LowerName); err != nil {
+					log.Error("Delete cache(MailChangedJustNow) fail: %v", err)
+				}
+			} else {
+				cacheKey = "MailResendLimit_"
+			}
+			if ctx.Cache.IsExist(cacheKey + ctx.Doer.LowerName) {
 				ctx.Data["ResendLimited"] = true
 			} else {
 				ctx.Data["ActiveCodeLives"] = timeutil.MinutesToFriendly(setting.Service.ActiveCodeLives, ctx.Locale)
 				mailer.SendActivateAccountMail(ctx.Locale, ctx.Doer)
 
-				if err := ctx.Cache.Put("MailResendLimit_"+ctx.Doer.LowerName, ctx.Doer.LowerName, 180); err != nil {
+				if err := ctx.Cache.Put(cacheKey+ctx.Doer.LowerName, ctx.Doer.LowerName, 180); err != nil {
 					log.Error("Set cache(MailResendLimit) fail: %v", err)
 				}
 			}
@@ -691,6 +702,43 @@ func Activate(ctx *context.Context) {
 func ActivatePost(ctx *context.Context) {
 	code := ctx.FormString("code")
 	if len(code) == 0 {
+		email := ctx.FormString("email")
+		if len(email) > 0 {
+			ctx.Data["IsActivatePage"] = true
+			if ctx.Doer == nil || ctx.Doer.IsActive {
+				ctx.NotFound("invalid user", nil)
+				return
+			}
+			// Change the primary email
+			if setting.Service.RegisterEmailConfirm {
+				if ctx.Cache.IsExist("MailChangeLimit_" + ctx.Doer.LowerName) {
+					ctx.Data["ResendLimited"] = true
+				} else {
+					ctx.Data["ActiveCodeLives"] = timeutil.MinutesToFriendly(setting.Service.ActiveCodeLives, ctx.Locale)
+					err := user_service.ReplaceInactivePrimaryEmail(ctx, ctx.Doer.Email, &user_model.EmailAddress{
+						UID:   ctx.Doer.ID,
+						Email: email,
+					})
+					if err != nil {
+						ctx.Data["IsActivatePage"] = false
+						log.Error("Couldn't replace inactive primary email of user %d: %v", ctx.Doer.ID, err)
+						ctx.RenderWithErr(ctx.Tr("auth.change_unconfirmed_email_error", err), TplActivate, nil)
+						return
+					}
+					if err := ctx.Cache.Put("MailChangeLimit_"+ctx.Doer.LowerName, ctx.Doer.LowerName, 180); err != nil {
+						log.Error("Set cache(MailChangeLimit) fail: %v", err)
+					}
+					if err := ctx.Cache.Put("MailChangedJustNow_"+ctx.Doer.LowerName, ctx.Doer.LowerName, 180); err != nil {
+						log.Error("Set cache(MailChangedJustNow) fail: %v", err)
+					}
+
+					// Confirmation mail will be re-sent after the redirect to `/user/activate` below.
+				}
+			} else {
+				ctx.Data["ServiceNotEnabled"] = true
+			}
+		}
+
 		ctx.Redirect(setting.AppSubURL + "/user/activate")
 		return
 	}

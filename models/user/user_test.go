@@ -484,6 +484,16 @@ func TestIsUserVisibleToViewer(t *testing.T) {
 	test(user31, nil, false)
 }
 
+func TestGetAllAdmins(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	admins, err := user_model.GetAllAdmins(db.DefaultContext)
+	assert.NoError(t, err)
+
+	assert.Len(t, admins, 1)
+	assert.Equal(t, int64(1), admins[0].ID)
+}
+
 func Test_ValidateUser(t *testing.T) {
 	oldSetting := setting.Service.AllowedUserVisibilityModesSlice
 	defer func() {
@@ -501,6 +511,11 @@ func Test_ValidateUser(t *testing.T) {
 }
 
 func Test_NormalizeUserFromEmail(t *testing.T) {
+	oldSetting := setting.Service.AllowDotsInUsernames
+	defer func() {
+		setting.Service.AllowDotsInUsernames = oldSetting
+	}()
+	setting.Service.AllowDotsInUsernames = true
 	testCases := []struct {
 		Input             string
 		Expected          string

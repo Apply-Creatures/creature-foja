@@ -5,10 +5,16 @@ package repo
 
 import (
 	"context"
+	"fmt"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/modules/git"
+	giturl "code.gitea.io/gitea/modules/git/url"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/timeutil"
 	"code.gitea.io/gitea/modules/util"
 
@@ -131,4 +137,22 @@ func PushMirrorsIterate(ctx context.Context, limit int, f func(idx int, bean any
 		sess = sess.Limit(limit)
 	}
 	return sess.Iterate(new(PushMirror), f)
+}
+
+// GetPushMirrorRemoteAddress returns the address of associated with a repository's given remote.
+func GetPushMirrorRemoteAddress(ownerName, repoName, remoteName string) (string, error) {
+	repoPath := filepath.Join(setting.RepoRootPath, strings.ToLower(ownerName), strings.ToLower(repoName)+".git")
+
+	remoteURL, err := git.GetRemoteAddress(context.Background(), repoPath, remoteName)
+	if err != nil {
+		return "", fmt.Errorf("get remote %s's address of %s/%s failed: %v", remoteName, ownerName, repoName, err)
+	}
+
+	u, err := giturl.Parse(remoteURL)
+	if err != nil {
+		return "", err
+	}
+	u.User = nil
+
+	return u.String(), nil
 }

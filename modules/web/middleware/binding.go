@@ -8,6 +8,7 @@ import (
 	"reflect"
 	"strings"
 
+	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/translation"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/validation"
@@ -135,7 +136,11 @@ func Validate(errs binding.Errors, data map[string]any, f Form, l translation.Lo
 			case validation.ErrRegexPattern:
 				data["ErrorMsg"] = trName + l.Tr("form.regex_pattern_error", errs[0].Message)
 			case validation.ErrUsername:
-				data["ErrorMsg"] = trName + l.Tr("form.username_error")
+				if setting.Service.AllowDotsInUsernames {
+					data["ErrorMsg"] = trName + l.Tr("form.username_error")
+				} else {
+					data["ErrorMsg"] = trName + l.Tr("form.username_error_no_dots")
+				}
 			case validation.ErrInvalidGroupTeamMap:
 				data["ErrorMsg"] = trName + l.Tr("form.invalid_group_team_map_error", errs[0].Message)
 			default:

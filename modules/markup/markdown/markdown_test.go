@@ -524,6 +524,18 @@ func TestMathBlock(t *testing.T) {
 			"$$a$$",
 			`<pre class="code-block is-loading"><code class="chroma language-math display">a</code></pre>` + nl,
 		},
+		{
+			`\[a b\]`,
+			`<pre class="code-block is-loading"><code class="chroma language-math display">a b</code></pre>` + nl,
+		},
+		{
+			`\[a b]`,
+			`<p>[a b]</p>` + nl,
+		},
+		{
+			`$$a`,
+			`<p>$$a</p>` + nl,
+		},
 	}
 
 	for _, test := range testcases {
@@ -531,6 +543,204 @@ func TestMathBlock(t *testing.T) {
 		assert.NoError(t, err, "Unexpected error in testcase: %q", test.testcase)
 		assert.Equal(t, test.expected, res, "Unexpected result in testcase %q", test.testcase)
 
+	}
+}
+
+func TestFootnote(t *testing.T) {
+	testcases := []struct {
+		testcase string
+		expected string
+	}{
+		{
+			`Citation needed[^0].
+[^0]: Source`,
+			`<p>Citation needed<sup id="fnref:user-content-0"><a href="#fn:user-content-0" rel="nofollow">1</a></sup>.</p>
+<div>
+<hr/>
+<ol>
+<li id="fn:user-content-0">
+<p>Source <a href="#fnref:user-content-0" rel="nofollow">↩︎</a></p>
+</li>
+</ol>
+</div>
+`,
+		},
+		{
+			`Citation needed[^0]`,
+			`<p>Citation needed[^0]</p>
+`,
+		},
+		{
+			`Citation needed[^1], Citation needed twice[^3]
+[^3]: Source`,
+			`<p>Citation needed[^1], Citation needed twice<sup id="fnref:user-content-3"><a href="#fn:user-content-3" rel="nofollow">1</a></sup></p>
+<div>
+<hr/>
+<ol>
+<li id="fn:user-content-3">
+<p>Source <a href="#fnref:user-content-3" rel="nofollow">↩︎</a></p>
+</li>
+</ol>
+</div>
+`,
+		},
+		{
+			`Citation needed[^0]
+[^1]: Source`,
+			`<p>Citation needed[^0]</p>
+`,
+		},
+		{
+			`Citation needed[^0]
+[^0]: Source 1
+[^0]: Source 2`,
+			`<p>Citation needed<sup id="fnref:user-content-0"><a href="#fn:user-content-0" rel="nofollow">1</a></sup></p>
+<div>
+<hr/>
+<ol>
+<li id="fn:user-content-0">
+<p>Source 1 <a href="#fnref:user-content-0" rel="nofollow">↩︎</a></p>
+</li>
+</ol>
+</div>
+`,
+		},
+		{
+			`Citation needed![^0]
+[^0]: Source`,
+			`<p>Citation needed<sup id="fnref:user-content-0"><a href="#fn:user-content-0" rel="nofollow">1</a></sup></p>
+<div>
+<hr/>
+<ol>
+<li id="fn:user-content-0">
+<p>Source <a href="#fnref:user-content-0" rel="nofollow">↩︎</a></p>
+</li>
+</ol>
+</div>
+`,
+		},
+		{
+			`Trigger [^`,
+			`<p>Trigger [^</p>
+`,
+		},
+		{
+			`Trigger 2 [^0`,
+			`<p>Trigger 2 [^0</p>
+`,
+		},
+		{
+			`Citation needed[^0]
+[^0]: Source with citation needed[^1]
+[^1]: Source`,
+			`<p>Citation needed<sup id="fnref:user-content-0"><a href="#fn:user-content-0" rel="nofollow">1</a></sup></p>
+<div>
+<hr/>
+<ol>
+<li id="fn:user-content-0">
+<p>Source with citation needed<sup id="fnref:user-content-1"><a href="#fn:user-content-1" rel="nofollow">2</a></sup> <a href="#fnref:user-content-0" rel="nofollow">↩︎</a></p>
+</li>
+<li id="fn:user-content-1">
+<p>Source <a href="#fnref:user-content-1" rel="nofollow">↩︎</a></p>
+</li>
+</ol>
+</div>
+`,
+		},
+		{
+			`Citation needed[^#]
+[^#]: Source`,
+			`<p>Citation needed<sup id="fnref:user-content-1"><a href="#fn:user-content-1" rel="nofollow">1</a></sup></p>
+<div>
+<hr/>
+<ol>
+<li id="fn:user-content-1">
+<p>Source <a href="#fnref:user-content-1" rel="nofollow">↩︎</a></p>
+</li>
+</ol>
+</div>
+`,
+		},
+		{
+			`Citation needed[^0]
+    [^0]: Source`,
+			`<p>Citation needed[^0]<br/>
+[^0]: Source</p>
+`,
+		},
+		{
+			`[^0]: Source
+
+Citation needed[^0].`,
+			`<p>Citation needed<sup id="fnref:user-content-0"><a href="#fn:user-content-0" rel="nofollow">1</a></sup>.</p>
+<div>
+<hr/>
+<ol>
+<li id="fn:user-content-0">
+<p>Source <a href="#fnref:user-content-0" rel="nofollow">↩︎</a></p>
+</li>
+</ol>
+</div>
+`,
+		},
+		{
+			`Citation needed[^]
+[^]: Source`,
+			`<p>Citation needed[^]<br/>
+[^]: Source</p>
+`,
+		},
+		{
+			`Citation needed[^0]
+[^0] Source`,
+			`<p>Citation needed[^0]<br/>
+[^0] Source</p>
+`,
+		},
+		{
+			`Citation needed[^0]
+[^0 Source`,
+			`<p>Citation needed[^0]<br/>
+[^0 Source</p>
+`,
+		},
+		{
+			`Citation needed[^0] [^0]: Source`,
+			`<p>Citation needed[^0] [^0]: Source</p>
+`,
+		},
+		{
+			`Citation needed[^Source here 0 # 9-3]
+[^Source here 0 # 9-3]: Source`,
+			`<p>Citation needed<sup id="fnref:user-content-source-here-0-9-3"><a href="#fn:user-content-source-here-0-9-3" rel="nofollow">1</a></sup></p>
+<div>
+<hr/>
+<ol>
+<li id="fn:user-content-source-here-0-9-3">
+<p>Source <a href="#fnref:user-content-source-here-0-9-3" rel="nofollow">↩︎</a></p>
+</li>
+</ol>
+</div>
+`,
+		},
+		{
+			`Citation needed[^0]
+[^0]:`,
+			`<p>Citation needed<sup id="fnref:user-content-0"><a href="#fn:user-content-0" rel="nofollow">1</a></sup></p>
+<div>
+<hr/>
+<ol>
+<li id="fn:user-content-0">
+ <a href="#fnref:user-content-0" rel="nofollow">↩︎</a></li>
+</ol>
+</div>
+`,
+		},
+	}
+	for _, test := range testcases {
+		res, err := markdown.RenderString(&markup.RenderContext{Ctx: git.DefaultContext}, test.testcase)
+		assert.NoError(t, err, "Unexpected error in testcase: %q", test.testcase)
+		assert.Equal(t, test.expected, res, "Unexpected result in testcase %q", test.testcase)
 	}
 }
 

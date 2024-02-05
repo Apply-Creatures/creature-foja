@@ -35,6 +35,9 @@ func canGithubEventMatch(eventName string, triggedEvent webhook_module.HookEvent
 	case GithubEventGollum:
 		return triggedEvent == webhook_module.HookEventWiki
 
+	case GithubEventSchedule:
+		return triggedEvent == webhook_module.HookEventSchedule
+
 	case GithubEventIssues:
 		switch triggedEvent {
 		case webhook_module.HookEventIssues,
@@ -69,9 +72,6 @@ func canGithubEventMatch(eventName string, triggedEvent webhook_module.HookEvent
 		default:
 			return false
 		}
-
-	case GithubEventSchedule:
-		return triggedEvent == webhook_module.HookEventSchedule
 
 	default:
 		return eventName == string(triggedEvent)

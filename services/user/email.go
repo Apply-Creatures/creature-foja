@@ -145,6 +145,33 @@ func AddEmailAddresses(ctx context.Context, u *user_model.User, emails []string)
 	return nil
 }
 
+// ReplaceInactivePrimaryEmail replaces the primary email of a given user, even if the primary is not yet activated.
+func ReplaceInactivePrimaryEmail(ctx context.Context, oldEmail string, email *user_model.EmailAddress) error {
+	user := &user_model.User{}
+	has, err := db.GetEngine(ctx).ID(email.UID).Get(user)
+	if err != nil {
+		return err
+	} else if !has {
+		return user_model.ErrUserNotExist{
+			UID:   email.UID,
+			Name:  "",
+			KeyID: 0,
+		}
+	}
+
+	err = AddEmailAddresses(ctx, user, []string{email.Email})
+	if err != nil {
+		return err
+	}
+
+	err = user_model.MakeEmailPrimaryWithUser(ctx, user, email)
+	if err != nil {
+		return err
+	}
+
+	return DeleteEmailAddresses(ctx, user, []string{oldEmail})
+}
+
 func DeleteEmailAddresses(ctx context.Context, u *user_model.User, emails []string) error {
 	for _, emailStr := range emails {
 		// Check if address exists

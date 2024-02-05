@@ -335,6 +335,16 @@
 							<label>{{ctx.Locale.Tr "repo.settings.use_internal_wiki"}}</label>
 						</div>
 					</div>
+					{{if (not .Repository.IsPrivate)}}
+					<div class="field {{if (.Repository.UnitEnabled $.Context $.UnitTypeExternalWiki)}}disabled{{end}}">
+						<div class="field">
+							<div class="ui checkbox">
+								<input name="globally_writeable_wiki" type="checkbox" {{if .Permission.IsGloballyWriteable $.UnitTypeWiki}}checked{{end}}>
+								<label>{{ctx.Locale.Tr "repo.settings.wiki_globally_editable"}}</label>
+							</div>
+						</div>
+					</div>
+					{{end}}
 					<div class="field">
 						<div class="ui radio checkbox{{if $isExternalWikiGlobalDisabled}} disabled{{end}}"{{if $isExternalWikiGlobalDisabled}} data-tooltip-content="{{ctx.Locale.Tr "repo.unit_disabled"}}"{{end}}>
 							<input class="enable-system-radio" name="enable_external_wiki" type="radio" value="true" data-target="#external_wiki_box" {{if .Repository.UnitEnabled $.Context $.UnitTypeExternalWiki}}checked{{end}}>
@@ -770,6 +780,17 @@
 					</div>
 				</div>
 				{{if .Permission.CanRead $.UnitTypeWiki}}
+					{{if ne $.Repository.GetWikiBranchName .DefaultWikiBranchName}}
+						<div class="flex-item">
+							<div class="flex-item-main">
+								<div class="flex-item-title">{{ctx.Locale.Tr "repo.settings.wiki_rename_branch_main"}}</div>
+								<div class="flex-item-body">{{ctx.Locale.Tr "repo.settings.wiki_rename_branch_main_desc" .DefaultWikiBranchName}}</div>
+							</div>
+							<div class="flex-item-trailing">
+								<button class="ui basic red show-modal button" data-modal="#rename-wiki-branch-modal">{{ctx.Locale.Tr "repo.settings.wiki_rename_branch_main"}}</button>
+							</div>
+						</div>
+					{{end}}
 					<div class="flex-item">
 						<div class="flex-item-main">
 							<div class="flex-item-title">{{ctx.Locale.Tr "repo.settings.wiki_delete"}}</div>
@@ -832,7 +853,7 @@
 					<input type="hidden" name="action" value="convert">
 					<div class="field">
 						<label>
-							{{ctx.Locale.Tr "repo.settings.transfer_form_title"}}
+							{{ctx.Locale.Tr "repo.settings.enter_repo_name"}}
 							<span class="text red">{{.Repository.FullName}}</span>
 						</label>
 					</div>
@@ -863,7 +884,7 @@
 					<input type="hidden" name="action" value="convert_fork">
 					<div class="field">
 						<label>
-							{{ctx.Locale.Tr "repo.settings.transfer_form_title"}}
+							{{ctx.Locale.Tr "repo.settings.enter_repo_name"}}
 							<span class="text red">{{.Repository.FullName}}</span>
 						</label>
 					</div>
@@ -895,7 +916,7 @@
 				<input type="hidden" name="action" value="transfer">
 				<div class="field">
 					<label>
-						{{ctx.Locale.Tr "repo.settings.transfer_form_title"}}
+						{{ctx.Locale.Tr "repo.settings.enter_repo_name"}}
 						<span class="text red">{{.Repository.FullName}}</span>
 					</label>
 				</div>
@@ -933,7 +954,7 @@
 				<input type="hidden" name="action" value="delete">
 				<div class="field">
 					<label>
-						{{ctx.Locale.Tr "repo.settings.transfer_form_title"}}
+						{{ctx.Locale.Tr "repo.settings.enter_repo_name"}}
 						<span class="text red">{{.Repository.FullName}}</span>
 					</label>
 				</div>
@@ -965,7 +986,7 @@
 				<input type="hidden" name="action" value="delete-wiki">
 				<div class="field">
 					<label>
-						{{ctx.Locale.Tr "repo.settings.transfer_form_title"}}
+						{{ctx.Locale.Tr "repo.settings.enter_repo_name"}}
 						<span class="text red">{{.Repository.FullName}}</span>
 					</label>
 				</div>
@@ -981,6 +1002,40 @@
 			</form>
 		</div>
 	</div>
+	{{if ne $.Repository.GetWikiBranchName .DefaultWikiBranchName}}
+		<div class="ui small modal" id="rename-wiki-branch-modal">
+			<div class="header">
+				{{ctx.Locale.Tr "repo.settings.wiki_rename_branch_main"}}
+			</div>
+			<div class="content">
+				<div class="ui warning message">
+					<ul>
+						<li>{{ctx.Locale.Tr "repo.settings.wiki_rename_branch_main_notices_1" | Safe}}</li>
+						<li>{{ctx.Locale.Tr "repo.settings.wiki_rename_branch_main_notices_2" .Repository.Name}}</li>
+					</ul>
+				</div>
+				<form class="ui form" action="{{.Link}}" method="post">
+					{{.CsrfTokenHtml}}
+					<input type="hidden" name="action" value="rename-wiki-branch">
+					<div class="field">
+						<label>
+							{{ctx.Locale.Tr "repo.settings.enter_repo_name"}}
+							<span class="text red">{{.Repository.FullName}}</span>
+						</label>
+					</div>
+					<div class="required field">
+						<label for="repo_name">{{ctx.Locale.Tr "repo.repo_name"}}</label>
+						<input id="repo_name" name="repo_name" required>
+					</div>
+
+					<div class="text right actions">
+						<button class="ui cancel button">{{ctx.Locale.Tr "settings.cancel"}}</button>
+						<button class="ui red button">{{ctx.Locale.Tr "repo.settings.confirm_wiki_branch_rename"}}</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	{{end}}
 	{{end}}
 
 	{{if not .Repository.IsMirror}}
@@ -993,20 +1048,23 @@
 				{{end}}
 			</div>
 			<div class="content">
-				<p>
+				<div class="ui warning message">
 					{{if .Repository.IsArchived}}
 						{{ctx.Locale.Tr "repo.settings.unarchive.text"}}
 					{{else}}
 						{{ctx.Locale.Tr "repo.settings.archive.text"}}
 					{{end}}
-				</p>
-			</div>
-			<form action="{{.Link}}" method="post">
-				{{.CsrfTokenHtml}}
-				<input type="hidden" name="action" value="{{if .Repository.IsArchived}}unarchive{{else}}archive{{end}}">
-				<input type="hidden" name="repo_id" value="{{.Repository.ID}}">
-				{{template "base/modal_actions_confirm" .}}
+				</div>
+				<form action="{{.Link}}" method="post">
+					{{.CsrfTokenHtml}}
+					<input type="hidden" name="action" value="{{if .Repository.IsArchived}}unarchive{{else}}archive{{end}}">
+					<input type="hidden" name="repo_id" value="{{.Repository.ID}}">
+					<div class="text right actions">
+						<button class="ui cancel button">{{ctx.Locale.Tr "settings.cancel"}}</button>
+						<button class="ui red button">{{ctx.Locale.Tr "repo.settings.archive.button"}}</button>
+					</div>
 			</form>
+			</div>
 		</div>
 	{{end}}
 {{end}}

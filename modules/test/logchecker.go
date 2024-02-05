@@ -55,13 +55,15 @@ func (lc *LogChecker) checkLogEvent(event *log.EventFormatted) {
 
 var checkerIndex int64
 
-func NewLogChecker(namePrefix string) (logChecker *LogChecker, cancel func()) {
+func NewLogChecker(namePrefix string, level log.Level) (logChecker *LogChecker, cancel func()) {
 	logger := log.GetManager().GetLogger(namePrefix)
 	newCheckerIndex := atomic.AddInt64(&checkerIndex, 1)
 	writerName := namePrefix + "-" + fmt.Sprint(newCheckerIndex)
 
 	lc := &LogChecker{}
-	lc.EventWriterBaseImpl = log.NewEventWriterBase(writerName, "test-log-checker", log.WriterMode{})
+	lc.EventWriterBaseImpl = log.NewEventWriterBase(writerName, "test-log-checker", log.WriterMode{
+		Level: level,
+	})
 	logger.AddWriters(lc)
 	return lc, func() { _ = logger.RemoveWriter(writerName) }
 }

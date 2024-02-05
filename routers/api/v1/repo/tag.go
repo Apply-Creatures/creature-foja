@@ -176,7 +176,7 @@ func CreateTag(ctx *context.APIContext) {
 	//   schema:
 	//     "$ref": "#/definitions/CreateTagOption"
 	// responses:
-	//   "200":
+	//   "201":
 	//     "$ref": "#/responses/Tag"
 	//   "404":
 	//     "$ref": "#/responses/notFound"

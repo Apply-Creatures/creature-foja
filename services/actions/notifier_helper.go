@@ -118,9 +118,6 @@ func notify(ctx context.Context, input *notifyInput) error {
 		return nil
 	}
 	if unit_model.TypeActions.UnitGlobalDisabled() {
-		if err := actions_model.CleanRepoScheduleTasks(ctx, input.Repo); err != nil {
-			log.Error("CleanRepoScheduleTasks: %v", err)
-		}
 		return nil
 	}
 	if err := input.Repo.LoadUnits(ctx); err != nil {
@@ -157,31 +154,23 @@ func notify(ctx context.Context, input *notifyInput) error {
 
 	var detectedWorkflows []*actions_module.DetectedWorkflow
 	actionsConfig := input.Repo.MustGetUnit(ctx, unit_model.TypeActions).ActionsConfig()
-	workflows, schedules, err := actions_module.DetectWorkflows(gitRepo, commit,
-		input.Event,
-		input.Payload,
-		input.Event == webhook_module.HookEventPush && git.RefName(input.Ref).BranchName() == input.Repo.DefaultBranch,
-	)
+	workflows, schedules, err := actions_module.DetectWorkflows(gitRepo, commit, input.Event, input.Payload)
 	if err != nil {
 		return fmt.Errorf("DetectWorkflows: %w", err)
 	}
 
-	log.Trace("repo %s with commit %s event %s find %d workflows and %d schedules",
-		input.Repo.RepoPath(),
-		commit.ID,
-		input.Event,
-		len(workflows),
-		len(schedules),
-	)
+	if len(workflows) == 0 {
+		log.Trace("repo %s with commit %s couldn't find workflows", input.Repo.RepoPath(), commit.ID)
+	} else {
+		for _, wf := range workflows {
+			if actionsConfig.IsWorkflowDisabled(wf.EntryName) {
+				log.Trace("repo %s has disable workflows %s", input.Repo.RepoPath(), wf.EntryName)
+				continue
+			}
 
-	for _, wf := range workflows {
-		if actionsConfig.IsWorkflowDisabled(wf.EntryName) {
-			log.Trace("repo %s has disable workflows %s", input.Repo.RepoPath(), wf.EntryName)
-			continue
-		}
-
-		if wf.TriggerEvent.Name != actions_module.GithubEventPullRequestTarget {
-			detectedWorkflows = append(detectedWorkflows, wf)
+			if wf.TriggerEvent != actions_module.GithubEventPullRequestTarget {
+				detectedWorkflows = append(detectedWorkflows, wf)
+			}
 		}
 	}
 
@@ -192,7 +181,7 @@ func notify(ctx context.Context, input *notifyInput) error {
 		if err != nil {
 			return fmt.Errorf("gitRepo.GetCommit: %w", err)
 		}
-		baseWorkflows, _, err := actions_module.DetectWorkflows(gitRepo, baseCommit, input.Event, input.Payload, false)
+		baseWorkflows, _, err := actions_module.DetectWorkflows(gitRepo, baseCommit, input.Event, input.Payload)
 		if err != nil {
 			return fmt.Errorf("DetectWorkflows: %w", err)
 		}
@@ -200,7 +189,7 @@ func notify(ctx context.Context, input *notifyInput) error {
 			log.Trace("repo %s with commit %s couldn't find pull_request_target workflows", input.Repo.RepoPath(), baseCommit.ID)
 		} else {
 			for _, wf := range baseWorkflows {
-				if wf.TriggerEvent.Name == actions_module.GithubEventPullRequestTarget {
+				if wf.TriggerEvent == actions_module.GithubEventPullRequestTarget {
 					detectedWorkflows = append(detectedWorkflows, wf)
 				}
 			}
@@ -277,7 +266,7 @@ func handleWorkflows(
 			IsForkPullRequest: isForkPullRequest,
 			Event:             input.Event,
 			EventPayload:      string(p),
-			TriggerEvent:      dwf.TriggerEvent.Name,
+			TriggerEvent:      dwf.TriggerEvent,
 			Status:            actions_model.StatusWaiting,
 		}
 		if need, err := ifNeedApproval(ctx, run, input.Repo, input.Doer); err != nil {
@@ -301,7 +290,6 @@ func handleWorkflows(
 				run.RepoID,
 				run.Ref,
 				run.WorkflowID,
-				run.Event,
 			); err != nil {
 				log.Error("CancelRunningJobs: %v", err)
 			}
@@ -427,8 +415,8 @@ func handleSchedules(
 		log.Error("CountSchedules: %v", err)
 		return err
 	} else if count > 0 {
-		if err := actions_model.CleanRepoScheduleTasks(ctx, input.Repo); err != nil {
-			log.Error("CleanRepoScheduleTasks: %v", err)
+		if err := actions_model.DeleteScheduleTaskByRepo(ctx, input.Repo.ID); err != nil {
+			log.Error("DeleteCronTaskByRepo: %v", err)
 		}
 	}
 
@@ -437,7 +425,11 @@ func handleSchedules(
 		return nil
 	}
 
-	p, err := json.Marshal(input.Payload)
+	payload := &api.SchedulePayload{
+		Action: api.HookScheduleCreated,
+	}
+
+	p, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("json.Marshal: %w", err)
 	}
@@ -462,47 +454,28 @@ func handleSchedules(
 			OwnerID:       input.Repo.OwnerID,
 			WorkflowID:    dwf.EntryName,
 			TriggerUserID: input.Doer.ID,
-			Ref:           ref,
+			Ref:           input.Repo.DefaultBranch,
 			CommitSHA:     commit.ID.String(),
-			Event:         input.Event,
+			Event:         webhook_module.HookEventType(api.HookScheduleCreated),
 			EventPayload:  string(p),
 			Specs:         schedules,
 			Content:       dwf.Content,
+		}
+
+		// cancel running jobs if the event is push
+		if run.Event == webhook_module.HookEventPush {
+			// cancel running jobs of the same workflow
+			if err := actions_model.CancelRunningJobs(
+				ctx,
+				run.RepoID,
+				run.Ref,
+				run.WorkflowID,
+			); err != nil {
+				log.Error("CancelRunningJobs: %v", err)
+			}
 		}
 		crons = append(crons, run)
 	}
 
 	return actions_model.CreateScheduleTask(ctx, crons)
-}
-
-// DetectAndHandleSchedules detects the schedule workflows on the default branch and create schedule tasks
-func DetectAndHandleSchedules(ctx context.Context, repo *repo_model.Repository) error {
-	gitRepo, err := gitrepo.OpenRepository(context.Background(), repo)
-	if err != nil {
-		return fmt.Errorf("git.OpenRepository: %w", err)
-	}
-	defer gitRepo.Close()
-
-	// Only detect schedule workflows on the default branch
-	commit, err := gitRepo.GetCommit(repo.DefaultBranch)
-	if err != nil {
-		return fmt.Errorf("gitRepo.GetCommit: %w", err)
-	}
-	scheduleWorkflows, err := actions_module.DetectScheduledWorkflows(gitRepo, commit)
-	if err != nil {
-		return fmt.Errorf("detect schedule workflows: %w", err)
-	}
-	if len(scheduleWorkflows) == 0 {
-		return nil
-	}
-
-	// We need a notifyInput to call handleSchedules
-	// Here we use the commit author as the Doer of the notifyInput
-	commitUser, err := user_model.GetUserByEmail(ctx, commit.Author.Email)
-	if err != nil {
-		return fmt.Errorf("get user by email: %w", err)
-	}
-	notifyInput := newNotifyInput(repo, commitUser, webhook_module.HookEventSchedule)
-
-	return handleSchedules(ctx, scheduleWorkflows, commit, notifyInput, repo.DefaultBranch)
 }

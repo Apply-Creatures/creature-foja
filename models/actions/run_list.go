@@ -10,7 +10,6 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/container"
-	webhook_module "code.gitea.io/gitea/modules/webhook"
 
 	"xorm.io/builder"
 )
@@ -72,7 +71,6 @@ type FindRunOptions struct {
 	WorkflowID    string
 	Ref           string // the commit/tag/… that caused this workflow
 	TriggerUserID int64
-	TriggerEvent  webhook_module.HookEventType
 	Approved      bool // not util.OptionalBool, it works only when it's true
 	Status        []Status
 }
@@ -99,9 +97,6 @@ func (opts FindRunOptions) ToConds() builder.Cond {
 	}
 	if opts.Ref != "" {
 		cond = cond.And(builder.Eq{"ref": opts.Ref})
-	}
-	if opts.TriggerEvent != "" {
-		cond = cond.And(builder.Eq{"trigger_event": opts.TriggerEvent})
 	}
 	return cond
 }

@@ -96,7 +96,7 @@ func CreateCodeComment(ctx context.Context, doer *user_model.User, gitRepo *git.
 			return nil, err
 		}
 
-		comment, err := createCodeComment(ctx,
+		comment, err := CreateCodeCommentKnownReviewID(ctx,
 			doer,
 			issue.Repo,
 			issue,
@@ -136,7 +136,7 @@ func CreateCodeComment(ctx context.Context, doer *user_model.User, gitRepo *git.
 		}
 	}
 
-	comment, err := createCodeComment(ctx,
+	comment, err := CreateCodeCommentKnownReviewID(ctx,
 		doer,
 		issue.Repo,
 		issue,
@@ -162,7 +162,7 @@ func CreateCodeComment(ctx context.Context, doer *user_model.User, gitRepo *git.
 }
 
 // createCodeComment creates a plain code comment at the specified line / path
-func createCodeComment(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, issue *issues_model.Issue, content, treePath string, line, reviewID int64) (*issues_model.Comment, error) {
+func CreateCodeCommentKnownReviewID(ctx context.Context, doer *user_model.User, repo *repo_model.Repository, issue *issues_model.Issue, content, treePath string, line, reviewID int64) (*issues_model.Comment, error) {
 	var commitID, patch string
 	if err := issue.LoadPullRequest(ctx); err != nil {
 		return nil, fmt.Errorf("LoadPullRequest: %w", err)

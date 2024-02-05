@@ -208,6 +208,7 @@ func innerToRepo(ctx context.Context, repo *repo_model.Repository, permissionInR
 		ExternalTracker:               externalTracker,
 		InternalTracker:               internalTracker,
 		HasWiki:                       hasWiki,
+		WikiBranch:                    repo.WikiBranch,
 		HasProjects:                   hasProjects,
 		HasReleases:                   hasReleases,
 		HasPackages:                   hasPackages,

@@ -262,7 +262,9 @@ func GetArchive(ctx *context.APIContext) {
 	// ---
 	// summary: Get an archive of a repository
 	// produces:
-	// - application/json
+	// - application/octet-stream
+	// - application/zip
+	// - application/gzip
 	// parameters:
 	// - name: owner
 	//   in: path
@@ -342,7 +344,17 @@ func download(ctx *context.APIContext, archiveName string, archiver *repo_model.
 	}
 	defer fr.Close()
 
+	contentType := ""
+	switch archiver.Type {
+	case git.ZIP:
+		contentType = "application/zip"
+	case git.TARGZ:
+		// Per RFC6713.
+		contentType = "application/gzip"
+	}
+
 	ctx.ServeContent(fr, &context.ServeHeaderOptions{
+		ContentType:  contentType,
 		Filename:     downloadName,
 		LastModified: archiver.CreatedUnix.AsLocalTime(),
 	})

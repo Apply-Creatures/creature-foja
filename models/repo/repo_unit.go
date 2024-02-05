@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/perm"
 	"code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/setting"
@@ -39,13 +40,43 @@ func (err ErrUnitTypeNotExist) Unwrap() error {
 	return util.ErrNotExist
 }
 
+// RepoUnitAccessMode specifies the users access mode to a repo unit
+type UnitAccessMode int
+
+const (
+	// UnitAccessModeUnset - no unit mode set
+	UnitAccessModeUnset UnitAccessMode = iota // 0
+	// UnitAccessModeNone no access
+	UnitAccessModeNone // 1
+	// UnitAccessModeRead read access
+	UnitAccessModeRead // 2
+	// UnitAccessModeWrite write access
+	UnitAccessModeWrite // 3
+)
+
+func (mode UnitAccessMode) ToAccessMode(modeIfUnset perm.AccessMode) perm.AccessMode {
+	switch mode {
+	case UnitAccessModeUnset:
+		return modeIfUnset
+	case UnitAccessModeNone:
+		return perm.AccessModeNone
+	case UnitAccessModeRead:
+		return perm.AccessModeRead
+	case UnitAccessModeWrite:
+		return perm.AccessModeWrite
+	default:
+		return perm.AccessModeNone
+	}
+}
+
 // RepoUnit describes all units of a repository
 type RepoUnit struct { //revive:disable-line:exported
-	ID          int64
-	RepoID      int64              `xorm:"INDEX(s)"`
-	Type        unit.Type          `xorm:"INDEX(s)"`
-	Config      convert.Conversion `xorm:"TEXT"`
-	CreatedUnix timeutil.TimeStamp `xorm:"INDEX CREATED"`
+	ID                 int64
+	RepoID             int64              `xorm:"INDEX(s)"`
+	Type               unit.Type          `xorm:"INDEX(s)"`
+	Config             convert.Conversion `xorm:"TEXT"`
+	CreatedUnix        timeutil.TimeStamp `xorm:"INDEX CREATED"`
+	DefaultPermissions UnitAccessMode     `xorm:"NOT NULL DEFAULT 0"`
 }
 
 func init() {
@@ -282,4 +313,30 @@ func getUnitsByRepoID(ctx context.Context, repoID int64) (units []*RepoUnit, err
 func UpdateRepoUnit(ctx context.Context, unit *RepoUnit) error {
 	_, err := db.GetEngine(ctx).ID(unit.ID).Update(unit)
 	return err
+}
+
+// UpdateRepositoryUnits updates a repository's units
+func UpdateRepositoryUnits(ctx context.Context, repo *Repository, units []RepoUnit, deleteUnitTypes []unit.Type) (err error) {
+	ctx, committer, err := db.TxContext(ctx)
+	if err != nil {
+		return err
+	}
+	defer committer.Close()
+
+	// Delete existing settings of units before adding again
+	for _, u := range units {
+		deleteUnitTypes = append(deleteUnitTypes, u.Type)
+	}
+
+	if _, err = db.GetEngine(ctx).Where("repo_id = ?", repo.ID).In("type", deleteUnitTypes).Delete(new(RepoUnit)); err != nil {
+		return err
+	}
+
+	if len(units) > 0 {
+		if err = db.Insert(ctx, units); err != nil {
+			return err
+		}
+	}
+
+	return committer.Commit()
 }

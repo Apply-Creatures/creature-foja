@@ -231,6 +231,25 @@ func GetEmailAddresses(ctx context.Context, uid int64) ([]*EmailAddress, error) 
 	return emails, nil
 }
 
+type ActivatedEmailAddress struct {
+	ID    int64
+	Email string
+}
+
+func GetActivatedEmailAddresses(ctx context.Context, uid int64) ([]*ActivatedEmailAddress, error) {
+	emails := make([]*ActivatedEmailAddress, 0, 8)
+	if err := db.GetEngine(ctx).
+		Table("email_address").
+		Select("id, email").
+		Where("uid=?", uid).
+		And("is_activated=?", true).
+		Asc("id").
+		Find(&emails); err != nil {
+		return nil, err
+	}
+	return emails, nil
+}
+
 // GetEmailAddressByID gets a user's email address by ID
 func GetEmailAddressByID(ctx context.Context, uid, id int64) (*EmailAddress, error) {
 	// User ID is required for security reasons
@@ -313,31 +332,7 @@ func updateActivation(ctx context.Context, email *EmailAddress, activate bool) e
 	return UpdateUserCols(ctx, user, "rands")
 }
 
-// MakeEmailPrimary sets primary email address of given user.
-func MakeEmailPrimary(ctx context.Context, email *EmailAddress) error {
-	has, err := db.GetEngine(ctx).Get(email)
-	if err != nil {
-		return err
-	} else if !has {
-		return ErrEmailAddressNotExist{Email: email.Email}
-	}
-
-	if !email.IsActivated {
-		return ErrEmailNotActivated
-	}
-
-	user := &User{}
-	has, err = db.GetEngine(ctx).ID(email.UID).Get(user)
-	if err != nil {
-		return err
-	} else if !has {
-		return ErrUserNotExist{
-			UID:   email.UID,
-			Name:  "",
-			KeyID: 0,
-		}
-	}
-
+func MakeEmailPrimaryWithUser(ctx context.Context, user *User, email *EmailAddress) error {
 	ctx, committer, err := db.TxContext(ctx)
 	if err != nil {
 		return err
@@ -365,6 +360,30 @@ func MakeEmailPrimary(ctx context.Context, email *EmailAddress) error {
 	}
 
 	return committer.Commit()
+}
+
+// MakeEmailPrimary sets primary email address of given user.
+func MakeEmailPrimary(ctx context.Context, email *EmailAddress) error {
+	has, err := db.GetEngine(ctx).Get(email)
+	if err != nil {
+		return err
+	} else if !has {
+		return ErrEmailAddressNotExist{Email: email.Email}
+	}
+
+	if !email.IsActivated {
+		return ErrEmailNotActivated
+	}
+
+	user := &User{}
+	has, err = db.GetEngine(ctx).ID(email.UID).Get(user)
+	if err != nil {
+		return err
+	} else if !has {
+		return ErrUserNotExist{UID: email.UID}
+	}
+
+	return MakeEmailPrimaryWithUser(ctx, user, email)
 }
 
 // VerifyActiveEmailCode verifies active email code when active account

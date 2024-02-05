@@ -1,0 +1,33 @@
+{{template "base/head" .}}
+<div role="main" aria-label="{{.Title}}" class="page-content repository">
+	{{template "repo/header" .}}
+	<div class="ui container">
+		{{template "base/alert" .}}
+		<div class="user-main-content twelve wide column">
+			<h4 class="ui top attached header">
+				{{ctx.Locale.Tr "repo.admin.manage_flags"}}
+			</h4>
+			<div class="ui attached segment">
+				<form class="ui form" action="{{.Link}}" method="post">
+					{{.CsrfTokenHtml}}
+					<strong>{{ctx.Locale.Tr "repo.admin.enabled_flags"}}</strong>
+					<div class="ui segment gt-pl-4">
+						{{range $flag, $checked := .Flags}}
+							<div class="field">
+								<div class="ui checkbox{{if $checked}} checked{{end}}">
+									<input name="flags" type="checkbox" value="{{$flag}}" {{if $checked}}checked{{end}}>
+									<label>{{$flag}}</label>
+								</div>
+							</div>
+						{{end}}
+					</div>
+
+					<div class="field">
+						<button class="ui primary button">{{ctx.Locale.Tr "repo.admin.update_flags"}}</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+</div>
+{{template "base/footer" .}}

@@ -6,7 +6,7 @@
 //
 // This documentation describes the Gitea API.
 //
-//	Schemes: http, https
+//	Schemes: https, http
 //	BasePath: /api/v1
 //	Version: {{AppVer | JSEscape | Safe}}
 //	License: MIT http://opensource.org/licenses/MIT
@@ -73,6 +73,7 @@ import (
 	actions_model "code.gitea.io/gitea/models/actions"
 	auth_model "code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/models/db"
+	issues_model "code.gitea.io/gitea/models/issues"
 	"code.gitea.io/gitea/models/organization"
 	"code.gitea.io/gitea/models/perm"
 	access_model "code.gitea.io/gitea/models/perm/access"
@@ -227,6 +228,39 @@ func repoAssignment() func(ctx *context.APIContext) {
 			ctx.NotFound()
 			return
 		}
+	}
+}
+
+// must be used within a group with a call to repoAssignment() to set ctx.Repo
+func commentAssignment(idParam string) func(ctx *context.APIContext) {
+	return func(ctx *context.APIContext) {
+		comment, err := issues_model.GetCommentByID(ctx, ctx.ParamsInt64(idParam))
+		if err != nil {
+			if issues_model.IsErrCommentNotExist(err) {
+				ctx.NotFound(err)
+			} else {
+				ctx.InternalServerError(err)
+			}
+			return
+		}
+
+		if err = comment.LoadIssue(ctx); err != nil {
+			ctx.InternalServerError(err)
+			return
+		}
+		if comment.Issue == nil || comment.Issue.RepoID != ctx.Repo.Repository.ID {
+			ctx.NotFound()
+			return
+		}
+
+		if !ctx.Repo.CanReadIssuesOrPulls(comment.Issue.IsPull) {
+			ctx.NotFound()
+			return
+		}
+
+		comment.Issue.Repo = ctx.Repo.Repository
+
+		ctx.Comment = comment
 	}
 }
 
@@ -1104,6 +1138,18 @@ func Routes() *web.Route {
 						m.Get("/permission", repo.GetRepoPermissions)
 					})
 				}, reqToken())
+				if setting.Repository.EnableFlags {
+					m.Group("/flags", func() {
+						m.Combo("").Get(repo.ListFlags).
+							Put(bind(api.ReplaceFlagsOption{}), repo.ReplaceAllFlags).
+							Delete(repo.DeleteAllFlags)
+						m.Group("/{flag}", func() {
+							m.Combo("").Get(repo.HasFlag).
+								Put(repo.AddFlag).
+								Delete(repo.DeleteFlag)
+						})
+					}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryAdmin), reqToken(), reqSiteAdmin())
+				}
 				m.Get("/assignees", reqToken(), reqAnyRepoReader(), repo.GetAssignees)
 				m.Get("/reviewers", reqToken(), reqAnyRepoReader(), repo.GetReviewers)
 				m.Group("/teams", func() {
@@ -1223,8 +1269,16 @@ func Routes() *web.Route {
 									Get(repo.GetPullReview).
 									Delete(reqToken(), repo.DeletePullReview).
 									Post(reqToken(), bind(api.SubmitPullReviewOptions{}), repo.SubmitPullReview)
-								m.Combo("/comments").
-									Get(repo.GetPullReviewComments)
+								m.Group("/comments", func() {
+									m.Combo("").
+										Get(repo.GetPullReviewComments).
+										Post(reqToken(), bind(api.CreatePullReviewCommentOptions{}), repo.CreatePullReviewComment)
+									m.Group("/{comment}", func() {
+										m.Combo("").
+											Get(repo.GetPullReviewComment).
+											Delete(reqToken(), repo.DeletePullReviewComment)
+									}, commentAssignment("comment"))
+								})
 								m.Post("/dismissals", reqToken(), bind(api.DismissPullReviewOptions{}), repo.DismissPullReview)
 								m.Post("/undismissals", reqToken(), repo.UnDismissPullReview)
 							})
@@ -1328,7 +1382,7 @@ func Routes() *web.Route {
 									Patch(reqToken(), mustNotBeArchived, bind(api.EditAttachmentOptions{}), repo.EditIssueCommentAttachment).
 									Delete(reqToken(), mustNotBeArchived, repo.DeleteIssueCommentAttachment)
 							}, mustEnableAttachments)
-						})
+						}, commentAssignment(":id"))
 					})
 					m.Group("/{index}", func() {
 						m.Combo("").Get(repo.GetIssue).

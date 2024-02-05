@@ -82,17 +82,7 @@ func TestAPIPullUpdateByRebase(t *testing.T) {
 }
 
 func createOutdatedPR(t *testing.T, actor, forkOrg *user_model.User) *issues_model.PullRequest {
-	baseRepo, err := repo_service.CreateRepository(db.DefaultContext, actor, actor, repo_service.CreateRepoOptions{
-		Name:        "repo-pr-update",
-		Description: "repo-tmp-pr-update description",
-		AutoInit:    true,
-		Gitignores:  "C,C++",
-		License:     "MIT",
-		Readme:      "Default",
-		IsPrivate:   false,
-	})
-	assert.NoError(t, err)
-	assert.NotEmpty(t, baseRepo)
+	baseRepo, _, _ := CreateDeclarativeRepo(t, actor, "repo-pr-update", nil, nil, nil)
 
 	headRepo, err := repo_service.ForkRepository(git.DefaultContext, actor, forkOrg, repo_service.ForkRepoOptions{
 		BaseRepo:    baseRepo,
@@ -112,8 +102,8 @@ func createOutdatedPR(t *testing.T, actor, forkOrg *user_model.User) *issues_mod
 			},
 		},
 		Message:   "Add File A",
-		OldBranch: "master",
-		NewBranch: "master",
+		OldBranch: "main",
+		NewBranch: "main",
 		Author: &files_service.IdentityOptions{
 			Name:  actor.Name,
 			Email: actor.Email,
@@ -139,7 +129,7 @@ func createOutdatedPR(t *testing.T, actor, forkOrg *user_model.User) *issues_mod
 			},
 		},
 		Message:   "Add File on PR branch",
-		OldBranch: "master",
+		OldBranch: "main",
 		NewBranch: "newBranch",
 		Author: &files_service.IdentityOptions{
 			Name:  actor.Name,
@@ -168,7 +158,7 @@ func createOutdatedPR(t *testing.T, actor, forkOrg *user_model.User) *issues_mod
 		HeadRepoID: headRepo.ID,
 		BaseRepoID: baseRepo.ID,
 		HeadBranch: "newBranch",
-		BaseBranch: "master",
+		BaseBranch: "main",
 		HeadRepo:   headRepo,
 		BaseRepo:   baseRepo,
 		Type:       issues_model.PullRequestGitea,

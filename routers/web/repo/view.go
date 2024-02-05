@@ -166,7 +166,7 @@ func renderDirectory(ctx *context.Context) {
 
 	if ctx.Repo.TreePath != "" {
 		ctx.Data["HideRepoInfo"] = true
-		ctx.Data["Title"] = ctx.Tr("repo.file.title", ctx.Repo.Repository.Name+"/"+path.Base(ctx.Repo.TreePath), ctx.Repo.RefName)
+		ctx.Data["Title"] = ctx.Tr("repo.file.title", ctx.Repo.Repository.Name+"/"+ctx.Repo.TreePath, ctx.Repo.RefName)
 	}
 
 	subfolder, readmeFile, err := findReadmeFileInEntries(ctx, entries, true)
@@ -381,7 +381,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 	}
 	defer dataRc.Close()
 
-	ctx.Data["Title"] = ctx.Tr("repo.file.title", ctx.Repo.Repository.Name+"/"+path.Base(ctx.Repo.TreePath), ctx.Repo.RefName)
+	ctx.Data["Title"] = ctx.Tr("repo.file.title", ctx.Repo.Repository.Name+"/"+ctx.Repo.TreePath, ctx.Repo.RefName)
 	ctx.Data["FileIsSymlink"] = entry.IsLink()
 	ctx.Data["FileName"] = blob.Name()
 	ctx.Data["RawFileLink"] = ctx.Repo.RepoLink + "/raw/" + ctx.Repo.BranchNameSubURL() + "/" + util.PathEscapeSegments(ctx.Repo.TreePath)
@@ -747,7 +747,7 @@ func checkHomeCodeViewable(ctx *context.Context) {
 			}
 
 			unit, ok := unit_model.Units[repoUnit.Type]
-			if ok && (firstUnit == nil || !firstUnit.IsLessThan(unit)) {
+			if ok && (firstUnit == nil || !firstUnit.IsLessThan(unit)) && repoUnit.Type.CanBeDefault() {
 				firstUnit = &unit
 			}
 		}
@@ -794,12 +794,19 @@ func Home(ctx *context.Context) {
 	if setting.Other.EnableFeed {
 		isFeed, _, showFeedType := feed.GetFeedType(ctx.Params(":reponame"), ctx.Req)
 		if isFeed {
-			switch {
-			case ctx.Link == fmt.Sprintf("%s.%s", ctx.Repo.RepoLink, showFeedType):
+			if ctx.Link == fmt.Sprintf("%s.%s", ctx.Repo.RepoLink, showFeedType) {
 				feed.ShowRepoFeed(ctx, ctx.Repo.Repository, showFeedType)
-			case ctx.Repo.TreePath == "":
+				return
+			}
+
+			if ctx.Repo.Repository.IsEmpty {
+				ctx.NotFound("MustBeNotEmpty", nil)
+				return
+			}
+
+			if ctx.Repo.TreePath == "" {
 				feed.ShowBranchFeed(ctx, ctx.Repo.Repository, showFeedType)
-			case ctx.Repo.TreePath != "":
+			} else {
 				feed.ShowFileFeed(ctx, ctx.Repo.Repository, showFeedType)
 			}
 			return
@@ -1028,20 +1035,79 @@ func renderCode(ctx *context.Context) {
 			return
 		}
 
-		showRecentlyPushedNewBranches := true
-		if ctx.Repo.Repository.IsMirror ||
-			!ctx.Repo.Repository.UnitEnabled(ctx, unit_model.TypePullRequests) {
-			showRecentlyPushedNewBranches = false
+		// If the repo is a mirror, don't display recently pushed branches.
+		if ctx.Repo.Repository.IsMirror {
+			goto PostRecentBranchCheck
 		}
-		if showRecentlyPushedNewBranches {
-			ctx.Data["RecentlyPushedNewBranches"], err = git_model.FindRecentlyPushedNewBranches(ctx, ctx.Repo.Repository.ID, ctx.Doer.ID, ctx.Repo.Repository.DefaultBranch)
-			if err != nil {
-				ctx.ServerError("GetRecentlyPushedBranches", err)
-				return
+
+		// If pull requests aren't enabled for either the current repo, or its
+		// base, don't display recently pushed branches.
+		if !(ctx.Repo.Repository.AllowsPulls(ctx) ||
+			(ctx.Repo.Repository.BaseRepo != nil && ctx.Repo.Repository.BaseRepo.AllowsPulls(ctx))) {
+			goto PostRecentBranchCheck
+		}
+
+		// Find recently pushed new branches to *this* repo.
+		branches, err := git_model.FindRecentlyPushedNewBranches(ctx, ctx.Repo.Repository.ID, ctx.Doer.ID, ctx.Repo.Repository.DefaultBranch)
+		if err != nil {
+			ctx.ServerError("FindRecentlyPushedBranches", err)
+			return
+		}
+
+		// If this is not a fork, check if the signed in user has a fork, and
+		// check branches there.
+		if !ctx.Repo.Repository.IsFork {
+			repo := repo_model.GetForkedRepo(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID)
+			if repo != nil {
+				baseBranches, err := git_model.FindRecentlyPushedNewBranches(ctx, repo.ID, ctx.Doer.ID, repo.DefaultBranch)
+				if err != nil {
+					ctx.ServerError("FindRecentlyPushedBranches", err)
+					return
+				}
+				branches = append(branches, baseBranches...)
 			}
 		}
+
+		// Filter out branches that have no relation to the default branch of
+		// the repository.
+		var filteredBranches []*git_model.Branch
+		for _, branch := range branches {
+			repo, err := branch.GetRepo(ctx)
+			if err != nil {
+				continue
+			}
+			gitRepo, err := git.OpenRepository(ctx, repo.RepoPath())
+			if err != nil {
+				continue
+			}
+			defer gitRepo.Close()
+			head, err := gitRepo.GetCommit(branch.CommitID)
+			if err != nil {
+				continue
+			}
+			defaultBranch, err := gitRepo.GetDefaultBranch()
+			if err != nil {
+				continue
+			}
+			defaultBranchHead, err := gitRepo.GetCommit(defaultBranch)
+			if err != nil {
+				continue
+			}
+
+			hasMergeBase, err := head.HasPreviousCommit(defaultBranchHead.ID)
+			if err != nil {
+				continue
+			}
+
+			if hasMergeBase {
+				filteredBranches = append(filteredBranches, branch)
+			}
+		}
+
+		ctx.Data["RecentlyPushedNewBranches"] = filteredBranches
 	}
 
+PostRecentBranchCheck:
 	var treeNames []string
 	paths := make([]string, 0, 5)
 	if len(ctx.Repo.TreePath) > 0 {

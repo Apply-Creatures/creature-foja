@@ -155,7 +155,8 @@ func Test_IsValidExternalTrackerURLFormat(t *testing.T) {
 	}
 }
 
-func TestIsValidUsername(t *testing.T) {
+func TestIsValidUsernameAllowDots(t *testing.T) {
+	setting.Service.AllowDotsInUsernames = true
 	tests := []struct {
 		arg  string
 		want bool
@@ -182,6 +183,34 @@ func TestIsValidUsername(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.arg, func(t *testing.T) {
 			assert.Equalf(t, tt.want, IsValidUsername(tt.arg), "IsValidUsername(%v)", tt.arg)
+		})
+	}
+}
+
+func TestIsValidUsernameBanDots(t *testing.T) {
+	setting.Service.AllowDotsInUsernames = false
+	defer func() {
+		setting.Service.AllowDotsInUsernames = true
+	}()
+
+	tests := []struct {
+		arg  string
+		want bool
+	}{
+		{arg: "a", want: true},
+		{arg: "abc", want: true},
+		{arg: "0.b-c", want: false},
+		{arg: "a.b-c_d", want: false},
+		{arg: ".abc", want: false},
+		{arg: "abc.", want: false},
+		{arg: "a..bc", want: false},
+		{arg: "a...bc", want: false},
+		{arg: "a.-bc", want: false},
+		{arg: "a._bc", want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.arg, func(t *testing.T) {
+			assert.Equalf(t, tt.want, IsValidUsername(tt.arg), "IsValidUsername[AllowDotsInUsernames=false](%v)", tt.arg)
 		})
 	}
 }

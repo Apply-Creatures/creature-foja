@@ -1,4 +1,5 @@
 // Copyright 2020 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors c/o Codeberg e.V.. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 //go:build gogit
@@ -57,23 +58,25 @@ func (repo *Repository) GetLanguageStats(commitID string) (map[string]int64, err
 			return nil
 		}
 
-		notVendored := false
-		notGenerated := false
+		isVendored := LinguistBoolAttrib{}
+		isGenerated := LinguistBoolAttrib{}
+		isDocumentation := LinguistBoolAttrib{}
+		isDetectable := LinguistBoolAttrib{}
 
 		if checker != nil {
 			attrs, err := checker.CheckPath(f.Name)
 			if err == nil {
 				if vendored, has := attrs["linguist-vendored"]; has {
-					if vendored == "set" || vendored == "true" {
-						return nil
-					}
-					notVendored = vendored == "false"
+					isVendored = LinguistBoolAttrib{Value: vendored}
 				}
 				if generated, has := attrs["linguist-generated"]; has {
-					if generated == "set" || generated == "true" {
-						return nil
-					}
-					notGenerated = generated == "false"
+					isGenerated = LinguistBoolAttrib{Value: generated}
+				}
+				if documentation, has := attrs["linguist-documentation"]; has {
+					isDocumentation = LinguistBoolAttrib{Value: documentation}
+				}
+				if detectable, has := attrs["linguist-detectable"]; has {
+					isDetectable = LinguistBoolAttrib{Value: detectable}
 				}
 				if language, has := attrs["linguist-language"]; has && language != "unspecified" && language != "" {
 					// group languages, such as Pug -> HTML; SCSS -> CSS
@@ -105,8 +108,11 @@ func (repo *Repository) GetLanguageStats(commitID string) (map[string]int64, err
 			}
 		}
 
-		if (!notVendored && analyze.IsVendor(f.Name)) || enry.IsDotFile(f.Name) ||
-			enry.IsDocumentation(f.Name) || enry.IsConfiguration(f.Name) {
+		if isDetectable.IsFalse() || isVendored.IsTrue() || isDocumentation.IsTrue() ||
+			(!isVendored.IsFalse() && analyze.IsVendor(f.Name)) ||
+			enry.IsDotFile(f.Name) ||
+			enry.IsConfiguration(f.Name) ||
+			(!isDocumentation.IsFalse() && enry.IsDocumentation(f.Name)) {
 			return nil
 		}
 
@@ -115,12 +121,11 @@ func (repo *Repository) GetLanguageStats(commitID string) (map[string]int64, err
 		if f.Size <= bigFileSize {
 			content, _ = readFile(f, fileSizeLimit)
 		}
-		if !notGenerated && enry.IsGenerated(f.Name, content) {
+		if !isGenerated.IsTrue() && enry.IsGenerated(f.Name, content) {
 			return nil
 		}
 
 		// TODO: Use .gitattributes file for linguist overrides
-
 		language := analyze.GetCodeLanguage(f.Name, content)
 		if language == enry.OtherLanguage || language == "" {
 			return nil
@@ -136,6 +141,13 @@ func (repo *Repository) GetLanguageStats(commitID string) (map[string]int64, err
 		if !checked {
 			langtype := enry.GetLanguageType(language)
 			included = langtype == enry.Programming || langtype == enry.Markup
+			if !included {
+				if isDetectable.IsTrue() {
+					included = true
+				} else {
+					return nil
+				}
+			}
 			includedLanguage[language] = included
 		}
 		if included {

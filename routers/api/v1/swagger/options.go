@@ -18,6 +18,9 @@ type swaggerParameterBodies struct {
 	AddCollaboratorOption api.AddCollaboratorOption
 
 	// in:body
+	ReplaceFlagsOption api.ReplaceFlagsOption
+
+	// in:body
 	CreateEmailOption api.CreateEmailOption
 	// in:body
 	DeleteEmailOption api.DeleteEmailOption
@@ -157,6 +160,9 @@ type swaggerParameterBodies struct {
 
 	// in:body
 	CreatePullReviewComment api.CreatePullReviewComment
+
+	// in:body
+	CreatePullReviewCommentOptions api.CreatePullReviewCommentOptions
 
 	// in:body
 	SubmitPullReviewOptions api.SubmitPullReviewOptions

@@ -12,6 +12,7 @@ import (
 	access_model "code.gitea.io/gitea/models/perm/access"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/structs"
 
@@ -46,4 +47,31 @@ func TestPullRequest_APIFormat(t *testing.T) {
 	assert.NotNil(t, apiPullRequest)
 	assert.Nil(t, apiPullRequest.Head.Repository)
 	assert.EqualValues(t, -1, apiPullRequest.Head.RepoID)
+}
+
+func TestPullReviewList(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	t.Run("Pending review", func(t *testing.T) {
+		reviewer := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+		review := unittest.AssertExistsAndLoadBean(t, &issues_model.Review{ID: 6, ReviewerID: reviewer.ID})
+		rl := []*issues_model.Review{review}
+
+		t.Run("Anonymous", func(t *testing.T) {
+			prList, err := ToPullReviewList(db.DefaultContext, rl, nil)
+			assert.NoError(t, err)
+			assert.Empty(t, prList)
+		})
+		t.Run("Reviewer", func(t *testing.T) {
+			prList, err := ToPullReviewList(db.DefaultContext, rl, reviewer)
+			assert.NoError(t, err)
+			assert.Len(t, prList, 1)
+		})
+		t.Run("Admin", func(t *testing.T) {
+			adminUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{IsAdmin: true}, unittest.Cond("id != ?", reviewer.ID))
+			prList, err := ToPullReviewList(db.DefaultContext, rl, adminUser)
+			assert.NoError(t, err)
+			assert.Len(t, prList, 1)
+		})
+	})
 }

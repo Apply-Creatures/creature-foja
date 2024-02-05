@@ -4,6 +4,7 @@
 package user_test
 
 import (
+	"fmt"
 	"testing"
 
 	"code.gitea.io/gitea/models/db"
@@ -216,6 +217,40 @@ func TestEmailAddressValidate(t *testing.T) {
 	for kase, err := range kases {
 		t.Run(kase, func(t *testing.T) {
 			assert.EqualValues(t, err, user_model.ValidateEmail(kase))
+		})
+	}
+}
+
+func TestGetActivatedEmailAddresses(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	testCases := []struct {
+		UID      int64
+		expected []*user_model.ActivatedEmailAddress
+	}{
+		{
+			UID:      1,
+			expected: []*user_model.ActivatedEmailAddress{{ID: 9, Email: "user1@example.com"}, {ID: 33, Email: "user1-2@example.com"}, {ID: 34, Email: "user1-3@example.com"}},
+		},
+		{
+			UID:      2,
+			expected: []*user_model.ActivatedEmailAddress{{ID: 3, Email: "user2@example.com"}},
+		},
+		{
+			UID:      4,
+			expected: []*user_model.ActivatedEmailAddress{{ID: 11, Email: "user4@example.com"}},
+		},
+		{
+			UID:      11,
+			expected: []*user_model.ActivatedEmailAddress{},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(fmt.Sprintf("User %d", testCase.UID), func(t *testing.T) {
+			emails, err := user_model.GetActivatedEmailAddresses(db.DefaultContext, testCase.UID)
+			assert.NoError(t, err)
+			assert.Equal(t, testCase.expected, emails)
 		})
 	}
 }

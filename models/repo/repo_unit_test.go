@@ -6,6 +6,8 @@ package repo
 import (
 	"testing"
 
+	"code.gitea.io/gitea/models/perm"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,4 +29,11 @@ func TestActionsConfig(t *testing.T) {
 	cfg.DisableWorkflow("test2.yaml")
 	cfg.DisableWorkflow("test3.yaml")
 	assert.EqualValues(t, "test1.yaml,test2.yaml,test3.yaml", cfg.ToString())
+}
+
+func TestRepoUnitAccessMode(t *testing.T) {
+	assert.Equal(t, UnitAccessModeNone.ToAccessMode(perm.AccessModeAdmin), perm.AccessModeNone)
+	assert.Equal(t, UnitAccessModeRead.ToAccessMode(perm.AccessModeAdmin), perm.AccessModeRead)
+	assert.Equal(t, UnitAccessModeWrite.ToAccessMode(perm.AccessModeAdmin), perm.AccessModeWrite)
+	assert.Equal(t, UnitAccessModeUnset.ToAccessMode(perm.AccessModeRead), perm.AccessModeRead)
 }

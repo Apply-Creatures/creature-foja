@@ -88,6 +88,7 @@ type Repository struct {
 	ExternalTracker               *ExternalTracker `json:"external_tracker,omitempty"`
 	HasWiki                       bool             `json:"has_wiki"`
 	ExternalWiki                  *ExternalWiki    `json:"external_wiki,omitempty"`
+	WikiBranch                    string           `json:"wiki_branch,omitempty"`
 	HasPullRequests               bool             `json:"has_pull_requests"`
 	HasProjects                   bool             `json:"has_projects"`
 	HasReleases                   bool             `json:"has_releases"`
@@ -175,6 +176,8 @@ type EditRepoOption struct {
 	ExternalWiki *ExternalWiki `json:"external_wiki,omitempty"`
 	// sets the default branch for this repository.
 	DefaultBranch *string `json:"default_branch,omitempty"`
+	// sets the branch used for this repository's wiki.
+	WikiBranch *string `json:"wiki_branch,omitempty"`
 	// either `true` to allow pull requests, or `false` to prevent pull request.
 	HasPullRequests *bool `json:"has_pull_requests,omitempty"`
 	// either `true` to enable project unit, or `false` to disable them.
