@@ -11,7 +11,6 @@ import (
 	"code.gitea.io/gitea/models/db"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/context"
-	"code.gitea.io/gitea/routers/utils"
 	user_service "code.gitea.io/gitea/services/user"
 )
 
@@ -35,7 +34,7 @@ func BlockedUsers(ctx *context.Context) {
 
 // BlockedUsersBlock blocks a particular user from the organization.
 func BlockedUsersBlock(ctx *context.Context) {
-	uname := utils.RemoveUsernameParameterSuffix(strings.ToLower(ctx.FormString("uname")))
+	uname := strings.ToLower(ctx.FormString("uname"))
 	u, err := user_model.GetUserByName(ctx, uname)
 	if err != nil {
 		ctx.ServerError("GetUserByName", err)
