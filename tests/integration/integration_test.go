@@ -286,8 +286,7 @@ func createUser(ctx context.Context, t testing.TB, user *user_model.User) func()
 	assert.NoError(t, db.Insert(ctx, user))
 
 	if len(user.Email) > 0 {
-		changePrimaryEmail := true
-		assert.NoError(t, user_model.UpdateUser(ctx, user, changePrimaryEmail))
+		assert.NoError(t, user_service.ReplacePrimaryEmailAddress(ctx, user, user.Email))
 	}
 
 	return func() {
