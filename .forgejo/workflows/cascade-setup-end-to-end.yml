@@ -46,7 +46,7 @@ jobs:
           su forgejo -c 'set -ex ; for b in ${{ env.FEATURE_BRANCHES }} ; do git merge -m $b origin/forgejo-$b ; done'
       - uses: https://code.forgejo.org/actions/setup-go@v4
         with:
-          go-version: ">=1.21"
+          go-version: "1.21"
       - name: make deps-backend
         run: |
           su forgejo -c 'make deps-backend'
