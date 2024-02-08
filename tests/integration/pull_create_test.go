@@ -96,6 +96,105 @@ func TestPullCreate(t *testing.T) {
 	})
 }
 
+func TestPullCreateWithPullTemplate(t *testing.T) {
+	onGiteaRun(t, func(t *testing.T, u *url.URL) {
+		baseUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+		forkUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+
+		templateCandidates := []string{
+			".forgejo/PULL_REQUEST_TEMPLATE.md",
+			".forgejo/pull_request_template.md",
+			".gitea/PULL_REQUEST_TEMPLATE.md",
+			".gitea/pull_request_template.md",
+			".github/PULL_REQUEST_TEMPLATE.md",
+			".github/pull_request_template.md",
+		}
+
+		createBaseRepo := func(t *testing.T, templateFiles []string, message string) (*repo_model.Repository, func()) {
+			t.Helper()
+
+			changeOps := make([]*files_service.ChangeRepoFile, len(templateFiles))
+			for i, template := range templateFiles {
+				changeOps[i] = &files_service.ChangeRepoFile{
+					Operation:     "create",
+					TreePath:      template,
+					ContentReader: strings.NewReader(message + " " + template),
+				}
+			}
+
+			repo, _, deferrer := CreateDeclarativeRepo(t, baseUser, "", nil, nil, changeOps)
+
+			return repo, deferrer
+		}
+
+		testPullPreview := func(t *testing.T, session *TestSession, user, repo, message string) {
+			t.Helper()
+
+			req := NewRequest(t, "GET", path.Join(user, repo))
+			resp := session.MakeRequest(t, req, http.StatusOK)
+
+			// Click the PR button to create a pull
+			htmlDoc := NewHTMLParser(t, resp.Body)
+			link, exists := htmlDoc.doc.Find("#new-pull-request").Attr("href")
+			assert.True(t, exists, "The template has changed")
+
+			// Load the pull request preview
+			req = NewRequest(t, "GET", link)
+			resp = session.MakeRequest(t, req, http.StatusOK)
+
+			// Check that the message from the template is present.
+			htmlDoc = NewHTMLParser(t, resp.Body)
+			pullRequestMessage := htmlDoc.doc.Find("textarea[placeholder*='comment']").Text()
+			assert.Equal(t, message, pullRequestMessage)
+		}
+
+		for i, template := range templateCandidates {
+			t.Run(template, func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				// Create the base repository, with the pull request template added.
+				message := fmt.Sprintf("TestPullCreateWithPullTemplate/%s", template)
+				baseRepo, deferrer := createBaseRepo(t, []string{template}, message)
+				defer deferrer()
+
+				// Fork the repository
+				session := loginUser(t, forkUser.Name)
+				testRepoFork(t, session, baseUser.Name, baseRepo.Name, forkUser.Name, baseRepo.Name)
+				forkedRepo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{OwnerID: forkUser.ID, Name: baseRepo.Name})
+
+				// Apply a change to the fork
+				err := createOrReplaceFileInBranch(forkUser, forkedRepo, "README.md", forkedRepo.DefaultBranch, fmt.Sprintf("Hello, World (%d)\n", i))
+				assert.NoError(t, err)
+
+				testPullPreview(t, session, forkUser.Name, forkedRepo.Name, message+" "+template)
+			})
+		}
+
+		t.Run("multiple template options", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			// Create the base repository, with the pull request template added.
+			message := "TestPullCreateWithPullTemplate/multiple"
+			baseRepo, deferrer := createBaseRepo(t, templateCandidates, message)
+			defer deferrer()
+
+			// Fork the repository
+			session := loginUser(t, forkUser.Name)
+			testRepoFork(t, session, baseUser.Name, baseRepo.Name, forkUser.Name, baseRepo.Name)
+			forkedRepo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{OwnerID: forkUser.ID, Name: baseRepo.Name})
+
+			// Apply a change to the fork
+			err := createOrReplaceFileInBranch(forkUser, forkedRepo, "README.md", forkedRepo.DefaultBranch, "Hello, World (%d)\n")
+			assert.NoError(t, err)
+
+			// Unlike issues, where all candidates are considered and shown, for
+			// pull request, there's a priority: if there are multiple
+			// templates, only the highest priority one is used.
+			testPullPreview(t, session, forkUser.Name, forkedRepo.Name, message+" .forgejo/PULL_REQUEST_TEMPLATE.md")
+		})
+	})
+}
+
 func TestPullCreate_TitleEscape(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, u *url.URL) {
 		session := loginUser(t, "user1")
