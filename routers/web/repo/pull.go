@@ -115,21 +115,21 @@ func getRepository(ctx *context.Context, repoID int64) *repo_model.Repository {
 	return repo
 }
 
-func getForkRepository(ctx *context.Context) *repo_model.Repository {
-	forkRepo := getRepository(ctx, ctx.ParamsInt64(":repoid"))
-	if ctx.Written() {
-		return nil
+func updateForkRepositoryInContext(ctx *context.Context, forkRepo *repo_model.Repository) bool {
+	if forkRepo == nil {
+		ctx.NotFound("No repository in context", nil)
+		return false
 	}
 
 	if forkRepo.IsEmpty {
 		log.Trace("Empty repository %-v", forkRepo)
-		ctx.NotFound("getForkRepository", nil)
-		return nil
+		ctx.NotFound("updateForkRepositoryInContext", nil)
+		return false
 	}
 
 	if err := forkRepo.LoadOwner(ctx); err != nil {
 		ctx.ServerError("LoadOwner", err)
-		return nil
+		return false
 	}
 
 	ctx.Data["repo_name"] = forkRepo.Name
@@ -142,7 +142,7 @@ func getForkRepository(ctx *context.Context) *repo_model.Repository {
 	ownedOrgs, err := organization.GetOrgsCanCreateRepoByUserID(ctx, ctx.Doer.ID)
 	if err != nil {
 		ctx.ServerError("GetOrgsCanCreateRepoByUserID", err)
-		return nil
+		return false
 	}
 	var orgs []*organization.Organization
 	for _, org := range ownedOrgs {
@@ -170,7 +170,7 @@ func getForkRepository(ctx *context.Context) *repo_model.Repository {
 		traverseParentRepo, err = repo_model.GetRepositoryByID(ctx, traverseParentRepo.ForkID)
 		if err != nil {
 			ctx.ServerError("GetRepositoryByID", err)
-			return nil
+			return false
 		}
 	}
 
@@ -184,7 +184,7 @@ func getForkRepository(ctx *context.Context) *repo_model.Repository {
 	} else {
 		ctx.Data["CanForkRepo"] = false
 		ctx.Flash.Error(ctx.Tr("repo.fork_no_valid_owners"), true)
-		return nil
+		return false
 	}
 
 	branches, err := git_model.FindBranchNames(ctx, git_model.FindBranchOptions{
@@ -198,14 +198,19 @@ func getForkRepository(ctx *context.Context) *repo_model.Repository {
 	})
 	if err != nil {
 		ctx.ServerError("FindBranchNames", err)
-		return nil
+		return false
 	}
 	ctx.Data["Branches"] = append([]string{ctx.Repo.Repository.DefaultBranch}, branches...)
 
-	return forkRepo
+	return true
 }
 
-// Fork render repository fork page
+// ForkByID redirects (with 301 Moved Permanently) to the repository's `/fork` page
+func ForkByID(ctx *context.Context) {
+	ctx.Redirect(ctx.Repo.Repository.Link()+"/fork", http.StatusMovedPermanently)
+}
+
+// Fork renders the repository fork page
 func Fork(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("new_fork")
 
@@ -217,8 +222,7 @@ func Fork(ctx *context.Context) {
 		ctx.Flash.Error(msg, true)
 	}
 
-	getForkRepository(ctx)
-	if ctx.Written() {
+	if !updateForkRepositoryInContext(ctx, ctx.Repo.Repository) {
 		return
 	}
 
@@ -236,8 +240,8 @@ func ForkPost(ctx *context.Context) {
 		return
 	}
 
-	forkRepo := getForkRepository(ctx)
-	if ctx.Written() {
+	forkRepo := ctx.Repo.Repository
+	if !updateForkRepositoryInContext(ctx, forkRepo) {
 		return
 	}
 
