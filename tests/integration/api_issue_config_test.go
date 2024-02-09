@@ -1,4 +1,5 @@
 // Copyright 2023 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors c/o Codeberg e.V.. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package integration
@@ -18,12 +19,16 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-func createIssueConfig(t *testing.T, user *user_model.User, repo *repo_model.Repository, issueConfig map[string]any) {
+func createIssueConfigInDirectory(t *testing.T, user *user_model.User, repo *repo_model.Repository, dir string, issueConfig map[string]any) {
 	config, err := yaml.Marshal(issueConfig)
 	assert.NoError(t, err)
 
-	err = createOrReplaceFileInBranch(user, repo, ".gitea/ISSUE_TEMPLATE/config.yaml", repo.DefaultBranch, string(config))
+	err = createOrReplaceFileInBranch(user, repo, fmt.Sprintf("%s/ISSUE_TEMPLATE/config.yaml", dir), repo.DefaultBranch, string(config))
 	assert.NoError(t, err)
+}
+
+func createIssueConfig(t *testing.T, user *user_model.User, repo *repo_model.Repository, issueConfig map[string]any) {
+	createIssueConfigInDirectory(t, user, repo, ".gitea", issueConfig)
 }
 
 func getIssueConfig(t *testing.T, owner, repo string) api.IssueConfig {
@@ -44,6 +49,8 @@ func TestAPIRepoGetIssueConfig(t *testing.T) {
 	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
 
 	t.Run("Default", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
 		issueConfig := getIssueConfig(t, owner.Name, repo.Name)
 
 		assert.True(t, issueConfig.BlankIssuesEnabled)
@@ -51,6 +58,8 @@ func TestAPIRepoGetIssueConfig(t *testing.T) {
 	})
 
 	t.Run("DisableBlankIssues", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
 		config := make(map[string]any)
 		config["blank_issues_enabled"] = false
 
@@ -63,6 +72,8 @@ func TestAPIRepoGetIssueConfig(t *testing.T) {
 	})
 
 	t.Run("ContactLinks", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
 		contactLink := make(map[string]string)
 		contactLink["name"] = "TestName"
 		contactLink["url"] = "https://example.com"
@@ -84,6 +95,8 @@ func TestAPIRepoGetIssueConfig(t *testing.T) {
 	})
 
 	t.Run("Full", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
 		contactLink := make(map[string]string)
 		contactLink["name"] = "TestName"
 		contactLink["url"] = "https://example.com"
@@ -113,6 +126,8 @@ func TestAPIRepoIssueConfigPaths(t *testing.T) {
 	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
 
 	templateConfigCandidates := []string{
+		".forgejo/ISSUE_TEMPLATE/config",
+		".forgejo/issue_template/config",
 		".gitea/ISSUE_TEMPLATE/config",
 		".gitea/issue_template/config",
 		".github/ISSUE_TEMPLATE/config",
@@ -123,6 +138,8 @@ func TestAPIRepoIssueConfigPaths(t *testing.T) {
 		for _, extension := range []string{".yaml", ".yml"} {
 			fullPath := canidate + extension
 			t.Run(fullPath, func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
 				configMap := make(map[string]any)
 				configMap["blank_issues_enabled"] = false
 
@@ -153,6 +170,8 @@ func TestAPIRepoValidateIssueConfig(t *testing.T) {
 	urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issue_config/validate", owner.Name, repo.Name)
 
 	t.Run("Valid", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
 		req := NewRequest(t, "GET", urlStr)
 		resp := MakeRequest(t, req, http.StatusOK)
 
@@ -164,18 +183,28 @@ func TestAPIRepoValidateIssueConfig(t *testing.T) {
 	})
 
 	t.Run("Invalid", func(t *testing.T) {
-		config := make(map[string]any)
-		config["blank_issues_enabled"] = "Test"
+		dirs := []string{".gitea", ".forgejo"}
+		for _, dir := range dirs {
+			t.Run(dir, func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+				defer func() {
+					deleteFileInBranch(owner, repo, fmt.Sprintf("%s/ISSUE_TEMPLATE/config.yaml", dir), repo.DefaultBranch)
+				}()
 
-		createIssueConfig(t, owner, repo, config)
+				config := make(map[string]any)
+				config["blank_issues_enabled"] = "Test"
 
-		req := NewRequest(t, "GET", urlStr)
-		resp := MakeRequest(t, req, http.StatusOK)
+				createIssueConfigInDirectory(t, owner, repo, dir, config)
 
-		var issueConfigValidation api.IssueConfigValidation
-		DecodeJSON(t, resp, &issueConfigValidation)
+				req := NewRequest(t, "GET", urlStr)
+				resp := MakeRequest(t, req, http.StatusOK)
 
-		assert.False(t, issueConfigValidation.Valid)
-		assert.NotEmpty(t, issueConfigValidation.Message)
+				var issueConfigValidation api.IssueConfigValidation
+				DecodeJSON(t, resp, &issueConfigValidation)
+
+				assert.False(t, issueConfigValidation.Valid)
+				assert.NotEmpty(t, issueConfigValidation.Message)
+			})
+		}
 	})
 }

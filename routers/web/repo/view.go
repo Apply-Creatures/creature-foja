@@ -94,6 +94,10 @@ func findReadmeFileInEntries(ctx *context.Context, entries []*git.TreeEntry, try
 				if entry.Name() == "docs" || docsEntries[0] == nil {
 					docsEntries[0] = entry
 				}
+			case ".forgejo":
+				if entry.Name() == ".forgejo" || docsEntries[1] == nil {
+					docsEntries[1] = entry
+				}
 			case ".gitea":
 				if entry.Name() == ".gitea" || docsEntries[1] == nil {
 					docsEntries[1] = entry

@@ -55,12 +55,18 @@ func getMergeMessage(ctx context.Context, baseGitRepo *git.Repository, pr *issue
 	}
 
 	if mergeStyle != "" {
-		templateFilepath := fmt.Sprintf(".gitea/default_merge_message/%s_TEMPLATE.md", strings.ToUpper(string(mergeStyle)))
 		commit, err := baseGitRepo.GetBranchCommit(pr.BaseRepo.DefaultBranch)
 		if err != nil {
 			return "", "", err
 		}
-		templateContent, err := commit.GetFileContent(templateFilepath, setting.Repository.PullRequest.DefaultMergeMessageSize)
+
+		templateFilepathForgejo := fmt.Sprintf(".forgejo/default_merge_message/%s_TEMPLATE.md", strings.ToUpper(string(mergeStyle)))
+		templateFilepathGitea := fmt.Sprintf(".gitea/default_merge_message/%s_TEMPLATE.md", strings.ToUpper(string(mergeStyle)))
+
+		templateContent, err := commit.GetFileContent(templateFilepathForgejo, setting.Repository.PullRequest.DefaultMergeMessageSize)
+		if _, ok := err.(git.ErrNotExist); ok {
+			templateContent, err = commit.GetFileContent(templateFilepathGitea, setting.Repository.PullRequest.DefaultMergeMessageSize)
+		}
 		if err != nil {
 			if !git.IsErrNotExist(err) {
 				return "", "", err
