@@ -20,7 +20,6 @@ jobs:
           go-version: "1.21"
           check-latest: true
       - run: make deps-backend deps-tools
-      - run: echo $(nproc)
       - run: make --always-make -j$(nproc) lint-backend checks-backend # ensure the "go-licenses" make target runs
         env:
           TAGS: bindata sqlite sqlite_unlock_notify
