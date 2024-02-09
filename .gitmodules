@@ -1,0 +1,3 @@
+[submodule "manual-testing"]
+	path = manual-testing
+	url = https://codeberg.org/forgejo/forgejo-manual-testing
