@@ -4,9 +4,6 @@ on:
     types:
       - labeled
 
-env:
-  FEATURE_BRANCHES: "privacy i18n moderation branding dependency"
-
 jobs:
   info:
     if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
@@ -41,9 +38,6 @@ jobs:
           git config user.name "Your Name"
           adduser --quiet --comment forgejo --disabled-password forgejo
           chown -R forgejo:forgejo .
-      - name: merge feature branches
-        run: |
-          su forgejo -c 'set -ex ; for b in ${{ env.FEATURE_BRANCHES }} ; do git merge -m $b origin/forgejo-$b ; done'
       - uses: https://code.forgejo.org/actions/setup-go@v4
         with:
           go-version: "1.21"
