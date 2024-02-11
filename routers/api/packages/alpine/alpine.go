@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	packages_model "code.gitea.io/gitea/models/packages"
+	alpine_model "code.gitea.io/gitea/models/packages/alpine"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/json"
 	packages_module "code.gitea.io/gitea/modules/packages"
@@ -28,6 +29,53 @@ func apiError(ctx *context.Context, status int, obj any) {
 	helper.LogAndProcessError(ctx, status, obj, func(message string) {
 		ctx.PlainText(status, message)
 	})
+}
+
+func createOrAddToExisting(ctx *context.Context, pck *alpine_module.Package, branch, repository, architecture string, buf packages_module.HashedSizeReader, fileMetadataRaw []byte) {
+	_, _, err := packages_service.CreatePackageOrAddFileToExisting(
+		ctx,
+		&packages_service.PackageCreationInfo{
+			PackageInfo: packages_service.PackageInfo{
+				Owner:       ctx.Package.Owner,
+				PackageType: packages_model.TypeAlpine,
+				Name:        pck.Name,
+				Version:     pck.Version,
+			},
+			Creator:  ctx.Doer,
+			Metadata: pck.VersionMetadata,
+		},
+		&packages_service.PackageFileCreationInfo{
+			PackageFileInfo: packages_service.PackageFileInfo{
+				Filename:     fmt.Sprintf("%s-%s.apk", pck.Name, pck.Version),
+				CompositeKey: fmt.Sprintf("%s|%s|%s", branch, repository, architecture),
+			},
+			Creator: ctx.Doer,
+			Data:    buf,
+			IsLead:  true,
+			Properties: map[string]string{
+				alpine_module.PropertyBranch:       branch,
+				alpine_module.PropertyRepository:   repository,
+				alpine_module.PropertyArchitecture: architecture,
+				alpine_module.PropertyMetadata:     string(fileMetadataRaw),
+			},
+		},
+	)
+	if err != nil {
+		switch err {
+		case packages_model.ErrDuplicatePackageVersion, packages_model.ErrDuplicatePackageFile:
+			apiError(ctx, http.StatusConflict, err)
+		case packages_service.ErrQuotaTotalCount, packages_service.ErrQuotaTypeSize, packages_service.ErrQuotaTotalSize:
+			apiError(ctx, http.StatusForbidden, err)
+		default:
+			apiError(ctx, http.StatusInternalServerError, err)
+		}
+		return
+	}
+
+	if err := alpine_service.BuildSpecificRepositoryFiles(ctx, ctx.Package.Owner.ID, branch, repository, pck.FileMetadata.Architecture); err != nil {
+		apiError(ctx, http.StatusInternalServerError, err)
+		return
+	}
 }
 
 func GetRepositoryKey(ctx *context.Context) {
@@ -133,49 +181,36 @@ func UploadPackageFile(ctx *context.Context) {
 		return
 	}
 
-	_, _, err = packages_service.CreatePackageOrAddFileToExisting(
-		ctx,
-		&packages_service.PackageCreationInfo{
-			PackageInfo: packages_service.PackageInfo{
-				Owner:       ctx.Package.Owner,
-				PackageType: packages_model.TypeAlpine,
-				Name:        pck.Name,
-				Version:     pck.Version,
-			},
-			Creator:  ctx.Doer,
-			Metadata: pck.VersionMetadata,
-		},
-		&packages_service.PackageFileCreationInfo{
-			PackageFileInfo: packages_service.PackageFileInfo{
-				Filename:     fmt.Sprintf("%s-%s.apk", pck.Name, pck.Version),
-				CompositeKey: fmt.Sprintf("%s|%s|%s", branch, repository, pck.FileMetadata.Architecture),
-			},
-			Creator: ctx.Doer,
-			Data:    buf,
-			IsLead:  true,
-			Properties: map[string]string{
-				alpine_module.PropertyBranch:       branch,
-				alpine_module.PropertyRepository:   repository,
-				alpine_module.PropertyArchitecture: pck.FileMetadata.Architecture,
-				alpine_module.PropertyMetadata:     string(fileMetadataRaw),
-			},
-		},
-	)
-	if err != nil {
-		switch err {
-		case packages_model.ErrDuplicatePackageVersion, packages_model.ErrDuplicatePackageFile:
-			apiError(ctx, http.StatusConflict, err)
-		case packages_service.ErrQuotaTotalCount, packages_service.ErrQuotaTypeSize, packages_service.ErrQuotaTotalSize:
-			apiError(ctx, http.StatusForbidden, err)
-		default:
+	// Check whether the package being uploaded has no architecture defined.
+	// If true, loop through the available architectures in the repo and create
+	// the package file for the each architecture. If there are no architectures
+	// available on the repository, fallback to x86_64
+	if pck.FileMetadata.Architecture == "noarch" {
+		architectures, err := alpine_model.GetArchitectures(ctx, ctx.Package.Owner.ID, repository)
+		if err != nil {
 			apiError(ctx, http.StatusInternalServerError, err)
+			return
 		}
-		return
-	}
 
-	if err := alpine_service.BuildSpecificRepositoryFiles(ctx, ctx.Package.Owner.ID, branch, repository, pck.FileMetadata.Architecture); err != nil {
-		apiError(ctx, http.StatusInternalServerError, err)
-		return
+		if len(architectures) == 0 {
+			architectures = []string{
+				"x86_64",
+			}
+		}
+
+		for _, arch := range architectures {
+			pck.FileMetadata.Architecture = arch
+
+			fileMetadataRaw, err := json.Marshal(pck.FileMetadata)
+			if err != nil {
+				apiError(ctx, http.StatusInternalServerError, err)
+				return
+			}
+
+			createOrAddToExisting(ctx, pck, branch, repository, pck.FileMetadata.Architecture, buf, fileMetadataRaw)
+		}
+	} else {
+		createOrAddToExisting(ctx, pck, branch, repository, pck.FileMetadata.Architecture, buf, fileMetadataRaw)
 	}
 
 	ctx.Status(http.StatusCreated)
