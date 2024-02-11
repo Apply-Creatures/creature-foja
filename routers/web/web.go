@@ -1403,7 +1403,10 @@ func registerRoutes(m *web.Route) {
 				})
 			})
 
-			m.Get("/workflows/{workflow_name}/badge.svg", badges.GetWorkflowBadge)
+			m.Group("/workflows/{workflow_name}", func() {
+				m.Get("/badge.svg", badges.GetWorkflowBadge)
+				m.Get("/runs/latest", actions.ViewLatestWorkflowRun)
+			})
 		}, reqRepoActionsReader, actions.MustEnableActions)
 
 		m.Group("/wiki", func() {
