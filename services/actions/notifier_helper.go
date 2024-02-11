@@ -152,6 +152,11 @@ func notify(ctx context.Context, input *notifyInput) error {
 		return nil
 	}
 
+	if SkipPullRequestEvent(ctx, input.Event, input.Repo.ID, commit.ID.String()) {
+		log.Trace("repo %s with commit %s skip event %v", input.Repo.RepoPath(), commit.ID, input.Event)
+		return nil
+	}
+
 	var detectedWorkflows []*actions_module.DetectedWorkflow
 	actionsConfig := input.Repo.MustGetUnit(ctx, unit_model.TypeActions).ActionsConfig()
 	workflows, schedules, err := actions_module.DetectWorkflows(gitRepo, commit, input.Event, input.Payload)
@@ -201,6 +206,24 @@ func notify(ctx context.Context, input *notifyInput) error {
 	}
 
 	return handleWorkflows(ctx, detectedWorkflows, commit, input, ref)
+}
+
+func SkipPullRequestEvent(ctx context.Context, event webhook_module.HookEventType, repoID int64, commitSHA string) bool {
+	if event != webhook_module.HookEventPullRequestSync {
+		return false
+	}
+
+	run := actions_model.ActionRun{
+		Event:     webhook_module.HookEventPullRequest,
+		RepoID:    repoID,
+		CommitSHA: commitSHA,
+	}
+	exist, err := db.GetEngine(ctx).Exist(&run)
+	if err != nil {
+		log.Error("Exist ActionRun %v: %v", run, err)
+		return false
+	}
+	return exist
 }
 
 func skipWorkflowsForCommit(input *notifyInput, commit *git.Commit) bool {
