@@ -88,14 +88,13 @@ HUGO_VERSION ?= 0.111.3
 
 STORED_VERSION=$(shell cat $(STORED_VERSION_FILE) 2>/dev/null)
 ifneq ($(STORED_VERSION),)
-  GITEA_VERSION ?= $(STORED_VERSION)
+  FORGEJO_VERSION ?= $(STORED_VERSION)
 else
-  GITEA_VERSION ?= $(shell git describe --tags --always | sed 's/-/+/' | sed 's/^v//')
+  FORGEJO_VERSION ?= $(shell git describe --tags --always | sed 's/-/+/' | sed 's/^v//')
 endif
-VERSION = ${GITEA_VERSION}
+VERSION ?= ${FORGEJO_VERSION}
 
-# SemVer
-FORGEJO_VERSION := 7.0.0+0-gitea-1.22.0
+GITEA_VERSION ?= 1.22.0
 
 LDFLAGS := $(LDFLAGS) -X "main.MakeVersion=$(MAKE_VERSION)" -X "main.Version=$(GITEA_VERSION)" -X "main.Tags=$(TAGS)" -X "main.ForgejoVersion=$(FORGEJO_VERSION)"
 
