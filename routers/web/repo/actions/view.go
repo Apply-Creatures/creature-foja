@@ -22,7 +22,6 @@ import (
 	"code.gitea.io/gitea/modules/actions"
 	"code.gitea.io/gitea/modules/base"
 	context_module "code.gitea.io/gitea/modules/context"
-	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/storage"
 	"code.gitea.io/gitea/modules/timeutil"
 	"code.gitea.io/gitea/modules/util"
@@ -75,8 +74,7 @@ func ViewLatestWorkflowRun(ctx *context_module.Context) {
 		if errors.Is(err, util.ErrNotExist) {
 			ctx.NotFound("GetLatestRunForBranchAndWorkflow", err)
 		} else {
-			log.Error("GetLatestRunForBranchAndWorkflow: %v", err)
-			ctx.Error(http.StatusInternalServerError, "Unable to get latest run for workflow on branch")
+			ctx.ServerError("GetLatestRunForBranchAndWorkflow", err)
 		}
 		return
 	}
