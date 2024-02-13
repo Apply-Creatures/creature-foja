@@ -33,8 +33,9 @@ var (
 	// DefaultContext is the default context to run git commands in, must be initialized by git.InitXxx
 	DefaultContext context.Context
 
-	SupportProcReceive bool // >= 2.29
-	SupportHashSha256  bool // >= 2.42, SHA-256 repositories no longer an ‘experimental curiosity’
+	SupportProcReceive  bool // >= 2.29
+	SupportHashSha256   bool // >= 2.42, SHA-256 repositories no longer an ‘experimental curiosity’
+	InvertedGitFlushEnv bool // 2.43.1
 
 	gitVersion *version.Version
 )
@@ -192,6 +193,8 @@ func InitFull(ctx context.Context) (err error) {
 		log.Warn("sha256 hash support is disabled - requires Git >= 2.42. Gogit is currently unsupported")
 	}
 
+	InvertedGitFlushEnv = CheckGitVersionEqual("2.43.1") == nil
+
 	if setting.LFS.StartServer {
 		if CheckGitVersionAtLeast("2.1.2") != nil {
 			return errors.New("LFS server support requires Git >= 2.1.2")
@@ -316,6 +319,21 @@ func CheckGitVersionAtLeast(atLeast string) error {
 	}
 	if gitVersion.Compare(atLeastVersion) < 0 {
 		return fmt.Errorf("installed git binary version %s is not at least %s", gitVersion.Original(), atLeast)
+	}
+	return nil
+}
+
+// CheckGitVersionEqual checks if the git version is equal to the constraint version.
+func CheckGitVersionEqual(equal string) error {
+	if _, err := loadGitVersion(); err != nil {
+		return err
+	}
+	atLeastVersion, err := version.NewVersion(equal)
+	if err != nil {
+		return err
+	}
+	if !gitVersion.Equal(atLeastVersion) {
+		return fmt.Errorf("installed git binary version %s is not equal to %s", gitVersion.Original(), equal)
 	}
 	return nil
 }
