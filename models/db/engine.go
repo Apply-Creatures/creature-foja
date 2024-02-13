@@ -7,6 +7,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"io"
 	"reflect"
@@ -342,7 +343,7 @@ func (ErrorQueryHook) BeforeProcess(c *contexts.ContextHook) (context.Context, e
 }
 
 func (h *ErrorQueryHook) AfterProcess(c *contexts.ContextHook) error {
-	if c.Err != nil {
+	if c.Err != nil && !errors.Is(c.Err, context.Canceled) {
 		h.Logger.Log(8, log.ERROR, "[Error SQL Query] %s %v - %v", c.SQL, c.Args, c.Err)
 	}
 	return nil
