@@ -153,9 +153,7 @@ func ReplaceInactivePrimaryEmail(ctx context.Context, oldEmail string, email *us
 		return err
 	} else if !has {
 		return user_model.ErrUserNotExist{
-			UID:   email.UID,
-			Name:  "",
-			KeyID: 0,
+			UID: email.UID,
 		}
 	}
 
