@@ -17,6 +17,8 @@ const sfc = {
     runIndex: String,
     jobIndex: String,
     actionsURL: String,
+    workflowName: String,
+    workflowURL: String,
     locale: Object,
   },
 
@@ -56,6 +58,7 @@ const sfc = {
         commit: {
           localeCommit: '',
           localePushedBy: '',
+          localeWorkflow: '',
           shortSHA: '',
           link: '',
           pusher: {
@@ -324,6 +327,8 @@ export function initRepositoryActionView() {
     runIndex: el.getAttribute('data-run-index'),
     jobIndex: el.getAttribute('data-job-index'),
     actionsURL: el.getAttribute('data-actions-url'),
+    workflowName: el.getAttribute('data-workflow-name'),
+    workflowURL: el.getAttribute('data-workflow-url'),
     locale: {
       approve: el.getAttribute('data-locale-approve'),
       cancel: el.getAttribute('data-locale-cancel'),
@@ -369,7 +374,7 @@ export function initRepositoryActionView() {
           {{ locale.rerun_all }}
         </button>
       </div>
-      <div class="action-commit-summary">
+      <div class="action-summary">
         {{ run.commit.localeCommit }}
         <a class="muted" :href="run.commit.link">{{ run.commit.shortSHA }}</a>
         {{ run.commit.localePushedBy }}
@@ -377,6 +382,10 @@ export function initRepositoryActionView() {
         <span class="ui label" v-if="run.commit.shortSHA">
           <a :href="run.commit.branch.link">{{ run.commit.branch.name }}</a>
         </span>
+      </div>
+      <div class="action-summary">
+        {{ run.commit.localeWorkflow }}
+        <a class="muted" :href="workflowURL">{{ workflowName }}</a>
       </div>
     </div>
     <div class="action-view-body">
@@ -500,7 +509,7 @@ export function initRepositoryActionView() {
   flex: 1;
 }
 
-.action-commit-summary {
+.action-summary {
   display: flex;
   gap: 5px;
   margin: 0 0 0 28px;

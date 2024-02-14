@@ -27,7 +27,7 @@ func TestActionsWebRouteLatestWorkflowRun(t *testing.T) {
 		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
 
 		// create the repo
-		repo, _, f := CreateDeclarativeRepo(t, user2, "",
+		repo, _, f := CreateDeclarativeRepo(t, user2, "actionsTestRepo",
 			[]unit_model.Type{unit_model.TypeActions}, nil,
 			[]*files_service.ChangeRepoFile{
 				{
@@ -44,16 +44,16 @@ func TestActionsWebRouteLatestWorkflowRun(t *testing.T) {
 		)
 		defer f()
 
+		// helpers
+		getWorkflowRunRedirectURI := func(workflow string) string {
+			req := NewRequest(t, "GET", fmt.Sprintf("%s/actions/workflows/%s/runs/latest", repo.HTMLURL(), workflow))
+			resp := MakeRequest(t, req, http.StatusTemporaryRedirect)
+
+			return resp.Header().Get("Location")
+		}
+
 		t.Run("valid workflows", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
-
-			// helpers
-			getWorkflowRunRedirectURI := func(workflow string) string {
-				req := NewRequest(t, "GET", fmt.Sprintf("%s/actions/workflows/%s/runs/latest", repo.HTMLURL(), workflow))
-				resp := MakeRequest(t, req, http.StatusTemporaryRedirect)
-
-				return resp.Header().Get("Location")
-			}
 
 			// two runs have been created
 			assert.Equal(t, 2, unittest.GetCount(t, &actions_model.ActionRun{RepoID: repo.ID}))
@@ -75,6 +75,24 @@ func TestActionsWebRouteLatestWorkflowRun(t *testing.T) {
 			err = workflowTwo.LoadAttributes(context.Background())
 			assert.NoError(t, err)
 			assert.Equal(t, workflowTwoURI, workflowTwo.HTMLURL())
+		})
+
+		t.Run("check if workflow page shows file name", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			// Get the redirect URI
+			workflow := "workflow-1.yml"
+			workflowOneURI := getWorkflowRunRedirectURI(workflow)
+
+			// Fetch the page that shows information about the run initiated by "workflow-1.yml".
+			// routers/web/repo/actions/view.go: data-workflow-url is constructed using data-workflow-name.
+			req := NewRequest(t, "GET", workflowOneURI)
+			resp := MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+
+			// Verify that URL of the workflow is shown correctly.
+			rightURL := fmt.Sprintf("/user2/actionsTestRepo/actions?workflow=%s", workflow)
+			htmlDoc.AssertElement(t, fmt.Sprintf("#repo-action-view[data-workflow-url=\"%s\"]", rightURL), true)
 		})
 
 		t.Run("existing workflow, non-existent branch", func(t *testing.T) {
