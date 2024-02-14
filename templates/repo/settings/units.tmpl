@@ -1,0 +1,13 @@
+{{template "repo/settings/layout_head" (dict "ctxData" . "pageClass" "repository settings options")}}
+<div class="user-main-content twelve wide column">
+	<form class="ui form" method="post" action="{{.RepoLink}}/settings/units">
+		{{.CsrfTokenHtml}}
+		{{template "repo/settings/units/overview" .}}
+		{{template "repo/settings/units/issues" .}}
+		{{if not .IsMirror}}
+			{{template "repo/settings/units/pulls" .}}
+		{{end}}
+		{{template "repo/settings/units/wiki" .}}
+	</form>
+</div>
+{{template "repo/settings/layout_footer" .}}

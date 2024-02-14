@@ -130,6 +130,24 @@ type RepoSettingForm struct {
 	EnablePrune            bool
 
 	// Advanced settings
+	IsArchived bool
+
+	// Signing Settings
+	TrustModel string
+
+	// Admin settings
+	EnableHealthCheck  bool
+	RequestReindexType string
+}
+
+// Validate validates the fields
+func (f *RepoSettingForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
+	ctx := context.GetValidateContext(req)
+	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
+}
+
+// RepoUnitSettingForm form for changing repository unit settings
+type RepoUnitSettingForm struct {
 	EnableCode                            bool
 	EnableWiki                            bool
 	GloballyWriteableWiki                 bool
@@ -161,18 +179,10 @@ type RepoSettingForm struct {
 	EnableTimetracker                     bool
 	AllowOnlyContributorsToTrackTime      bool
 	EnableIssueDependencies               bool
-	IsArchived                            bool
-
-	// Signing Settings
-	TrustModel string
-
-	// Admin settings
-	EnableHealthCheck  bool
-	RequestReindexType string
 }
 
 // Validate validates the fields
-func (f *RepoSettingForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
+func (f *RepoUnitSettingForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
 	ctx := context.GetValidateContext(req)
 	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
 }

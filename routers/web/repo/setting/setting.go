@@ -41,6 +41,7 @@ import (
 
 const (
 	tplSettingsOptions base.TplName = "repo/settings/options"
+	tplSettingsUnits   base.TplName = "repo/settings/units"
 	tplCollaboration   base.TplName = "repo/settings/collaboration"
 	tplBranches        base.TplName = "repo/settings/branches"
 	tplGithooks        base.TplName = "repo/settings/githooks"
@@ -87,6 +88,201 @@ func SettingsCtxData(ctx *context.Context) {
 		return
 	}
 	ctx.Data["PushMirrors"] = pushMirrors
+}
+
+// Units show a repositorys unit settings page
+func Units(ctx *context.Context) {
+	ctx.Data["Title"] = ctx.Tr("repo.settings.units.units")
+	ctx.Data["PageIsRepoSettingsUnits"] = true
+
+	ctx.HTML(http.StatusOK, tplSettingsUnits)
+}
+
+func UnitsPost(ctx *context.Context) {
+	form := web.GetForm(ctx).(*forms.RepoUnitSettingForm)
+
+	repo := ctx.Repo.Repository
+
+	var repoChanged bool
+	var units []repo_model.RepoUnit
+	var deleteUnitTypes []unit_model.Type
+
+	// This section doesn't require repo_name/RepoName to be set in the form, don't show it
+	// as an error on the UI for this action
+	ctx.Data["Err_RepoName"] = nil
+
+	if repo.CloseIssuesViaCommitInAnyBranch != form.EnableCloseIssuesViaCommitInAnyBranch {
+		repo.CloseIssuesViaCommitInAnyBranch = form.EnableCloseIssuesViaCommitInAnyBranch
+		repoChanged = true
+	}
+
+	if form.EnableCode && !unit_model.TypeCode.UnitGlobalDisabled() {
+		units = append(units, repo_model.RepoUnit{
+			RepoID: repo.ID,
+			Type:   unit_model.TypeCode,
+		})
+	} else if !unit_model.TypeCode.UnitGlobalDisabled() {
+		deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeCode)
+	}
+
+	if form.EnableWiki && form.EnableExternalWiki && !unit_model.TypeExternalWiki.UnitGlobalDisabled() {
+		if !validation.IsValidExternalURL(form.ExternalWikiURL) {
+			ctx.Flash.Error(ctx.Tr("repo.settings.external_wiki_url_error"))
+			ctx.Redirect(repo.Link() + "/settings/units")
+			return
+		}
+
+		units = append(units, repo_model.RepoUnit{
+			RepoID: repo.ID,
+			Type:   unit_model.TypeExternalWiki,
+			Config: &repo_model.ExternalWikiConfig{
+				ExternalWikiURL: form.ExternalWikiURL,
+			},
+		})
+		deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeWiki)
+	} else if form.EnableWiki && !form.EnableExternalWiki && !unit_model.TypeWiki.UnitGlobalDisabled() {
+		var wikiPermissions repo_model.UnitAccessMode
+		if form.GloballyWriteableWiki {
+			wikiPermissions = repo_model.UnitAccessModeWrite
+		} else {
+			wikiPermissions = repo_model.UnitAccessModeRead
+		}
+		units = append(units, repo_model.RepoUnit{
+			RepoID:             repo.ID,
+			Type:               unit_model.TypeWiki,
+			Config:             new(repo_model.UnitConfig),
+			DefaultPermissions: wikiPermissions,
+		})
+		deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeExternalWiki)
+	} else {
+		if !unit_model.TypeExternalWiki.UnitGlobalDisabled() {
+			deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeExternalWiki)
+		}
+		if !unit_model.TypeWiki.UnitGlobalDisabled() {
+			deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeWiki)
+		}
+	}
+
+	if form.EnableIssues && form.EnableExternalTracker && !unit_model.TypeExternalTracker.UnitGlobalDisabled() {
+		if !validation.IsValidExternalURL(form.ExternalTrackerURL) {
+			ctx.Flash.Error(ctx.Tr("repo.settings.external_tracker_url_error"))
+			ctx.Redirect(repo.Link() + "/settings/units")
+			return
+		}
+		if len(form.TrackerURLFormat) != 0 && !validation.IsValidExternalTrackerURLFormat(form.TrackerURLFormat) {
+			ctx.Flash.Error(ctx.Tr("repo.settings.tracker_url_format_error"))
+			ctx.Redirect(repo.Link() + "/settings/units")
+			return
+		}
+		units = append(units, repo_model.RepoUnit{
+			RepoID: repo.ID,
+			Type:   unit_model.TypeExternalTracker,
+			Config: &repo_model.ExternalTrackerConfig{
+				ExternalTrackerURL:           form.ExternalTrackerURL,
+				ExternalTrackerFormat:        form.TrackerURLFormat,
+				ExternalTrackerStyle:         form.TrackerIssueStyle,
+				ExternalTrackerRegexpPattern: form.ExternalTrackerRegexpPattern,
+			},
+		})
+		deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeIssues)
+	} else if form.EnableIssues && !form.EnableExternalTracker && !unit_model.TypeIssues.UnitGlobalDisabled() {
+		units = append(units, repo_model.RepoUnit{
+			RepoID: repo.ID,
+			Type:   unit_model.TypeIssues,
+			Config: &repo_model.IssuesConfig{
+				EnableTimetracker:                form.EnableTimetracker,
+				AllowOnlyContributorsToTrackTime: form.AllowOnlyContributorsToTrackTime,
+				EnableDependencies:               form.EnableIssueDependencies,
+			},
+		})
+		deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeExternalTracker)
+	} else {
+		if !unit_model.TypeExternalTracker.UnitGlobalDisabled() {
+			deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeExternalTracker)
+		}
+		if !unit_model.TypeIssues.UnitGlobalDisabled() {
+			deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeIssues)
+		}
+	}
+
+	if form.EnableProjects && !unit_model.TypeProjects.UnitGlobalDisabled() {
+		units = append(units, repo_model.RepoUnit{
+			RepoID: repo.ID,
+			Type:   unit_model.TypeProjects,
+		})
+	} else if !unit_model.TypeProjects.UnitGlobalDisabled() {
+		deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeProjects)
+	}
+
+	if form.EnableReleases && !unit_model.TypeReleases.UnitGlobalDisabled() {
+		units = append(units, repo_model.RepoUnit{
+			RepoID: repo.ID,
+			Type:   unit_model.TypeReleases,
+		})
+	} else if !unit_model.TypeReleases.UnitGlobalDisabled() {
+		deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeReleases)
+	}
+
+	if form.EnablePackages && !unit_model.TypePackages.UnitGlobalDisabled() {
+		units = append(units, repo_model.RepoUnit{
+			RepoID: repo.ID,
+			Type:   unit_model.TypePackages,
+		})
+	} else if !unit_model.TypePackages.UnitGlobalDisabled() {
+		deleteUnitTypes = append(deleteUnitTypes, unit_model.TypePackages)
+	}
+
+	if form.EnableActions && !unit_model.TypeActions.UnitGlobalDisabled() {
+		units = append(units, repo_model.RepoUnit{
+			RepoID: repo.ID,
+			Type:   unit_model.TypeActions,
+		})
+	} else if !unit_model.TypeActions.UnitGlobalDisabled() {
+		deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeActions)
+	}
+
+	if form.EnablePulls && !unit_model.TypePullRequests.UnitGlobalDisabled() {
+		units = append(units, repo_model.RepoUnit{
+			RepoID: repo.ID,
+			Type:   unit_model.TypePullRequests,
+			Config: &repo_model.PullRequestsConfig{
+				IgnoreWhitespaceConflicts:     form.PullsIgnoreWhitespace,
+				AllowMerge:                    form.PullsAllowMerge,
+				AllowRebase:                   form.PullsAllowRebase,
+				AllowRebaseMerge:              form.PullsAllowRebaseMerge,
+				AllowSquash:                   form.PullsAllowSquash,
+				AllowManualMerge:              form.PullsAllowManualMerge,
+				AutodetectManualMerge:         form.EnableAutodetectManualMerge,
+				AllowRebaseUpdate:             form.PullsAllowRebaseUpdate,
+				DefaultDeleteBranchAfterMerge: form.DefaultDeleteBranchAfterMerge,
+				DefaultMergeStyle:             repo_model.MergeStyle(form.PullsDefaultMergeStyle),
+				DefaultAllowMaintainerEdit:    form.DefaultAllowMaintainerEdit,
+			},
+		})
+	} else if !unit_model.TypePullRequests.UnitGlobalDisabled() {
+		deleteUnitTypes = append(deleteUnitTypes, unit_model.TypePullRequests)
+	}
+
+	if len(units) == 0 {
+		ctx.Flash.Error(ctx.Tr("repo.settings.update_settings_no_unit"))
+		ctx.Redirect(ctx.Repo.RepoLink + "/settings/units")
+		return
+	}
+
+	if err := repo_model.UpdateRepositoryUnits(ctx, repo, units, deleteUnitTypes); err != nil {
+		ctx.ServerError("UpdateRepositoryUnits", err)
+		return
+	}
+	if repoChanged {
+		if err := repo_service.UpdateRepository(ctx, repo, false); err != nil {
+			ctx.ServerError("UpdateRepository", err)
+			return
+		}
+	}
+	log.Trace("Repository advanced settings updated: %s/%s", ctx.Repo.Owner.Name, repo.Name)
+
+	ctx.Flash.Success(ctx.Tr("repo.settings.update_settings_success"))
+	ctx.Redirect(ctx.Repo.RepoLink + "/settings/units")
 }
 
 // Settings show a repository's settings page
@@ -434,188 +630,6 @@ func SettingsPost(ctx *context.Context) {
 
 		ctx.Flash.Success(ctx.Tr("repo.settings.update_settings_success"))
 		ctx.Redirect(repo.Link() + "/settings")
-
-	case "advanced":
-		var repoChanged bool
-		var units []repo_model.RepoUnit
-		var deleteUnitTypes []unit_model.Type
-
-		// This section doesn't require repo_name/RepoName to be set in the form, don't show it
-		// as an error on the UI for this action
-		ctx.Data["Err_RepoName"] = nil
-
-		if repo.CloseIssuesViaCommitInAnyBranch != form.EnableCloseIssuesViaCommitInAnyBranch {
-			repo.CloseIssuesViaCommitInAnyBranch = form.EnableCloseIssuesViaCommitInAnyBranch
-			repoChanged = true
-		}
-
-		if form.EnableCode && !unit_model.TypeCode.UnitGlobalDisabled() {
-			units = append(units, repo_model.RepoUnit{
-				RepoID: repo.ID,
-				Type:   unit_model.TypeCode,
-			})
-		} else if !unit_model.TypeCode.UnitGlobalDisabled() {
-			deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeCode)
-		}
-
-		if form.EnableWiki && form.EnableExternalWiki && !unit_model.TypeExternalWiki.UnitGlobalDisabled() {
-			if !validation.IsValidExternalURL(form.ExternalWikiURL) {
-				ctx.Flash.Error(ctx.Tr("repo.settings.external_wiki_url_error"))
-				ctx.Redirect(repo.Link() + "/settings")
-				return
-			}
-
-			units = append(units, repo_model.RepoUnit{
-				RepoID: repo.ID,
-				Type:   unit_model.TypeExternalWiki,
-				Config: &repo_model.ExternalWikiConfig{
-					ExternalWikiURL: form.ExternalWikiURL,
-				},
-			})
-			deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeWiki)
-		} else if form.EnableWiki && !form.EnableExternalWiki && !unit_model.TypeWiki.UnitGlobalDisabled() {
-			var wikiPermissions repo_model.UnitAccessMode
-			if form.GloballyWriteableWiki {
-				wikiPermissions = repo_model.UnitAccessModeWrite
-			} else {
-				wikiPermissions = repo_model.UnitAccessModeRead
-			}
-			units = append(units, repo_model.RepoUnit{
-				RepoID:             repo.ID,
-				Type:               unit_model.TypeWiki,
-				Config:             new(repo_model.UnitConfig),
-				DefaultPermissions: wikiPermissions,
-			})
-			deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeExternalWiki)
-		} else {
-			if !unit_model.TypeExternalWiki.UnitGlobalDisabled() {
-				deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeExternalWiki)
-			}
-			if !unit_model.TypeWiki.UnitGlobalDisabled() {
-				deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeWiki)
-			}
-		}
-
-		if form.EnableIssues && form.EnableExternalTracker && !unit_model.TypeExternalTracker.UnitGlobalDisabled() {
-			if !validation.IsValidExternalURL(form.ExternalTrackerURL) {
-				ctx.Flash.Error(ctx.Tr("repo.settings.external_tracker_url_error"))
-				ctx.Redirect(repo.Link() + "/settings")
-				return
-			}
-			if len(form.TrackerURLFormat) != 0 && !validation.IsValidExternalTrackerURLFormat(form.TrackerURLFormat) {
-				ctx.Flash.Error(ctx.Tr("repo.settings.tracker_url_format_error"))
-				ctx.Redirect(repo.Link() + "/settings")
-				return
-			}
-			units = append(units, repo_model.RepoUnit{
-				RepoID: repo.ID,
-				Type:   unit_model.TypeExternalTracker,
-				Config: &repo_model.ExternalTrackerConfig{
-					ExternalTrackerURL:           form.ExternalTrackerURL,
-					ExternalTrackerFormat:        form.TrackerURLFormat,
-					ExternalTrackerStyle:         form.TrackerIssueStyle,
-					ExternalTrackerRegexpPattern: form.ExternalTrackerRegexpPattern,
-				},
-			})
-			deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeIssues)
-		} else if form.EnableIssues && !form.EnableExternalTracker && !unit_model.TypeIssues.UnitGlobalDisabled() {
-			units = append(units, repo_model.RepoUnit{
-				RepoID: repo.ID,
-				Type:   unit_model.TypeIssues,
-				Config: &repo_model.IssuesConfig{
-					EnableTimetracker:                form.EnableTimetracker,
-					AllowOnlyContributorsToTrackTime: form.AllowOnlyContributorsToTrackTime,
-					EnableDependencies:               form.EnableIssueDependencies,
-				},
-			})
-			deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeExternalTracker)
-		} else {
-			if !unit_model.TypeExternalTracker.UnitGlobalDisabled() {
-				deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeExternalTracker)
-			}
-			if !unit_model.TypeIssues.UnitGlobalDisabled() {
-				deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeIssues)
-			}
-		}
-
-		if form.EnableProjects && !unit_model.TypeProjects.UnitGlobalDisabled() {
-			units = append(units, repo_model.RepoUnit{
-				RepoID: repo.ID,
-				Type:   unit_model.TypeProjects,
-			})
-		} else if !unit_model.TypeProjects.UnitGlobalDisabled() {
-			deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeProjects)
-		}
-
-		if form.EnableReleases && !unit_model.TypeReleases.UnitGlobalDisabled() {
-			units = append(units, repo_model.RepoUnit{
-				RepoID: repo.ID,
-				Type:   unit_model.TypeReleases,
-			})
-		} else if !unit_model.TypeReleases.UnitGlobalDisabled() {
-			deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeReleases)
-		}
-
-		if form.EnablePackages && !unit_model.TypePackages.UnitGlobalDisabled() {
-			units = append(units, repo_model.RepoUnit{
-				RepoID: repo.ID,
-				Type:   unit_model.TypePackages,
-			})
-		} else if !unit_model.TypePackages.UnitGlobalDisabled() {
-			deleteUnitTypes = append(deleteUnitTypes, unit_model.TypePackages)
-		}
-
-		if form.EnableActions && !unit_model.TypeActions.UnitGlobalDisabled() {
-			units = append(units, repo_model.RepoUnit{
-				RepoID: repo.ID,
-				Type:   unit_model.TypeActions,
-			})
-		} else if !unit_model.TypeActions.UnitGlobalDisabled() {
-			deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeActions)
-		}
-
-		if form.EnablePulls && !unit_model.TypePullRequests.UnitGlobalDisabled() {
-			units = append(units, repo_model.RepoUnit{
-				RepoID: repo.ID,
-				Type:   unit_model.TypePullRequests,
-				Config: &repo_model.PullRequestsConfig{
-					IgnoreWhitespaceConflicts:     form.PullsIgnoreWhitespace,
-					AllowMerge:                    form.PullsAllowMerge,
-					AllowRebase:                   form.PullsAllowRebase,
-					AllowRebaseMerge:              form.PullsAllowRebaseMerge,
-					AllowSquash:                   form.PullsAllowSquash,
-					AllowManualMerge:              form.PullsAllowManualMerge,
-					AutodetectManualMerge:         form.EnableAutodetectManualMerge,
-					AllowRebaseUpdate:             form.PullsAllowRebaseUpdate,
-					DefaultDeleteBranchAfterMerge: form.DefaultDeleteBranchAfterMerge,
-					DefaultMergeStyle:             repo_model.MergeStyle(form.PullsDefaultMergeStyle),
-					DefaultAllowMaintainerEdit:    form.DefaultAllowMaintainerEdit,
-				},
-			})
-		} else if !unit_model.TypePullRequests.UnitGlobalDisabled() {
-			deleteUnitTypes = append(deleteUnitTypes, unit_model.TypePullRequests)
-		}
-
-		if len(units) == 0 {
-			ctx.Flash.Error(ctx.Tr("repo.settings.update_settings_no_unit"))
-			ctx.Redirect(ctx.Repo.RepoLink + "/settings")
-			return
-		}
-
-		if err := repo_model.UpdateRepositoryUnits(ctx, repo, units, deleteUnitTypes); err != nil {
-			ctx.ServerError("UpdateRepositoryUnits", err)
-			return
-		}
-		if repoChanged {
-			if err := repo_service.UpdateRepository(ctx, repo, false); err != nil {
-				ctx.ServerError("UpdateRepository", err)
-				return
-			}
-		}
-		log.Trace("Repository advanced settings updated: %s/%s", ctx.Repo.Owner.Name, repo.Name)
-
-		ctx.Flash.Success(ctx.Tr("repo.settings.update_settings_success"))
-		ctx.Redirect(ctx.Repo.RepoLink + "/settings")
 
 	case "signing":
 		changed := false
