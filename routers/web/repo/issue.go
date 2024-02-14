@@ -1042,7 +1042,7 @@ func renderErrorOfTemplates(ctx *context.Context, errs map[string]error) string 
 	})
 	if err != nil {
 		log.Debug("render flash error: %v", err)
-		flashError = ctx.Tr("repo.issues.choose.ignore_invalid_templates")
+		flashError = ctx.Locale.TrString("repo.issues.choose.ignore_invalid_templates")
 	}
 	return flashError
 }
@@ -1664,7 +1664,7 @@ func ViewIssue(ctx *context.Context) {
 			}
 			ghostMilestone := &issues_model.Milestone{
 				ID:   -1,
-				Name: ctx.Tr("repo.issues.deleted_milestone"),
+				Name: ctx.Locale.TrString("repo.issues.deleted_milestone"),
 			}
 			if comment.OldMilestoneID > 0 && comment.OldMilestone == nil {
 				comment.OldMilestone = ghostMilestone
@@ -1681,7 +1681,7 @@ func ViewIssue(ctx *context.Context) {
 
 			ghostProject := &project_model.Project{
 				ID:    -1,
-				Title: ctx.Tr("repo.issues.deleted_project"),
+				Title: ctx.Locale.TrString("repo.issues.deleted_project"),
 			}
 
 			if comment.OldProjectID > 0 && comment.OldProject == nil {
