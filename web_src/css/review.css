@@ -153,6 +153,10 @@
   min-height: 168px;
 }
 
+.comment-code-cloud .ui.tab.markup {
+  font-size: 14px;
+}
+
 .comment-code-cloud .ui.tabular.menu {
   margin: 0.5em;
 }
