@@ -31,6 +31,7 @@ import (
 	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -832,7 +833,7 @@ func doCreateAgitFlowPull(dstPath string, ctx *APITestContext, baseBranch, headB
 					Name:  "user2",
 					When:  time.Now(),
 				},
-				Message: "Testing commit 2",
+				Message: "Testing commit 2\n\nLonger description.",
 			})
 			assert.NoError(t, err)
 			commit, err = gitRepo.GetRefCommitID("HEAD")
@@ -863,6 +864,77 @@ func doCreateAgitFlowPull(dstPath string, ctx *APITestContext, baseBranch, headB
 			}
 			assert.False(t, prMsg.HasMerged)
 			assert.Equal(t, commit, prMsg.Head.Sha)
+		})
+		t.Run("PushParams", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			t.Run("NoParams", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				_, _, gitErr := git.NewCommand(git.DefaultContext, "push", "origin").AddDynamicArguments("HEAD:refs/for/master/" + headBranch + "-implicit").RunStdString(&git.RunOpts{Dir: dstPath})
+				assert.NoError(t, gitErr)
+
+				unittest.AssertCount(t, &issues_model.PullRequest{}, pullNum+3)
+				pr3 := unittest.AssertExistsAndLoadBean(t, &issues_model.PullRequest{
+					HeadRepoID: repo.ID,
+					Flow:       issues_model.PullRequestFlowAGit,
+					Index:      pr1.Index + 2,
+				})
+				assert.NotEmpty(t, pr3)
+				err := pr3.LoadIssue(db.DefaultContext)
+				assert.NoError(t, err)
+
+				_, err2 := doAPIGetPullRequest(*ctx, ctx.Username, ctx.Reponame, pr3.Index)(t)
+				require.NoError(t, err2)
+
+				assert.Equal(t, "Testing commit 2", pr3.Issue.Title)
+				assert.Contains(t, pr3.Issue.Content, "Longer description.")
+			})
+			t.Run("TitleOverride", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				_, _, gitErr := git.NewCommand(git.DefaultContext, "push", "origin", "-o", "title=my-shiny-title").AddDynamicArguments("HEAD:refs/for/master/" + headBranch + "-implicit-2").RunStdString(&git.RunOpts{Dir: dstPath})
+				assert.NoError(t, gitErr)
+
+				unittest.AssertCount(t, &issues_model.PullRequest{}, pullNum+4)
+				pr := unittest.AssertExistsAndLoadBean(t, &issues_model.PullRequest{
+					HeadRepoID: repo.ID,
+					Flow:       issues_model.PullRequestFlowAGit,
+					Index:      pr1.Index + 3,
+				})
+				assert.NotEmpty(t, pr)
+				err := pr.LoadIssue(db.DefaultContext)
+				assert.NoError(t, err)
+
+				_, err = doAPIGetPullRequest(*ctx, ctx.Username, ctx.Reponame, pr.Index)(t)
+				require.NoError(t, err)
+
+				assert.Equal(t, "my-shiny-title", pr.Issue.Title)
+				assert.Contains(t, pr.Issue.Content, "Longer description.")
+			})
+
+			t.Run("DescriptionOverride", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				_, _, gitErr := git.NewCommand(git.DefaultContext, "push", "origin", "-o", "description=custom").AddDynamicArguments("HEAD:refs/for/master/" + headBranch + "-implicit-3").RunStdString(&git.RunOpts{Dir: dstPath})
+				assert.NoError(t, gitErr)
+
+				unittest.AssertCount(t, &issues_model.PullRequest{}, pullNum+5)
+				pr := unittest.AssertExistsAndLoadBean(t, &issues_model.PullRequest{
+					HeadRepoID: repo.ID,
+					Flow:       issues_model.PullRequestFlowAGit,
+					Index:      pr1.Index + 4,
+				})
+				assert.NotEmpty(t, pr)
+				err := pr.LoadIssue(db.DefaultContext)
+				assert.NoError(t, err)
+
+				_, err = doAPIGetPullRequest(*ctx, ctx.Username, ctx.Reponame, pr.Index)(t)
+				require.NoError(t, err)
+
+				assert.Equal(t, "Testing commit 2", pr.Issue.Title)
+				assert.Contains(t, pr.Issue.Content, "custom")
+			})
 		})
 		t.Run("Merge", doAPIMergePullRequest(*ctx, ctx.Username, ctx.Reponame, pr1.Index))
 		t.Run("CheckoutMasterAgain", doGitCheckoutBranch(dstPath, "master"))

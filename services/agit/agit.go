@@ -38,6 +38,9 @@ func ProcReceive(ctx context.Context, repo *repo_model.Repository, gitRepo *git.
 	_, forcePush = opts.GitPushOptions["force-push"]
 	objectFormat, _ := gitRepo.GetObjectFormat()
 
+	title, hasTitle := opts.GitPushOptions["title"]
+	description, hasDesc := opts.GitPushOptions["description"]
+
 	for i := range opts.OldCommitIDs {
 		if opts.NewCommitIDs[i] == objectFormat.EmptyObjectID().String() {
 			results = append(results, private.HookProcReceiveRefResult{
@@ -102,18 +105,21 @@ func ProcReceive(ctx context.Context, repo *repo_model.Repository, gitRepo *git.
 				return nil, fmt.Errorf("Failed to get unmerged agit flow pull request in repository: %s/%s Error: %w", ownerName, repoName, err)
 			}
 
-			// create a new pull request
-			if len(title) == 0 {
-				var has bool
-				title, has = opts.GitPushOptions["title"]
-				if !has || len(title) == 0 {
-					commit, err := gitRepo.GetCommit(opts.NewCommitIDs[i])
-					if err != nil {
-						return nil, fmt.Errorf("Failed to get commit %s in repository: %s/%s Error: %w", opts.NewCommitIDs[i], ownerName, repoName, err)
-					}
-					title = strings.Split(commit.CommitMessage, "\n")[0]
+			// automatically fill out the title and the description from the first commit.
+			shouldGetCommit := len(title) == 0 || len(description) == 0
+
+			var commit *git.Commit
+			if shouldGetCommit {
+				commit, err = gitRepo.GetCommit(opts.NewCommitIDs[i])
+				if err != nil {
+					return nil, fmt.Errorf("Failed to get commit %s in repository: %s/%s Error: %w", opts.NewCommitIDs[i], ownerName, repoName, err)
 				}
-				description = opts.GitPushOptions["description"]
+			}
+			if !hasTitle || len(title) == 0 {
+				title = strings.Split(commit.CommitMessage, "\n")[0]
+			}
+			if !hasDesc || len(description) == 0 {
+				_, description, _ = strings.Cut(commit.CommitMessage, "\n\n")
 			}
 
 			pusher, err := user_model.GetUserByID(ctx, opts.UserID)
