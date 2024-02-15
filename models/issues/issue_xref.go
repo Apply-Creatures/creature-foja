@@ -46,10 +46,10 @@ func neuterCrossReferences(ctx context.Context, issueID, commentID int64) error 
 	for i, c := range active {
 		ids[i] = c.ID
 	}
-	return neuterCrossReferencesIds(ctx, nil, ids)
+	return neuterCrossReferencesIDs(ctx, nil, ids)
 }
 
-func neuterCrossReferencesIds(stdCtx context.Context, ctx *crossReferencesContext, ids []int64) error {
+func neuterCrossReferencesIDs(stdCtx context.Context, ctx *crossReferencesContext, ids []int64) error {
 	sess := db.GetEngine(stdCtx).In("id", ids).Cols("`ref_action`")
 	if ctx != nil && ctx.OrigIssue.NoAutoTime {
 		sess.SetExpr("updated_unix", ctx.OrigIssue.UpdatedUnix).NoAutoTime()
@@ -104,7 +104,7 @@ func (issue *Issue) createCrossReferences(stdCtx context.Context, ctx *crossRefe
 			}
 		}
 		if len(ids) > 0 {
-			if err = neuterCrossReferencesIds(stdCtx, ctx, ids); err != nil {
+			if err = neuterCrossReferencesIDs(stdCtx, ctx, ids); err != nil {
 				return err
 			}
 		}
