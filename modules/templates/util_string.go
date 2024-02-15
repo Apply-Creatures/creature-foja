@@ -4,6 +4,7 @@
 package templates
 
 import (
+	"html/template"
 	"strings"
 
 	"code.gitea.io/gitea/modules/base"
@@ -17,8 +18,14 @@ func NewStringUtils() *StringUtils {
 	return &stringUtils
 }
 
-func (su *StringUtils) HasPrefix(s, prefix string) bool {
-	return strings.HasPrefix(s, prefix)
+func (su *StringUtils) HasPrefix(s any, prefix string) bool {
+	switch v := s.(type) {
+	case string:
+		return strings.HasPrefix(v, prefix)
+	case template.HTML:
+		return strings.HasPrefix(string(v), prefix)
+	}
+	return false
 }
 
 func (su *StringUtils) Contains(s, substr string) bool {
