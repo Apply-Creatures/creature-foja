@@ -1,7 +1,6 @@
 {{$invalid := (index .comments 0).Invalidated}}
 {{$resolved := (index .comments 0).IsResolved}}
 {{$resolveDoer := (index .comments 0).ResolveDoer}}
-{{$hideByDefault := or $resolved (and $invalid (not .ShowOutdatedComments))}}
 {{$isNotPending := (not (eq (index .comments 0).Review.Type 0))}}
 <div class="ui segments conversation-holder">
 	<div class="ui segment collapsible-comment-box gt-py-3 gt-df gt-ac gt-sb">
@@ -15,7 +14,7 @@
 		</div>
 		<div>
 			{{if or $invalid $resolved}}
-				<button id="show-outdated-{{(index .comments 0).ID}}" data-comment="{{(index .comments 0).ID}}" class="{{if not $hideByDefault}}gt-hidden {{end}}ui compact labeled button show-outdated gt-df gt-ac">
+				<button id="show-outdated-{{(index .comments 0).ID}}" data-comment="{{(index .comments 0).ID}}" class="{{if not $resolved}}gt-hidden {{end}}ui compact labeled button show-outdated gt-df gt-ac">
 					{{svg "octicon-unfold" 16 "gt-mr-3"}}
 					{{if $resolved}}
 						{{ctx.Locale.Tr "repo.issues.review.show_resolved"}}
@@ -23,7 +22,7 @@
 						{{ctx.Locale.Tr "repo.issues.review.show_outdated"}}
 					{{end}}
 				</button>
-				<button id="hide-outdated-{{(index .comments 0).ID}}" data-comment="{{(index .comments 0).ID}}" class="{{if $hideByDefault}}gt-hidden {{end}}ui compact labeled button hide-outdated gt-df gt-ac">
+				<button id="hide-outdated-{{(index .comments 0).ID}}" data-comment="{{(index .comments 0).ID}}" class="{{if $resolved}}gt-hidden {{end}}ui compact labeled button hide-outdated gt-df gt-ac">
 					{{svg "octicon-fold" 16 "gt-mr-3"}}
 					{{if $resolved}}
 						{{ctx.Locale.Tr "repo.issues.review.hide_resolved"}}
@@ -37,7 +36,7 @@
 	{{$diff := (CommentMustAsDiff ctx (index .comments 0))}}
 	{{if $diff}}
 		{{$file := (index $diff.Files 0)}}
-		<div id="code-preview-{{(index .comments 0).ID}}" class="ui table segment{{if $hideByDefault}} gt-hidden{{end}}">
+		<div id="code-preview-{{(index .comments 0).ID}}" class="ui table segment{{if $resolved}} gt-hidden{{end}}">
 			<div class="diff-file-box diff-box file-content {{TabSizeClass $.Editorconfig $file.Name}}">
 				<div class="file-body file-code code-view code-diff code-diff-unified unicode-escaped">
 					<table>
@@ -49,7 +48,7 @@
 			</div>
 		</div>
 	{{end}}
-	<div id="code-comments-{{(index .comments 0).ID}}" class="comment-code-cloud ui segment{{if $hideByDefault}} gt-hidden{{end}}">
+	<div id="code-comments-{{(index .comments 0).ID}}" class="comment-code-cloud ui segment{{if $resolved}} gt-hidden{{end}}">
 		<div class="ui comments gt-mb-0">
 			{{range .comments}}
 				{{$createdSubStr:= TimeSinceUnix .CreatedUnix ctx.Locale}}

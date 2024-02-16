@@ -601,7 +601,7 @@ func TestDiff_LoadCommentsNoOutdated(t *testing.T) {
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
 	diff := setupDefaultDiff()
 	assert.NoError(t, diff.LoadComments(db.DefaultContext, issue, user, false))
-	assert.Len(t, diff.Files[0].Sections[0].Lines[0].Comments, 2)
+	assert.Len(t, diff.Files[0].Sections[0].Lines[0].Conversations, 2)
 }
 
 func TestDiff_LoadCommentsWithOutdated(t *testing.T) {
@@ -611,20 +611,22 @@ func TestDiff_LoadCommentsWithOutdated(t *testing.T) {
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
 	diff := setupDefaultDiff()
 	assert.NoError(t, diff.LoadComments(db.DefaultContext, issue, user, true))
-	assert.Len(t, diff.Files[0].Sections[0].Lines[0].Comments, 3)
+	assert.Len(t, diff.Files[0].Sections[0].Lines[0].Conversations, 2)
+	assert.Len(t, diff.Files[0].Sections[0].Lines[0].Conversations[0], 2)
+	assert.Len(t, diff.Files[0].Sections[0].Lines[0].Conversations[1], 1)
 }
 
 func TestDiffLine_CanComment(t *testing.T) {
 	assert.False(t, (&DiffLine{Type: DiffLineSection}).CanComment())
-	assert.False(t, (&DiffLine{Type: DiffLineAdd, Comments: []*issues_model.Comment{{Content: "bla"}}}).CanComment())
+	assert.False(t, (&DiffLine{Type: DiffLineAdd, Conversations: []issues_model.CodeConversation{{{Content: "bla"}}}}).CanComment())
 	assert.True(t, (&DiffLine{Type: DiffLineAdd}).CanComment())
 	assert.True(t, (&DiffLine{Type: DiffLineDel}).CanComment())
 	assert.True(t, (&DiffLine{Type: DiffLinePlain}).CanComment())
 }
 
 func TestDiffLine_GetCommentSide(t *testing.T) {
-	assert.Equal(t, "previous", (&DiffLine{Comments: []*issues_model.Comment{{Line: -3}}}).GetCommentSide())
-	assert.Equal(t, "proposed", (&DiffLine{Comments: []*issues_model.Comment{{Line: 3}}}).GetCommentSide())
+	assert.Equal(t, "previous", (&DiffLine{Conversations: []issues_model.CodeConversation{{{Line: -3}}}}).GetCommentSide())
+	assert.Equal(t, "proposed", (&DiffLine{Conversations: []issues_model.CodeConversation{{{Line: 3}}}}).GetCommentSide())
 }
 
 func TestGetDiffRangeWithWhitespaceBehavior(t *testing.T) {

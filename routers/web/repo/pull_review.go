@@ -153,7 +153,7 @@ func UpdateResolveConversation(ctx *context.Context) {
 }
 
 func renderConversation(ctx *context.Context, comment *issues_model.Comment, origin string) {
-	comments, err := issues_model.FetchCodeCommentsByLine(ctx, comment.Issue, ctx.Doer, comment.TreePath, comment.Line, true)
+	comments, err := issues_model.FetchCodeConversation(ctx, comment, ctx.Doer)
 	if err != nil {
 		ctx.ServerError("FetchCodeCommentsByLine", err)
 		return

@@ -1,0 +1,3 @@
+{{range .conversations}}
+	{{template "repo/diff/conversation" dict "." $ "comments" .}}
+{{end}}

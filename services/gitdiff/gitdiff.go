@@ -13,7 +13,6 @@ import (
 	"html/template"
 	"io"
 	"net/url"
-	"sort"
 	"strings"
 	"time"
 
@@ -75,13 +74,13 @@ const (
 
 // DiffLine represents a line difference in a DiffSection.
 type DiffLine struct {
-	LeftIdx     int
-	RightIdx    int
-	Match       int
-	Type        DiffLineType
-	Content     string
-	Comments    []*issues_model.Comment
-	SectionInfo *DiffLineSectionInfo
+	LeftIdx       int
+	RightIdx      int
+	Match         int
+	Type          DiffLineType
+	Content       string
+	Conversations []issues_model.CodeConversation
+	SectionInfo   *DiffLineSectionInfo
 }
 
 // DiffLineSectionInfo represents diff line section meta data
@@ -118,15 +117,15 @@ func (d *DiffLine) GetHTMLDiffLineType() string {
 
 // CanComment returns whether a line can get commented
 func (d *DiffLine) CanComment() bool {
-	return len(d.Comments) == 0 && d.Type != DiffLineSection
+	return len(d.Conversations) == 0 && d.Type != DiffLineSection
 }
 
 // GetCommentSide returns the comment side of the first comment, if not set returns empty string
 func (d *DiffLine) GetCommentSide() string {
-	if len(d.Comments) == 0 {
+	if len(d.Conversations) == 0 || len(d.Conversations[0]) == 0 {
 		return ""
 	}
-	return d.Comments[0].DiffSide()
+	return d.Conversations[0][0].DiffSide()
 }
 
 // GetLineTypeMarker returns the line type marker
@@ -467,23 +466,20 @@ type Diff struct {
 
 // LoadComments loads comments into each line
 func (diff *Diff) LoadComments(ctx context.Context, issue *issues_model.Issue, currentUser *user_model.User, showOutdatedComments bool) error {
-	allComments, err := issues_model.FetchCodeComments(ctx, issue, currentUser, showOutdatedComments)
+	allConversations, err := issues_model.FetchCodeConversations(ctx, issue, currentUser, showOutdatedComments)
 	if err != nil {
 		return err
 	}
 	for _, file := range diff.Files {
-		if lineCommits, ok := allComments[file.Name]; ok {
+		if lineCommits, ok := allConversations[file.Name]; ok {
 			for _, section := range file.Sections {
 				for _, line := range section.Lines {
-					if comments, ok := lineCommits[int64(line.LeftIdx*-1)]; ok {
-						line.Comments = append(line.Comments, comments...)
+					if conversations, ok := lineCommits[int64(line.LeftIdx*-1)]; ok {
+						line.Conversations = append(line.Conversations, conversations...)
 					}
 					if comments, ok := lineCommits[int64(line.RightIdx)]; ok {
-						line.Comments = append(line.Comments, comments...)
+						line.Conversations = append(line.Conversations, comments...)
 					}
-					sort.SliceStable(line.Comments, func(i, j int) bool {
-						return line.Comments[i].CreatedUnix < line.Comments[j].CreatedUnix
-					})
 				}
 			}
 		}
