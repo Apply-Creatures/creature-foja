@@ -681,6 +681,7 @@ func registerRoutes(m *web.Route) {
 	// ***** START: Admin *****
 	m.Group("/admin", func() {
 		m.Get("", admin.Dashboard)
+		m.Get("/system_status", admin.SystemStatus)
 		m.Post("", web.Bind(forms.AdminDashboardForm{}), admin.DashboardPost)
 
 		if setting.Database.Type.IsMySQL() || setting.Database.Type.IsMSSQL() {
