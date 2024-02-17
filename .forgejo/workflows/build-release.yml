@@ -18,7 +18,10 @@ name: Build release
 
 on:
   push:
-    tags: 'v*'
+    tags: 'v[0-9]+.[0-9]+.*'
+    branches:
+      - 'forgejo'
+      - 'v*/forgejo'
 
 jobs:
   release:
@@ -43,17 +46,34 @@ jobs:
           go-version: "1.21"
           check-latest: true
 
-      - name: version from ref_name
-        id: tag-version
+      - name: version from ref
+        id: release-info
+        shell: bash
         run: |
-          version="${{ github.ref_name }}"
-          version=${version##*v}
-          echo "value=$version" >> "$GITHUB_OUTPUT"
+          set -x
+          ref="${{ github.ref }}"
+          if [[ $ref =~ ^refs/heads/ ]] ; then
+            version=${ref#refs/heads/}
+            version=${version%/forgejo}-test
+            override=true
+          fi
+          if [[ $ref =~ ^refs/tags/ ]] ; then
+            version=${ref#refs/tags/}
+            override=false
+          fi
+          if test -z "$version" ; then
+            echo failed to figure out the release version from the reference=$ref
+            exit 1
+          fi
+          version=${version#v}
+          echo "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "override=$override" >> "$GITHUB_OUTPUT"
 
       - name: release notes
         id: release-notes
         run: |
-          anchor=${{ steps.tag-version.outputs.value }}
+          anchor=${{ steps.release-info.outputs.version }}
           anchor=${anchor//./-}
           cat >> "$GITHUB_OUTPUT" <<EOF
           value<<ENDVAR
@@ -65,7 +85,7 @@ jobs:
         run: |
           set -x
           apt-get -qq install -y make
-          version=${{ steps.tag-version.outputs.value }}
+          version=${{ steps.release-info.outputs.version }}
           #
           # Make sure all files are owned by the current user.
           # When run as root `npx webpack` will assume the identity
@@ -122,34 +142,38 @@ jobs:
 
       - name: build container & release
         if: ${{ secrets.TOKEN != '' }}
-        uses: https://code.forgejo.org/forgejo/forgejo-build-publish/build@v1
+        uses: https://code.forgejo.org/forgejo/forgejo-build-publish/build@v3
         with:
           forgejo: "${{ env.GITHUB_SERVER_URL }}"
           owner: "${{ env.GITHUB_REPOSITORY_OWNER }}"
           repository: "${{ steps.repository.outputs.value }}"
           doer: "${{ secrets.DOER }}"
-          tag-version: "${{ steps.tag-version.outputs.value }}"
+          release-version: "${{ steps.release-info.outputs.version }}"
+          sha: "${{ steps.release-info.outputs.sha }}"
           token: "${{ secrets.TOKEN }}"
           platforms: linux/amd64,linux/arm64,linux/arm/v6
           release-notes: "${{ steps.release-notes.outputs.value }}"
           binary-name: forgejo
           binary-path: /app/gitea/gitea
-          verbose: ${{ vars.VERBOSE || 'false' }}
+          override: "${{ steps.release-info.outputs.override }}"
+          verbose: ${{ vars.VERBOSE || secrets.VERBOSE || 'false' }}
 
       - name: build rootless container
         if: ${{ secrets.TOKEN != '' }}
-        uses: https://code.forgejo.org/forgejo/forgejo-build-publish/build@v1
+        uses: https://code.forgejo.org/forgejo/forgejo-build-publish/build@v3
         with:
           forgejo: "${{ env.GITHUB_SERVER_URL }}"
           owner: "${{ env.GITHUB_REPOSITORY_OWNER }}"
           repository: "${{ steps.repository.outputs.value }}"
           doer: "${{ secrets.DOER }}"
-          tag-version: "${{ steps.tag-version.outputs.value }}"
+          release-version: "${{ steps.release-info.outputs.version }}"
+          sha: "${{ steps.release-info.outputs.sha }}"
           token: "${{ secrets.TOKEN }}"
           platforms: linux/amd64,linux/arm64,linux/arm/v6
           suffix: -rootless
           dockerfile: Dockerfile.rootless
-          verbose: ${{ vars.VERBOSE || 'false' }}
+          override: "${{ steps.release-info.outputs.override }}"
+          verbose: ${{ vars.VERBOSE || secrets.VERBOSE || 'false' }}
 
       - name: end-to-end tests
         if: ${{ secrets.TOKEN != '' && vars.ROLE == 'forgejo-integration' }}
