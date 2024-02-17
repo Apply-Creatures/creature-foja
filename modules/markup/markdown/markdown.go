@@ -125,6 +125,7 @@ func SpecializedMarkdown() goldmark.Markdown {
 				parser.WithAttribute(),
 				parser.WithAutoHeadingID(),
 				parser.WithASTTransformers(
+					util.Prioritized(&callout.GitHubLegacyCalloutTransformer{}, 8000),
 					util.Prioritized(&callout.GitHubCalloutTransformer{}, 9000),
 					util.Prioritized(&ASTTransformer{}, 10000),
 				),
