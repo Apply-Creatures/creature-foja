@@ -3028,27 +3028,34 @@ func NewComment(ctx *context.Context) {
 				// check whether the ref of PR <refs/pulls/pr_index/head> in base repo is consistent with the head commit of head branch in the head repo
 				// get head commit of PR
 				if pull.Flow == issues_model.PullRequestFlowGithub {
-					prHeadRef := pull.GetGitRefName()
 					if err := pull.LoadBaseRepo(ctx); err != nil {
 						ctx.ServerError("Unable to load base repo", err)
 						return
 					}
+					if err := pull.LoadHeadRepo(ctx); err != nil {
+						ctx.ServerError("Unable to load head repo", err)
+						return
+					}
+
+					// Check if the base branch of the pull request still exists.
+					if ok := git.IsBranchExist(ctx, pull.BaseRepo.RepoPath(), pull.BaseBranch); !ok {
+						ctx.JSONError(ctx.Tr("repo.pulls.reopen_failed.base_branch"))
+						return
+					}
+
+					// Check if the head branch of the pull request still exists.
+					if ok := git.IsBranchExist(ctx, pull.HeadRepo.RepoPath(), pull.HeadBranch); !ok {
+						ctx.JSONError(ctx.Tr("repo.pulls.reopen_failed.head_branch"))
+						return
+					}
+
+					prHeadRef := pull.GetGitRefName()
 					prHeadCommitID, err := git.GetFullCommitID(ctx, pull.BaseRepo.RepoPath(), prHeadRef)
 					if err != nil {
 						ctx.ServerError("Get head commit Id of pr fail", err)
 						return
 					}
 
-					// get head commit of branch in the head repo
-					if err := pull.LoadHeadRepo(ctx); err != nil {
-						ctx.ServerError("Unable to load head repo", err)
-						return
-					}
-					if ok := git.IsBranchExist(ctx, pull.HeadRepo.RepoPath(), pull.BaseBranch); !ok {
-						// todo localize
-						ctx.JSONError("The origin branch is delete, cannot reopen.")
-						return
-					}
 					headBranchRef := pull.GetGitHeadBranchRefName()
 					headBranchCommitID, err := git.GetFullCommitID(ctx, pull.HeadRepo.RepoPath(), headBranchRef)
 					if err != nil {
