@@ -5,7 +5,7 @@ FROM --platform=$BUILDPLATFORM docker.io/library/golang:1.21-alpine3.19 as build
 ARG GOPROXY
 ENV GOPROXY ${GOPROXY:-direct}
 
-ARG GITEA_VERSION
+ARG RELEASE_VERSION
 ARG TAGS="sqlite sqlite_unlock_notify"
 ENV TAGS "bindata timetzdata $TAGS"
 ARG CGO_EXTRA_CFLAGS
@@ -36,7 +36,7 @@ WORKDIR ${GOPATH}/src/code.gitea.io/gitea
 RUN make clean-all
 RUN make frontend
 RUN go build contrib/environment-to-ini/environment-to-ini.go && xx-verify environment-to-ini
-RUN make go-check generate-backend static-executable && xx-verify gitea
+RUN make RELEASE_VERSION=$RELEASE_VERSION go-check generate-backend static-executable && xx-verify gitea
 
 # Copy local files
 COPY docker/root /tmp/local

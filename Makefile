@@ -92,11 +92,12 @@ ifneq ($(STORED_VERSION),)
 else
   FORGEJO_VERSION ?= $(shell git describe --tags --always | sed 's/-/+/' | sed 's/^v//')
 endif
-VERSION ?= ${FORGEJO_VERSION}
+RELEASE_VERSION ?= ${FORGEJO_VERSION}
+VERSION ?= ${RELEASE_VERSION}
 
 GITEA_VERSION ?= 1.22.0
 
-LDFLAGS := $(LDFLAGS) -X "main.MakeVersion=$(MAKE_VERSION)" -X "main.Version=$(GITEA_VERSION)" -X "main.Tags=$(TAGS)" -X "main.ForgejoVersion=$(FORGEJO_VERSION)"
+LDFLAGS := $(LDFLAGS) -X "main.ReleaseVersion=$(RELEASE_VERSION)" -X "main.MakeVersion=$(MAKE_VERSION)" -X "main.Version=$(GITEA_VERSION)" -X "main.Tags=$(TAGS)" -X "main.ForgejoVersion=$(FORGEJO_VERSION)"
 
 LINUX_ARCHS ?= linux/amd64,linux/386,linux/arm-5,linux/arm-6,linux/arm64
 
