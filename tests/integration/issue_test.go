@@ -1,4 +1,5 @@
 // Copyright 2017 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors c/o Codeberg e.V.. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package integration
@@ -795,5 +796,22 @@ func TestCommitRefComment(t *testing.T) {
 
 		event := htmlDoc.Find("#issuecomment-1001 .text").Text()
 		assert.Contains(t, event, "referenced this issue")
+	})
+}
+
+func TestIssueFilterNoFollow(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	req := NewRequest(t, "GET", "/user2/repo1/issues")
+	resp := MakeRequest(t, req, http.StatusOK)
+	htmlDoc := NewHTMLParser(t, resp.Body)
+
+	// Check that every link in the filter list has rel="nofollow".
+	filterLinks := htmlDoc.Find(".issue-list-toolbar-right a[href*=\"/issues?q=\"]")
+	assert.True(t, filterLinks.Length() > 0)
+	filterLinks.Each(func(i int, link *goquery.Selection) {
+		rel, has := link.Attr("rel")
+		assert.True(t, has)
+		assert.Equal(t, "nofollow", rel)
 	})
 }
