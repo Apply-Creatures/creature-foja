@@ -190,4 +190,4 @@ jobs:
           destination-token: ${{ secrets.CASCADE_DESTINATION_TOKEN }}
           update: .forgejo/cascading-release-end-to-end
         env:
-          FORGEJO_BINARY: "${{ env.GITHUB_SERVER_URL }}/${{ github.repository }}/releases/download/v${{ steps.tag-version.outputs.value }}/forgejo-${{ steps.tag-version.outputs.value }}-linux-amd64"
+          FORGEJO_BINARY: "${{ env.GITHUB_SERVER_URL }}/${{ github.repository }}/releases/download/v${{ steps.release-info.outputs.version }}/forgejo-${{ steps.release-info.outputs.version }}-linux-amd64"

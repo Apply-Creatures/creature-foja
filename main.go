@@ -29,6 +29,8 @@ var (
 	Version     = "development" // program version for this build
 	Tags        = ""            // the Golang build tags
 	MakeVersion = ""            // "make" program version if built with make
+
+	ReleaseVersion = ""
 )
 
 var ForgejoVersion = "1.0.0"
@@ -54,9 +56,16 @@ func main() {
 		log.GetManager().Close()
 		os.Exit(code)
 	}
-	app := cmd.NewMainApp(Version, formatBuiltWith())
+	app := cmd.NewMainApp(Version, formatReleaseVersion()+formatBuiltWith())
 	_ = cmd.RunMainApp(app, os.Args...) // all errors should have been handled by the RunMainApp
 	log.GetManager().Close()
+}
+
+func formatReleaseVersion() string {
+	if len(ReleaseVersion) > 0 {
+		return " (release name " + ReleaseVersion + ")"
+	}
+	return ""
 }
 
 func formatBuiltWith() string {
