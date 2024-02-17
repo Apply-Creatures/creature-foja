@@ -57,8 +57,10 @@ function initRepoDiffConversationForm() {
       $form.addClass('is-loading');
       const formData = new FormData($form[0]);
 
-      // if the form is submitted by a button, append the button's name and value to the form data
-      const submitter = submitEventSubmitter(e.originalEvent);
+      // If the form is submitted by a button, append the button's name and value to the form data.
+      // originalEvent can be undefined, such as an event that's caused by Ctrl+Enter, in that case
+      // sent the event itself.
+      const submitter = submitEventSubmitter(e.originalEvent ?? e);
       const isSubmittedByButton = (submitter?.nodeName === 'BUTTON') || (submitter?.nodeName === 'INPUT' && submitter.type === 'submit');
       if (isSubmittedByButton && submitter.name) {
         formData.append(submitter.name, submitter.value);
@@ -76,6 +78,7 @@ function initRepoDiffConversationForm() {
       $newConversationHolder.find('.dropdown').dropdown();
       initCompReactionSelector($newConversationHolder);
     } catch { // here the caught error might be a jQuery AJAX error (thrown by await $.post), which is not good to use for error message handling
+      console.error('error when submitting conversation', e);
       showErrorToast(i18n.network_error);
     } finally {
       $form.removeClass('is-loading');
