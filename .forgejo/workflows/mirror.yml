@@ -1,10 +1,8 @@
 name: mirror
 
 on:
-  push:
-    branches:
-      - 'forgejo'
-      - 'v*/forgejo'
+  schedule:
+    - cron: '@daily'
 
 jobs:
   mirror:
