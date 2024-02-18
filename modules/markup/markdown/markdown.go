@@ -13,6 +13,7 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/common"
+	"code.gitea.io/gitea/modules/markup/markdown/callout"
 	"code.gitea.io/gitea/modules/markup/markdown/math"
 	"code.gitea.io/gitea/modules/setting"
 	giteautil "code.gitea.io/gitea/modules/util"
@@ -124,6 +125,8 @@ func SpecializedMarkdown() goldmark.Markdown {
 				parser.WithAttribute(),
 				parser.WithAutoHeadingID(),
 				parser.WithASTTransformers(
+					util.Prioritized(&callout.GitHubLegacyCalloutTransformer{}, 8000),
+					util.Prioritized(&callout.GitHubCalloutTransformer{}, 9000),
 					util.Prioritized(&ASTTransformer{}, 10000),
 				),
 			),
@@ -135,6 +138,7 @@ func SpecializedMarkdown() goldmark.Markdown {
 		// Override the original Tasklist renderer!
 		specMarkdown.Renderer().AddOptions(
 			renderer.WithNodeRenderers(
+				util.Prioritized(callout.NewGitHubCalloutHTMLRenderer(), 10),
 				util.Prioritized(NewHTMLRenderer(), 10),
 			),
 		)

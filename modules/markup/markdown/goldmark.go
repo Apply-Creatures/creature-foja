@@ -13,7 +13,6 @@ import (
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/common"
 	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/svg"
 	giteautil "code.gitea.io/gitea/modules/util"
 
 	"github.com/microcosm-cc/bluemonday/css"
@@ -53,7 +52,6 @@ func (g *ASTTransformer) Transform(node *ast.Document, reader text.Reader, pc pa
 		}
 	}
 
-	attentionMarkedBlockquotes := make(container.Set[*ast.Blockquote])
 	_ = ast.Walk(node, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
 		if !entering {
 			return ast.WalkContinue, nil
@@ -197,18 +195,6 @@ func (g *ASTTransformer) Transform(node *ast.Document, reader text.Reader, pc pa
 			if css.ColorHandler(strings.ToLower(string(colorContent))) {
 				v.AppendChild(v, NewColorPreview(colorContent))
 			}
-		case *ast.Emphasis:
-			// check if inside blockquote for attention, expected hierarchy is
-			// Emphasis < Paragraph < Blockquote
-			blockquote, isInBlockquote := n.Parent().Parent().(*ast.Blockquote)
-			if isInBlockquote && !attentionMarkedBlockquotes.Contains(blockquote) {
-				fullText := string(n.Text(reader.Source()))
-				if fullText == AttentionNote || fullText == AttentionWarning {
-					v.SetAttributeString("class", []byte("attention-"+strings.ToLower(fullText)))
-					v.Parent().InsertBefore(v.Parent(), v, NewAttention(fullText))
-					attentionMarkedBlockquotes.Add(blockquote)
-				}
-			}
 		}
 		return ast.WalkContinue, nil
 	})
@@ -299,7 +285,6 @@ func (r *HTMLRenderer) RegisterFuncs(reg renderer.NodeRendererFuncRegisterer) {
 	reg.Register(KindSummary, r.renderSummary)
 	reg.Register(KindIcon, r.renderIcon)
 	reg.Register(ast.KindCodeSpan, r.renderCodeSpan)
-	reg.Register(KindAttention, r.renderAttention)
 	reg.Register(KindTaskCheckBoxListItem, r.renderTaskCheckBoxListItem)
 	reg.Register(east.KindTaskCheckBox, r.renderTaskCheckBox)
 }
@@ -333,28 +318,6 @@ func (r *HTMLRenderer) renderCodeSpan(w util.BufWriter, source []byte, n ast.Nod
 		return ast.WalkSkipChildren, nil
 	}
 	_, _ = w.WriteString("</code>")
-	return ast.WalkContinue, nil
-}
-
-// renderAttention renders a quote marked with i.e. "> **Note**" or "> **Warning**" with a corresponding svg
-func (r *HTMLRenderer) renderAttention(w util.BufWriter, source []byte, node ast.Node, entering bool) (ast.WalkStatus, error) {
-	if entering {
-		_, _ = w.WriteString(`<span class="attention-icon attention-`)
-		n := node.(*Attention)
-		_, _ = w.WriteString(strings.ToLower(n.AttentionType))
-		_, _ = w.WriteString(`">`)
-
-		var octiconType string
-		switch n.AttentionType {
-		case AttentionNote:
-			octiconType = "info"
-		case AttentionWarning:
-			octiconType = "alert"
-		}
-		_, _ = w.WriteString(string(svg.RenderHTML("octicon-" + octiconType)))
-	} else {
-		_, _ = w.WriteString("</span>\n")
-	}
 	return ast.WalkContinue, nil
 }
 
