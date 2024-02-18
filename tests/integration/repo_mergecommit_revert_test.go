@@ -26,6 +26,7 @@ func TestRepoMergeCommitRevert(t *testing.T) {
 		"commit_message":  "test message",
 		"commit_choice":   "direct",
 		"new_branch_name": "test-revert-branch-1",
+		"commit_mail_id":  "-1",
 	})
 	resp = session.MakeRequest(t, req, http.StatusSeeOther)
 

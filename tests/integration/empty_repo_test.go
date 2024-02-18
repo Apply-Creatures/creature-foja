@@ -89,10 +89,11 @@ func TestEmptyRepoUploadFile(t *testing.T) {
 	assert.NoError(t, json.Unmarshal(resp.Body.Bytes(), &respMap))
 
 	req = NewRequestWithValues(t, "POST", "/user30/empty/_upload/"+setting.Repository.DefaultBranch, map[string]string{
-		"_csrf":         GetCSRF(t, session, "/user/settings"),
-		"commit_choice": "direct",
-		"files":         respMap["uuid"],
-		"tree_path":     "",
+		"_csrf":          GetCSRF(t, session, "/user/settings"),
+		"commit_choice":  "direct",
+		"files":          respMap["uuid"],
+		"tree_path":      "",
+		"commit_mail_id": "-1",
 	})
 	resp = session.MakeRequest(t, req, http.StatusSeeOther)
 	redirect := test.RedirectURL(resp)

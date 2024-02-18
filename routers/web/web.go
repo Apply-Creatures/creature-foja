@@ -1265,7 +1265,7 @@ func registerRoutes(m *web.Route) {
 					Post(web.Bind(forms.EditRepoFileForm{}), repo.NewDiffPatchPost)
 				m.Combo("/_cherrypick/{sha:([a-f0-9]{4,64})}/*").Get(repo.CherryPick).
 					Post(web.Bind(forms.CherryPickForm{}), repo.CherryPickPost)
-			}, repo.MustBeEditable)
+			}, repo.MustBeEditable, repo.CommonEditorData)
 			m.Group("", func() {
 				m.Post("/upload-file", repo.UploadFileToServer)
 				m.Post("/upload-remove", web.Bind(forms.RemoveUploadFileForm{}), repo.RemoveUploadFileFromServer)

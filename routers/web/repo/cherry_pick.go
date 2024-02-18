@@ -115,11 +115,18 @@ func CherryPickPost(ctx *context.Context) {
 		message += "\n\n" + form.CommitMessage
 	}
 
+	gitIdentity := getGitIdentity(ctx, form.CommitMailID, tplCherryPick, &form)
+	if ctx.Written() {
+		return
+	}
+
 	opts := &files.ApplyDiffPatchOptions{
 		LastCommitID: form.LastCommit,
 		OldBranch:    ctx.Repo.BranchName,
 		NewBranch:    branchName,
 		Message:      message,
+		Author:       gitIdentity,
+		Committer:    gitIdentity,
 	}
 
 	// First lets try the simple plain read-tree -m approach

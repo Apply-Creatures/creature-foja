@@ -808,6 +808,7 @@ type CherryPickForm struct {
 	CommitChoice  string `binding:"Required;MaxSize(50)"`
 	NewBranchName string `binding:"GitRefName;MaxSize(100)"`
 	LastCommit    string
+	CommitMailID  int64 `binding:"Required"`
 	Revert        bool
 	Signoff       bool
 }
@@ -834,6 +835,7 @@ type UploadRepoFileForm struct {
 	CommitChoice  string `binding:"Required;MaxSize(50)"`
 	NewBranchName string `binding:"GitRefName;MaxSize(100)"`
 	Files         []string
+	CommitMailID  int64 `binding:"Required"`
 	Signoff       bool
 }
 
@@ -868,6 +870,7 @@ type DeleteRepoFileForm struct {
 	CommitChoice  string `binding:"Required;MaxSize(50)"`
 	NewBranchName string `binding:"GitRefName;MaxSize(100)"`
 	LastCommit    string
+	CommitMailID  int64 `binding:"Required"`
 	Signoff       bool
 }
 
