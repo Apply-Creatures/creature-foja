@@ -28,6 +28,8 @@ jobs:
     if: vars.ROLE == 'forgejo-integration' || github.repository_owner == 'root'
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Sanitize the name of the repository
         id: repository
@@ -64,6 +66,7 @@ jobs:
             exit 1
           fi
           version=${version#v}
+          git describe --tags --always
           echo "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "override=$override" >> "$GITHUB_OUTPUT"
