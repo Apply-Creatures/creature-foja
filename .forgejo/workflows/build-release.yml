@@ -82,6 +82,18 @@ jobs:
           ENDVAR
           EOF
 
+      - name: cache node_modules
+        id: node
+        uses: https://code.forgejo.org/actions/cache@v3
+        with:
+          path: |
+            node_modules
+          key: node-${{ steps.release-info.outputs.version }}
+
+      - name: skip if node cache hit
+        if: steps.node.outputs.cache-hit != 'true'
+        run: echo no hit
+
       - name: Build sources
         run: |
           set -x
