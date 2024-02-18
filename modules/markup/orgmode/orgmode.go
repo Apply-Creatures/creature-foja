@@ -147,11 +147,21 @@ func (r *Writer) resolveLink(node org.Node) string {
 	}
 	if len(link) > 0 && !markup.IsLinkStr(link) &&
 		link[0] != '#' && !strings.HasPrefix(link, mailto) {
-		base := r.Ctx.Links.Base
+
+		var base string
+		if r.Ctx.IsWiki {
+			base = r.Ctx.Links.WikiLink()
+		} else if r.Ctx.Links.HasBranchInfo() {
+			base = r.Ctx.Links.SrcLink()
+		} else {
+			base = r.Ctx.Links.Base
+		}
+
 		switch l.Kind() {
 		case "image", "video":
 			base = r.Ctx.Links.ResolveMediaLink(r.Ctx.IsWiki)
 		}
+
 		link = util.URLJoin(base, link)
 	}
 	return link
