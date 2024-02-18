@@ -7,6 +7,7 @@ package generate
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"fmt"
 	"io"
 	"time"
 
@@ -36,6 +37,20 @@ func NewInternalToken() (string, error) {
 	}
 
 	return internalToken, nil
+}
+
+const defaultJwtSecretLen = 32
+
+// DecodeJwtSecret decodes a base64 encoded jwt secret into bytes, and check its length
+func DecodeJwtSecret(src string) ([]byte, error) {
+	encoding := base64.RawURLEncoding
+	decoded := make([]byte, encoding.DecodedLen(len(src))+3)
+	if n, err := encoding.Decode(decoded, []byte(src)); err != nil {
+		return nil, err
+	} else if n != defaultJwtSecretLen {
+		return nil, fmt.Errorf("invalid base64 decoded length: %d, expects: %d", n, defaultJwtSecretLen)
+	}
+	return decoded[:defaultJwtSecretLen], nil
 }
 
 // NewJwtSecret generates a new base64 encoded value intended to be used for JWT secrets.
