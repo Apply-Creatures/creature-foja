@@ -89,11 +89,17 @@
   .repo-header .flex-item {
     flex-grow: 1;
   }
-  .repo-buttons .ui.labeled.button .text {
-    display: none;
-  }
+  .repo-buttons .ui.labeled.button .text,
   .repo-header .flex-item-trailing .label {
-    display: none;
+    /* the elements are hidden from users with intact eye vision,
+     * because SVG icons convey the meaning.
+     * However, they should remain accessible to screen readers */
+    position: absolute;
+    left: -1000vw;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
   }
   .repo-header .flex-item-trailing .repo-icon {
     display: initial;
