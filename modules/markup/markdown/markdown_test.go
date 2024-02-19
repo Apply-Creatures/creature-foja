@@ -15,6 +15,7 @@ import (
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/test"
 	"code.gitea.io/gitea/modules/util"
 
 	"github.com/stretchr/testify/assert"
@@ -1169,4 +1170,30 @@ space</p>
 		assert.NoError(t, err, "Unexpected error in testcase: %v", i)
 		assert.Equal(t, c.Expected, result, "Unexpected result in testcase %v", i)
 	}
+}
+
+func TestCustomMarkdownURL(t *testing.T) {
+	defer test.MockVariableValue(&setting.Markdown.CustomURLSchemes, []string{"abp"})()
+
+	setting.AppURL = AppURL
+	setting.AppSubURL = AppSubURL
+
+	test := func(input, expected string) {
+		buffer, err := markdown.RenderString(&markup.RenderContext{
+			Ctx: git.DefaultContext,
+			Links: markup.Links{
+				Base:       setting.AppSubURL,
+				BranchPath: "branch/main",
+			},
+		}, input)
+		assert.NoError(t, err)
+		assert.Equal(t, strings.TrimSpace(expected), strings.TrimSpace(buffer))
+	}
+
+	test("[test](abp:subscribe?location=https://codeberg.org/filters.txt&amp;title=joy)",
+		`<p><a href="abp:subscribe?location=https://codeberg.org/filters.txt&amp;title=joy" rel="nofollow">test</a></p>`)
+
+	// Ensure that the schema itself without `:` is still made absolute.
+	test("[test](abp)",
+		`<p><a href="http://localhost:3000/gogits/gogs/src/branch/main/abp" rel="nofollow">test</a></p>`)
 }
