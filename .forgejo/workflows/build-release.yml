@@ -53,8 +53,12 @@ jobs:
           set -x
           ref="${{ github.ref }}"
           if [[ $ref =~ ^refs/heads/ ]] ; then
-            version=${ref#refs/heads/}
-            version=${version%/forgejo}-test
+            if test "$ref" = "refs/heads/forgejo" ; then
+              version=0.0-test
+            else
+              version=${ref#refs/heads/}
+              version=${version%/forgejo}-test
+            fi
             override=true
           fi
           if [[ $ref =~ ^refs/tags/ ]] ; then
