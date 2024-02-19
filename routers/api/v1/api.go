@@ -8,7 +8,7 @@
 //
 //	Schemes: https, http
 //	BasePath: /api/v1
-//	Version: {{AppVer | JSEscape | Safe}}
+//	Version: {{AppVer | JSEscape}}
 //	License: MIT http://opensource.org/licenses/MIT
 //
 //	Consumes:
