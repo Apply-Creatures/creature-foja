@@ -936,6 +936,54 @@ func doCreateAgitFlowPull(dstPath string, ctx *APITestContext, baseBranch, headB
 				assert.Contains(t, pr.Issue.Content, "custom")
 			})
 		})
+
+		t.Run("Force push", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			upstreamGitRepo, err := git.OpenRepository(git.DefaultContext, filepath.Join(setting.RepoRootPath, ctx.Username, ctx.Reponame+".git"))
+			require.NoError(t, err)
+			defer upstreamGitRepo.Close()
+
+			_, _, gitErr := git.NewCommand(git.DefaultContext, "push", "origin").AddDynamicArguments("HEAD:refs/for/master/" + headBranch + "-force-push").RunStdString(&git.RunOpts{Dir: dstPath})
+			require.NoError(t, gitErr)
+
+			unittest.AssertCount(t, &issues_model.PullRequest{}, pullNum+6)
+			pr := unittest.AssertExistsAndLoadBean(t, &issues_model.PullRequest{
+				HeadRepoID: repo.ID,
+				Flow:       issues_model.PullRequestFlowAGit,
+				Index:      pr1.Index + 5,
+			})
+
+			headCommitID, err := upstreamGitRepo.GetRefCommitID(pr.GetGitRefName())
+			require.NoError(t, err)
+
+			_, _, gitErr = git.NewCommand(git.DefaultContext, "reset", "--hard", "HEAD~1").RunStdString(&git.RunOpts{Dir: dstPath})
+			require.NoError(t, gitErr)
+
+			t.Run("Fails", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				_, stdErr, gitErr := git.NewCommand(git.DefaultContext, "push", "origin").AddDynamicArguments("HEAD:refs/for/master/" + headBranch + "-force-push").RunStdString(&git.RunOpts{Dir: dstPath})
+				assert.Error(t, gitErr)
+
+				assert.Contains(t, stdErr, "-o force-push=true")
+
+				currentHeadCommitID, err := upstreamGitRepo.GetRefCommitID(pr.GetGitRefName())
+				assert.NoError(t, err)
+				assert.EqualValues(t, headCommitID, currentHeadCommitID)
+			})
+			t.Run("Succeeds", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				_, _, gitErr := git.NewCommand(git.DefaultContext, "push", "origin", "-o", "force-push=true").AddDynamicArguments("HEAD:refs/for/master/" + headBranch + "-force-push").RunStdString(&git.RunOpts{Dir: dstPath})
+				assert.NoError(t, gitErr)
+
+				currentHeadCommitID, err := upstreamGitRepo.GetRefCommitID(pr.GetGitRefName())
+				assert.NoError(t, err)
+				assert.NotEqualValues(t, headCommitID, currentHeadCommitID)
+			})
+		})
+
 		t.Run("Merge", doAPIMergePullRequest(*ctx, ctx.Username, ctx.Reponame, pr1.Index))
 		t.Run("CheckoutMasterAgain", doGitCheckoutBranch(dstPath, "master"))
 	}
