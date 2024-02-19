@@ -16,6 +16,7 @@ import (
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/highlight"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/templates"
 	"code.gitea.io/gitea/modules/timeutil"
 	"code.gitea.io/gitea/modules/util"
@@ -68,6 +69,14 @@ func RefBlame(ctx *context.Context) {
 
 	ctx.Data["FileSize"] = blob.Size()
 	ctx.Data["FileName"] = blob.Name()
+
+	// Do not display a blame view if the size of the file is
+	// larger than what is configured as the maximum.
+	if blob.Size() >= setting.UI.MaxDisplayFileSize {
+		ctx.Data["IsFileTooLarge"] = true
+		ctx.HTML(http.StatusOK, tplRepoHome)
+		return
+	}
 
 	ctx.Data["NumLinesSet"] = true
 	ctx.Data["NumLines"], err = blob.GetBlobLineCount()

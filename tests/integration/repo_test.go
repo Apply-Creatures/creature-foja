@@ -15,13 +15,16 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	unit_model "code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/models/unittest"
+	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/test"
+	"code.gitea.io/gitea/modules/translation"
 	repo_service "code.gitea.io/gitea/services/repository"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestViewRepo(t *testing.T) {
@@ -447,17 +450,61 @@ func TestBlameFileInRepo(t *testing.T) {
 
 	session := loginUser(t, "user2")
 
-	req := NewRequest(t, "GET", "/user2/repo1/blame/branch/master/README.md")
-	resp := session.MakeRequest(t, req, http.StatusOK)
+	t.Run("Assert", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
 
-	htmlDoc := NewHTMLParser(t, resp.Body)
-	description := htmlDoc.doc.Find("#repo-desc")
-	repoTopics := htmlDoc.doc.Find("#repo-topics")
-	repoSummary := htmlDoc.doc.Find(".repository-summary")
+		req := NewRequest(t, "GET", "/user2/repo1/blame/branch/master/README.md")
+		resp := session.MakeRequest(t, req, http.StatusOK)
 
-	assert.EqualValues(t, 0, description.Length())
-	assert.EqualValues(t, 0, repoTopics.Length())
-	assert.EqualValues(t, 0, repoSummary.Length())
+		htmlDoc := NewHTMLParser(t, resp.Body)
+		description := htmlDoc.doc.Find("#repo-desc")
+		repoTopics := htmlDoc.doc.Find("#repo-topics")
+		repoSummary := htmlDoc.doc.Find(".repository-summary")
+
+		assert.EqualValues(t, 0, description.Length())
+		assert.EqualValues(t, 0, repoTopics.Length())
+		assert.EqualValues(t, 0, repoSummary.Length())
+	})
+
+	t.Run("File size", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+		gitRepo, err := git.OpenRepository(git.DefaultContext, repo.RepoPath())
+		require.NoError(t, err)
+		defer gitRepo.Close()
+
+		commit, err := gitRepo.GetCommit("HEAD")
+		require.NoError(t, err)
+
+		blob, err := commit.GetBlobByPath("README.md")
+		require.NoError(t, err)
+
+		fileSize := blob.Size()
+		require.NotZero(t, fileSize)
+
+		t.Run("Above maximum", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			defer test.MockVariableValue(&setting.UI.MaxDisplayFileSize, fileSize)()
+
+			req := NewRequest(t, "GET", "/user2/repo1/blame/branch/master/README.md")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+
+			htmlDoc := NewHTMLParser(t, resp.Body)
+			assert.Contains(t, htmlDoc.Find(".code-view").Text(), translation.NewLocale("en-US").Tr("repo.file_too_large"))
+		})
+
+		t.Run("Under maximum", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			defer test.MockVariableValue(&setting.UI.MaxDisplayFileSize, fileSize+1)()
+
+			req := NewRequest(t, "GET", "/user2/repo1/blame/branch/master/README.md")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+
+			htmlDoc := NewHTMLParser(t, resp.Body)
+			assert.NotContains(t, htmlDoc.Find(".code-view").Text(), translation.NewLocale("en-US").Tr("repo.file_too_large"))
+		})
+	})
 }
 
 // TestViewRepoDirectory repo description, topics and summary should not be displayed when within a directory
