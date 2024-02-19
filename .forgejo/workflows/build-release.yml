@@ -14,8 +14,6 @@
 #  secrets.CASCADE_DESTINATION_TOKEN: <generated from code.forgejo.org/forgejo-ci> scope read:user, write:repository, write:issue
 #  vars.CASCADE_DESTINATION_DOER: forgejo-ci
 #
-name: Build release
-
 on:
   push:
     tags: 'v[0-9]+.[0-9]+.*'
@@ -30,6 +28,8 @@ jobs:
     if: vars.ROLE == 'forgejo-integration' || github.repository_owner == 'root'
     steps:
       - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Sanitize the name of the repository
         id: repository
@@ -53,8 +53,12 @@ jobs:
           set -x
           ref="${{ github.ref }}"
           if [[ $ref =~ ^refs/heads/ ]] ; then
-            version=${ref#refs/heads/}
-            version=${version%/forgejo}-test
+            if test "$ref" = "refs/heads/forgejo" ; then
+              version=0.0-test
+            else
+              version=${ref#refs/heads/}
+              version=${version%/forgejo}-test
+            fi
             override=true
           fi
           if [[ $ref =~ ^refs/tags/ ]] ; then
@@ -66,6 +70,7 @@ jobs:
             exit 1
           fi
           version=${version#v}
+          git describe --tags --always
           echo "sha=${{ github.sha }}" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "override=$override" >> "$GITHUB_OUTPUT"
@@ -80,6 +85,18 @@ jobs:
           See https://codeberg.org/forgejo/forgejo/src/branch/forgejo/RELEASE-NOTES.md#$anchor
           ENDVAR
           EOF
+
+      - name: cache node_modules
+        id: node
+        uses: https://code.forgejo.org/actions/cache@v3
+        with:
+          path: |
+            node_modules
+          key: node-${{ steps.release-info.outputs.version }}
+
+      - name: skip if node cache hit
+        if: steps.node.outputs.cache-hit != 'true'
+        run: echo no hit
 
       - name: Build sources
         run: |
@@ -177,7 +194,7 @@ jobs:
 
       - name: end-to-end tests
         if: ${{ secrets.TOKEN != '' && vars.ROLE == 'forgejo-integration' }}
-        uses: https://code.forgejo.org/actions/cascading-pr@v1
+        uses: https://code.forgejo.org/actions/cascading-pr@v2
         with:
           origin-url: ${{ env.GITHUB_SERVER_URL }}
           origin-repo: ${{ github.repository }}
@@ -191,3 +208,25 @@ jobs:
           update: .forgejo/cascading-release-end-to-end
         env:
           FORGEJO_BINARY: "${{ env.GITHUB_SERVER_URL }}/${{ github.repository }}/releases/download/v${{ steps.release-info.outputs.version }}/forgejo-${{ steps.release-info.outputs.version }}-linux-amd64"
+
+      - name: copy to experimental
+        if: vars.ROLE == 'forgejo-integration' && secrets.TOKEN != ''
+        run: |
+          if test "${{ vars.VERBOSE }}" = true ; then
+            set -x
+          fi
+          tag=v${{ steps.release-info.outputs.version }}
+          url=https://any:${{ secrets.TOKEN }}@codeberg.org
+          if test "${{ steps.release-info.outputs.override }}" = "true" ; then
+            curl -sS -X DELETE $url/api/v1/repos/forgejo-experimental/forgejo/releases/tags/$tag > /dev/null
+            curl -sS -X DELETE $url/api/v1/repos/forgejo-experimental/forgejo/tags/$tag > /dev/null
+          fi
+          # actions/checkout@v3 sets http.https://codeberg.org/.extraheader with the automatic token.
+          # Get rid of it so it does not prevent using the token that has write permissions
+          git config --local --unset http.https://codeberg.org/.extraheader
+          if test -f .git/shallow ; then
+            echo "unexptected .git/shallow file is present"
+            echo "it suggests a checkout --depth X was used which may prevent pushing the commit"
+            echo "it happens when actions/checkout is called without depth: 0"
+          fi
+          git push $url/forgejo-experimental/forgejo ${{ steps.release-info.outputs.sha }}:refs/tags/$tag
