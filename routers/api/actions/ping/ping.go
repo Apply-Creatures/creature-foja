@@ -12,7 +12,7 @@ import (
 
 	pingv1 "code.gitea.io/actions-proto-go/ping/v1"
 	"code.gitea.io/actions-proto-go/ping/v1/pingv1connect"
-	"github.com/bufbuild/connect-go"
+	"connectrpc.com/connect"
 )
 
 func NewPingServiceHandler() (string, http.Handler) {
