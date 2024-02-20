@@ -6,14 +6,16 @@
 			<form class="ui form ignore-dirty" method="get">
 				<div class="ui fluid action input">
 					<input name="q" value="{{.Keyword}}"{{if .CodeIndexerUnavailable}} disabled{{end}} placeholder="{{ctx.Locale.Tr "repo.search.search_repo"}}">
-					<div class="ui dropdown selection {{if .CodeIndexerUnavailable}} disabled{{end}}" data-tooltip-content="{{ctx.Locale.Tr "repo.search.type.tooltip"}}">
-						<input name="t" type="hidden"{{if .CodeIndexerUnavailable}} disabled{{end}} value="{{.queryType}}">{{svg "octicon-triangle-down" 14 "dropdown icon"}}
-						<div class="text">{{ctx.Locale.Tr (printf "repo.search.%s" (or .queryType "fuzzy"))}}</div>
-						<div class="menu">
-							<div class="item" data-value="" data-tooltip-content="{{ctx.Locale.Tr "repo.search.fuzzy.tooltip"}}">{{ctx.Locale.Tr "repo.search.fuzzy"}}</div>
-							<div class="item" data-value="match" data-tooltip-content="{{ctx.Locale.Tr "repo.search.match.tooltip"}}">{{ctx.Locale.Tr "repo.search.match"}}</div>
+					{{if .CodeIndexerEnabled}}
+						<div class="ui dropdown selection {{if .CodeIndexerUnavailable}} disabled{{end}}" data-tooltip-content="{{ctx.Locale.Tr "repo.search.type.tooltip"}}">
+							<input name="t" type="hidden"{{if .CodeIndexerUnavailable}} disabled{{end}} value="{{.queryType}}">{{svg "octicon-triangle-down" 14 "dropdown icon"}}
+							<div class="text">{{ctx.Locale.Tr (printf "repo.search.%s" (or .queryType "fuzzy"))}}</div>
+							<div class="menu">
+								<div class="item" data-value="" data-tooltip-content="{{ctx.Locale.Tr "repo.search.fuzzy.tooltip"}}">{{ctx.Locale.Tr "repo.search.fuzzy"}}</div>
+								<div class="item" data-value="match" data-tooltip-content="{{ctx.Locale.Tr "repo.search.match.tooltip"}}">{{ctx.Locale.Tr "repo.search.match"}}</div>
+							</div>
 						</div>
-					</div>
+					{{end}}
 					<button class="ui icon button"{{if .CodeIndexerUnavailable}} disabled{{end}} type="submit">{{svg "octicon-search" 16}}</button>
 				</div>
 			</form>
@@ -41,7 +43,7 @@
 						<div class="diff-file-box diff-box file-content non-diff-file-content repo-search-result">
 							<h4 class="ui top attached normal header gt-df gt-fw">
 								<span class="file gt-f1">{{.Filename}}</span>
-								<a role="button" class="ui basic tiny button" rel="nofollow" href="{{$.SourcePath}}/src/commit/{{PathEscape $result.CommitID}}/{{PathEscapeSegments .Filename}}">{{ctx.Locale.Tr "repo.diff.view_file"}}</a>
+								<a role="button" class="ui basic tiny button" rel="nofollow" href="{{$.SourcePath}}/src/{{if $.CodeIndexerEnabled}}commit{{else}}branch{{end}}/{{PathEscape $result.CommitID}}/{{PathEscapeSegments .Filename}}">{{ctx.Locale.Tr "repo.diff.view_file"}}</a>
 							</h4>
 							<div class="ui attached table segment">
 								<div class="file-body file-code code-view">
@@ -50,7 +52,7 @@
 											<tr>
 												<td class="lines-num">
 													{{range .LineNumbers}}
-														<a href="{{$.SourcePath}}/src/commit/{{PathEscape $result.CommitID}}/{{PathEscapeSegments $result.Filename}}#L{{.}}"><span>{{.}}</span></a>
+														<a href="{{$.SourcePath}}/src/{{if $.CodeIndexerEnabled}}commit{{else}}branch{{end}}/{{PathEscape $result.CommitID}}/{{PathEscapeSegments $result.Filename}}#L{{.}}"><span>{{.}}</span></a>
 													{{end}}
 												</td>
 												<td class="lines-code chroma"><code class="code-inner">{{.FormattedLines}}</code></td>
