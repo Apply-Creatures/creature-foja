@@ -4,6 +4,7 @@
 package charset
 
 import (
+	"html/template"
 	"strings"
 	"testing"
 
@@ -13,6 +14,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 )
+
+var testContext = escapeContext("test")
 
 type escapeControlTest struct {
 	name   string
@@ -159,7 +162,7 @@ func TestEscapeControlReader(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			output := &strings.Builder{}
-			status, err := EscapeControlReader(strings.NewReader(tt.text), output, &translation.MockLocale{})
+			status, err := EscapeControlReader(strings.NewReader(tt.text), output, &translation.MockLocale{}, testContext)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.status, *status)
 			assert.Equal(t, tt.result, output.String())
@@ -169,9 +172,22 @@ func TestEscapeControlReader(t *testing.T) {
 
 func TestSettingAmbiguousUnicodeDetection(t *testing.T) {
 	defer test.MockVariableValue(&setting.UI.AmbiguousUnicodeDetection, true)()
-	_, out := EscapeControlHTML("a test", &translation.MockLocale{})
+
+	_, out := EscapeControlHTML("a test", &translation.MockLocale{}, testContext)
 	assert.EqualValues(t, `a<span class="escaped-code-point" data-escaped="[U+00A0]"><span class="char"> </span></span>test`, out)
 	setting.UI.AmbiguousUnicodeDetection = false
-	_, out = EscapeControlHTML("a test", &translation.MockLocale{})
+	_, out = EscapeControlHTML("a test", &translation.MockLocale{}, testContext)
 	assert.EqualValues(t, `a test`, out)
+}
+
+func TestAmbiguousUnicodeDetectionContext(t *testing.T) {
+	defer test.MockVariableValue(&setting.UI.SkipEscapeContexts, []string{"test"})()
+
+	input := template.HTML("a test")
+
+	_, out := EscapeControlHTML(input, &translation.MockLocale{}, escapeContext("not-test"))
+	assert.EqualValues(t, `a<span class="escaped-code-point" data-escaped="[U+00A0]"><span class="char"> </span></span>test`, out)
+
+	_, out = EscapeControlHTML(input, &translation.MockLocale{}, testContext)
+	assert.EqualValues(t, input, out)
 }

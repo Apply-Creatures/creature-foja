@@ -307,7 +307,7 @@ func LFSFileGet(ctx *context.Context) {
 
 		// Building code view blocks with line number on server side.
 		escapedContent := &bytes.Buffer{}
-		ctx.Data["EscapeStatus"], _ = charset.EscapeControlReader(rd, escapedContent, ctx.Locale)
+		ctx.Data["EscapeStatus"], _ = charset.EscapeControlReader(rd, escapedContent, ctx.Locale, charset.FileviewContext)
 
 		var output bytes.Buffer
 		lines := strings.Split(escapedContent.String(), "\n")

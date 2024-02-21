@@ -10,6 +10,7 @@ package charset
 import (
 	"html/template"
 	"io"
+	"slices"
 	"strings"
 
 	"code.gitea.io/gitea/modules/log"
@@ -20,16 +21,29 @@ import (
 // RuneNBSP is the codepoint for NBSP
 const RuneNBSP = 0xa0
 
+type escapeContext string
+
+// Keep this consistent with the documentation of [ui].SKIP_ESCAPE_CONTEXTS
+// Defines the different contexts that could be used to escape in.
+const (
+	// Wiki pages.
+	WikiContext escapeContext = "wiki"
+	// Rendered content (except markup), source code and blames.
+	FileviewContext escapeContext = "file-view"
+	// Commits or pull requet's diff.
+	DiffContext escapeContext = "diff"
+)
+
 // EscapeControlHTML escapes the unicode control sequences in a provided html document
-func EscapeControlHTML(html template.HTML, locale translation.Locale, allowed ...rune) (escaped *EscapeStatus, output template.HTML) {
+func EscapeControlHTML(html template.HTML, locale translation.Locale, context escapeContext, allowed ...rune) (escaped *EscapeStatus, output template.HTML) {
 	sb := &strings.Builder{}
-	escaped, _ = EscapeControlReader(strings.NewReader(string(html)), sb, locale, allowed...) // err has been handled in EscapeControlReader
+	escaped, _ = EscapeControlReader(strings.NewReader(string(html)), sb, locale, context, allowed...) // err has been handled in EscapeControlReader
 	return escaped, template.HTML(sb.String())
 }
 
 // EscapeControlReader escapes the unicode control sequences in a provided reader of HTML content and writer in a locale and returns the findings as an EscapeStatus
-func EscapeControlReader(reader io.Reader, writer io.Writer, locale translation.Locale, allowed ...rune) (escaped *EscapeStatus, err error) {
-	if !setting.UI.AmbiguousUnicodeDetection {
+func EscapeControlReader(reader io.Reader, writer io.Writer, locale translation.Locale, context escapeContext, allowed ...rune) (escaped *EscapeStatus, err error) {
+	if !setting.UI.AmbiguousUnicodeDetection || slices.Contains(setting.UI.SkipEscapeContexts, string(context)) {
 		_, err = io.Copy(writer, reader)
 		return &EscapeStatus{}, err
 	}

@@ -279,7 +279,7 @@ func renderBlame(ctx *context.Context, blameParts []*git.BlamePart, commitNames 
 				lexerName = lexerNameForLine
 			}
 
-			br.EscapeStatus, br.Code = charset.EscapeControlHTML(line, ctx.Locale)
+			br.EscapeStatus, br.Code = charset.EscapeControlHTML(line, ctx.Locale, charset.FileviewContext)
 			rows = append(rows, br)
 			escapeStatus = escapeStatus.Or(br.EscapeStatus)
 		}
