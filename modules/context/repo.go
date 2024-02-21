@@ -82,31 +82,6 @@ func (r *Repository) CanCreateBranch() bool {
 	return r.Permission.CanWrite(unit_model.TypeCode) && r.Repository.CanCreateBranch()
 }
 
-// AllUnitsEnabled returns true if all units are enabled for the repo.
-func (r *Repository) AllUnitsEnabled(ctx context.Context) bool {
-	hasAnyUnitEnabled := func(unitGroup []unit_model.Type) bool {
-		// Loop over the group of units
-		for _, unit := range unitGroup {
-			// If *any* of them is enabled, return true.
-			if r.Repository.UnitEnabled(ctx, unit) {
-				return true
-			}
-		}
-
-		// If none are enabled, return false.
-		return false
-	}
-
-	for _, unitGroup := range unit_model.AllowedRepoUnitGroups {
-		// If any disabled unit is found, return false immediately.
-		if !hasAnyUnitEnabled(unitGroup) {
-			return false
-		}
-	}
-
-	return true
-}
-
 // RepoMustNotBeArchived checks if a repo is archived
 func RepoMustNotBeArchived() func(ctx *Context) {
 	return func(ctx *Context) {
@@ -1079,7 +1054,6 @@ func RepoRefByType(refType RepoRefType, ignoreNotExistErr ...bool) func(*Context
 		ctx.Data["IsViewTag"] = ctx.Repo.IsViewTag
 		ctx.Data["IsViewCommit"] = ctx.Repo.IsViewCommit
 		ctx.Data["CanCreateBranch"] = ctx.Repo.CanCreateBranch()
-		ctx.Data["AllUnitsEnabled"] = ctx.Repo.AllUnitsEnabled(ctx)
 
 		ctx.Repo.CommitsCount, err = ctx.Repo.GetCommitsCount()
 		if err != nil {

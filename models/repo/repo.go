@@ -439,6 +439,31 @@ func (repo *Repository) GetUnit(ctx context.Context, tp unit.Type) (*RepoUnit, e
 	return nil, ErrUnitTypeNotExist{tp}
 }
 
+// AllUnitsEnabled returns true if all units are enabled for the repo.
+func (repo *Repository) AllUnitsEnabled(ctx context.Context) bool {
+	hasAnyUnitEnabled := func(unitGroup []unit.Type) bool {
+		// Loop over the group of units
+		for _, unit := range unitGroup {
+			// If *any* of them is enabled, return true.
+			if repo.UnitEnabled(ctx, unit) {
+				return true
+			}
+		}
+
+		// If none are enabled, return false.
+		return false
+	}
+
+	for _, unitGroup := range unit.AllowedRepoUnitGroups {
+		// If any disabled unit is found, return false immediately.
+		if !hasAnyUnitEnabled(unitGroup) {
+			return false
+		}
+	}
+
+	return true
+}
+
 // LoadOwner loads owner user
 func (repo *Repository) LoadOwner(ctx context.Context) (err error) {
 	if repo.Owner != nil {
