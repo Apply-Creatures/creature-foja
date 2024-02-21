@@ -219,7 +219,7 @@
 				{{end}}
 
 				{{if .Permission.IsAdmin}}
-					{{if not .AllUnitsEnabled}}
+					{{if not (.Repository.AllUnitsEnabled ctx)}}
 						<a class="{{if .PageIsRepoSettingsUnits}}active {{end}}item" href="{{.RepoLink}}/settings/units">
 							{{svg "octicon-diff-added"}} {{ctx.Locale.Tr "repo.settings.units.add_more"}}
 						</a>
