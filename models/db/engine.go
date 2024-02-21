@@ -146,6 +146,7 @@ func InitEngine(ctx context.Context) error {
 	xormEngine.SetMaxOpenConns(setting.Database.MaxOpenConns)
 	xormEngine.SetMaxIdleConns(setting.Database.MaxIdleConns)
 	xormEngine.SetConnMaxLifetime(setting.Database.ConnMaxLifetime)
+	xormEngine.SetConnMaxIdleTime(setting.Database.ConnMaxIdleTime)
 	xormEngine.SetDefaultContext(ctx)
 
 	if setting.Database.SlowQueryThreshold > 0 {

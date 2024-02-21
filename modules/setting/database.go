@@ -42,6 +42,7 @@ var (
 		DBConnectBackoff   time.Duration
 		MaxIdleConns       int
 		MaxOpenConns       int
+		ConnMaxIdleTime    time.Duration
 		ConnMaxLifetime    time.Duration
 		IterateBufferSize  int
 		AutoMigration      bool
@@ -81,6 +82,7 @@ func loadDBSetting(rootCfg ConfigProvider) {
 	} else {
 		Database.ConnMaxLifetime = sec.Key("CONN_MAX_LIFETIME").MustDuration(0)
 	}
+	Database.ConnMaxIdleTime = sec.Key("CONN_MAX_IDLETIME").MustDuration(0)
 	Database.MaxOpenConns = sec.Key("MAX_OPEN_CONNS").MustInt(0)
 
 	Database.IterateBufferSize = sec.Key("ITERATE_BUFFER_SIZE").MustInt(50)
