@@ -2,7 +2,7 @@
 		{{template "base/alert" .}}
 		{{end}}
 		<h4 class="ui top attached header center">
-			{{ctx.Locale.Tr "settings.change_password"}}
+			{{ctx.Locale.Tr "settings.update_password"}}
 		</h4>
 		<div class="ui attached segment">
 			<form class="ui form" action="{{.ChangePasscodeLink}}" method="post">
@@ -17,7 +17,7 @@
 			</div>
 			<div class="inline field">
 				<label></label>
-				<button class="ui primary button">{{ctx.Locale.Tr "settings.change_password"}}</button>
+				<button class="ui primary button">{{ctx.Locale.Tr "settings.update_password"}}</button>
 			</div>
 			</form>
 		</div>
