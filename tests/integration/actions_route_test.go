@@ -22,10 +22,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func GetWorkflowRunRedirectURI(t *testing.T, repo_url, workflow string) string {
+func GetWorkflowRunRedirectURI(t *testing.T, repoURL, workflow string) string {
 	t.Helper()
 
-	req := NewRequest(t, "GET", fmt.Sprintf("%s/actions/workflows/%s/runs/latest", repo_url, workflow))
+	req := NewRequest(t, "GET", fmt.Sprintf("%s/actions/workflows/%s/runs/latest", repoURL, workflow))
 	resp := MakeRequest(t, req, http.StatusTemporaryRedirect)
 
 	return resp.Header().Get("Location")
