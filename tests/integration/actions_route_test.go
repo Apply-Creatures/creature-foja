@@ -22,6 +22,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func GetWorkflowRunRedirectURI(t *testing.T, repo_url string, workflow string) string {
+	t.Helper()
+
+	req := NewRequest(t, "GET", fmt.Sprintf("%s/actions/workflows/%s/runs/latest", repo_url, workflow))
+	resp := MakeRequest(t, req, http.StatusTemporaryRedirect)
+
+	return resp.Header().Get("Location")
+}
+
 func TestActionsWebRouteLatestWorkflowRun(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, u *url.URL) {
 		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
@@ -44,13 +53,7 @@ func TestActionsWebRouteLatestWorkflowRun(t *testing.T) {
 		)
 		defer f()
 
-		// helpers
-		getWorkflowRunRedirectURI := func(workflow string) string {
-			req := NewRequest(t, "GET", fmt.Sprintf("%s/actions/workflows/%s/runs/latest", repo.HTMLURL(), workflow))
-			resp := MakeRequest(t, req, http.StatusTemporaryRedirect)
-
-			return resp.Header().Get("Location")
-		}
+		repoURL := repo.HTMLURL()
 
 		t.Run("valid workflows", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
@@ -59,8 +62,8 @@ func TestActionsWebRouteLatestWorkflowRun(t *testing.T) {
 			assert.Equal(t, 2, unittest.GetCount(t, &actions_model.ActionRun{RepoID: repo.ID}))
 
 			// Get the redirect URIs for both workflows
-			workflowOneURI := getWorkflowRunRedirectURI("workflow-1.yml")
-			workflowTwoURI := getWorkflowRunRedirectURI("workflow-2.yml")
+			workflowOneURI := GetWorkflowRunRedirectURI(t, repoURL, "workflow-1.yml")
+			workflowTwoURI := GetWorkflowRunRedirectURI(t, repoURL, "workflow-2.yml")
 
 			// Verify that the two are different.
 			assert.NotEqual(t, workflowOneURI, workflowTwoURI)
@@ -82,7 +85,7 @@ func TestActionsWebRouteLatestWorkflowRun(t *testing.T) {
 
 			// Get the redirect URI
 			workflow := "workflow-1.yml"
-			workflowOneURI := getWorkflowRunRedirectURI(workflow)
+			workflowOneURI := GetWorkflowRunRedirectURI(t, repoURL, workflow)
 
 			// Fetch the page that shows information about the run initiated by "workflow-1.yml".
 			// routers/web/repo/actions/view.go: data-workflow-url is constructed using data-workflow-name.
@@ -91,21 +94,21 @@ func TestActionsWebRouteLatestWorkflowRun(t *testing.T) {
 			htmlDoc := NewHTMLParser(t, resp.Body)
 
 			// Verify that URL of the workflow is shown correctly.
-			rightURL := fmt.Sprintf("/user2/actionsTestRepo/actions?workflow=%s", workflow)
-			htmlDoc.AssertElement(t, fmt.Sprintf("#repo-action-view[data-workflow-url=\"%s\"]", rightURL), true)
+			expectedURL := fmt.Sprintf("/user2/actionsTestRepo/actions?workflow=%s", workflow)
+			htmlDoc.AssertElement(t, fmt.Sprintf("#repo-action-view[data-workflow-url=\"%s\"]", expectedURL), true)
 		})
 
 		t.Run("existing workflow, non-existent branch", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
-			req := NewRequest(t, "GET", fmt.Sprintf("%s/actions/workflows/workflow-1.yml/runs/latest?branch=foobar", repo.HTMLURL()))
+			req := NewRequest(t, "GET", fmt.Sprintf("%s/actions/workflows/workflow-1.yml/runs/latest?branch=foobar", repoURL))
 			MakeRequest(t, req, http.StatusNotFound)
 		})
 
 		t.Run("non-existing workflow", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
-			req := NewRequest(t, "GET", fmt.Sprintf("%s/actions/workflows/workflow-3.yml/runs/latest", repo.HTMLURL()))
+			req := NewRequest(t, "GET", fmt.Sprintf("%s/actions/workflows/workflow-3.yml/runs/latest", repoURL))
 			MakeRequest(t, req, http.StatusNotFound)
 		})
 	})
