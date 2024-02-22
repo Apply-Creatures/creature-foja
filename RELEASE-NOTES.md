@@ -4,6 +4,54 @@ A Forgejo release is published shortly after a Gitea release is published and th
 
 The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.21.1-0 or v1.21.2-0) does not require manual actions but others might (e.g. v1.20, v1.21).
 
+## 1.21.6-0
+
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.6-0` release can be reviewed from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo/
+$ git -C forgejo log --oneline --no-merges v1.21.5-0..v1.21.6-0
+```
+
+This stable release contains bug fixes and a **security fix**, as explained in the [v1.21.6-0 companion blog post](https://forgejo.org/2024-02-release-v1-21-6-0/).
+
+* Recommended Action
+
+  We **strongly recommend** that all Forgejo installations are [upgraded](https://forgejo.org/docs/v1.21/admin/upgrade/) to the latest version as soon as possible.
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.21/user/semver/)
+
+  The semantic version was updated to `6.0.6+0-gitea-1.21.6`
+
+* Security fix
+
+  * [Fix XSS vulnerabilities](https://codeberg.org/forgejo/forgejo/pulls/2434). It enabled attackers to inject client-side scripts into web pages displayed to Forgejo visitors.
+
+* Bug fixes
+
+  The most prominent ones are described here, others can be found in the list of commits included in the release as described above.
+
+  * [Always write proc-receive hook for all git versions](https://codeberg.org/forgejo/forgejo/commit/a1fb6a2346193439dafaee5acf071632246e6dd7).
+  * [Fix debian InRelease Acquire-By-Hash newline](https://codeberg.org/forgejo/forgejo/commit/8a2c4e9ff2743f47a8d1f081b9e35dcc16431115).
+  * [Fix missing link on outgoing new release notifications](https://codeberg.org/forgejo/forgejo/commit/3a061083d65bdfc9acf0cb5839b84f6a9c17a727).
+  * [Workaround to clean up old reviews on creating a new one](https://codeberg.org/forgejo/forgejo/commit/8377ecbfe1f2b72ec7d65c46cbc9022ad0ccd75f).
+  * [Fix push to create with capitalize repo name](https://codeberg.org/forgejo/forgejo/commit/8782275c9c66ad6fc7c44503d7df9dae7196aa65).
+  * In Markdown [don't try to make the link absolute if the link has a schema that's defined in `[markdown].CUSTOM_URL_SCHEMES`](https://codeberg.org/forgejo/forgejo/commit/6c100083c29fb0ccf0cc52e8767e540a260d9468), because they can't be made absolute.
+  * [Fix Ctrl+Enter on submitting review comment](https://codeberg.org/forgejo/forgejo/commit/1c3a31d85112d10fb948d6f0b763191ed6f68e90).
+  * In Git version v2.43.1, the behavior of `GIT_FLUSH` was accidentially flipped. This causes Forgejo to hang on the `check-attr` command, because no output was being flushed. [Workaround this by detecting if Git v2.43.1 is used and set `GIT_FLUSH=0` thus getting the correct behavior](https://codeberg.org/forgejo/forgejo/commit/ff468ab5e426582b068586ce13d5a5348365e783).
+  * [When setting `url.host` on a URL object with no port specified (like is the case of default port), the resulting URL's port will not change. Workaround this quirk in the URL standard by explicitly setting port for the http and https protocols](https://codeberg.org/forgejo/forgejo/commit/628e1036cfbcfae442cb6494249fe11410447056).
+  * [Fix elasticsearch Request Entity Too Large](https://codeberg.org/forgejo/forgejo/commit/e6f59f6e1489d63d53de0da1de406a7a71a82adb).
+  * [Do not send update/delete release notifications when it is in a draft state](https://codeberg.org/forgejo/forgejo/commit/3c54a1dbf62e56d948feb1008512900140033737).
+  * [Do not run Forgejo Actions workflows synchronized events on the same commit as the one used to create a pull request](https://codeberg.org/forgejo/forgejo/commit/ce96379aef6e92cff2e9982031d5248ef8b01947).
+  * [Fix a MySQL performance regression introduced in v1.21.4-0](https://codeberg.org/forgejo/forgejo/commit/af98a0a7c6f4cbb5340974958ebe4389e3bf4e9a).
+  * [Fix Internal Server Error when resolving comments](https://codeberg.org/forgejo/forgejo/commit/ad67d9ef1a219b21309f811c14e7353cbc4982e3).
+  * Packages
+    * Swift: [fix a failure to resolve from package registry](https://codeberg.org/forgejo/forgejo/commit/fab6780fda5d8ded020a98253a793e87ed94f634).
+    * Alpine: [if the APKINFO contains an install if condition, write it in the APKINDEX](https://codeberg.org/forgejo/forgejo/commit/7afbc62057b876fb6711ef58743f664a2509dde4).
+  * org-mode files
+    * [It is possible that the description of an `Regularlink` is `Text` and not another `Regularlink`](https://codeberg.org/forgejo/forgejo/commit/781d2a68ccb276bf13caf0b378b74d9efeab3d39).
+    * [Fix relative links on orgmode](https://codeberg.org/forgejo/forgejo/commit/fa700333ba2649d14f1670dd2745957704a33b40).
+
 ## 1.21.5-0
 
 The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.5-0` release can be reviewed from the command line with:
