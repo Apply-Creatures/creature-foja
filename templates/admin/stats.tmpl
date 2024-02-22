@@ -5,10 +5,10 @@
 	</h4>
 	<div class="ui attached table segment">
 		<table class="ui very basic striped table unstackable">
-			{{range $statsKey := .StatsKeys}}
+			{{range $statsKey, $statsValue := .Stats}}
 			<tr>
 				<td width="200">{{$statsKey}}</td>
-				<td>{{index $.StatsCounter $statsKey}}</td>
+				<td>{{$statsValue}}</td>
 			</tr>
 			{{end}}
 		</table>

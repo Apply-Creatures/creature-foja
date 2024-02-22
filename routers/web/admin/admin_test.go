@@ -6,6 +6,11 @@ package admin
 import (
 	"testing"
 
+	activities_model "code.gitea.io/gitea/models/activities"
+	"code.gitea.io/gitea/models/unittest"
+	"code.gitea.io/gitea/modules/contexttest"
+	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/test"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -65,4 +70,47 @@ func TestShadowPassword(t *testing.T) {
 	for _, k := range kases {
 		assert.EqualValues(t, k.Result, shadowPassword(k.Provider, k.CfgItem))
 	}
+}
+
+func TestMonitorStats(t *testing.T) {
+	unittest.PrepareTestEnv(t)
+
+	t.Run("Normal", func(t *testing.T) {
+		defer test.MockVariableValue(&setting.Metrics.EnabledIssueByLabel, false)()
+		defer test.MockVariableValue(&setting.Metrics.EnabledIssueByRepository, false)()
+
+		ctx, _ := contexttest.MockContext(t, "admin/stats")
+		MonitorStats(ctx)
+
+		// Test some of the stats manually.
+		mappedStats := ctx.Data["Stats"].(map[string]any)
+		stats := activities_model.GetStatistic(ctx).Counter
+
+		assert.EqualValues(t, stats.Comment, mappedStats["Comment"])
+		assert.EqualValues(t, stats.Issue, mappedStats["Issue"])
+		assert.EqualValues(t, stats.User, mappedStats["User"])
+		assert.EqualValues(t, stats.Milestone, mappedStats["Milestone"])
+
+		// Ensure that these aren't set.
+		assert.Empty(t, stats.IssueByLabel)
+		assert.Empty(t, stats.IssueByRepository)
+		assert.Nil(t, mappedStats["IssueByLabel"])
+		assert.Nil(t, mappedStats["IssueByRepository"])
+	})
+
+	t.Run("IssueByX", func(t *testing.T) {
+		defer test.MockVariableValue(&setting.Metrics.EnabledIssueByLabel, true)()
+		defer test.MockVariableValue(&setting.Metrics.EnabledIssueByRepository, true)()
+
+		ctx, _ := contexttest.MockContext(t, "admin/stats")
+		MonitorStats(ctx)
+
+		mappedStats := ctx.Data["Stats"].(map[string]any)
+		stats := activities_model.GetStatistic(ctx).Counter
+
+		assert.NotEmpty(t, stats.IssueByLabel)
+		assert.NotEmpty(t, stats.IssueByRepository)
+		assert.EqualValues(t, stats.IssueByLabel, mappedStats["IssueByLabel"])
+		assert.EqualValues(t, stats.IssueByRepository, mappedStats["IssueByRepository"])
+	})
 }
