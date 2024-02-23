@@ -110,7 +110,7 @@ jobs:
           #
           # Push a commit to a branch that triggers the build of a test release
           #
-          version=0.0-test
+          version=1.2-test
           (
             git clone $url/root/forgejo /tmp/forgejo
             cd /tmp/forgejo
