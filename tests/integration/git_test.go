@@ -937,12 +937,12 @@ func doCreateAgitFlowPull(dstPath string, ctx *APITestContext, baseBranch, headB
 			})
 		})
 
+		upstreamGitRepo, err := git.OpenRepository(git.DefaultContext, filepath.Join(setting.RepoRootPath, ctx.Username, ctx.Reponame+".git"))
+		require.NoError(t, err)
+		defer upstreamGitRepo.Close()
+
 		t.Run("Force push", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
-
-			upstreamGitRepo, err := git.OpenRepository(git.DefaultContext, filepath.Join(setting.RepoRootPath, ctx.Username, ctx.Reponame+".git"))
-			require.NoError(t, err)
-			defer upstreamGitRepo.Close()
 
 			_, _, gitErr := git.NewCommand(git.DefaultContext, "push", "origin").AddDynamicArguments("HEAD:refs/for/master/" + headBranch + "-force-push").RunStdString(&git.RunOpts{Dir: dstPath})
 			require.NoError(t, gitErr)
@@ -982,6 +982,21 @@ func doCreateAgitFlowPull(dstPath string, ctx *APITestContext, baseBranch, headB
 				assert.NoError(t, err)
 				assert.NotEqualValues(t, headCommitID, currentHeadCommitID)
 			})
+		})
+
+		t.Run("Branch already contains commit", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			branchCommit, err := upstreamGitRepo.GetBranchCommit("master")
+			require.NoError(t, err)
+
+			_, _, gitErr := git.NewCommand(git.DefaultContext, "reset", "--hard").AddDynamicArguments(branchCommit.ID.String() + "~1").RunStdString(&git.RunOpts{Dir: dstPath})
+			require.NoError(t, gitErr)
+
+			_, stdErr, gitErr := git.NewCommand(git.DefaultContext, "push", "origin").AddDynamicArguments("HEAD:refs/for/master/" + headBranch + "-already-contains").RunStdString(&git.RunOpts{Dir: dstPath})
+			assert.Error(t, gitErr)
+
+			assert.Contains(t, stdErr, "already contains this commit")
 		})
 
 		t.Run("Merge", doAPIMergePullRequest(*ctx, ctx.Username, ctx.Reponame, pr1.Index))

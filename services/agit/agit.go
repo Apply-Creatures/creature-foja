@@ -101,6 +101,21 @@ func ProcReceive(ctx context.Context, repo *repo_model.Repository, gitRepo *git.
 				return nil, fmt.Errorf("failed to get unmerged AGit flow pull request in repository %q: %w", repo.FullName(), err)
 			}
 
+			// Check if the changes are already in the target branch.
+			stdout, _, gitErr := git.NewCommand(ctx, "branch", "--contains").AddDynamicArguments(opts.NewCommitIDs[i], baseBranchName).RunStdString(&git.RunOpts{Dir: repo.RepoPath()})
+			if gitErr != nil {
+				return nil, fmt.Errorf("failed to check if the target branch already contains the new commit in repository %q: %w", repo.FullName(), err)
+			}
+			if len(stdout) > 0 {
+				results = append(results, private.HookProcReceiveRefResult{
+					OriginalRef: opts.RefFullNames[i],
+					OldOID:      opts.OldCommitIDs[i],
+					NewOID:      opts.NewCommitIDs[i],
+					Err:         "The target branch already contains this commit",
+				})
+				continue
+			}
+
 			// Automatically fill out the title and the description from the first commit.
 			shouldGetCommit := len(title) == 0 || len(description) == 0
 
