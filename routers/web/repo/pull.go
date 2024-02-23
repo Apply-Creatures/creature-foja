@@ -1,5 +1,6 @@
-// Copyright 2018 The Gitea Authors.
-// Copyright 2014 The Gogs Authors.
+// Copyright 2014 The Gogs Authors. All rights reserved.
+// Copyright 2018 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // All rights reserved.
 // SPDX-License-Identifier: MIT
 
@@ -381,6 +382,11 @@ func setMergeTarget(ctx *context.Context, pull *issues_model.PullRequest) {
 	} else {
 		ctx.Data["HeadTarget"] = pull.MustHeadUserName(ctx) + "/" + pull.HeadRepo.Name + ":" + pull.HeadBranch
 	}
+
+	if pull.Flow == issues_model.PullRequestFlowAGit {
+		ctx.Data["MadeUsingAGit"] = true
+	}
+
 	ctx.Data["BaseTarget"] = pull.BaseBranch
 	ctx.Data["HeadBranchLink"] = pull.GetHeadBranchLink(ctx)
 	ctx.Data["BaseBranchLink"] = pull.GetBaseBranchLink(ctx)
