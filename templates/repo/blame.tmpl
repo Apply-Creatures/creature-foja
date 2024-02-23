@@ -30,6 +30,15 @@
 	</h4>
 	<div class="ui attached table unstackable segment">
 		<div class="file-view code-view unicode-escaped">
+			{{if .IsFileTooLarge}}
+				<table>
+					<tbody>
+						<tr>
+							<td class="gt-text-center gt-p-1"><strong>{{ctx.Locale.Tr "repo.file_too_large"}}</strong></td>
+						</tr>
+					</tbody>
+				</table>
+			{{else}}
 			<table>
 				<tbody>
 					{{range $row := .BlameRows}}
@@ -75,6 +84,7 @@
 					{{end}}
 				</tbody>
 			</table>
+			{{end}}
 		</div>
 	</div>
 </div>
