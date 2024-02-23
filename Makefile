@@ -90,7 +90,7 @@ STORED_VERSION=$(shell cat $(STORED_VERSION_FILE) 2>/dev/null)
 ifneq ($(STORED_VERSION),)
   FORGEJO_VERSION ?= $(STORED_VERSION)
 else
-  FORGEJO_VERSION ?= $(shell git describe --tags --always | sed 's/-/+/' | sed 's/^v//')
+  FORGEJO_VERSION ?= $(shell git describe --exclude '*-test' --tags --always | sed 's/-/+/' | sed 's/^v//')
 endif
 RELEASE_VERSION ?= ${FORGEJO_VERSION}
 VERSION ?= ${RELEASE_VERSION}
