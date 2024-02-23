@@ -125,3 +125,38 @@ func TestActionsWebRouteLatestRun(t *testing.T) {
 		assert.Equal(t, workflow.HTMLURL(), resp.Header().Get("Location"))
 	})
 }
+
+func TestActionsArtifactDeletion(t *testing.T) {
+	onGiteaRun(t, func(t *testing.T, u *url.URL) {
+		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+
+		// create the repo
+		repo, _, f := CreateDeclarativeRepo(t, user2, "",
+			[]unit_model.Type{unit_model.TypeActions}, nil,
+			[]*files_service.ChangeRepoFile{
+				{
+					Operation:     "create",
+					TreePath:      ".gitea/workflows/pr.yml",
+					ContentReader: strings.NewReader("name: test\non:\n  push:\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo helloworld\n"),
+				},
+			},
+		)
+		defer f()
+
+		// a run has been created
+		assert.Equal(t, 1, unittest.GetCount(t, &actions_model.ActionRun{RepoID: repo.ID}))
+
+		// Load the run we just created
+		run := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRun{RepoID: repo.ID})
+		err := run.LoadAttributes(context.Background())
+		assert.NoError(t, err)
+
+		// Visit it's web view
+		req := NewRequest(t, "GET", run.HTMLURL())
+		resp := MakeRequest(t, req, http.StatusOK)
+		htmlDoc := NewHTMLParser(t, resp.Body)
+
+		// Assert that the artifact deletion markup exists
+		htmlDoc.AssertElement(t, "[data-locale-confirm-delete-artifact]", true)
+	})
+}
