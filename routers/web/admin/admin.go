@@ -7,8 +7,8 @@ package admin
 import (
 	"fmt"
 	"net/http"
+	"reflect"
 	"runtime"
-	"sort"
 	"time"
 
 	activities_model "code.gitea.io/gitea/models/activities"
@@ -16,7 +16,6 @@ import (
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/graceful"
-	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/updatechecker"
@@ -225,26 +224,22 @@ func CronTasks(ctx *context.Context) {
 func MonitorStats(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("admin.monitor.stats")
 	ctx.Data["PageIsAdminMonitorStats"] = true
-	bs, err := json.Marshal(activities_model.GetStatistic(ctx).Counter)
-	if err != nil {
-		ctx.ServerError("MonitorStats", err)
-		return
-	}
-	statsCounter := map[string]any{}
-	err = json.Unmarshal(bs, &statsCounter)
-	if err != nil {
-		ctx.ServerError("MonitorStats", err)
-		return
-	}
-	statsKeys := make([]string, 0, len(statsCounter))
-	for k := range statsCounter {
-		if statsCounter[k] == nil {
+	modelStats := activities_model.GetStatistic(ctx).Counter
+	stats := map[string]any{}
+
+	// To avoid manually converting the values of the stats struct to an map,
+	// and to avoid using JSON to do this for us (JSON encoder converts numbers to
+	// scientific notation). Use reflect to convert the struct to an map.
+	rv := reflect.ValueOf(modelStats)
+	for i := 0; i < rv.NumField(); i++ {
+		field := rv.Field(i)
+		// Preserve old behavior, do not show arrays that are empty.
+		if field.Kind() == reflect.Slice && field.Len() == 0 {
 			continue
 		}
-		statsKeys = append(statsKeys, k)
+		stats[rv.Type().Field(i).Name] = field.Interface()
 	}
-	sort.Strings(statsKeys)
-	ctx.Data["StatsKeys"] = statsKeys
-	ctx.Data["StatsCounter"] = statsCounter
+
+	ctx.Data["Stats"] = stats
 	ctx.HTML(http.StatusOK, tplStats)
 }
