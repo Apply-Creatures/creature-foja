@@ -13,4 +13,3 @@ func skipIfSHA256NotSupported(t *testing.T) {
 		t.Skip("skipping because installed Git version doesn't support SHA256")
 	}
 }
-
