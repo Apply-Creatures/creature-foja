@@ -338,7 +338,7 @@ func renderReadmeFile(ctx *context.Context, subfolder string, readmeFile *git.Tr
 			log.Error("Read readme content failed: %v", err)
 		}
 		contentEscaped := template.HTMLEscapeString(util.UnsafeBytesToString(content))
-		ctx.Data["EscapeStatus"], ctx.Data["FileContent"] = charset.EscapeControlHTML(template.HTML(contentEscaped), ctx.Locale)
+		ctx.Data["EscapeStatus"], ctx.Data["FileContent"] = charset.EscapeControlHTML(template.HTML(contentEscaped), ctx.Locale, charset.FileviewContext)
 	}
 
 	if !fInfo.isLFSFile && ctx.Repo.CanEnableEditor(ctx, ctx.Doer) {
@@ -572,7 +572,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 			status := &charset.EscapeStatus{}
 			statuses := make([]*charset.EscapeStatus, len(fileContent))
 			for i, line := range fileContent {
-				statuses[i], fileContent[i] = charset.EscapeControlHTML(line, ctx.Locale)
+				statuses[i], fileContent[i] = charset.EscapeControlHTML(line, ctx.Locale, charset.FileviewContext)
 				status = status.Or(statuses[i])
 			}
 			ctx.Data["EscapeStatus"] = status
@@ -678,7 +678,7 @@ func markupRender(ctx *context.Context, renderCtx *markup.RenderContext, input i
 	go func() {
 		sb := &strings.Builder{}
 		// We allow NBSP here this is rendered
-		escaped, _ = charset.EscapeControlReader(markupRd, sb, ctx.Locale, charset.RuneNBSP)
+		escaped, _ = charset.EscapeControlReader(markupRd, sb, ctx.Locale, charset.FileviewContext, charset.RuneNBSP)
 		output = template.HTML(sb.String())
 		close(done)
 	}()

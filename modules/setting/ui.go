@@ -38,6 +38,7 @@ var UI = struct {
 	PreferredTimestampTense string
 
 	AmbiguousUnicodeDetection bool
+	SkipEscapeContexts        []string
 
 	Notification struct {
 		MinTimeout            time.Duration
@@ -89,6 +90,7 @@ var UI = struct {
 	PreferredTimestampTense: "mixed",
 
 	AmbiguousUnicodeDetection: true,
+	SkipEscapeContexts:        []string{},
 
 	Notification: struct {
 		MinTimeout            time.Duration

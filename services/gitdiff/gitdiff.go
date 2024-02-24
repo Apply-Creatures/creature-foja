@@ -284,14 +284,14 @@ type DiffInline struct {
 
 // DiffInlineWithUnicodeEscape makes a DiffInline with hidden unicode characters escaped
 func DiffInlineWithUnicodeEscape(s template.HTML, locale translation.Locale) DiffInline {
-	status, content := charset.EscapeControlHTML(s, locale)
+	status, content := charset.EscapeControlHTML(s, locale, charset.DiffContext)
 	return DiffInline{EscapeStatus: status, Content: content}
 }
 
 // DiffInlineWithHighlightCode makes a DiffInline with code highlight and hidden unicode characters escaped
 func DiffInlineWithHighlightCode(fileName, language, code string, locale translation.Locale) DiffInline {
 	highlighted, _ := highlight.Code(fileName, language, code)
-	status, content := charset.EscapeControlHTML(highlighted, locale)
+	status, content := charset.EscapeControlHTML(highlighted, locale, charset.DiffContext)
 	return DiffInline{EscapeStatus: status, Content: content}
 }
 
