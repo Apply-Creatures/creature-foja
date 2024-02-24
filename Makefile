@@ -85,19 +85,18 @@ endif
 STORED_VERSION_FILE := VERSION
 HUGO_VERSION ?= 0.111.3
 
+GITEA_COMPATIBILITY ?= 1.22.0
 
 STORED_VERSION=$(shell cat $(STORED_VERSION_FILE) 2>/dev/null)
 ifneq ($(STORED_VERSION),)
   FORGEJO_VERSION ?= $(STORED_VERSION)
 else
-  FORGEJO_VERSION ?= $(shell git describe --exclude '*-test' --tags --always | sed 's/-/+/' | sed 's/^v//')
+  FORGEJO_VERSION ?= $(shell git describe --exclude '*-test' --tags --always | sed 's/^v//')+${GITEA_COMPATIBILITY}
 endif
 RELEASE_VERSION ?= ${FORGEJO_VERSION}
 VERSION ?= ${RELEASE_VERSION}
 
-GITEA_VERSION ?= 1.22.0
-
-LDFLAGS := $(LDFLAGS) -X "main.ReleaseVersion=$(RELEASE_VERSION)" -X "main.MakeVersion=$(MAKE_VERSION)" -X "main.Version=$(GITEA_VERSION)" -X "main.Tags=$(TAGS)" -X "main.ForgejoVersion=$(FORGEJO_VERSION)"
+LDFLAGS := $(LDFLAGS) -X "main.ReleaseVersion=$(RELEASE_VERSION)" -X "main.MakeVersion=$(MAKE_VERSION)" -X "main.Version=$(FORGEJO_VERSION)" -X "main.Tags=$(TAGS)" -X "main.ForgejoVersion=$(FORGEJO_VERSION)"
 
 LINUX_ARCHS ?= linux/amd64,linux/386,linux/arm-5,linux/arm-6,linux/arm64
 
