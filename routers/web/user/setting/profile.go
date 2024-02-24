@@ -42,7 +42,7 @@ const (
 )
 
 var (
-	recognisedPronouns = []string{"", "he/him", "she/her", "they/them", "it/its", "any/all"}
+	recognisedPronouns = []string{"", "he/him", "she/her", "they/them", "it/its", "any pronouns"}
 )
 
 // Profile render user's profile page
