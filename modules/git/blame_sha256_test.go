@@ -11,6 +11,8 @@ import (
 )
 
 func TestReadingBlameOutputSha256(t *testing.T) {
+	skipIfSHA256NotSupported(t)
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
