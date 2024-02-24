@@ -9,6 +9,7 @@ import (
 
 func AddPronounsToUser(x *xorm.Engine) error {
 	type User struct {
+		ID       int64 `xorm:"pk autoincr"`
 		Pronouns string
 	}
 
