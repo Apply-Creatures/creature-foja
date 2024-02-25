@@ -307,56 +307,65 @@ const (
 	tplStarUnstar   base.TplName = "repo/star_unstar"
 )
 
-// Action response for actions to a repository
-func Action(ctx *context.Context) {
-	var err error
-	switch ctx.Params(":action") {
-	case "watch":
-		err = repo_model.WatchRepo(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID, true)
-	case "unwatch":
-		err = repo_model.WatchRepo(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID, false)
-	case "star":
-		err = repo_model.StarRepo(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID, true)
-	case "unstar":
-		err = repo_model.StarRepo(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID, false)
-	case "accept_transfer":
-		err = acceptOrRejectRepoTransfer(ctx, true)
-	case "reject_transfer":
-		err = acceptOrRejectRepoTransfer(ctx, false)
-	}
+func ActionWatch(watch bool) func(ctx *context.Context) {
+	return func(ctx *context.Context) {
+		err := repo_model.WatchRepo(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID, watch)
+		if err != nil {
+			ctx.ServerError(fmt.Sprintf("Action (watch, %t)", watch), err)
+			return
+		}
 
-	if err != nil {
-		ctx.ServerError(fmt.Sprintf("Action (%s)", ctx.Params(":action")), err)
-		return
-	}
-
-	switch ctx.Params(":action") {
-	case "watch", "unwatch":
 		ctx.Data["IsWatchingRepo"] = repo_model.IsWatching(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID)
-	case "star", "unstar":
-		ctx.Data["IsStaringRepo"] = repo_model.IsStaring(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID)
-	}
 
-	switch ctx.Params(":action") {
-	case "watch", "unwatch", "star", "unstar":
 		// we have to reload the repository because NumStars or NumWatching (used in the templates) has just changed
 		ctx.Data["Repository"], err = repo_model.GetRepositoryByName(ctx, ctx.Repo.Repository.OwnerID, ctx.Repo.Repository.Name)
 		if err != nil {
-			ctx.ServerError(fmt.Sprintf("Action (%s)", ctx.Params(":action")), err)
+			ctx.ServerError(fmt.Sprintf("Action (watch, %t)", watch), err)
 			return
 		}
-	}
 
-	switch ctx.Params(":action") {
-	case "watch", "unwatch":
 		ctx.HTML(http.StatusOK, tplWatchUnwatch)
-		return
-	case "star", "unstar":
-		ctx.HTML(http.StatusOK, tplStarUnstar)
-		return
 	}
+}
 
-	ctx.RedirectToFirst(ctx.FormString("redirect_to"), ctx.Repo.RepoLink)
+func ActionStar(star bool) func(ctx *context.Context) {
+	return func(ctx *context.Context) {
+		err := repo_model.StarRepo(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID, star)
+		if err != nil {
+			ctx.ServerError(fmt.Sprintf("Action (star, %t)", star), err)
+			return
+		}
+
+		ctx.Data["IsStaringRepo"] = repo_model.IsStaring(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID)
+
+		// we have to reload the repository because NumStars or NumWatching (used in the templates) has just changed
+		ctx.Data["Repository"], err = repo_model.GetRepositoryByName(ctx, ctx.Repo.Repository.OwnerID, ctx.Repo.Repository.Name)
+		if err != nil {
+			ctx.ServerError(fmt.Sprintf("Action (star, %t)", star), err)
+			return
+		}
+
+		ctx.HTML(http.StatusOK, tplStarUnstar)
+	}
+}
+
+func ActionTransfer(accept bool) func(ctx *context.Context) {
+	return func(ctx *context.Context) {
+		var action string
+		if accept {
+			action = "accept_transfer"
+		} else {
+			action = "reject_transfer"
+		}
+
+		err := acceptOrRejectRepoTransfer(ctx, accept)
+		if err != nil {
+			ctx.ServerError(fmt.Sprintf("Action (%s)", action), err)
+			return
+		}
+
+		ctx.RedirectToFirst(ctx.FormString("redirect_to"), ctx.Repo.RepoLink)
+	}
 }
 
 func acceptOrRejectRepoTransfer(ctx *context.Context, accept bool) error {
