@@ -579,11 +579,6 @@ func ArtifactsView(ctx *context_module.Context) {
 }
 
 func ArtifactsDeleteView(ctx *context_module.Context) {
-	if !ctx.Repo.CanWrite(unit.TypeActions) {
-		ctx.Error(http.StatusForbidden, "no permission")
-		return
-	}
-
 	runIndex := ctx.ParamsInt64("run")
 	artifactName := ctx.Params("artifact_name")
 
