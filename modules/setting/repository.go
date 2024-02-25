@@ -50,6 +50,7 @@ var (
 		PrefixArchiveFiles                      bool
 		DisableMigrations                       bool
 		DisableStars                            bool `ini:"DISABLE_STARS"`
+		DisableForks                            bool
 		DefaultBranch                           string
 		AllowAdoptionOfUnadoptedRepositories    bool
 		AllowDeleteOfUnadoptedRepositories      bool
@@ -172,6 +173,7 @@ var (
 		PrefixArchiveFiles:                      true,
 		DisableMigrations:                       false,
 		DisableStars:                            false,
+		DisableForks:                            false,
 		DefaultBranch:                           "main",
 		AllowForkWithoutMaximumLimit:            true,
 
