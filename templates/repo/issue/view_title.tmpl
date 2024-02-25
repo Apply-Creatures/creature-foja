@@ -47,7 +47,9 @@
 				{{if .HeadBranchLink}}
 					{{$headHref = printf `<a href="%s">%s</a>` (.HeadBranchLink | Escape) $headHref}}
 				{{end}}
-				{{$headHref = printf `%s <button class="btn interact-fg" data-tooltip-content="%s" data-clipboard-text="%s">%s</button>` $headHref (ctx.Locale.Tr "copy_branch") (.HeadTarget | Escape) (svg "octicon-copy" 14)}}
+				{{if not .MadeUsingAGit}}
+					{{$headHref = printf `%s <button class="btn interact-fg" data-tooltip-content="%s" data-clipboard-text="%s">%s</button>` $headHref (ctx.Locale.Tr "copy_branch") (.HeadTarget | Escape) (svg "octicon-copy" 14)}}
+				{{end}}
 				{{$baseHref := .BaseTarget|Escape}}
 				{{if .BaseBranchLink}}
 					{{$baseHref = printf `<a href="%s">%s</a>` (.BaseBranchLink | Escape) $baseHref}}
@@ -68,6 +70,12 @@
 						<span id="pull-desc" class="pull-desc">
 							<a {{if gt .Issue.Poster.ID 0}}href="{{.Issue.Poster.HomeLink}}"{{end}}>{{.Issue.Poster.GetDisplayName}}</a>
 							{{ctx.Locale.Tr "repo.pulls.title_desc" .NumCommits ($headHref|Safe) ($baseHref|Safe)}}
+						</span>
+					{{end}}
+					{{if .MadeUsingAGit}}
+						{{/* TODO: Add tooltip and a link to the documentation */}}
+						<span id="agit-label" class="ui small label">
+							{{ctx.Locale.Tr "repo.pulls.made_using_agit"}}
 						</span>
 					{{end}}
 					<span id="pull-desc-edit" class="gt-hidden flex-text-block">

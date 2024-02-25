@@ -450,7 +450,7 @@ func doMergeFork(ctx, baseCtx APITestContext, baseBranch, headBranch string) fun
 		var pr api.PullRequest
 		var err error
 
-		// Create a test pullrequest
+		// Create a test pull request
 		t.Run("CreatePullRequest", func(t *testing.T) {
 			pr, err = doAPICreatePullRequest(ctx, baseCtx.Username, baseCtx.Reponame, baseBranch, headBranch)(t)
 			assert.NoError(t, err)
@@ -469,6 +469,19 @@ func doMergeFork(ctx, baseCtx APITestContext, baseBranch, headBranch string) fun
 			Reponame: baseCtx.Reponame,
 		}
 		t.Run("EnsureCanSeePull", doEnsureCanSeePull(headCtx, pr, true))
+
+		// Confirm that there is no AGit Label
+		// TODO: Refactor and move this check to a function
+		t.Run("AGitLabelIsMissing", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			session := loginUser(t, ctx.Username)
+
+			req := NewRequest(t, "GET", fmt.Sprintf("/%s/%s/pulls/%d", baseCtx.Username, baseCtx.Reponame, pr.Index))
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+			htmlDoc.AssertElement(t, "#agit-label", false)
+		})
 
 		// Then get the diff string
 		var diffHash string
@@ -812,6 +825,17 @@ func doCreateAgitFlowPull(dstPath string, ctx *APITestContext, baseBranch, headB
 		if pr1 == nil || pr2 == nil {
 			return
 		}
+
+		t.Run("AGitLabelIsPresent", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			session := loginUser(t, ctx.Username)
+
+			req := NewRequest(t, "GET", fmt.Sprintf("/%s/%s/pulls/%d", url.PathEscape(ctx.Username), url.PathEscape(ctx.Reponame), pr2.Index))
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+			htmlDoc.AssertElement(t, "#agit-label", true)
+		})
 
 		t.Run("AddCommit2", func(t *testing.T) {
 			err := os.WriteFile(path.Join(dstPath, "test_file"), []byte("## test content \n ## test content 2"), 0o666)
