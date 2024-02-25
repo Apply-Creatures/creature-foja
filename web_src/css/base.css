@@ -96,6 +96,16 @@ progress::-moz-progress-bar {
   background-color: var(--color-accent);
 }
 
+h1.error-code {
+  font-size: 15em;
+  font-weight: 800;
+  color: transparent;
+  --error-code-color-1: #a2a2a2;
+  --error-code-color-2: #797979;
+  background: repeating-linear-gradient(45deg, var(--error-code-color-1), var(--error-code-color-1) 10px, var(--error-code-color-2) 10px, var(--error-code-color-2) 20px);
+  background-clip: text;
+}
+
 * {
   scrollbar-color: var(--color-primary) transparent;
   caret-color: var(--color-caret);

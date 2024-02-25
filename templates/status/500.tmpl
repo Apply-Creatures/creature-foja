@@ -33,7 +33,10 @@
 				<style> .ui.message.flash-message { text-align: left; } </style>
 				{{template "base/alert" .}}
 			</div>
-			<p class="gt-mt-5 center"><img src="{{AssetUrlPrefix}}/img/500.png" alt="Internal Server Error"></p>
+			<div class="ui container center">
+				<h1 class="gt-mt-5 error-code">500</h1>
+				<p>Internal Server Error</p>
+			</div>
 			<div class="divider"></div>
 			<div class="ui container gt-my-5">
 				{{if .ErrorMsg}}
