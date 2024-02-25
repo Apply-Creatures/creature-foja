@@ -9,10 +9,12 @@ import (
 	"testing"
 
 	"code.gitea.io/gitea/models/db"
+	git_model "code.gitea.io/gitea/models/git"
 	repo_model "code.gitea.io/gitea/models/repo"
 	unit_model "code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
+	gitea_context "code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/setting"
 	repo_service "code.gitea.io/gitea/services/repository"
 	"code.gitea.io/gitea/tests"
@@ -126,5 +128,45 @@ func TestRepoAddMoreUnits(t *testing.T) {
 
 		// The "Add more" link appears no more
 		assertAddMore(t, false)
+	})
+}
+
+func TestProtectedBranch(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1, OwnerID: user.ID})
+	session := loginUser(t, user.Name)
+
+	t.Run("Add", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		link := fmt.Sprintf("/%s/settings/branches/edit", repo.FullName())
+
+		req := NewRequestWithValues(t, "POST", link, map[string]string{
+			"_csrf":       GetCSRF(t, session, link),
+			"rule_name":   "master",
+			"enable_push": "true",
+		})
+		session.MakeRequest(t, req, http.StatusSeeOther)
+
+		// Verify it was added.
+		unittest.AssertExistsIf(t, true, &git_model.ProtectedBranch{RuleName: "master", RepoID: repo.ID})
+	})
+
+	t.Run("Add duplicate", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		link := fmt.Sprintf("/%s/settings/branches/edit", repo.FullName())
+
+		req := NewRequestWithValues(t, "POST", link, map[string]string{
+			"_csrf":           GetCSRF(t, session, link),
+			"rule_name":       "master",
+			"require_signed_": "true",
+		})
+		session.MakeRequest(t, req, http.StatusSeeOther)
+		flashCookie := session.GetCookie(gitea_context.CookieNameFlash)
+		assert.NotNil(t, flashCookie)
+		assert.EqualValues(t, "error%3DThere%2Bis%2Balready%2Ba%2Brule%2Bfor%2Bthis%2Bset%2Bof%2Bbranches", flashCookie.Value)
+
+		// Verify it wasn't added.
+		unittest.AssertCount(t, &git_model.ProtectedBranch{RuleName: "master", RepoID: repo.ID}, 1)
 	})
 }
