@@ -39,7 +39,9 @@
 						{{if not $.DisableStars}}
 							<a class="text grey flex-text-inline" href="{{.Link}}/stars">{{svg "octicon-star" 16}}{{.NumStars}}</a>
 						{{end}}
-						<a class="text grey flex-text-inline" href="{{.Link}}/forks">{{svg "octicon-git-branch" 16}}{{.NumForks}}</a>
+						{{if not $.DisableForks}}
+							<a class="text grey flex-text-inline" href="{{.Link}}/forks">{{svg "octicon-git-branch" 16}}{{.NumForks}}</a>
+						{{end}}
 					</div>
 				</div>
 				{{$description := .DescriptionHTML $.Context}}

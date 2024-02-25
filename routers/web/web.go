@@ -968,7 +968,9 @@ func registerRoutes(m *web.Route) {
 		m.Post("/create", web.Bind(forms.CreateRepoForm{}), repo.CreatePost)
 		m.Get("/migrate", repo.Migrate)
 		m.Post("/migrate", web.Bind(forms.MigrateRepoForm{}), repo.MigratePost)
-		m.Get("/fork/{repoid}", context.RepoIDAssignment(), context.UnitTypes(), reqRepoCodeReader, repo.ForkByID)
+		if !setting.Repository.DisableForks {
+			m.Get("/fork/{repoid}", context.RepoIDAssignment(), context.UnitTypes(), reqRepoCodeReader, repo.ForkByID)
+		}
 		m.Get("/search", repo.SearchRepo)
 	}, reqSignIn)
 
@@ -1148,8 +1150,10 @@ func registerRoutes(m *web.Route) {
 
 	// Grouping for those endpoints that do require authentication
 	m.Group("/{username}/{reponame}", func() {
-		m.Combo("/fork", reqRepoCodeReader).Get(repo.Fork).
-			Post(web.Bind(forms.CreateRepoForm{}), repo.ForkPost)
+		if !setting.Repository.DisableForks {
+			m.Combo("/fork", reqRepoCodeReader).Get(repo.Fork).
+				Post(web.Bind(forms.CreateRepoForm{}), repo.ForkPost)
+		}
 		m.Group("/issues", func() {
 			m.Group("/new", func() {
 				m.Combo("").Get(context.RepoRef(), repo.NewIssue).
@@ -1560,9 +1564,11 @@ func registerRoutes(m *web.Route) {
 			m.Get("/*", context.RepoRefByType(context.RepoRefLegacy), repo.Home)
 		}, repo.SetEditorconfigIfExists)
 
-		m.Group("", func() {
-			m.Get("/forks", repo.Forks)
-		}, context.RepoRef(), reqRepoCodeReader)
+		if !setting.Repository.DisableForks {
+			m.Group("", func() {
+				m.Get("/forks", repo.Forks)
+			}, context.RepoRef(), reqRepoCodeReader)
+		}
 		m.Get("/commit/{sha:([a-f0-9]{4,64})}.{ext:patch|diff}", repo.MustBeNotEmpty, reqRepoCodeReader, repo.RawDiff)
 	}, ignSignIn, context.RepoAssignment, context.UnitTypes())
 

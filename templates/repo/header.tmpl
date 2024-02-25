@@ -62,55 +62,8 @@
 					{{if not $.DisableStars}}
 					{{template "repo/star_unstar" $}}
 					{{end}}
-					{{if and (not .IsEmpty) ($.Permission.CanRead $.UnitTypeCode)}}
-						<div class="ui labeled button
-							{{if or (not $.IsSigned) (and (not $.CanSignedUserFork) (not $.UserAndOrgForks))}}
-								disabled
-							{{end}}"
-							{{if not $.IsSigned}}
-								data-tooltip-content="{{ctx.Locale.Tr "repo.fork_guest_user"}}"
-							{{else if and (not $.CanSignedUserFork) (not $.UserAndOrgForks)}}
-								data-tooltip-content="{{ctx.Locale.Tr "repo.fork_from_self"}}"
-							{{end}}
-						>
-							<a class="ui compact{{if $.ShowForkModal}} show-modal{{end}} small basic button"
-								{{if not $.CanSignedUserFork}}
-									{{if gt (len $.UserAndOrgForks) 1}}
-										data-modal="#fork-repo-modal"
-									{{else if eq (len $.UserAndOrgForks) 1}}
-										href="{{AppSubUrl}}/{{(index $.UserAndOrgForks 0).FullName}}"
-									{{/*else is not required here, because the button shouldn't link to any site if you can't create a fork*/}}
-									{{end}}
-								{{else if not $.UserAndOrgForks}}
-									href="{{$.RepoLink}}/fork"
-								{{else}}
-									data-modal="#fork-repo-modal"
-								{{end}}
-							>
-								{{svg "octicon-repo-forked"}}<span class="text">{{ctx.Locale.Tr "repo.fork"}}</span>
-							</a>
-							<div class="ui small modal" id="fork-repo-modal">
-								<div class="header">
-									{{ctx.Locale.Tr "repo.already_forked" .Name}}
-								</div>
-								<div class="content gt-text-left">
-									<div class="ui list">
-										{{range $.UserAndOrgForks}}
-											<div class="ui item gt-py-3">
-												<a href="{{.Link}}">{{svg "octicon-repo-forked" 16 "gt-mr-3"}}{{.FullName}}</a>
-											</div>
-										{{end}}
-									</div>
-									{{if $.CanSignedUserFork}}
-									<div class="divider"></div>
-									<a href="{{$.RepoLink}}/fork">{{ctx.Locale.Tr "repo.fork_to_different_account"}}</a>
-									{{end}}
-								</div>
-							</div>
-							<a class="ui basic label" href="{{.Link}}/forks">
-								{{CountFmt .NumForks}}
-							</a>
-						</div>
+					{{if not $.DisableForks}}
+					{{template "repo/header_fork" $}}
 					{{end}}
 				</div>
 			{{end}}
