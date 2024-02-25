@@ -296,6 +296,7 @@ package "code.gitea.io/gitea/modules/translation"
 
 package "code.gitea.io/gitea/modules/util"
 	func UnsafeStringToBytes
+	func OptionalBoolFromGeneric
 
 package "code.gitea.io/gitea/modules/util/filebuffer"
 	func CreateFromReader
