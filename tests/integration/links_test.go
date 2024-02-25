@@ -36,8 +36,6 @@ func TestLinksNoLogin(t *testing.T) {
 		"/user2/repo1/",
 		"/user2/repo1/projects",
 		"/user2/repo1/projects/1",
-		"/assets/img/404.png",
-		"/assets/img/500.png",
 		"/.well-known/security.txt",
 	}
 
