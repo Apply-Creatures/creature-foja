@@ -50,7 +50,7 @@
 				{{if not .MadeUsingAGit}}
 					{{$headHref = HTMLFormat `%s <button class="btn interact-fg" data-tooltip-content="%s" data-clipboard-text="%s">%s</button>` $headHref (ctx.Locale.Tr "copy_branch") .HeadTarget (svg "octicon-copy" 14)}}
 				{{end}}
-				{{$baseHref := .BaseTarget|Escape}}
+				{{$baseHref := .BaseTarget}}
 				{{if .BaseBranchLink}}
 					{{$baseHref = HTMLFormat `<a href="%s">%s</a>` .BaseBranchLink $baseHref}}
 				{{end}}
