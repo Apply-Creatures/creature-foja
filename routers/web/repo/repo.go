@@ -323,15 +323,6 @@ func Action(ctx *context.Context) {
 		err = acceptOrRejectRepoTransfer(ctx, true)
 	case "reject_transfer":
 		err = acceptOrRejectRepoTransfer(ctx, false)
-	case "desc": // FIXME: this is not used
-		if !ctx.Repo.IsOwner() {
-			ctx.Error(http.StatusNotFound)
-			return
-		}
-
-		ctx.Repo.Repository.Description = ctx.FormString("desc")
-		ctx.Repo.Repository.Website = ctx.FormString("site")
-		err = repo_service.UpdateRepository(ctx, ctx.Repo.Repository, false)
 	}
 
 	if err != nil {
