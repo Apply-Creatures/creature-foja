@@ -42,6 +42,7 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/routers"
+	"code.gitea.io/gitea/services/auth/source/remote"
 	gitea_context "code.gitea.io/gitea/services/context"
 	repo_service "code.gitea.io/gitea/services/repository"
 	files_service "code.gitea.io/gitea/services/repository/files"
@@ -53,7 +54,8 @@ import (
 	gouuid "github.com/google/uuid"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
-	goth_gitlab "github.com/markbates/goth/providers/gitlab"
+	goth_gitlab "github.com/markbates/goth/providers/github"
+	goth_github "github.com/markbates/goth/providers/gitlab"
 	"github.com/santhosh-tekuri/jsonschema/v5"
 	"github.com/stretchr/testify/assert"
 )
@@ -336,6 +338,36 @@ func authSourcePayloadGitLabCustom(name string) map[string]string {
 	payload["oauth2_token_url"] = goth_gitlab.TokenURL
 	payload["oauth2_profile_url"] = goth_gitlab.ProfileURL
 	return payload
+}
+
+func authSourcePayloadGitHub(name string) map[string]string {
+	payload := authSourcePayloadOAuth2(name)
+	payload["oauth2_provider"] = "github"
+	return payload
+}
+
+func authSourcePayloadGitHubCustom(name string) map[string]string {
+	payload := authSourcePayloadGitHub(name)
+	payload["oauth2_use_custom_url"] = "on"
+	payload["oauth2_auth_url"] = goth_github.AuthURL
+	payload["oauth2_token_url"] = goth_github.TokenURL
+	payload["oauth2_profile_url"] = goth_github.ProfileURL
+	return payload
+}
+
+func createRemoteAuthSource(t *testing.T, name, url, matchingSource string) *auth.Source {
+	assert.NoError(t, auth.CreateSource(context.Background(), &auth.Source{
+		Type:     auth.Remote,
+		Name:     name,
+		IsActive: true,
+		Cfg: &remote.Source{
+			URL:            url,
+			MatchingSource: matchingSource,
+		},
+	}))
+	source, err := auth.GetSourceByName(context.Background(), name)
+	assert.NoError(t, err)
+	return source
 }
 
 func createUser(ctx context.Context, t testing.TB, user *user_model.User) func() {

@@ -21,6 +21,7 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
+	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -31,6 +32,35 @@ func TestOAuth2Application_LoadUser(t *testing.T) {
 	user, err := user_model.GetUserByID(db.DefaultContext, app.UID)
 	assert.NoError(t, err)
 	assert.NotNil(t, user)
+}
+
+func TestGetUserByName(t *testing.T) {
+	defer tests.AddFixtures("models/user/fixtures/")()
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	{
+		_, err := user_model.GetUserByName(db.DefaultContext, "")
+		assert.True(t, user_model.IsErrUserNotExist(err), err)
+	}
+	{
+		_, err := user_model.GetUserByName(db.DefaultContext, "UNKNOWN")
+		assert.True(t, user_model.IsErrUserNotExist(err), err)
+	}
+	{
+		user, err := user_model.GetUserByName(db.DefaultContext, "USER2")
+		assert.NoError(t, err)
+		assert.Equal(t, user.Name, "user2")
+	}
+	{
+		user, err := user_model.GetUserByName(db.DefaultContext, "org3")
+		assert.NoError(t, err)
+		assert.Equal(t, user.Name, "org3")
+	}
+	{
+		user, err := user_model.GetUserByName(db.DefaultContext, "remote01")
+		assert.NoError(t, err)
+		assert.Equal(t, user.Name, "remote01")
+	}
 }
 
 func TestGetUserEmailsByNames(t *testing.T) {
@@ -61,7 +91,24 @@ func TestCanCreateOrganization(t *testing.T) {
 	assert.False(t, user.CanCreateOrganization())
 }
 
+func TestGetAllUsers(t *testing.T) {
+	defer tests.AddFixtures("models/user/fixtures/")()
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	users, err := user_model.GetAllUsers(db.DefaultContext)
+	assert.NoError(t, err)
+
+	found := make(map[user_model.UserType]bool, 0)
+	for _, user := range users {
+		found[user.Type] = true
+	}
+	assert.True(t, found[user_model.UserTypeIndividual], users)
+	assert.True(t, found[user_model.UserTypeRemoteUser], users)
+	assert.False(t, found[user_model.UserTypeOrganization], users)
+}
+
 func TestSearchUsers(t *testing.T) {
+	defer tests.AddFixtures("models/user/fixtures/")()
 	assert.NoError(t, unittest.PrepareTestDatabase())
 	testSuccess := func(opts *user_model.SearchUserOptions, expectedUserOrOrgIDs []int64) {
 		users, _, err := user_model.SearchUsers(db.DefaultContext, opts)
@@ -102,13 +149,13 @@ func TestSearchUsers(t *testing.T) {
 	}
 
 	testUserSuccess(&user_model.SearchUserOptions{OrderBy: "id ASC", ListOptions: db.ListOptions{Page: 1}},
-		[]int64{1, 2, 4, 5, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 24, 27, 28, 29, 30, 32, 34, 37, 38, 39, 40})
+		[]int64{1, 2, 4, 5, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 24, 27, 28, 29, 30, 32, 34, 37, 38, 39, 40, 1041})
 
 	testUserSuccess(&user_model.SearchUserOptions{ListOptions: db.ListOptions{Page: 1}, IsActive: optional.Some(false)},
 		[]int64{9})
 
 	testUserSuccess(&user_model.SearchUserOptions{OrderBy: "id ASC", ListOptions: db.ListOptions{Page: 1}, IsActive: optional.Some(true)},
-		[]int64{1, 2, 4, 5, 8, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 24, 27, 28, 29, 30, 32, 34, 37, 38, 39, 40})
+		[]int64{1, 2, 4, 5, 8, 10, 11, 12, 13, 14, 15, 16, 18, 20, 21, 24, 27, 28, 29, 30, 32, 34, 37, 38, 39, 40, 1041})
 
 	testUserSuccess(&user_model.SearchUserOptions{Keyword: "user1", OrderBy: "id ASC", ListOptions: db.ListOptions{Page: 1}, IsActive: optional.Some(true)},
 		[]int64{1, 10, 11, 12, 13, 14, 15, 16, 18})
@@ -124,7 +171,7 @@ func TestSearchUsers(t *testing.T) {
 		[]int64{29})
 
 	testUserSuccess(&user_model.SearchUserOptions{ListOptions: db.ListOptions{Page: 1}, IsProhibitLogin: optional.Some(true)},
-		[]int64{37})
+		[]int64{1041, 37})
 
 	testUserSuccess(&user_model.SearchUserOptions{ListOptions: db.ListOptions{Page: 1}, IsTwoFactorEnabled: optional.Some(true)},
 		[]int64{24})
