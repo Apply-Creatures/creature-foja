@@ -1124,7 +1124,14 @@ func registerRoutes(m *web.Route) {
 		}, ctxDataSet("PageIsRepoSettings", true, "LFSStartServer", setting.LFS.StartServer))
 	}, reqSignIn, context.RepoAssignment, context.UnitTypes(), reqRepoAdmin, context.RepoRef())
 
-	m.Post("/{username}/{reponame}/action/{action}", reqSignIn, context.RepoAssignment, context.UnitTypes(), repo.Action)
+	m.Group("/{username}/{reponame}/action", func() {
+		m.Post("/watch", repo.ActionWatch(true))
+		m.Post("/unwatch", repo.ActionWatch(false))
+		m.Post("/accept_transfer", repo.ActionTransfer(true))
+		m.Post("/reject_transfer", repo.ActionTransfer(false))
+		m.Post("/star", repo.ActionStar(true))
+		m.Post("/unstar", repo.ActionStar(false))
+	}, reqSignIn, context.RepoAssignment, context.UnitTypes())
 
 	// Grouping for those endpoints not requiring authentication (but should respect ignSignIn)
 	m.Group("/{username}/{reponame}", func() {
