@@ -251,5 +251,18 @@ func TestLinguistSupport(t *testing.T) {
 				assertFileLanguage(t, "/blame/branch/main/foo.c", "Bash")
 			})
 		})
+
+		// 10. Marking a file as non-documentation
+		t.Run("linguist-documentation=false", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			repo, sha, f := prep(t, "README.md linguist-documentation=false\n")
+			defer f()
+
+			langs := getFreshLanguageStats(t, repo, sha)
+			assert.Len(t, langs, 2)
+			assert.Equal(t, "Markdown", langs[0].Language)
+			assert.Equal(t, "C", langs[1].Language)
+		})
 	})
 }

@@ -336,10 +336,3 @@ func attributeToBool(attr map[string]string, name string) optional.Option[bool] 
 	}
 	return optional.None[bool]()
 }
-
-func attributeToString(attr map[string]string, name string) optional.Option[string] {
-	if value, has := attr[name]; has && value != "unspecified" {
-		return optional.Some(value)
-	}
-	return optional.None[string]()
-}

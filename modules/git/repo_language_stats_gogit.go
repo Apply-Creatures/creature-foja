@@ -138,21 +138,22 @@ func (repo *Repository) GetLanguageStats(commitID string) (map[string]int64, err
 		}
 
 		included, checked := includedLanguage[language]
+		langType := enry.GetLanguageType(language)
 		if !checked {
-			langtype := enry.GetLanguageType(language)
-			included = langtype == enry.Programming || langtype == enry.Markup
-			if !included {
-				if isTrue(isDetectable) {
-					included = true
-				} else {
-					return nil
-				}
+			included = langType == enry.Programming || langType == enry.Markup
+			if !included && (isTrue(isDetectable) || (langType == enry.Prose && isFalse(isDocumentation))) {
+				included = true
 			}
 			includedLanguage[language] = included
 		}
 		if included {
 			sizes[language] += f.Size
 		} else if len(sizes) == 0 && (firstExcludedLanguage == "" || firstExcludedLanguage == language) {
+			// Only consider Programming or Markup languages as fallback
+			if !(langType == enry.Programming || langType == enry.Markup) {
+				return nil
+			}
+
 			firstExcludedLanguage = language
 			firstExcludedLanguageSize += f.Size
 		}
