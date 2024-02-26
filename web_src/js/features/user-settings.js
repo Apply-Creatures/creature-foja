@@ -54,6 +54,7 @@ export function initUserSettings() {
   // If JS is disabled, the page will show the custom input, as the dropdown requires JS to work.
   // JS progressively enhances the input by adding a dropdown, but it works regardless.
   pronounsCustom.removeAttribute('name');
+  pronounsInput.setAttribute('name', 'pronouns');
   pronounsDropdown.style.display = '';
 
   onPronounsDropdownUpdate();

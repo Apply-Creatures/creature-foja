@@ -24,7 +24,7 @@
 				<div class="inline field">
 					<span class="inline field"><label for="pronouns">{{ctx.Locale.Tr "settings.pronouns"}}</label></span>
 					<div id="pronouns-dropdown" style="display: none" class="ui selection dropdown">
-						<input type="hidden" name="pronouns" value="{{.SignedUser.Pronouns}}">
+						<input type="hidden" value="{{.SignedUser.Pronouns}}">
 						<div class="text">
 							{{if .PronounsAreCustom}}
 								{{ctx.Locale.Tr "settings.pronouns_custom"}}
