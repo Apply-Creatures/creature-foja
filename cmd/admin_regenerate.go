@@ -5,7 +5,6 @@ package cmd
 
 import (
 	asymkey_model "code.gitea.io/gitea/models/asymkey"
-	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/graceful"
 	repo_service "code.gitea.io/gitea/services/repository"
 
@@ -33,12 +32,6 @@ func runRegenerateHooks(_ *cli.Context) error {
 	if err := initDB(ctx); err != nil {
 		return err
 	}
-
-	// Detection of ProcReceive support relies on Git module being initalized.
-	if err := git.InitFull(ctx); err != nil {
-		return err
-	}
-
 	return repo_service.SyncRepositoryHooks(graceful.GetManager().ShutdownContext())
 }
 
