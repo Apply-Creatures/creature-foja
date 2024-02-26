@@ -18,6 +18,7 @@ import (
 
 	auth_model "code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/models/db"
+	git_model "code.gitea.io/gitea/models/git"
 	issues_model "code.gitea.io/gitea/models/issues"
 	"code.gitea.io/gitea/models/perm"
 	repo_model "code.gitea.io/gitea/models/repo"
@@ -413,12 +414,17 @@ func doBranchProtectPRMerge(baseCtx *APITestContext, dstPath string) func(t *tes
 func doProtectBranch(ctx APITestContext, branch, userToWhitelist, unprotectedFilePatterns string) func(t *testing.T) {
 	// We are going to just use the owner to set the protection.
 	return func(t *testing.T) {
+		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{Name: ctx.Reponame, OwnerName: ctx.Username})
+		rule := &git_model.ProtectedBranch{RuleName: branch, RepoID: repo.ID}
+		unittest.LoadBeanIfExists(rule)
+
 		csrf := GetCSRF(t, ctx.Session, fmt.Sprintf("/%s/%s/settings/branches", url.PathEscape(ctx.Username), url.PathEscape(ctx.Reponame)))
 
 		if userToWhitelist == "" {
 			// Change branch to protected
 			req := NewRequestWithValues(t, "POST", fmt.Sprintf("/%s/%s/settings/branches/edit", url.PathEscape(ctx.Username), url.PathEscape(ctx.Reponame)), map[string]string{
 				"_csrf":                     csrf,
+				"rule_id":                   strconv.FormatInt(rule.ID, 10),
 				"rule_name":                 branch,
 				"unprotected_file_patterns": unprotectedFilePatterns,
 			})
@@ -430,6 +436,7 @@ func doProtectBranch(ctx APITestContext, branch, userToWhitelist, unprotectedFil
 			req := NewRequestWithValues(t, "POST", fmt.Sprintf("/%s/%s/settings/branches/edit", url.PathEscape(ctx.Username), url.PathEscape(ctx.Reponame)), map[string]string{
 				"_csrf":                     csrf,
 				"rule_name":                 branch,
+				"rule_id":                   strconv.FormatInt(rule.ID, 10),
 				"enable_push":               "whitelist",
 				"enable_whitelist":          "on",
 				"whitelist_users":           strconv.FormatInt(user.ID, 10),
