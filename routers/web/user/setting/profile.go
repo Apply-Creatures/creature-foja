@@ -41,6 +41,7 @@ const (
 	tplSettingsRepositories base.TplName = "user/settings/repos"
 )
 
+// must be kept in sync with `web_src/js/features/user-settings.js`
 var recognisedPronouns = []string{"", "he/him", "she/her", "they/them", "it/its", "any pronouns"}
 
 // Profile render user's profile page
