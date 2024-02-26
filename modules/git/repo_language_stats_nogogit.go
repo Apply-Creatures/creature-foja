@@ -15,6 +15,7 @@ import (
 
 	"code.gitea.io/gitea/modules/analyze"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/optional"
 
 	"github.com/go-enry/go-enry/v2"
 )
@@ -77,6 +78,13 @@ func (repo *Repository) GetLanguageStats(commitID string) (map[string]int64, err
 	firstExcludedLanguage := ""
 	firstExcludedLanguageSize := int64(0)
 
+	isTrue := func(v optional.Option[bool]) bool {
+		return v.ValueOrDefault(false)
+	}
+	isFalse := func(v optional.Option[bool]) bool {
+		return !v.ValueOrDefault(true)
+	}
+
 	for _, f := range entries {
 		select {
 		case <-repo.Ctx.Done():
@@ -91,26 +99,18 @@ func (repo *Repository) GetLanguageStats(commitID string) (map[string]int64, err
 			continue
 		}
 
-		isVendored := LinguistBoolAttrib{}
-		isGenerated := LinguistBoolAttrib{}
-		isDocumentation := LinguistBoolAttrib{}
-		isDetectable := LinguistBoolAttrib{}
+		isVendored := optional.None[bool]()
+		isGenerated := optional.None[bool]()
+		isDocumentation := optional.None[bool]()
+		isDetectable := optional.None[bool]()
 
 		if checker != nil {
 			attrs, err := checker.CheckPath(f.Name())
 			if err == nil {
-				if vendored, has := attrs["linguist-vendored"]; has {
-					isVendored = LinguistBoolAttrib{Value: vendored}
-				}
-				if generated, has := attrs["linguist-generated"]; has {
-					isGenerated = LinguistBoolAttrib{Value: generated}
-				}
-				if documentation, has := attrs["linguist-documentation"]; has {
-					isDocumentation = LinguistBoolAttrib{Value: documentation}
-				}
-				if detectable, has := attrs["linguist-detectable"]; has {
-					isDetectable = LinguistBoolAttrib{Value: detectable}
-				}
+				isVendored = attributeToBool(attrs, "linguist-vendored")
+				isGenerated = attributeToBool(attrs, "linguist-generated")
+				isDocumentation = attributeToBool(attrs, "linguist-documentation")
+				isDetectable = attributeToBool(attrs, "linguist-detectable")
 				if language, has := attrs["linguist-language"]; has && language != "unspecified" && language != "" {
 					// group languages, such as Pug -> HTML; SCSS -> CSS
 					group := enry.GetLanguageGroup(language)
@@ -142,11 +142,11 @@ func (repo *Repository) GetLanguageStats(commitID string) (map[string]int64, err
 			}
 		}
 
-		if isDetectable.IsFalse() || isVendored.IsTrue() || isDocumentation.IsTrue() ||
-			(!isVendored.IsFalse() && analyze.IsVendor(f.Name())) ||
+		if isFalse(isDetectable) || isTrue(isVendored) || isTrue(isDocumentation) ||
+			(!isFalse(isVendored) && analyze.IsVendor(f.Name())) ||
 			enry.IsDotFile(f.Name()) ||
 			enry.IsConfiguration(f.Name()) ||
-			(!isDocumentation.IsFalse() && enry.IsDocumentation(f.Name())) {
+			(!isFalse(isDocumentation) && enry.IsDocumentation(f.Name())) {
 			continue
 		}
 
@@ -179,7 +179,7 @@ func (repo *Repository) GetLanguageStats(commitID string) (map[string]int64, err
 				return nil, err
 			}
 		}
-		if !isGenerated.IsTrue() && enry.IsGenerated(f.Name(), content) {
+		if !isTrue(isGenerated) && enry.IsGenerated(f.Name(), content) {
 			continue
 		}
 
@@ -197,25 +197,24 @@ func (repo *Repository) GetLanguageStats(commitID string) (map[string]int64, err
 		}
 
 		included, checked := includedLanguage[language]
+		langType := enry.GetLanguageType(language)
 		if !checked {
-			langType := enry.GetLanguageType(language)
 			included = langType == enry.Programming || langType == enry.Markup
-			if !included {
-				if isDetectable.IsTrue() {
-					included = true
-				} else {
-					continue
-				}
+			if !included && (isTrue(isDetectable) || (langType == enry.Prose && isFalse(isDocumentation))) {
+				included = true
 			}
 			includedLanguage[language] = included
 		}
 		if included {
 			sizes[language] += f.Size()
 		} else if len(sizes) == 0 && (firstExcludedLanguage == "" || firstExcludedLanguage == language) {
+			// Only consider Programming or Markup languages as fallback
+			if !(langType == enry.Programming || langType == enry.Markup) {
+				continue
+			}
 			firstExcludedLanguage = language
 			firstExcludedLanguageSize += f.Size()
 		}
-		continue
 	}
 
 	// If there are no included languages add the first excluded language
