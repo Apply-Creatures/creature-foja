@@ -964,7 +964,9 @@ func Routes() *web.Route {
 					m.Get("/{target}", user.CheckFollowing)
 				})
 
-				m.Get("/starred", user.GetStarredRepos)
+				if !setting.Repository.DisableStars {
+					m.Get("/starred", user.GetStarredRepos)
+				}
 
 				m.Get("/subscriptions", user.GetWatchedRepos)
 			}, context_service.UserAssignmentAPI())
@@ -1039,14 +1041,16 @@ func Routes() *web.Route {
 				Post(bind(api.CreateRepoOption{}), repo.Create)
 
 			// (repo scope)
-			m.Group("/starred", func() {
-				m.Get("", user.GetMyStarredRepos)
-				m.Group("/{username}/{reponame}", func() {
-					m.Get("", user.IsStarring)
-					m.Put("", user.Star)
-					m.Delete("", user.Unstar)
-				}, repoAssignment())
-			}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryRepository))
+			if !setting.Repository.DisableStars {
+				m.Group("/starred", func() {
+					m.Get("", user.GetMyStarredRepos)
+					m.Group("/{username}/{reponame}", func() {
+						m.Get("", user.IsStarring)
+						m.Put("", user.Star)
+						m.Delete("", user.Unstar)
+					}, repoAssignment())
+				}, tokenRequiresScopes(auth_model.AccessTokenScopeCategoryRepository))
+			}
 			m.Get("/times", repo.ListMyTrackedTimes)
 			m.Get("/stopwatches", repo.GetStopwatches)
 			m.Get("/subscriptions", user.GetMyWatchedRepos)
@@ -1208,7 +1212,9 @@ func Routes() *web.Route {
 				m.Post("/markup", reqToken(), bind(api.MarkupOption{}), misc.Markup)
 				m.Post("/markdown", reqToken(), bind(api.MarkdownOption{}), misc.Markdown)
 				m.Post("/markdown/raw", reqToken(), misc.MarkdownRaw)
-				m.Get("/stargazers", repo.ListStargazers)
+				if !setting.Repository.DisableStars {
+					m.Get("/stargazers", repo.ListStargazers)
+				}
 				m.Get("/subscribers", repo.ListSubscribers)
 				m.Group("/subscription", func() {
 					m.Get("", user.IsWatching)

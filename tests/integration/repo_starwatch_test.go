@@ -9,6 +9,9 @@ import (
 	"strings"
 	"testing"
 
+	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/test"
+	"code.gitea.io/gitea/routers"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
@@ -79,4 +82,27 @@ func TestRepoStarUnstarUI(t *testing.T) {
 
 func TestRepoWatchUnwatchUI(t *testing.T) {
 	testRepoStarringOrWatching(t, "watch", "watchers")
+}
+
+func TestDisabledStars(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	defer test.MockVariableValue(&setting.Repository.DisableStars, true)()
+	defer test.MockVariableValue(&testWebRoutes, routers.NormalRoutes())()
+
+	t.Run("repo star, unstar", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "POST", "/user2/repo1/action/star")
+		MakeRequest(t, req, http.StatusNotFound)
+
+		req = NewRequest(t, "POST", "/user2/repo1/action/unstar")
+		MakeRequest(t, req, http.StatusNotFound)
+	})
+
+	t.Run("repo stargazers", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequest(t, "GET", "/user2/repo1/stars")
+		MakeRequest(t, req, http.StatusNotFound)
+	})
 }

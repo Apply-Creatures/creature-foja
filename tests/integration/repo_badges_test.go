@@ -16,7 +16,9 @@ import (
 	unit_model "code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/test"
+	"code.gitea.io/gitea/routers"
 	files_service "code.gitea.io/gitea/services/repository/files"
 	"code.gitea.io/gitea/tests"
 
@@ -107,6 +109,14 @@ func TestBadges(t *testing.T) {
 			resp := MakeRequest(t, req, http.StatusSeeOther)
 
 			assertBadge(t, resp, "stars-0-blue")
+
+			t.Run("disabled stars", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+				defer test.MockVariableValue(&setting.Repository.DisableStars, true)()
+				defer test.MockVariableValue(&testWebRoutes, routers.NormalRoutes())()
+
+				MakeRequest(t, req, http.StatusNotFound)
+			})
 		})
 
 		t.Run("Issues", func(t *testing.T) {

@@ -9,7 +9,10 @@ import (
 	"testing"
 
 	auth_model "code.gitea.io/gitea/models/auth"
+	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
+	"code.gitea.io/gitea/modules/test"
+	"code.gitea.io/gitea/routers"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
@@ -25,12 +28,26 @@ func TestAPIStar(t *testing.T) {
 	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeReadUser)
 	tokenWithUserScope := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteUser, auth_model.AccessTokenScopeWriteRepository)
 
+	assertDisabledStarsNotFound := func(t *testing.T, req *RequestWrapper) {
+		t.Helper()
+
+		defer tests.PrintCurrentTest(t)()
+		defer test.MockVariableValue(&setting.Repository.DisableStars, true)()
+		defer test.MockVariableValue(&testWebRoutes, routers.NormalRoutes())()
+
+		MakeRequest(t, req, http.StatusNotFound)
+	}
+
 	t.Run("Star", func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 
 		req := NewRequest(t, "PUT", fmt.Sprintf("/api/v1/user/starred/%s", repo)).
 			AddTokenAuth(tokenWithUserScope)
 		MakeRequest(t, req, http.StatusNoContent)
+
+		t.Run("disabled stars", func(t *testing.T) {
+			assertDisabledStarsNotFound(t, req)
+		})
 	})
 
 	t.Run("GetStarredRepos", func(t *testing.T) {
@@ -46,6 +63,10 @@ func TestAPIStar(t *testing.T) {
 		DecodeJSON(t, resp, &repos)
 		assert.Len(t, repos, 1)
 		assert.Equal(t, repo, repos[0].FullName)
+
+		t.Run("disabled stars", func(t *testing.T) {
+			assertDisabledStarsNotFound(t, req)
+		})
 	})
 
 	t.Run("GetMyStarredRepos", func(t *testing.T) {
@@ -61,6 +82,10 @@ func TestAPIStar(t *testing.T) {
 		DecodeJSON(t, resp, &repos)
 		assert.Len(t, repos, 1)
 		assert.Equal(t, repo, repos[0].FullName)
+
+		t.Run("disabled stars", func(t *testing.T) {
+			assertDisabledStarsNotFound(t, req)
+		})
 	})
 
 	t.Run("IsStarring", func(t *testing.T) {
@@ -73,6 +98,10 @@ func TestAPIStar(t *testing.T) {
 		req = NewRequest(t, "GET", fmt.Sprintf("/api/v1/user/starred/%s", repo+"notexisting")).
 			AddTokenAuth(tokenWithUserScope)
 		MakeRequest(t, req, http.StatusNotFound)
+
+		t.Run("disabled stars", func(t *testing.T) {
+			assertDisabledStarsNotFound(t, req)
+		})
 	})
 
 	t.Run("Unstar", func(t *testing.T) {
@@ -81,5 +110,9 @@ func TestAPIStar(t *testing.T) {
 		req := NewRequest(t, "DELETE", fmt.Sprintf("/api/v1/user/starred/%s", repo)).
 			AddTokenAuth(tokenWithUserScope)
 		MakeRequest(t, req, http.StatusNoContent)
+
+		t.Run("disabled stars", func(t *testing.T) {
+			assertDisabledStarsNotFound(t, req)
+		})
 	})
 }
