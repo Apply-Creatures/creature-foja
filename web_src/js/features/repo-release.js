@@ -2,14 +2,14 @@ import {hideElem, showElem} from '../utils/dom.js';
 import {initComboMarkdownEditor} from './comp/ComboMarkdownEditor.js';
 
 export function initRepoRelease() {
-  [...document.querySelectorAll('.remove-rel-attach')].forEach((el) => {
+  for (const el of document.querySelectorAll('.remove-rel-attach')) {
     el.addEventListener('click', (e) => {
       const uuid = e.target.getAttribute('data-uuid');
       const id = e.target.getAttribute('data-id');
       document.querySelector(`input[name='attachment-del-${uuid}']`).value = 'true';
       hideElem(`#attachment-${id}`);
     });
-  });
+  }
 }
 
 export function initRepoReleaseNew() {

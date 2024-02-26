@@ -1,23 +1,23 @@
 @import "../chroma/dark.css";
 @import "../codemirror/dark.css";
 :root {
-  --steel-900: #10161D;
-  --steel-850: #131A21;
-  --steel-800: #171E26;
-  --steel-750: #1D262F;
-  --steel-700: #242D38;
-  --steel-650: #2B3642;
+  --steel-900: #10161d;
+  --steel-850: #131a21;
+  --steel-800: #171e26;
+  --steel-750: #1d262f;
+  --steel-700: #242d38;
+  --steel-650: #2b3642;
   --steel-600: #374351;
   --steel-550: #445161;
-  --steel-500: #515F70;
-  --steel-450: #5F6E80;
-  --steel-400: #6D7D8F;
-  --steel-350: #7C8C9F;
-  --steel-300: #8C9CAF;
-  --steel-250: #9DADC0;
-  --steel-200: #AEBED0;
-  --steel-150: #C0CFE0;
-  --steel-100: #D2E0F0;
+  --steel-500: #515f70;
+  --steel-450: #5f6e80;
+  --steel-400: #6d7d8f;
+  --steel-350: #7c8c9f;
+  --steel-300: #8c9caf;
+  --steel-250: #9dadc0;
+  --steel-200: #aebed0;
+  --steel-150: #c0cfe0;
+  --steel-100: #d2e0f0;
   --is-dark-theme: true;
   --color-primary: #fb923c;
   --color-primary-contrast: #000;
@@ -64,18 +64,18 @@
   --color-secondary-light-2: var(--steel-700);
   --color-secondary-light-3: var(--steel-750);
   --color-secondary-light-4: var(--steel-800);
-  --color-secondary-alpha-10: #2B364219;
-  --color-secondary-alpha-20: #2B364233;
-  --color-secondary-alpha-30: #2B36424b;
-  --color-secondary-alpha-40: #2B364266;
-  --color-secondary-alpha-50: #2B364280;
-  --color-secondary-alpha-60: #2B364299;
-  --color-secondary-alpha-70: #2B3642b3;
-  --color-secondary-alpha-80: #2B3642cc;
-  --color-secondary-alpha-90: #2B3642e1;
+  --color-secondary-alpha-10: #2b364219;
+  --color-secondary-alpha-20: #2b364233;
+  --color-secondary-alpha-30: #2b36424b;
+  --color-secondary-alpha-40: #2b364266;
+  --color-secondary-alpha-50: #2b364280;
+  --color-secondary-alpha-60: #2b364299;
+  --color-secondary-alpha-70: #2b3642b3;
+  --color-secondary-alpha-80: #2b3642cc;
+  --color-secondary-alpha-90: #2b3642e1;
   --color-secondary-hover: var(--color-secondary-light-1);
   --color-secondary-active: var(--color-secondary-light-2);
-   /* console colors - used for actions console and console files */
+  /* console colors - used for actions console and console files */
   --color-console-fg: #eeeff2;
   --color-console-fg-subtle: #959cab;
   --color-console-bg: #1f212b;
@@ -125,7 +125,7 @@
   --color-pink-dark-1: #c7216b;
   --color-brown-dark-1: #94674a;
   --color-black-dark-1: #0f1623;
-    /* dark 2 variants produced via Sass scale-color(color, $lightness: -20%) */
+  /* dark 2 variants produced via Sass scale-color(color, $lightness: -20%) */
   --color-red-dark-2: #941616;
   --color-orange-dark-2: #bb460a;
   --color-yellow-dark-2: #ca8a04;
@@ -142,31 +142,31 @@
   --color-gold: #b1983b;
   --color-white: #ffffff;
   --color-diff-removed-word-bg: #783030;
-  --color-diff-added-word-bg: #255C39;
+  --color-diff-added-word-bg: #255c39;
   --color-diff-removed-row-bg: #432121;
   --color-diff-moved-row-bg: #825718;
-  --color-diff-added-row-bg: #1B3625;
+  --color-diff-added-row-bg: #1b3625;
   --color-diff-removed-row-border: #783030;
-  --color-diff-moved-row-border: #A67A1D;
-  --color-diff-added-row-border: #255C39;
+  --color-diff-moved-row-border: #a67a1d;
+  --color-diff-added-row-border: #255c39;
   --color-diff-inactive: var(--steel-650);
   --color-error-border: #783030;
-  --color-error-bg: #5F2525;
+  --color-error-bg: #5f2525;
   --color-error-bg-active: #783030;
   --color-error-bg-hover: #783030;
   --color-error-text: #fef2f2;
-  --color-success-border: #1F6E3C;
-  --color-success-bg: #1D462C;
+  --color-success-border: #1f6e3c;
+  --color-success-bg: #1d462c;
   --color-success-text: #f0fdf4;
-  --color-warning-border: #A67A1D;
+  --color-warning-border: #a67a1d;
   --color-warning-bg: #644821;
   --color-warning-text: #fefce8;
-  --color-info-border: #2E50B0;
-  --color-info-bg: #2A396B;
+  --color-info-border: #2e50b0;
+  --color-info-bg: #2a396b;
   --color-info-text: var(--steel-100);
-  --color-red-badge: #B91C1C;
-  --color-red-badge-bg: #B91C1C22;
-  --color-red-badge-hover-bg: #B91C1C44;
+  --color-red-badge: #b91c1c;
+  --color-red-badge-bg: #b91c1c22;
+  --color-red-badge-hover-bg: #b91c1c44;
   --color-green-badge: #16a34a;
   --color-green-badge-bg: #16a34a22;
   --color-green-badge-hover-bg: #16a34a44;
@@ -196,7 +196,7 @@
   --color-input-border: var(--steel-550);
   --color-input-border-hover: var(--steel-450);
   --color-header-wrapper: var(--steel-850);
-  --color-header-wrapper-transparent: #242D3800;
+  --color-header-wrapper-transparent: #242d3800;
   --color-light: #00000028;
   --color-light-mimic-enabled: rgba(0, 0, 0, calc(40 / 255 * 222 / 255 / var(--opacity-disabled)));
   --color-light-border: #ffffff28;
@@ -259,26 +259,11 @@
 .emoji[aria-label="musical notes"] {
   filter: invert(100%) hue-rotate(180deg);
 }
-.following.bar.light {
-  border-bottom-color: #ffffff11 !important;
-}
 .text.green.svg {
-  color: #16a34a !important;
+  color: var(--color-green-light) !important;
 }
 i.grey.icon.icon.icon.icon {
   color: var(--steel-350) !important;
-}
-.ui.red.button,
-.ui.negative.button {
-  background-color: #7f1d1d;
-}
-.ui.red.button:hover,
-.ui.negative.button:hover {
-  background-color: #991b1b;
-}
-.ui.red.button:active,
-.ui.negative.button:active {
-  background-color: #aa1919;
 }
 .ui.secondary.vertical.menu {
   border-radius: 0.28571429rem !important;
@@ -304,28 +289,21 @@ i.grey.icon.icon.icon.icon {
 }
 .ui.labeled.icon.buttons > .button > .icon,
 .ui.labeled.icon.button > .icon {
-  background-color: rgba(0, 0, 0, 0.05) !important;
+  background-color: var(--color-light) !important;
 }
 #review-box .review-comments-counter {
-  background-color: #00000088 !important;
-  color: #fff !important;
+  background-color: var(--color-shadow) !important;
+  color: var(--color-white) !important;
   margin-left: 0.5em;
 }
-.ui.tabs .ui.primary.label,
-.ui.menu .ui.primary.label {
-  background-color: rgba(192, 192, 255, 0.2) !important;
+.ui.basic.labels .primary.label,
+.ui.ui.ui.basic.primary.label {
   color: var(--color-text-dark) !important;
 }
 .ui.basic.yellow.label.pending-label {
   background: var(--color-light) !important;
 }
-.ui.tertiary.button {
-  color: #fff9;
-}
-.ui.tertiary.button:hover {
-  color: #ccc;
-}
 ::selection {
   background: var(--steel-100) !important;
-  color: #000 !important;
+  color: var(--color-white) !important;
 }

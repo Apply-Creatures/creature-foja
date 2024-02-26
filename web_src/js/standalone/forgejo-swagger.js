@@ -5,7 +5,7 @@ window.addEventListener('load', async () => {
   const url = document.getElementById('swagger-ui').getAttribute('data-source');
 
   const ui = SwaggerUI({
-    url: url,
+    url,
     dom_id: '#swagger-ui',
     deepLinking: true,
     docExpansion: 'none',
