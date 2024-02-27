@@ -59,6 +59,11 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
+func TestApostrophesInMentions(t *testing.T) {
+	rendered := RenderMarkdownToHtml(context.Background(), "@mention-user's comment")
+	assert.EqualValues(t, "<p><a href=\"http://localhost:3000/mention-user\" rel=\"nofollow\">@mention-user</a>&#39;s comment</p>\n", rendered)
+}
+
 func TestRenderCommitBody(t *testing.T) {
 	type args struct {
 		ctx   context.Context
