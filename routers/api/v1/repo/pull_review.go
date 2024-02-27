@@ -339,6 +339,7 @@ func CreatePullReviewComment(ctx *context.APIContext) {
 		opts.Path,
 		line,
 		review.ID,
+		nil,
 	)
 	if err != nil {
 		ctx.InternalServerError(err)
