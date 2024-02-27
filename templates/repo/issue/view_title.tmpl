@@ -73,10 +73,13 @@
 						</span>
 					{{end}}
 					{{if .MadeUsingAGit}}
-						{{/* TODO: Add tooltip and a link to the documentation */}}
-						<span id="agit-label" class="ui small label">
-							{{ctx.Locale.Tr "repo.pulls.made_using_agit"}}
-						</span>
+						{{/* TODO: Move documentation link to the instructions at the bottom of the PR, show instructions when clicking label */}}
+						{{/* Note: #agit-label is necessary for testing whether the label appears when it should in tests/integration/git_test.go */}}
+						<a target="_blank" rel="noopener" href="https://forgejo.org/docs/latest/user/agit-support/">
+							<span id="agit-label" data-tooltip-content="{{ctx.Locale.Tr "repo.pulls.agit_explanation"}}" class="ui small label">
+								{{ctx.Locale.Tr "repo.pulls.made_using_agit"}}
+							</span>
+						</a>
 					{{end}}
 					<span id="pull-desc-edit" class="gt-hidden flex-text-block">
 						<div class="ui floating filter dropdown">
