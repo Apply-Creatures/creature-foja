@@ -28,7 +28,8 @@ func TestRenderConversation(t *testing.T) {
 
 	run := func(name string, cb func(t *testing.T, ctx *context.Context, resp *httptest.ResponseRecorder)) {
 		t.Run(name, func(t *testing.T) {
-			ctx, resp := contexttest.MockContext(t, "/", contexttest.MockContextOption{Render: templates.HTMLRenderer()})
+			ctx, resp := contexttest.MockContext(t, "/")
+			ctx.Render = templates.HTMLRenderer()
 			contexttest.LoadUser(t, ctx, pr.Issue.PosterID)
 			contexttest.LoadRepo(t, ctx, pr.BaseRepoID)
 			contexttest.LoadGitRepo(t, ctx)
@@ -61,7 +62,8 @@ func TestRenderConversation(t *testing.T) {
 	run("diff without outdated", func(t *testing.T, ctx *context.Context, resp *httptest.ResponseRecorder) {
 		ctx.Data["ShowOutdatedComments"] = false
 		renderConversation(ctx, preparedComment, "diff")
-		assert.Contains(t, resp.Body.String(), `conversation-not-existing`)
+		// unlike gitea, Forgejo renders the conversation (with the "outdated" label)
+		assert.Contains(t, resp.Body.String(), `repo.issues.review.outdated_description`)
 	})
 	run("timeline with outdated", func(t *testing.T, ctx *context.Context, resp *httptest.ResponseRecorder) {
 		ctx.Data["ShowOutdatedComments"] = true
