@@ -125,5 +125,5 @@ func TestXSSReviewDismissed(t *testing.T) {
 	htmlDoc := NewHTMLParser(t, resp.Body)
 
 	htmlDoc.AssertElement(t, "script.evil", false)
-	assert.Contains(t, htmlDoc.Find("#issuecomment-1000 .dismissed-message").Text(), `dismissed Otto <script class='evil'>alert('Oh no!')</script>’s review`)
+	assert.Contains(t, htmlDoc.Find("#issuecomment-1000 .dismissed-message").Text(), `dismissed Otto <script class='evil'>alert('Oh no!')</script>'s review`)
 }

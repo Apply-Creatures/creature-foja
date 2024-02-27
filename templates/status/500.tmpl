@@ -9,7 +9,7 @@
 <html lang="{{ctx.Locale.Lang}}" data-theme="{{ThemeName .SignedUser}}">
 <head>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>Internal Server Error - {{AppName}}</title>
+	<title>{{ctx.Locale.Tr "error.server_internal"}} - {{AppName}}</title>
 	<link rel="icon" href="{{AssetUrlPrefix}}/img/favicon.svg" type="image/svg+xml">
 	<link rel="alternate icon" href="{{AssetUrlPrefix}}/img/favicon.png" type="image/png">
 	{{template "base/head_style" .}}
@@ -35,7 +35,7 @@
 			</div>
 			<div class="ui container center">
 				<h1 class="gt-mt-5 error-code">500</h1>
-				<p>Internal Server Error</p>
+				<p>{{ctx.Locale.Tr "error.server_internal"}}</p>
 			</div>
 			<div class="divider"></div>
 			<div class="ui container gt-my-5">
