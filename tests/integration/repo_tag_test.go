@@ -47,7 +47,15 @@ func TestTagViewWithoutRelease(t *testing.T) {
 
 	// Test that the page loads
 	req := NewRequestf(t, "GET", "/%s/releases/tag/no-release", repo.FullName())
-	MakeRequest(t, req, http.StatusOK)
+	resp := MakeRequest(t, req, http.StatusOK)
+
+	// Test that the tags sub-menu is active
+	htmlDoc := NewHTMLParser(t, resp.Body)
+	htmlDoc.AssertElement(t, ".small-menu-items .active.item[href*='/tags']", true)
+
+	// Test that the release sub-menu isn't active
+	releaseLink := htmlDoc.Find(".small-menu-items .item[href*='/releases']")
+	assert.False(t, releaseLink.HasClass("active"))
 }
 
 func TestCreateNewTagProtected(t *testing.T) {
