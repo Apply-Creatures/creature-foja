@@ -1129,8 +1129,10 @@ func registerRoutes(m *web.Route) {
 		m.Post("/unwatch", repo.ActionWatch(false))
 		m.Post("/accept_transfer", repo.ActionTransfer(true))
 		m.Post("/reject_transfer", repo.ActionTransfer(false))
-		m.Post("/star", repo.ActionStar(true))
-		m.Post("/unstar", repo.ActionStar(false))
+		if !setting.Repository.DisableStars {
+			m.Post("/star", repo.ActionStar(true))
+			m.Post("/unstar", repo.ActionStar(false))
+		}
 	}, reqSignIn, context.RepoAssignment, context.UnitTypes())
 
 	// Grouping for those endpoints not requiring authentication (but should respect ignSignIn)
@@ -1359,7 +1361,9 @@ func registerRoutes(m *web.Route) {
 					m.Get("/open.svg", badges.GetOpenPullsBadge)
 					m.Get("/closed.svg", badges.GetClosedPullsBadge)
 				})
-				m.Get("/stars.svg", badges.GetStarsBadge)
+				if !setting.Repository.DisableStars {
+					m.Get("/stars.svg", badges.GetStarsBadge)
+				}
 				m.Get("/release.svg", badges.GetLatestReleaseBadge)
 			})
 		}
@@ -1590,7 +1594,9 @@ func registerRoutes(m *web.Route) {
 	m.Post("/{username}/{reponame}/lastcommit/*", ignSignInAndCsrf, context.RepoAssignment, context.UnitTypes(), context.RepoRefByType(context.RepoRefCommit), reqRepoCodeReader, repo.LastCommit)
 
 	m.Group("/{username}/{reponame}", func() {
-		m.Get("/stars", repo.Stars)
+		if !setting.Repository.DisableStars {
+			m.Get("/stars", repo.Stars)
+		}
 		m.Get("/watchers", repo.Watchers)
 		m.Get("/search", reqRepoCodeReader, repo.Search)
 	}, ignSignIn, context.RepoAssignment, context.RepoRef(), context.UnitTypes())

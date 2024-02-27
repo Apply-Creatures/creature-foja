@@ -49,7 +49,7 @@ var (
 		DownloadOrCloneMethods                  []string
 		PrefixArchiveFiles                      bool
 		DisableMigrations                       bool
-		DisableStars                            bool `ini:"DISABLE_STARS"`
+		DisableStars                            bool
 		DisableForks                            bool
 		DefaultBranch                           string
 		AllowAdoptionOfUnadoptedRepositories    bool
