@@ -13,6 +13,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -312,10 +313,14 @@ func ViewPost(ctx *context_module.Context) {
 }
 
 // Rerun will rerun jobs in the given run
-// jobIndex = 0 means rerun all jobs
+// If jobIndexStr is a blank string, it means rerun all jobs
 func Rerun(ctx *context_module.Context) {
 	runIndex := ctx.ParamsInt64("run")
-	jobIndex := ctx.ParamsInt64("job")
+	jobIndexStr := ctx.Params("job")
+	var jobIndex int64
+	if jobIndexStr != "" {
+		jobIndex, _ = strconv.ParseInt(jobIndexStr, 10, 64)
+	}
 
 	run, err := actions_model.GetRunByIndex(ctx, ctx.Repo.Repository.ID, runIndex)
 	if err != nil {
@@ -347,7 +352,7 @@ func Rerun(ctx *context_module.Context) {
 		return
 	}
 
-	if jobIndex != 0 {
+	if jobIndexStr != "" {
 		jobs = []*actions_model.ActionRunJob{job}
 	}
 
