@@ -279,6 +279,8 @@ func SingleRelease(ctx *context.Context) {
 	releases, err := getReleaseInfos(ctx, &repo_model.FindReleasesOptions{
 		ListOptions: db.ListOptions{Page: 1, PageSize: 1},
 		RepoID:      ctx.Repo.Repository.ID,
+		// Include tags in the search too.
+		IncludeTags: true,
 		TagNames:    []string{ctx.Params("*")},
 		// only show draft releases for users who can write, read-only users shouldn't see draft releases.
 		IncludeDrafts: writeAccess,

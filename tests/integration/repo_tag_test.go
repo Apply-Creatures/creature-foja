@@ -1,9 +1,11 @@
 // Copyright 2021 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors c/o Codeberg e.V.. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package integration
 
 import (
+	"net/http"
 	"net/url"
 	"testing"
 
@@ -19,6 +21,34 @@ import (
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestTagViewWithoutRelease(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: repo.OwnerID})
+
+	defer func() {
+		releases, err := db.Find[repo_model.Release](db.DefaultContext, repo_model.FindReleasesOptions{
+			IncludeTags: true,
+			TagNames:    []string{"no-release"},
+			RepoID:      repo.ID,
+		})
+		assert.NoError(t, err)
+
+		for _, release := range releases {
+			_, err = db.DeleteByID[repo_model.Release](db.DefaultContext, release.ID)
+			assert.NoError(t, err)
+		}
+	}()
+
+	err := release.CreateNewTag(git.DefaultContext, owner, repo, "master", "no-release", "release-less tag")
+	assert.NoError(t, err)
+
+	// Test that the page loads
+	req := NewRequestf(t, "GET", "/%s/releases/tag/no-release", repo.FullName())
+	MakeRequest(t, req, http.StatusOK)
+}
 
 func TestCreateNewTagProtected(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
