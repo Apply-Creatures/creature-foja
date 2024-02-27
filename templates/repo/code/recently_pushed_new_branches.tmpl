@@ -8,7 +8,7 @@
 				{{$name = (print $repo.FullName ":" .Name)}}
 			{{end}}
 			{{$branchLink := (print ($repo.Link) "/src/branch/" (PathEscapeSegments .Name))}}
-			{{ctx.Locale.Tr "repo.pulls.recently_pushed_new_branches" (Escape $name) $timeSince $branchLink | Safe}}
+			{{ctx.Locale.Tr "repo.pulls.recently_pushed_new_branches" $name $timeSince $branchLink}}
 		</div>
 		<a role="button" class="ui compact positive button gt-m-0" href="{{$.Repository.ComposeBranchCompareURL $.Repository.BaseRepo $name}}">
 			{{ctx.Locale.Tr "repo.pulls.compare_changes"}}

@@ -28,10 +28,7 @@ func ProcReceive(ctx context.Context, repo *repo_model.Repository, gitRepo *git.
 	title, hasTitle := opts.GitPushOptions["title"]
 	description, hasDesc := opts.GitPushOptions["description"]
 
-	objectFormat, err := gitRepo.GetObjectFormat()
-	if err != nil {
-		return nil, fmt.Errorf("couldn't get object format of the repository: %w", err)
-	}
+	objectFormat := git.ObjectFormatFromName(repo.ObjectFormatName)
 
 	pusher, err := user_model.GetUserByID(ctx, opts.UserID)
 	if err != nil {

@@ -3,7 +3,7 @@
 	{{if .IsRepo}}{{template "repo/header" .}}{{end}}
 	<div class="ui container center">
 		<h1 style="margin-top: 100px" class="error-code">404</h1>
-		<p>{{if .NotFoundPrompt}}{{.NotFoundPrompt}}{{else}}{{ctx.Locale.Tr "error404" | Safe}}{{end}}</p>
+		<p>{{if .NotFoundPrompt}}{{.NotFoundPrompt}}{{else}}{{ctx.Locale.Tr "error404"}}{{end}}</p>
 		{{if .NotFoundGoBackURL}}<a class="ui button green" href="{{.NotFoundGoBackURL}}">{{ctx.Locale.Tr "go_back"}}</a>{{end}}
 
 		<div class="divider"></div>
