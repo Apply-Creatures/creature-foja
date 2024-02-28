@@ -5,11 +5,13 @@ package base
 
 import (
 	"math/big"
+	"strings"
 	"unicode/utf8"
 )
 
 // NaturalSortLess compares two strings so that they could be sorted in natural order
 func NaturalSortLess(s1, s2 string) bool {
+	s1, s2 = strings.ToLower(s1), strings.ToLower(s2)
 	var i1, i2 int
 	for {
 		rune1, j1, end1 := getNextRune(s1, i1)
