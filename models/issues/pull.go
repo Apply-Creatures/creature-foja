@@ -922,7 +922,14 @@ func PullRequestCodeOwnersReview(ctx context.Context, pull *Issue, pr *PullReque
 	}
 
 	rules, _ := GetCodeOwnersFromContent(ctx, data)
-	changedFiles, err := repo.GetFilesChangedBetween(git.BranchPrefix+pr.BaseBranch, pr.GetGitRefName())
+
+	prInfo, err := repo.GetCompareInfo(repo.Path, git.BranchPrefix+pr.BaseBranch, pr.GetGitRefName(), false, false)
+	if err != nil {
+		return err
+	}
+	// Use the merge base as the base instead of the main branch to avoid problems
+	// if the pull request is out of date with the base branch.
+	changedFiles, err := repo.GetFilesChangedBetween(prInfo.MergeBase, pr.HeadCommitID)
 	if err != nil {
 		return err
 	}
