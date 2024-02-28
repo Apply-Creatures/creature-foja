@@ -78,3 +78,16 @@ func TestContentHistory(t *testing.T) {
 	assert.EqualValues(t, 7, list2[1].HistoryID)
 	assert.EqualValues(t, 4, list2[2].HistoryID)
 }
+
+func TestHasIssueContentHistory(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	// Ensures that comment_id is into taken account even if it's zero.
+	_ = issues_model.SaveIssueContentHistory(db.DefaultContext, 1, 11, 100, timeutil.TimeStampNow(), "c-a", true)
+	_ = issues_model.SaveIssueContentHistory(db.DefaultContext, 1, 11, 100, timeutil.TimeStampNow().Add(5), "c-b", false)
+
+	hasHistory1, _ := issues_model.HasIssueContentHistory(db.DefaultContext, 11, 0)
+	assert.False(t, hasHistory1)
+	hasHistory2, _ := issues_model.HasIssueContentHistory(db.DefaultContext, 11, 100)
+	assert.True(t, hasHistory2)
+}

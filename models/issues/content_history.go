@@ -172,15 +172,7 @@ func FetchIssueContentHistoryList(dbCtx context.Context, issueID, commentID int6
 
 // HasIssueContentHistory check if a ContentHistory entry exists
 func HasIssueContentHistory(dbCtx context.Context, issueID, commentID int64) (bool, error) {
-	exists, err := db.GetEngine(dbCtx).Cols("id").Exist(&ContentHistory{
-		IssueID:   issueID,
-		CommentID: commentID,
-	})
-	if err != nil {
-		log.Error("can not fetch issue content history. err=%v", err)
-		return false, err
-	}
-	return exists, err
+	return db.GetEngine(dbCtx).Where("issue_id = ? AND comment_id = ?", issueID, commentID).Exist(new(ContentHistory))
 }
 
 // SoftDeleteIssueContentHistory soft delete
