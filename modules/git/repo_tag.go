@@ -185,10 +185,15 @@ func parseTagRef(ref map[string]string) (tag *Tag, err error) {
 
 	tag.Tagger = parseSignatureFromCommitLine(ref["creator"])
 	tag.Message = ref["contents"]
-	// strip PGP signature if present in contents field
+	// strip the signature if present in contents field
 	pgpStart := strings.Index(tag.Message, beginpgp)
 	if pgpStart >= 0 {
 		tag.Message = tag.Message[0:pgpStart]
+	} else {
+		sshStart := strings.Index(tag.Message, beginssh)
+		if sshStart >= 0 {
+			tag.Message = tag.Message[0:sshStart]
+		}
 	}
 
 	// annotated tag with GPG signature
