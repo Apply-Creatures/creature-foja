@@ -1,4 +1,5 @@
 // Copyright 2022 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package actions
@@ -35,13 +36,19 @@ func View(ctx *context_module.Context) {
 	ctx.Data["PageIsActions"] = true
 	runIndex := ctx.ParamsInt64("run")
 	jobIndex := ctx.ParamsInt64("job")
+
+	job, _ := getRunJobs(ctx, runIndex, jobIndex)
+	if ctx.Written() {
+		return
+	}
+
+	workflowName := job.Run.WorkflowID
+
 	ctx.Data["RunIndex"] = runIndex
 	ctx.Data["JobIndex"] = jobIndex
 	ctx.Data["ActionsURL"] = ctx.Repo.RepoLink + "/actions"
-
-	if getRunJobs(ctx, runIndex, jobIndex); ctx.Written() {
-		return
-	}
+	ctx.Data["WorkflowName"] = workflowName
+	ctx.Data["WorkflowURL"] = ctx.Repo.RepoLink + "/actions?workflow=" + workflowName
 
 	ctx.HTML(http.StatusOK, tplViewActions)
 }
@@ -131,6 +138,7 @@ type ViewJob struct {
 type ViewCommit struct {
 	LocaleCommit   string     `json:"localeCommit"`
 	LocalePushedBy string     `json:"localePushedBy"`
+	LocaleWorkflow string     `json:"localeWorkflow"`
 	ShortSha       string     `json:"shortSHA"`
 	Link           string     `json:"link"`
 	Pusher         ViewUser   `json:"pusher"`
@@ -213,6 +221,7 @@ func ViewPost(ctx *context_module.Context) {
 	resp.State.Run.Commit = ViewCommit{
 		LocaleCommit:   ctx.Locale.TrString("actions.runs.commit"),
 		LocalePushedBy: ctx.Locale.TrString("actions.runs.pushed_by"),
+		LocaleWorkflow: ctx.Locale.TrString("actions.runs.workflow"),
 		ShortSha:       base.ShortSha(run.CommitSHA),
 		Link:           fmt.Sprintf("%s/commit/%s", run.Repo.Link(), run.CommitSHA),
 		Pusher:         pusher,

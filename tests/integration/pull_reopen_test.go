@@ -26,6 +26,7 @@ import (
 	repo_service "code.gitea.io/gitea/services/repository"
 	files_service "code.gitea.io/gitea/services/repository/files"
 	"code.gitea.io/gitea/tests"
+
 	"github.com/stretchr/testify/assert"
 )
 
