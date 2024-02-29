@@ -23,15 +23,15 @@ func (te *TreeEntry) Type() string {
 }
 
 // FollowLink returns the entry pointed to by a symlink
-func (te *TreeEntry) FollowLink() (*TreeEntry, error) {
+func (te *TreeEntry) FollowLink() (*TreeEntry, string, error) {
 	if !te.IsLink() {
-		return nil, ErrBadLink{te.Name(), "not a symlink"}
+		return nil, "", ErrBadLink{te.Name(), "not a symlink"}
 	}
 
 	// read the link
 	r, err := te.Blob().DataAsync()
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	closed := false
 	defer func() {
@@ -42,7 +42,7 @@ func (te *TreeEntry) FollowLink() (*TreeEntry, error) {
 	buf := make([]byte, te.Size())
 	_, err = io.ReadFull(r, buf)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	_ = r.Close()
 	closed = true
@@ -56,33 +56,35 @@ func (te *TreeEntry) FollowLink() (*TreeEntry, error) {
 	}
 
 	if t == nil {
-		return nil, ErrBadLink{te.Name(), "points outside of repo"}
+		return nil, "", ErrBadLink{te.Name(), "points outside of repo"}
 	}
 
 	target, err := t.GetTreeEntryByPath(lnk)
 	if err != nil {
 		if IsErrNotExist(err) {
-			return nil, ErrBadLink{te.Name(), "broken link"}
+			return nil, "", ErrBadLink{te.Name(), "broken link"}
 		}
-		return nil, err
+		return nil, "", err
 	}
-	return target, nil
+	return target, lnk, nil
 }
 
 // FollowLinks returns the entry ultimately pointed to by a symlink
-func (te *TreeEntry) FollowLinks() (*TreeEntry, error) {
+func (te *TreeEntry) FollowLinks() (*TreeEntry, string, error) {
 	if !te.IsLink() {
-		return nil, ErrBadLink{te.Name(), "not a symlink"}
+		return nil, "", ErrBadLink{te.Name(), "not a symlink"}
 	}
 	entry := te
+	entryLink := ""
 	for i := 0; i < 999; i++ {
 		if entry.IsLink() {
-			next, err := entry.FollowLink()
+			next, link, err := entry.FollowLink()
+			entryLink = link
 			if err != nil {
-				return nil, err
+				return nil, "", err
 			}
 			if next.ID == entry.ID {
-				return nil, ErrBadLink{
+				return nil, "", ErrBadLink{
 					entry.Name(),
 					"recursive link",
 				}
@@ -93,12 +95,12 @@ func (te *TreeEntry) FollowLinks() (*TreeEntry, error) {
 		}
 	}
 	if entry.IsLink() {
-		return nil, ErrBadLink{
+		return nil, "", ErrBadLink{
 			te.Name(),
 			"too many levels of symbolic links",
 		}
 	}
-	return entry, nil
+	return entry, entryLink, nil
 }
 
 // returns the Tree pointed to by this TreeEntry, or nil if this is not a tree

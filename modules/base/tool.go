@@ -174,7 +174,7 @@ func Int64sToStrings(ints []int64) []string {
 func EntryIcon(entry *git.TreeEntry) string {
 	switch {
 	case entry.IsLink():
-		te, err := entry.FollowLink()
+		te, _, err := entry.FollowLink()
 		if err != nil {
 			log.Debug(err.Error())
 			return "file-symlink-file"

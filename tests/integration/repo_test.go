@@ -961,3 +961,54 @@ func TestRepoFilesList(t *testing.T) {
 		assert.EqualValues(t, []string{"Charlie", "alpha", "Beta", "delta", "licensa", "LICENSE", "licensz", "README.md", "zEta"}, filesList)
 	})
 }
+
+func TestRepoFollowSymlink(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	session := loginUser(t, "user2")
+
+	assertCase := func(t *testing.T, url, expectedSymlinkURL string, shouldExist bool) {
+		t.Helper()
+
+		req := NewRequest(t, "GET", url)
+		resp := session.MakeRequest(t, req, http.StatusOK)
+
+		htmlDoc := NewHTMLParser(t, resp.Body)
+		symlinkURL, ok := htmlDoc.Find(".file-actions .button[data-kind='follow-symlink']").Attr("href")
+		if shouldExist {
+			assert.True(t, ok)
+			assert.EqualValues(t, expectedSymlinkURL, symlinkURL)
+		} else {
+			assert.False(t, ok)
+		}
+	}
+
+	t.Run("Normal", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		assertCase(t, "/user2/readme-test/src/branch/symlink/README.md?display=source", "/user2/readme-test/src/branch/symlink/some/other/path/awefulcake.txt", true)
+	})
+
+	t.Run("Normal", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		assertCase(t, "/user2/readme-test/src/branch/symlink/some/README.txt", "/user2/readme-test/src/branch/symlink/some/other/path/awefulcake.txt", true)
+	})
+
+	t.Run("Normal", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		assertCase(t, "/user2/readme-test/src/branch/symlink/up/back/down/down/README.md", "/user2/readme-test/src/branch/symlink/down/side/../left/right/../reelmein", true)
+	})
+
+	t.Run("Broken symlink", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		assertCase(t, "/user2/readme-test/src/branch/fallbacks-broken-symlinks/docs/README", "", false)
+	})
+
+	t.Run("Loop symlink", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		assertCase(t, "/user2/readme-test/src/branch/symlink-loop/README.md", "", false)
+	})
+
+	t.Run("Not a symlink", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		assertCase(t, "/user2/readme-test/src/branch/master/README.md", "", false)
+	})
+}
