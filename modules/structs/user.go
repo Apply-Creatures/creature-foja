@@ -41,6 +41,8 @@ type User struct {
 	ProhibitLogin bool `json:"prohibit_login"`
 	// the user's location
 	Location string `json:"location"`
+	// the user's pronouns
+	Pronouns string `json:"pronouns"`
 	// the user's website
 	Website string `json:"website"`
 	// the user's description
@@ -71,6 +73,7 @@ type UserSettings struct {
 	Website             string `json:"website"`
 	Description         string `json:"description"`
 	Location            string `json:"location"`
+	Pronouns            string `json:"pronouns"`
 	Language            string `json:"language"`
 	Theme               string `json:"theme"`
 	DiffViewStyle       string `json:"diff_view_style"`
