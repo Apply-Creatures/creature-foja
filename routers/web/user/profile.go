@@ -20,6 +20,7 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
+	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/routers/web/feed"
@@ -205,7 +206,7 @@ func prepareUserProfileTabData(ctx *context.Context, showPrivate bool, profileDb
 			OrderBy:            orderBy,
 			Private:            ctx.IsSigned,
 			StarredByID:        ctx.ContextUser.ID,
-			Collaborate:        util.OptionalBoolFalse,
+			Collaborate:        optional.Some(false),
 			TopicOnly:          topicOnly,
 			Language:           language,
 			IncludeDescription: setting.UI.SearchRepoDescription,
@@ -227,7 +228,7 @@ func prepareUserProfileTabData(ctx *context.Context, showPrivate bool, profileDb
 			OrderBy:            orderBy,
 			Private:            ctx.IsSigned,
 			WatchedByID:        ctx.ContextUser.ID,
-			Collaborate:        util.OptionalBoolFalse,
+			Collaborate:        optional.Some(false),
 			TopicOnly:          topicOnly,
 			Language:           language,
 			IncludeDescription: setting.UI.SearchRepoDescription,
@@ -272,7 +273,7 @@ func prepareUserProfileTabData(ctx *context.Context, showPrivate bool, profileDb
 			OwnerID:            ctx.ContextUser.ID,
 			OrderBy:            orderBy,
 			Private:            ctx.IsSigned,
-			Collaborate:        util.OptionalBoolFalse,
+			Collaborate:        optional.Some(false),
 			TopicOnly:          topicOnly,
 			Language:           language,
 			IncludeDescription: setting.UI.SearchRepoDescription,
