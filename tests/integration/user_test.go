@@ -1,4 +1,5 @@
 // Copyright 2017 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package integration
@@ -6,6 +7,7 @@ package integration
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	auth_model "code.gitea.io/gitea/models/auth"
@@ -425,6 +427,166 @@ func TestUserHints(t *testing.T) {
 
 			ensureRepoUnitHints(t, false)
 			assertAddMore(t, false)
+		})
+	})
+}
+
+func TestUserPronouns(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	session := loginUser(t, "user2")
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteUser)
+
+	adminUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{IsAdmin: true})
+	adminSession := loginUser(t, adminUser.Name)
+	adminToken := getTokenForLoggedInUser(t, adminSession, auth_model.AccessTokenScopeWriteAdmin)
+
+	t.Run("API", func(t *testing.T) {
+		t.Run("user", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequest(t, "GET", "/api/v1/user").AddTokenAuth(token)
+			resp := MakeRequest(t, req, http.StatusOK)
+
+			// We check the raw JSON, because we want to test the response, not
+			// what it decodes into. Contents doesn't matter, we're testing the
+			// presence only.
+			assert.Contains(t, resp.Body.String(), `"pronouns":`)
+		})
+
+		t.Run("users/{username}", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequest(t, "GET", "/api/v1/users/user2")
+			resp := MakeRequest(t, req, http.StatusOK)
+
+			// We check the raw JSON, because we want to test the response, not
+			// what it decodes into. Contents doesn't matter, we're testing the
+			// presence only.
+			assert.Contains(t, resp.Body.String(), `"pronouns":`)
+		})
+
+		t.Run("user/settings", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			// Set pronouns first
+			pronouns := "they/them"
+			req := NewRequestWithJSON(t, "PATCH", "/api/v1/user/settings", &api.UserSettingsOptions{
+				Pronouns: &pronouns,
+			}).AddTokenAuth(token)
+			resp := MakeRequest(t, req, http.StatusOK)
+
+			// Verify the response
+			var user *api.UserSettings
+			DecodeJSON(t, resp, &user)
+			assert.Equal(t, pronouns, user.Pronouns)
+
+			// Verify retrieving the settings again
+			req = NewRequest(t, "GET", "/api/v1/user/settings").AddTokenAuth(token)
+			resp = MakeRequest(t, req, http.StatusOK)
+
+			DecodeJSON(t, resp, &user)
+			assert.Equal(t, pronouns, user.Pronouns)
+		})
+
+		t.Run("admin/users/{username}", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			// Set the pronouns for user2
+			pronouns := "she/her"
+			req := NewRequestWithJSON(t, "PATCH", "/api/v1/admin/users/user2", &api.EditUserOption{
+				LoginName: "user2",
+				SourceID:  0,
+				Pronouns:  &pronouns,
+			}).AddTokenAuth(adminToken)
+			resp := MakeRequest(t, req, http.StatusOK)
+
+			// Verify the API response
+			var user *api.User
+			DecodeJSON(t, resp, &user)
+			assert.Equal(t, pronouns, user.Pronouns)
+
+			// Verify via user2 too
+			req = NewRequest(t, "GET", "/api/v1/user").AddTokenAuth(token)
+			resp = MakeRequest(t, req, http.StatusOK)
+			DecodeJSON(t, resp, &user)
+			assert.Equal(t, pronouns, user.Pronouns)
+		})
+	})
+
+	t.Run("UI", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// Set the pronouns to a known state via the API
+		pronouns := "she/her"
+		req := NewRequestWithJSON(t, "PATCH", "/api/v1/user/settings", &api.UserSettingsOptions{
+			Pronouns: &pronouns,
+		}).AddTokenAuth(token)
+		MakeRequest(t, req, http.StatusOK)
+
+		t.Run("profile view", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequest(t, "GET", "/user2")
+			resp := MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+
+			userNameAndPronouns := strings.TrimSpace(htmlDoc.Find(".profile-avatar-name .username").Text())
+			assert.Contains(t, userNameAndPronouns, pronouns)
+		})
+
+		t.Run("settings", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequest(t, "GET", "/user/settings")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+
+			// Check that the field is present
+			pronounField, has := htmlDoc.Find(`input[name="pronouns"]`).Attr("value")
+			assert.True(t, has)
+			assert.Equal(t, pronouns, pronounField)
+
+			// Check that updating the field works
+			newPronouns := "they/them"
+			req = NewRequestWithValues(t, "POST", "/user/settings", map[string]string{
+				"_csrf":    GetCSRF(t, session, "/user/settings"),
+				"pronouns": newPronouns,
+			})
+			session.MakeRequest(t, req, http.StatusSeeOther)
+
+			user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: "user2"})
+			assert.Equal(t, newPronouns, user2.Pronouns)
+		})
+
+		t.Run("admin settings", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: "user2"})
+
+			req := NewRequestf(t, "GET", "/admin/users/%d/edit", user2.ID)
+			resp := adminSession.MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+
+			// Check that the pronouns field is present
+			pronounField, has := htmlDoc.Find(`input[name="pronouns"]`).Attr("value")
+			assert.True(t, has)
+			assert.NotEmpty(t, pronounField)
+
+			// Check that updating the field works
+			newPronouns := "it/its"
+			editURI := fmt.Sprintf("/admin/users/%d/edit", user2.ID)
+			req = NewRequestWithValues(t, "POST", editURI, map[string]string{
+				"_csrf":      GetCSRF(t, adminSession, editURI),
+				"login_type": "0-0",
+				"login_name": user2.LoginName,
+				"email":      user2.Email,
+				"pronouns":   newPronouns,
+			})
+			resp = adminSession.MakeRequest(t, req, http.StatusSeeOther)
+
+			user2New := unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: "user2"})
+			assert.Equal(t, newPronouns, user2New.Pronouns)
 		})
 	})
 }
