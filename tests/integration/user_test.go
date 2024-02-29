@@ -583,7 +583,7 @@ func TestUserPronouns(t *testing.T) {
 				"email":      user2.Email,
 				"pronouns":   newPronouns,
 			})
-			resp = adminSession.MakeRequest(t, req, http.StatusSeeOther)
+			adminSession.MakeRequest(t, req, http.StatusSeeOther)
 
 			user2New := unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: "user2"})
 			assert.Equal(t, newPronouns, user2New.Pronouns)
