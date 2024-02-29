@@ -26,7 +26,7 @@ type Tag struct {
 	Type      string
 	Tagger    *Signature
 	Message   string
-	Signature *CommitGPGSignature
+	Signature *ObjectSignature
 }
 
 // Commit return the commit of the tag reference
@@ -74,7 +74,7 @@ l:
 		}
 	}
 
-	extractTagSignature := func(signatureBeginMark, signatureEndMark string) (bool, *CommitGPGSignature, string) {
+	extractTagSignature := func(signatureBeginMark, signatureEndMark string) (bool, *ObjectSignature, string) {
 		idx := strings.LastIndex(tag.Message, signatureBeginMark)
 		if idx == -1 {
 			return false, nil, ""
@@ -85,7 +85,7 @@ l:
 			return false, nil, ""
 		}
 
-		return true, &CommitGPGSignature{
+		return true, &ObjectSignature{
 			Signature: tag.Message[idx+1 : idx+endSigIdx+len(signatureEndMark)],
 			Payload:   string(data[:bytes.LastIndex(data, []byte(signatureBeginMark))+1]),
 		}, tag.Message[:idx+1]

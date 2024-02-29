@@ -13,7 +13,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing/object"
 )
 
-func convertPGPSignature(c *object.Commit) *CommitGPGSignature {
+func convertPGPSignature(c *object.Commit) *ObjectSignature {
 	if c.PGPSignature == "" {
 		return nil
 	}
@@ -51,7 +51,7 @@ func convertPGPSignature(c *object.Commit) *CommitGPGSignature {
 		return nil
 	}
 
-	return &CommitGPGSignature{
+	return &ObjectSignature{
 		Signature: c.PGPSignature,
 		Payload:   w.String(),
 	}

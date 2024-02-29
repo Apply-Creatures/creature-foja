@@ -65,7 +65,7 @@ AAAAQKFeTnxi9ssRqSg+sJcmjAgpgoPq1k5SXm306+mJmkPwvhim8f9Gz6uy1AddPmXaD7
 			Type:    "commit",
 			Tagger:  &Signature{Name: "Jane Doe", Email: "jane.doe@example.com", When: time.Unix(1709146405, 0)},
 			Message: "v0\n",
-			Signature: &CommitGPGSignature{
+			Signature: &ObjectSignature{
 				Signature: `-----BEGIN SSH SIGNATURE-----
 U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgvD4pK7baygXxoWoVoKjVEc/xZh
 6w+1FUn5hypFqJXNAAAAADZ2l0AAAAAAAAAAZzaGE1MTIAAABTAAAAC3NzaC1lZDI1NTE5
