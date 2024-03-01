@@ -20,4 +20,10 @@ func TestNaturalSortLess(t *testing.T) {
 	test("a-1-a", "a-1-b", true)
 	test("2", "12", true)
 	test("a", "ab", true)
+
+	// Test for case insensitive.
+	test("A", "ab", true)
+	test("B", "ab", false)
+	test("a", "AB", true)
+	test("b", "AB", false)
 }
