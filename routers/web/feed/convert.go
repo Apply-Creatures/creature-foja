@@ -65,7 +65,7 @@ func renderMarkdown(ctx *context.Context, act *activities_model.Action, content 
 	}
 	markdown, err := markdown.RenderString(markdownCtx, content)
 	if err != nil {
-		return templates.Str2html(content) // old code did so: use Str2html to render in tmpl
+		return templates.SanitizeHTML(content) // old code did so: use SanitizeHTML to render in tmpl
 	}
 	return markdown
 }
@@ -244,7 +244,7 @@ func feedActionsToFeedItems(ctx *context.Context, actions activities_model.Actio
 			}
 		}
 		if len(content) == 0 {
-			content = templates.Str2html(desc)
+			content = templates.SanitizeHTML(desc)
 		}
 
 		// It's a common practice for feed generators to use plain text titles.
