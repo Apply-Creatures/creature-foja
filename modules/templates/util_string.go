@@ -4,6 +4,7 @@
 package templates
 
 import (
+	"fmt"
 	"html/template"
 	"strings"
 
@@ -26,6 +27,19 @@ func (su *StringUtils) HasPrefix(s any, prefix string) bool {
 		return strings.HasPrefix(string(v), prefix)
 	}
 	return false
+}
+
+func (su *StringUtils) ToString(v any) string {
+	switch v := v.(type) {
+	case string:
+		return v
+	case template.HTML:
+		return string(v)
+	case fmt.Stringer:
+		return v.String()
+	default:
+		return fmt.Sprint(v)
+	}
 }
 
 func (su *StringUtils) Contains(s, substr string) bool {
