@@ -589,4 +589,25 @@ func TestUserPronouns(t *testing.T) {
 			assert.Equal(t, newPronouns, user2New.Pronouns)
 		})
 	})
+
+	t.Run("unspecified", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// Set the pronouns to Unspecified (an empty string) via the API
+		pronouns := ""
+		req := NewRequestWithJSON(t, "PATCH", "/api/v1/admin/users/user2", &api.EditUserOption{
+			LoginName: "user2",
+			SourceID:  0,
+			Pronouns:  &pronouns,
+		}).AddTokenAuth(adminToken)
+		MakeRequest(t, req, http.StatusOK)
+
+		// Verify that the profile page does not display any pronouns, nor the separator
+		req = NewRequest(t, "GET", "/user2")
+		resp := MakeRequest(t, req, http.StatusOK)
+		htmlDoc := NewHTMLParser(t, resp.Body)
+
+		userName := strings.TrimSpace(htmlDoc.Find(".profile-avatar-name .username").Text())
+		assert.Contains(t, userName, "user2")
+	})
 }
