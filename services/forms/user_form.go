@@ -234,6 +234,11 @@ type UpdateLanguageForm struct {
 	Language string
 }
 
+// UpdateHintsForm form for updating user hint settings
+type UpdateHintsForm struct {
+	EnableRepoUnitHints bool
+}
+
 // Validate validates the fields
 func (f *UpdateLanguageForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
 	ctx := context.GetValidateContext(req)
