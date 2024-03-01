@@ -891,6 +891,14 @@ func PullRequestCodeOwnersReview(ctx context.Context, pull *Issue, pr *PullReque
 		return nil
 	}
 
+	if err := pull.LoadRepo(ctx); err != nil {
+		return err
+	}
+
+	if pull.Repo.IsFork {
+		return nil
+	}
+
 	if err := pr.LoadBaseRepo(ctx); err != nil {
 		return err
 	}

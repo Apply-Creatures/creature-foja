@@ -14,6 +14,7 @@ import (
 	"time"
 
 	issues_model "code.gitea.io/gitea/models/issues"
+	repo_model "code.gitea.io/gitea/models/repo"
 	unit_model "code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
@@ -42,9 +43,9 @@ func TestCodeOwner(t *testing.T) {
 
 		dstPath := t.TempDir()
 		r := fmt.Sprintf("%suser2/%s.git", u.String(), repo.Name)
-		u, _ = url.Parse(r)
-		u.User = url.UserPassword("user2", userPassword)
-		assert.NoError(t, git.CloneWithArgs(context.Background(), nil, u.String(), dstPath, git.CloneRepoOptions{}))
+		cloneURL, _ := url.Parse(r)
+		cloneURL.User = url.UserPassword("user2", userPassword)
+		assert.NoError(t, git.CloneWithArgs(context.Background(), nil, cloneURL.String(), dstPath, git.CloneRepoOptions{}))
 
 		t.Run("Normal", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
@@ -75,6 +76,26 @@ func TestCodeOwner(t *testing.T) {
 
 			pr := unittest.AssertExistsAndLoadBean(t, &issues_model.PullRequest{BaseRepoID: repo.ID, HeadBranch: "user2/codeowner-normal"})
 			unittest.AssertExistsIf(t, true, &issues_model.Review{IssueID: pr.IssueID, Type: issues_model.ReviewTypeRequest, ReviewerID: 5})
+		})
+
+		t.Run("Forked repository", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			session := loginUser(t, "user1")
+			testRepoFork(t, session, user2.Name, repo.Name, "user1", "repo1")
+
+			repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{OwnerName: "user1", Name: "repo1"})
+
+			r := fmt.Sprintf("%suser1/repo1.git", u.String())
+			remoteURL, _ := url.Parse(r)
+			remoteURL.User = url.UserPassword("user2", userPassword)
+			doGitAddRemote(dstPath, "forked", remoteURL)(t)
+
+			err := git.NewCommand(git.DefaultContext, "push", "forked", "HEAD:refs/for/main", "-o", "topic=codeowner-forked").Run(&git.RunOpts{Dir: dstPath})
+			assert.NoError(t, err)
+
+			pr := unittest.AssertExistsAndLoadBean(t, &issues_model.PullRequest{BaseRepoID: repo.ID, HeadBranch: "user2/codeowner-forked"})
+			unittest.AssertExistsIf(t, false, &issues_model.Review{IssueID: pr.IssueID, Type: issues_model.ReviewTypeRequest, ReviewerID: 5})
 		})
 
 		t.Run("Out of date", func(t *testing.T) {
