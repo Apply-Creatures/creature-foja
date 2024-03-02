@@ -25,6 +25,8 @@ type UploadRepoFileOptions struct {
 	NewBranch    string
 	TreePath     string
 	Message      string
+	Author       *IdentityOptions
+	Committer    *IdentityOptions
 	Files        []string // In UUID format.
 	Signoff      bool
 }
@@ -128,9 +130,7 @@ func UploadRepoFiles(ctx context.Context, repo *repo_model.Repository, doer *use
 		return err
 	}
 
-	// make author and committer the doer
-	author := doer
-	committer := doer
+	author, committer := GetAuthorAndCommitterUsers(opts.Author, opts.Committer, doer)
 
 	// Now commit the tree
 	commitHash, err := t.CommitTree(opts.LastCommitID, author, committer, treeHash, opts.Message, opts.Signoff)

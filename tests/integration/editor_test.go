@@ -4,7 +4,10 @@
 package integration
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -21,6 +24,7 @@ import (
 	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateFile(t *testing.T) {
@@ -183,135 +187,316 @@ func TestEditFileToNewBranch(t *testing.T) {
 	})
 }
 
-func TestEditFileCommitMail(t *testing.T) {
+func TestCommitMail(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, _ *url.URL) {
 		user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+		// Require that the user has KeepEmailPrivate enabled, because it needs
+		// to be tested that even with this setting enabled, it will use the
+		// provided mail and not revert to the placeholder one.
+		assert.True(t, user.KeepEmailPrivate)
 
-		session := loginUser(t, user.Name)
-		link := path.Join("user2", "repo1", "_edit", "master", "README.md")
+		inactivatedMail := unittest.AssertExistsAndLoadBean(t, &user_model.EmailAddress{ID: 35, UID: user.ID})
+		assert.False(t, inactivatedMail.IsActivated)
 
-		lastCommitAndCSRF := func() (string, string) {
-			req := NewRequest(t, "GET", link)
-			resp := session.MakeRequest(t, req, http.StatusOK)
+		otherEmail := unittest.AssertExistsAndLoadBean(t, &user_model.EmailAddress{ID: 1, IsActivated: true})
+		assert.NotEqualValues(t, otherEmail.UID, user.ID)
 
-			htmlDoc := NewHTMLParser(t, resp.Body)
-			lastCommit := htmlDoc.GetInputValueByName("last_commit")
-			assert.NotEmpty(t, lastCommit)
-
-			return lastCommit, htmlDoc.GetCSRF()
-		}
-
-		t.Run("Not activated", func(t *testing.T) {
-			defer tests.PrintCurrentTest(t)()
-
-			email := unittest.AssertExistsAndLoadBean(t, &user_model.EmailAddress{ID: 35, UID: user.ID})
-			assert.False(t, email.IsActivated)
-
-			lastCommit, csrf := lastCommitAndCSRF()
-			req := NewRequestWithValues(t, "POST", link, map[string]string{
-				"_csrf":          csrf,
-				"last_commit":    lastCommit,
-				"tree_path":      "README.md",
-				"content":        "new_content",
-				"commit_choice":  "direct",
-				"commit_mail_id": fmt.Sprintf("%d", email.ID),
-			})
-			resp := session.MakeRequest(t, req, http.StatusOK)
-
-			htmlDoc := NewHTMLParser(t, resp.Body)
-			assert.Contains(t,
-				htmlDoc.doc.Find(".ui.negative.message").Text(),
-				translation.NewLocale("en-US").Tr("repo.editor.invalid_commit_mail"),
-			)
-		})
-
-		t.Run("Not belong to user", func(t *testing.T) {
-			defer tests.PrintCurrentTest(t)()
-
-			email := unittest.AssertExistsAndLoadBean(t, &user_model.EmailAddress{ID: 1, IsActivated: true})
-			assert.NotEqualValues(t, email.UID, user.ID)
-
-			lastCommit, csrf := lastCommitAndCSRF()
-			req := NewRequestWithValues(t, "POST", link, map[string]string{
-				"_csrf":          csrf,
-				"last_commit":    lastCommit,
-				"tree_path":      "README.md",
-				"content":        "new_content",
-				"commit_choice":  "direct",
-				"commit_mail_id": fmt.Sprintf("%d", email.ID),
-			})
-			resp := session.MakeRequest(t, req, http.StatusOK)
-
-			htmlDoc := NewHTMLParser(t, resp.Body)
-			assert.Contains(t,
-				htmlDoc.doc.Find(".ui.negative.message").Text(),
-				translation.NewLocale("en-US").Tr("repo.editor.invalid_commit_mail"),
-			)
-		})
+		primaryEmail := unittest.AssertExistsAndLoadBean(t, &user_model.EmailAddress{ID: 3, UID: user.ID, IsActivated: true})
 
 		repo1 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
 		gitRepo, _ := git.OpenRepository(git.DefaultContext, repo1.RepoPath())
 		defer gitRepo.Close()
 
-		t.Run("Placeholder mail", func(t *testing.T) {
-			defer tests.PrintCurrentTest(t)()
+		session := loginUser(t, user.Name)
 
-			lastCommit, csrf := lastCommitAndCSRF()
-			req := NewRequestWithValues(t, "POST", link, map[string]string{
-				"_csrf":          csrf,
-				"last_commit":    lastCommit,
-				"tree_path":      "README.md",
-				"content":        "authored by placeholder mail",
-				"commit_choice":  "direct",
-				"commit_mail_id": "-1",
+		lastCommitAndCSRF := func(t *testing.T, link string, skipLastCommit bool) (string, string) {
+			t.Helper()
+
+			req := NewRequest(t, "GET", link)
+			resp := session.MakeRequest(t, req, http.StatusOK)
+
+			htmlDoc := NewHTMLParser(t, resp.Body)
+			lastCommit := htmlDoc.GetInputValueByName("last_commit")
+			if !skipLastCommit {
+				assert.NotEmpty(t, lastCommit)
+			}
+
+			return lastCommit, htmlDoc.GetCSRF()
+		}
+
+		type caseOpts struct {
+			link           string
+			fileName       string
+			base           map[string]string
+			skipLastCommit bool
+		}
+
+		// Base2 should have different content, so we can test two 'correct' operations
+		// without the second becoming a noop because no content was changed. If needed,
+		// link2 can point to a new file that's used with base2.
+		assertCase := func(t *testing.T, case1, case2 caseOpts) {
+			t.Helper()
+
+			t.Run("Not activated", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				lastCommit, csrf := lastCommitAndCSRF(t, case1.link, case1.skipLastCommit)
+				baseCopy := case1.base
+				baseCopy["_csrf"] = csrf
+				baseCopy["last_commit"] = lastCommit
+				baseCopy["commit_mail_id"] = fmt.Sprintf("%d", inactivatedMail.ID)
+
+				req := NewRequestWithValues(t, "POST", case1.link, baseCopy)
+				resp := session.MakeRequest(t, req, http.StatusOK)
+
+				htmlDoc := NewHTMLParser(t, resp.Body)
+				assert.Contains(t,
+					htmlDoc.doc.Find(".ui.negative.message").Text(),
+					translation.NewLocale("en-US").Tr("repo.editor.invalid_commit_mail"),
+				)
 			})
-			session.MakeRequest(t, req, http.StatusSeeOther)
 
-			commit, err := gitRepo.GetCommitByPath("README.md")
-			assert.NoError(t, err)
+			t.Run("Not belong to user", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
 
-			fileContent, err := commit.GetFileContent("README.md", 64)
-			assert.NoError(t, err)
-			assert.EqualValues(t, "authored by placeholder mail", fileContent)
+				lastCommit, csrf := lastCommitAndCSRF(t, case1.link, case1.skipLastCommit)
+				baseCopy := case1.base
+				baseCopy["_csrf"] = csrf
+				baseCopy["last_commit"] = lastCommit
+				baseCopy["commit_mail_id"] = fmt.Sprintf("%d", otherEmail.ID)
 
-			assert.EqualValues(t, "user2", commit.Author.Name)
-			assert.EqualValues(t, "user2@noreply.example.org", commit.Author.Email)
-			assert.EqualValues(t, "user2", commit.Committer.Name)
-			assert.EqualValues(t, "user2@noreply.example.org", commit.Committer.Email)
+				req := NewRequestWithValues(t, "POST", case1.link, baseCopy)
+				resp := session.MakeRequest(t, req, http.StatusOK)
+
+				htmlDoc := NewHTMLParser(t, resp.Body)
+				assert.Contains(t,
+					htmlDoc.doc.Find(".ui.negative.message").Text(),
+					translation.NewLocale("en-US").Tr("repo.editor.invalid_commit_mail"),
+				)
+			})
+
+			t.Run("Placeholder mail", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				lastCommit, csrf := lastCommitAndCSRF(t, case1.link, case1.skipLastCommit)
+				baseCopy := case1.base
+				baseCopy["_csrf"] = csrf
+				baseCopy["last_commit"] = lastCommit
+				baseCopy["commit_mail_id"] = "-1"
+
+				req := NewRequestWithValues(t, "POST", case1.link, baseCopy)
+				session.MakeRequest(t, req, http.StatusSeeOther)
+				if !case2.skipLastCommit {
+					newlastCommit, _ := lastCommitAndCSRF(t, case1.link, false)
+					assert.NotEqualValues(t, newlastCommit, lastCommit)
+				}
+
+				commit, err := gitRepo.GetCommitByPath(case1.fileName)
+				assert.NoError(t, err)
+
+				assert.EqualValues(t, "user2", commit.Author.Name)
+				assert.EqualValues(t, "user2@noreply.example.org", commit.Author.Email)
+				assert.EqualValues(t, "user2", commit.Committer.Name)
+				assert.EqualValues(t, "user2@noreply.example.org", commit.Committer.Email)
+			})
+
+			t.Run("Normal", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				lastCommit, csrf := lastCommitAndCSRF(t, case2.link, case2.skipLastCommit)
+				baseCopy := case2.base
+				baseCopy["_csrf"] = csrf
+				baseCopy["last_commit"] = lastCommit
+				baseCopy["commit_mail_id"] = fmt.Sprintf("%d", primaryEmail.ID)
+
+				req := NewRequestWithValues(t, "POST", case2.link, baseCopy)
+				session.MakeRequest(t, req, http.StatusSeeOther)
+				if !case2.skipLastCommit {
+					newlastCommit, _ := lastCommitAndCSRF(t, case2.link, false)
+					assert.NotEqualValues(t, newlastCommit, lastCommit)
+				}
+
+				commit, err := gitRepo.GetCommitByPath(case2.fileName)
+				assert.NoError(t, err)
+
+				assert.EqualValues(t, "user2", commit.Author.Name)
+				assert.EqualValues(t, primaryEmail.Email, commit.Author.Email)
+				assert.EqualValues(t, "user2", commit.Committer.Name)
+				assert.EqualValues(t, primaryEmail.Email, commit.Committer.Email)
+			})
+		}
+
+		t.Run("New", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			assertCase(t, caseOpts{
+				fileName: "new_file",
+				link:     "user2/repo1/_new/master",
+				base: map[string]string{
+					"tree_path":     "new_file",
+					"content":       "new_content",
+					"commit_choice": "direct",
+				},
+			}, caseOpts{
+				fileName: "new_file_2",
+				link:     "user2/repo1/_new/master",
+				base: map[string]string{
+					"tree_path":     "new_file_2",
+					"content":       "new_content",
+					"commit_choice": "direct",
+				},
+			},
+			)
 		})
 
-		t.Run("Normal", func(t *testing.T) {
+		t.Run("Edit", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			assertCase(t, caseOpts{
+				fileName: "README.md",
+				link:     "user2/repo1/_edit/master/README.md",
+				base: map[string]string{
+					"tree_path":     "README.md",
+					"content":       "Edit content",
+					"commit_choice": "direct",
+				},
+			}, caseOpts{
+				fileName: "README.md",
+				link:     "user2/repo1/_edit/master/README.md",
+				base: map[string]string{
+					"tree_path":     "README.md",
+					"content":       "Other content",
+					"commit_choice": "direct",
+				},
+			},
+			)
+		})
+
+		t.Run("Delete", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			assertCase(t, caseOpts{
+				fileName: "new_file",
+				link:     "user2/repo1/_delete/master/new_file",
+				base: map[string]string{
+					"commit_choice": "direct",
+				},
+			}, caseOpts{
+				fileName: "new_file_2",
+				link:     "user2/repo1/_delete/master/new_file_2",
+				base: map[string]string{
+					"commit_choice": "direct",
+				},
+			},
+			)
+		})
+
+		t.Run("Upload", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
-			// Require that the user has KeepEmailPrivate enabled, because it needs
-			// to be tested that even with this setting enabled, it will use the
-			// provided mail and not revert to the placeholder one.
-			assert.True(t, user.KeepEmailPrivate)
+			// Upload two seperate times, so we have two different 'uploads' that can
+			// be used indepently of each other.
+			uploadFile := func(t *testing.T, name, content string) string {
+				t.Helper()
 
-			email := unittest.AssertExistsAndLoadBean(t, &user_model.EmailAddress{ID: 3, UID: user.ID, IsActivated: true})
+				body := &bytes.Buffer{}
+				mpForm := multipart.NewWriter(body)
+				err := mpForm.WriteField("_csrf", GetCSRF(t, session, "/user2/repo1/_upload/master"))
+				require.NoError(t, err)
 
-			lastCommit, csrf := lastCommitAndCSRF()
-			req := NewRequestWithValues(t, "POST", link, map[string]string{
-				"_csrf":          csrf,
-				"last_commit":    lastCommit,
-				"tree_path":      "README.md",
-				"content":        "authored by activated mail",
-				"commit_choice":  "direct",
-				"commit_mail_id": fmt.Sprintf("%d", email.ID),
+				file, err := mpForm.CreateFormFile("file", name)
+				require.NoError(t, err)
+
+				io.Copy(file, bytes.NewBufferString(content))
+				require.NoError(t, mpForm.Close())
+
+				req := NewRequestWithBody(t, "POST", "/user2/repo1/upload-file", body)
+				req.Header.Add("Content-Type", mpForm.FormDataContentType())
+				resp := session.MakeRequest(t, req, http.StatusOK)
+
+				respMap := map[string]string{}
+				DecodeJSON(t, resp, &respMap)
+				return respMap["uuid"]
+			}
+
+			file1UUID := uploadFile(t, "upload_file_1", "Uploaded a file!")
+			file2UUID := uploadFile(t, "upload_file_2", "Uploaded another file!")
+
+			assertCase(t, caseOpts{
+				fileName:       "upload_file_1",
+				link:           "user2/repo1/_upload/master",
+				skipLastCommit: true,
+				base: map[string]string{
+					"commit_choice": "direct",
+					"files":         file1UUID,
+				},
+			}, caseOpts{
+				fileName:       "upload_file_2",
+				link:           "user2/repo1/_upload/master",
+				skipLastCommit: true,
+				base: map[string]string{
+					"commit_choice": "direct",
+					"files":         file2UUID,
+				},
+			},
+			)
+		})
+
+		t.Run("Apply patch", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			assertCase(t, caseOpts{
+				fileName: "diff-file-1.txt",
+				link:     "user2/repo1/_diffpatch/master",
+				base: map[string]string{
+					"tree_path":     "patch",
+					"commit_choice": "direct",
+					"content": `diff --git a/diff-file-1.txt b/diff-file-1.txt
+new file mode 100644
+index 0000000000..50fcd26d6c
+--- /dev/null
++++ b/diff-file-1.txt
+@@ -0,0 +1 @@
++File 1
+`,
+				},
+			}, caseOpts{
+				fileName: "diff-file-2.txt",
+				link:     "user2/repo1/_diffpatch/master",
+				base: map[string]string{
+					"tree_path":     "patch",
+					"commit_choice": "direct",
+					"content": `diff --git a/diff-file-2.txt b/diff-file-2.txt
+new file mode 100644
+index 0000000000..4475433e27
+--- /dev/null
++++ b/diff-file-2.txt
+@@ -0,0 +1 @@
++File 2
+`,
+				},
 			})
-			session.MakeRequest(t, req, http.StatusSeeOther)
+		})
 
-			commit, err := gitRepo.GetCommitByPath("README.md")
+		t.Run("Cherry pick", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			commitID1, err := gitRepo.GetCommitByPath("diff-file-1.txt")
+			assert.NoError(t, err)
+			commitID2, err := gitRepo.GetCommitByPath("diff-file-2.txt")
 			assert.NoError(t, err)
 
-			fileContent, err := commit.GetFileContent("README.md", 64)
-			assert.NoError(t, err)
-			assert.EqualValues(t, "authored by activated mail", fileContent)
-
-			assert.EqualValues(t, "user2", commit.Author.Name)
-			assert.EqualValues(t, email.Email, commit.Author.Email)
-			assert.EqualValues(t, "user2", commit.Committer.Name)
-			assert.EqualValues(t, email.Email, commit.Committer.Email)
+			assertCase(t, caseOpts{
+				fileName: "diff-file-1.txt",
+				link:     "user2/repo1/_cherrypick/" + commitID1.ID.String() + "/master",
+				base: map[string]string{
+					"commit_choice": "direct",
+					"revert":        "true",
+				},
+			}, caseOpts{
+				fileName: "diff-file-2.txt",
+				link:     "user2/repo1/_cherrypick/" + commitID2.ID.String() + "/master",
+				base: map[string]string{
+					"commit_choice": "direct",
+					"revert":        "true",
+				},
+			})
 		})
 	})
 }

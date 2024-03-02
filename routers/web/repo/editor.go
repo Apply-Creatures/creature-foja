@@ -121,6 +121,18 @@ func getSelectableEmailAddresses(ctx *context.Context) ([]*user_model.ActivatedE
 	return commitEmails, nil
 }
 
+// CommonEditorData sets common context data that is used by the editor.
+func CommonEditorData(ctx *context.Context) {
+	// Set context for selectable email addresses.
+	commitEmails, err := getSelectableEmailAddresses(ctx)
+	if err != nil {
+		ctx.ServerError("getSelectableEmailAddresses", err)
+		return
+	}
+	ctx.Data["CommitMails"] = commitEmails
+	ctx.Data["DefaultCommitMail"] = ctx.Doer.GetEmail()
+}
+
 func editFile(ctx *context.Context, isNewFile bool) {
 	ctx.Data["PageIsEdit"] = true
 	ctx.Data["IsNewFile"] = isNewFile
@@ -196,12 +208,6 @@ func editFile(ctx *context.Context, isNewFile bool) {
 		treeNames = append(treeNames, fileName)
 	}
 
-	commitEmails, err := getSelectableEmailAddresses(ctx)
-	if err != nil {
-		ctx.ServerError("getSelectableEmailAddresses", err)
-		return
-	}
-
 	ctx.Data["TreeNames"] = treeNames
 	ctx.Data["TreePaths"] = treePaths
 	ctx.Data["BranchLink"] = ctx.Repo.RepoLink + "/src/" + ctx.Repo.BranchNameSubURL()
@@ -217,8 +223,6 @@ func editFile(ctx *context.Context, isNewFile bool) {
 	ctx.Data["PreviewableExtensions"] = strings.Join(markup.PreviewableExtensions(), ",")
 	ctx.Data["LineWrapExtensions"] = strings.Join(setting.Repository.Editor.LineWrapExtensions, ",")
 	ctx.Data["EditorconfigJson"] = GetEditorConfig(ctx, treePath)
-	ctx.Data["CommitMails"] = commitEmails
-	ctx.Data["DefaultCommitMail"] = ctx.Doer.GetEmail()
 
 	ctx.HTML(http.StatusOK, tplEditFile)
 }
@@ -254,12 +258,6 @@ func editFilePost(ctx *context.Context, form forms.EditRepoFileForm, isNewFile b
 		branchName = form.NewBranchName
 	}
 
-	commitEmails, err := getSelectableEmailAddresses(ctx)
-	if err != nil {
-		ctx.ServerError("getSelectableEmailAddresses", err)
-		return
-	}
-
 	ctx.Data["PageIsEdit"] = true
 	ctx.Data["PageHasPosted"] = true
 	ctx.Data["IsNewFile"] = isNewFile
@@ -276,8 +274,6 @@ func editFilePost(ctx *context.Context, form forms.EditRepoFileForm, isNewFile b
 	ctx.Data["PreviewableExtensions"] = strings.Join(markup.PreviewableExtensions(), ",")
 	ctx.Data["LineWrapExtensions"] = strings.Join(setting.Repository.Editor.LineWrapExtensions, ",")
 	ctx.Data["EditorconfigJson"] = GetEditorConfig(ctx, form.TreePath)
-	ctx.Data["CommitMails"] = commitEmails
-	ctx.Data["DefaultCommitMail"] = ctx.Doer.GetEmail()
 
 	if ctx.HasError() {
 		ctx.HTML(http.StatusOK, tplEditFile)
@@ -312,28 +308,9 @@ func editFilePost(ctx *context.Context, form forms.EditRepoFileForm, isNewFile b
 		operation = "create"
 	}
 
-	gitIdentity := &files_service.IdentityOptions{
-		Name: ctx.Doer.Name,
-	}
-
-	// -1 is defined as placeholder email.
-	if form.CommitMailID == -1 {
-		gitIdentity.Email = ctx.Doer.GetPlaceholderEmail()
-	} else {
-		// Check if the given email is activated.
-		email, err := user_model.GetEmailAddressByID(ctx, ctx.Doer.ID, form.CommitMailID)
-		if err != nil {
-			ctx.ServerError("GetEmailAddressByID", err)
-			return
-		}
-
-		if email == nil || !email.IsActivated {
-			ctx.Data["Err_CommitMailID"] = true
-			ctx.RenderWithErr(ctx.Tr("repo.editor.invalid_commit_mail"), tplEditFile, &form)
-			return
-		}
-
-		gitIdentity.Email = email.Email
+	gitIdentity := getGitIdentity(ctx, form.CommitMailID, tplEditFile, form)
+	if ctx.Written() {
+		return
 	}
 
 	if _, err := files_service.ChangeRepoFiles(ctx, ctx.Repo.Repository, ctx.Doer, &files_service.ChangeRepoFilesOptions{
@@ -550,6 +527,11 @@ func DeleteFilePost(ctx *context.Context) {
 		message += "\n\n" + form.CommitMessage
 	}
 
+	gitIdentity := getGitIdentity(ctx, form.CommitMailID, tplDeleteFile, &form)
+	if ctx.Written() {
+		return
+	}
+
 	if _, err := files_service.ChangeRepoFiles(ctx, ctx.Repo.Repository, ctx.Doer, &files_service.ChangeRepoFilesOptions{
 		LastCommitID: form.LastCommit,
 		OldBranch:    ctx.Repo.BranchName,
@@ -560,8 +542,10 @@ func DeleteFilePost(ctx *context.Context) {
 				TreePath:  ctx.Repo.TreePath,
 			},
 		},
-		Message: message,
-		Signoff: form.Signoff,
+		Message:   message,
+		Signoff:   form.Signoff,
+		Author:    gitIdentity,
+		Committer: gitIdentity,
 	}); err != nil {
 		// This is where we handle all the errors thrown by repofiles.DeleteRepoFile
 		if git.IsErrNotExist(err) || models.IsErrRepoFileDoesNotExist(err) {
@@ -760,6 +744,11 @@ func UploadFilePost(ctx *context.Context) {
 		message += "\n\n" + form.CommitMessage
 	}
 
+	gitIdentity := getGitIdentity(ctx, form.CommitMailID, tplUploadFile, &form)
+	if ctx.Written() {
+		return
+	}
+
 	if err := files_service.UploadRepoFiles(ctx, ctx.Repo.Repository, ctx.Doer, &files_service.UploadRepoFileOptions{
 		LastCommitID: ctx.Repo.CommitID,
 		OldBranch:    oldBranchName,
@@ -768,6 +757,8 @@ func UploadFilePost(ctx *context.Context) {
 		Message:      message,
 		Files:        form.Files,
 		Signoff:      form.Signoff,
+		Author:       gitIdentity,
+		Committer:    gitIdentity,
 	}); err != nil {
 		if git_model.IsErrLFSFileLocked(err) {
 			ctx.Data["Err_TreePath"] = true
@@ -937,4 +928,34 @@ func GetClosestParentWithFiles(treePath string, commit *git.Commit) string {
 		return GetClosestParentWithFiles(path.Dir(treePath), commit)
 	}
 	return treePath
+}
+
+// getGitIdentity returns the Git identity that should be used for an Git
+// operation, that takes into account an user's specified email.
+func getGitIdentity(ctx *context.Context, commitMailID int64, tpl base.TplName, form any) *files_service.IdentityOptions {
+	gitIdentity := &files_service.IdentityOptions{
+		Name: ctx.Doer.Name,
+	}
+
+	// -1 is defined as placeholder email.
+	if commitMailID == -1 {
+		gitIdentity.Email = ctx.Doer.GetPlaceholderEmail()
+	} else {
+		// Check if the given email is activated.
+		email, err := user_model.GetEmailAddressByID(ctx, ctx.Doer.ID, commitMailID)
+		if err != nil {
+			ctx.ServerError("GetEmailAddressByID", err)
+			return nil
+		}
+
+		if email == nil || !email.IsActivated {
+			ctx.Data["Err_CommitMailID"] = true
+			ctx.RenderWithErr(ctx.Tr("repo.editor.invalid_commit_mail"), tplEditFile, form)
+			return nil
+		}
+
+		gitIdentity.Email = email.Email
+	}
+
+	return gitIdentity
 }
