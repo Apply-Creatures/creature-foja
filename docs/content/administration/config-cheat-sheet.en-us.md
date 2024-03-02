@@ -518,7 +518,9 @@ And the following unique queues:
 
 - `DEFAULT_EMAIL_NOTIFICATIONS`: **enabled**: Default configuration for email notifications for users (user configurable). Options: enabled, onmention, disabled
 - `DISABLE_REGULAR_ORG_CREATION`: **false**: Disallow regular (non-admin) users from creating organizations.
-- `SEND_NOTIFICATION_EMAIL_ON_NEW_USER`: **false**: Send an email to all admins when a new user signs up to inform the admins about this act.
+- `USER_DISABLED_FEATURES`: **_empty_** Disabled features for users, could be `deletion`, `manage_gpg_keys` and more features can be added in future.
+  - `deletion`: User cannot delete their own account.
+  - `manage_gpg_keys`: User cannot configure gpg keys
 
 ## Security (`security`)
 
