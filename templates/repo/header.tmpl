@@ -177,7 +177,7 @@
 							{{svg "octicon-diff-added"}} {{ctx.Locale.Tr "repo.settings.units.add_more"}}
 						</a>
 					{{end}}
-					<a class="{{if .PageIsRepoSettings}}active {{end}} item" href="{{.RepoLink}}/settings">
+					<a class="{{if and .PageIsRepoSettings (not .PageIsRepoSettingsUnits)}}active {{end}} item" href="{{.RepoLink}}/settings">
 						{{svg "octicon-tools"}} {{ctx.Locale.Tr "repo.settings"}}
 					</a>
 				{{end}}
