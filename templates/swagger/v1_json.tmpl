@@ -12828,7 +12828,8 @@
       },
       "post": {
         "consumes": [
-          "multipart/form-data"
+          "multipart/form-data",
+          "application/octet-stream"
         ],
         "produces": [
           "application/json"
@@ -12871,8 +12872,7 @@
             "type": "file",
             "description": "attachment to upload",
             "name": "attachment",
-            "in": "formData",
-            "required": true
+            "in": "formData"
           }
         ],
         "responses": {
