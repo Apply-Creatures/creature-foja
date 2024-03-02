@@ -24,7 +24,6 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
-	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/routers/api/v1/utils"
 	"code.gitea.io/gitea/services/context"
@@ -124,14 +123,14 @@ func SearchIssues(ctx *context.APIContext) {
 		return
 	}
 
-	var isClosed util.OptionalBool
+	var isClosed optional.Option[bool]
 	switch ctx.FormString("state") {
 	case "closed":
-		isClosed = util.OptionalBoolTrue
+		isClosed = optional.Some(true)
 	case "all":
-		isClosed = util.OptionalBoolNone
+		isClosed = optional.None[bool]()
 	default:
-		isClosed = util.OptionalBoolFalse
+		isClosed = optional.Some(false)
 	}
 
 	var (
@@ -206,14 +205,14 @@ func SearchIssues(ctx *context.APIContext) {
 		keyword = ""
 	}
 
-	var isPull util.OptionalBool
+	var isPull optional.Option[bool]
 	switch ctx.FormString("type") {
 	case "pulls":
-		isPull = util.OptionalBoolTrue
+		isPull = optional.Some(true)
 	case "issues":
-		isPull = util.OptionalBoolFalse
+		isPull = optional.Some(false)
 	default:
-		isPull = util.OptionalBoolNone
+		isPull = optional.None[bool]()
 	}
 
 	var includedAnyLabels []int64
@@ -398,14 +397,14 @@ func ListIssues(ctx *context.APIContext) {
 		return
 	}
 
-	var isClosed util.OptionalBool
+	var isClosed optional.Option[bool]
 	switch ctx.FormString("state") {
 	case "closed":
-		isClosed = util.OptionalBoolTrue
+		isClosed = optional.Some(true)
 	case "all":
-		isClosed = util.OptionalBoolNone
+		isClosed = optional.None[bool]()
 	default:
-		isClosed = util.OptionalBoolFalse
+		isClosed = optional.Some(false)
 	}
 
 	keyword := ctx.FormTrim("q")
@@ -454,31 +453,29 @@ func ListIssues(ctx *context.APIContext) {
 
 	listOptions := utils.GetListOptions(ctx)
 
-	var isPull util.OptionalBool
+	isPull := optional.None[bool]()
 	switch ctx.FormString("type") {
 	case "pulls":
-		isPull = util.OptionalBoolTrue
+		isPull = optional.Some(true)
 	case "issues":
-		isPull = util.OptionalBoolFalse
-	default:
-		isPull = util.OptionalBoolNone
+		isPull = optional.Some(false)
 	}
 
-	if isPull != util.OptionalBoolNone && !ctx.Repo.CanReadIssuesOrPulls(isPull.IsTrue()) {
+	if isPull.Has() && !ctx.Repo.CanReadIssuesOrPulls(isPull.Value()) {
 		ctx.NotFound()
 		return
 	}
 
-	if isPull == util.OptionalBoolNone {
+	if !isPull.Has() {
 		canReadIssues := ctx.Repo.CanRead(unit.TypeIssues)
 		canReadPulls := ctx.Repo.CanRead(unit.TypePullRequests)
 		if !canReadIssues && !canReadPulls {
 			ctx.NotFound()
 			return
 		} else if !canReadIssues {
-			isPull = util.OptionalBoolTrue
+			isPull = optional.Some(true)
 		} else if !canReadPulls {
-			isPull = util.OptionalBoolFalse
+			isPull = optional.Some(false)
 		}
 	}
 
