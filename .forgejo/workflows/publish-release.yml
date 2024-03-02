@@ -42,16 +42,19 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: copy & sign
-        uses: https://code.forgejo.org/forgejo/forgejo-build-publish/publish@v1
+        uses: https://code.forgejo.org/forgejo/forgejo-build-publish/publish@v4
         with:
-          forgejo: ${{ vars.FORGEJO }}
+          from-forgejo: ${{ vars.FORGEJO }}
+          to-forgejo: ${{ vars.FORGEJO }}
           from-owner: ${{ vars.FROM_OWNER }}
           to-owner: ${{ vars.TO_OWNER }}
           repo: ${{ vars.REPO }}
-          ref-name: ${{ github.ref_name }}
           release-notes: "See https://codeberg.org/forgejo/forgejo/src/branch/forgejo/RELEASE-NOTES.md#{ANCHOR}"
-          doer: ${{ vars.DOER }}
-          token: ${{ secrets.TOKEN }}
+          ref-name: ${{ github.ref_name }}
+          sha: ${{ github.sha }}
+          from-token: ${{ secrets.TOKEN }}
+          to-doer: ${{ vars.DOER }}
+          to-token: ${{ secrets.TOKEN }}
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
           verbose: ${{ vars.VERBOSE }}
