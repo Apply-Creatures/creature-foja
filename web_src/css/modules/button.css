@@ -1,14 +1,14 @@
 /* this contains override styles for buttons and related elements */
 
 /* these styles changed the Fomantic UI's rules, Fomantic UI expects only "basic" buttons have borders */
-.ui.button,
-.ui.button:focus {
+.ui.button {
   background: var(--color-button);
   border: 1px solid var(--color-light-border);
   color: var(--color-text);
 }
 
-.ui.button:hover {
+.ui.button:hover,
+.ui.button:focus {
   background: var(--color-hover);
   color: var(--color-text);
 }
@@ -20,13 +20,15 @@
 .ui.active.button,
 .ui.button:active,
 .ui.active.button:active,
-.ui.active.button:hover {
+.ui.active.button:hover,
+.ui.active.button:focus {
   background: var(--color-active);
   color: var(--color-text);
 }
 
 .delete-button,
-.delete-button:hover {
+.delete-button:hover,
+.delete-button:focus {
   color: var(--color-red);
 }
 
@@ -87,15 +89,15 @@ It needs some tricks to tweak the left/right borders with active state */
 
 .ui.labeled.button.disabled > .button,
 .ui.basic.buttons .button,
-.ui.basic.button,
-.ui.basic.buttons .button:focus,
-.ui.basic.button:focus {
+.ui.basic.button {
   color: var(--color-text-light);
   background: var(--color-button);
 }
 
 .ui.basic.buttons .button:hover,
-.ui.basic.button:hover {
+.ui.basic.button:hover,
+.ui.basic.buttons .button:focus,
+.ui.basic.button:focus {
   color: var(--color-text);
   background: var(--color-hover);
 }
@@ -105,7 +107,9 @@ It needs some tricks to tweak the left/right borders with active state */
 .ui.basic.buttons .active.button,
 .ui.basic.active.button,
 .ui.basic.buttons .active.button:hover,
-.ui.basic.active.button:hover {
+.ui.basic.active.button:hover,
+.ui.basic.buttons .active.button:focus,
+.ui.basic.active.button:focus {
   color: var(--color-text);
   background: var(--color-active);
 }
@@ -124,15 +128,15 @@ It needs some tricks to tweak the left/right borders with active state */
 .ui.primary.labels .label,
 .ui.ui.ui.primary.label,
 .ui.primary.button,
-.ui.primary.buttons .button,
-.ui.primary.button:focus,
-.ui.primary.buttons .button:focus {
+.ui.primary.buttons .button {
   background: var(--color-primary);
   color: var(--color-primary-contrast);
 }
 
 .ui.primary.button:hover,
-.ui.primary.buttons .button:hover {
+.ui.primary.buttons .button:hover,
+.ui.primary.button:focus,
+.ui.primary.buttons .button:focus {
   background: var(--color-primary-hover);
   color: var(--color-primary-contrast);
 }
@@ -143,15 +147,15 @@ It needs some tricks to tweak the left/right borders with active state */
 }
 
 .ui.basic.primary.buttons .button,
-.ui.basic.primary.button,
-.ui.basic.primary.buttons .button:focus,
-.ui.basic.primary.button:focus {
+.ui.basic.primary.button{
   color: var(--color-primary);
   border-color: var(--color-primary);
 }
 
 .ui.basic.primary.buttons .button:hover,
-.ui.basic.primary.button:hover {
+.ui.basic.primary.button:hover,
+.ui.basic.primary.buttons .button:focus,
+.ui.basic.primary.button:focus {
   color: var(--color-primary-hover);
   border-color: var(--color-primary-hover);
 }
@@ -184,15 +188,15 @@ It needs some tricks to tweak the left/right borders with active state */
 }
 
 .ui.basic.secondary.buttons .button,
-.ui.basic.secondary.button,
-.ui.basic.secondary.button:focus,
-.ui.basic.secondary.buttons .button:focus {
+.ui.basic.secondary.button {
   color: var(--color-secondary-button);
   border-color: var(--color-secondary-button);
 }
 
 .ui.basic.secondary.buttons .button:hover,
-.ui.basic.secondary.button:hover {
+.ui.basic.secondary.button:hover,
+.ui.basic.secondary.button:focus,
+.ui.basic.secondary.buttons .button:focus {
   color: var(--color-secondary-hover);
   border-color: var(--color-secondary-hover);
 }
@@ -208,14 +212,14 @@ It needs some tricks to tweak the left/right borders with active state */
 .ui.red.labels .label,
 .ui.ui.ui.red.label,
 .ui.red.button,
-.ui.red.buttons .button,
-.ui.red.button:focus,
-.ui.red.buttons .button:focus {
+.ui.red.buttons .button {
   background: var(--color-red);
 }
 
 .ui.red.button:hover,
-.ui.red.buttons .button:hover {
+.ui.red.buttons .button:hover,
+.ui.red.button:focus,
+.ui.red.buttons .button:focus {
   background: var(--color-red-dark-1);
 }
 
@@ -225,15 +229,15 @@ It needs some tricks to tweak the left/right borders with active state */
 }
 
 .ui.basic.red.buttons .button,
-.ui.basic.red.button,
-.ui.basic.red.buttons .button:focus,
-.ui.basic.red.button:focus {
+.ui.basic.red.button {
   color: var(--color-red);
   border-color: var(--color-red);
 }
 
 .ui.basic.red.buttons .button:hover,
-.ui.basic.red.button:hover {
+.ui.basic.red.button:hover,
+.ui.basic.red.buttons .button:focus,
+.ui.basic.red.button:focus {
   color: var(--color-red-dark-1);
   border-color: var(--color-red-dark-1);
 }

@@ -1935,9 +1935,9 @@ table th[data-sortt-desc] .svg {
 }
 
 .ui.secondary.pointing.menu .active.item,
-.ui.secondary.pointing.menu .active.item:hover,
-.ui.secondary.pointing.menu .dropdown.item:hover,
-.ui.secondary.pointing.menu a.item:hover {
+.ui.secondary.pointing.menu .active.item:hover, .ui.secondary.pointing.menu .active.item:focus,
+.ui.secondary.pointing.menu .dropdown.item:hover, .ui.secondary.pointing.menu .dropdown.item:focus,
+.ui.secondary.pointing.menu a.item:hover, .ui.secondary.pointing.menu a.item:focus {
   color: var(--color-text-dark);
 }
 
