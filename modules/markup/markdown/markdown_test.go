@@ -742,7 +742,7 @@ Citation needed[^0].`,
 	for _, test := range testcases {
 		res, err := markdown.RenderString(&markup.RenderContext{Ctx: git.DefaultContext}, test.testcase)
 		assert.NoError(t, err, "Unexpected error in testcase: %q", test.testcase)
-		assert.Equal(t, test.expected, res, "Unexpected result in testcase %q", test.testcase)
+		assert.Equal(t, test.expected, string(res), "Unexpected result in testcase %q", test.testcase)
 	}
 }
 
@@ -1189,7 +1189,7 @@ func TestCustomMarkdownURL(t *testing.T) {
 			},
 		}, input)
 		assert.NoError(t, err)
-		assert.Equal(t, strings.TrimSpace(expected), strings.TrimSpace(buffer))
+		assert.Equal(t, strings.TrimSpace(expected), strings.TrimSpace(string(buffer)))
 	}
 
 	test("[test](abp:subscribe?location=https://codeberg.org/filters.txt&amp;title=joy)",
