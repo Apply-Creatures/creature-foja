@@ -271,8 +271,8 @@ func Printf(format string, args ...any) {
 func AddFixtures(dirs ...string) func() {
 	return unittest.OverrideFixtures(
 		unittest.FixturesOptions{
-			Dir:  filepath.Join(filepath.Dir(setting.AppPath), "models/fixtures/"),
-			Base: filepath.Dir(setting.AppPath),
+			Dir:  filepath.Join(setting.AppWorkPath, "models/fixtures/"),
+			Base: setting.AppWorkPath,
 			Dirs: dirs,
 		},
 	)
