@@ -11,14 +11,13 @@ import (
 
 	"code.gitea.io/gitea/models/db"
 	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
 
 	"github.com/42wim/sshsig"
 )
 
-// ParseCommitWithSSHSignature check if signature is good against keystore.
-func ParseCommitWithSSHSignature(ctx context.Context, c *git.Commit, committer *user_model.User) *CommitVerification {
+// ParseObjectWithSSHSignature check if signature is good against keystore.
+func ParseObjectWithSSHSignature(ctx context.Context, c *GitObject, committer *user_model.User) *ObjectVerification {
 	// Now try to associate the signature with the committer, if present
 	if committer.ID != 0 {
 		keys, err := db.Find[PublicKey](ctx, FindPublicKeyOptions{
@@ -27,7 +26,7 @@ func ParseCommitWithSSHSignature(ctx context.Context, c *git.Commit, committer *
 		})
 		if err != nil { // Skipping failed to get ssh keys of user
 			log.Error("ListPublicKeys: %v", err)
-			return &CommitVerification{
+			return &ObjectVerification{
 				CommittingUser: committer,
 				Verified:       false,
 				Reason:         "gpg.error.failed_retrieval_gpg_keys",
@@ -55,7 +54,7 @@ func ParseCommitWithSSHSignature(ctx context.Context, c *git.Commit, committer *
 
 		for _, k := range keys {
 			if k.Verified && activated {
-				commitVerification := verifySSHCommitVerification(c.Signature.Signature, c.Signature.Payload, k, committer, committer, c.Committer.Email)
+				commitVerification := verifySSHObjectVerification(c.Signature.Signature, c.Signature.Payload, k, committer, committer, c.Committer.Email)
 				if commitVerification != nil {
 					return commitVerification
 				}
@@ -63,19 +62,19 @@ func ParseCommitWithSSHSignature(ctx context.Context, c *git.Commit, committer *
 		}
 	}
 
-	return &CommitVerification{
+	return &ObjectVerification{
 		CommittingUser: committer,
 		Verified:       false,
 		Reason:         NoKeyFound,
 	}
 }
 
-func verifySSHCommitVerification(sig, payload string, k *PublicKey, committer, signer *user_model.User, email string) *CommitVerification {
+func verifySSHObjectVerification(sig, payload string, k *PublicKey, committer, signer *user_model.User, email string) *ObjectVerification {
 	if err := sshsig.Verify(bytes.NewBuffer([]byte(payload)), []byte(sig), []byte(k.Content), "git"); err != nil {
 		return nil
 	}
 
-	return &CommitVerification{ // Everything is ok
+	return &ObjectVerification{ // Everything is ok
 		CommittingUser: committer,
 		Verified:       true,
 		Reason:         fmt.Sprintf("%s / %s", signer.Name, k.Fingerprint),

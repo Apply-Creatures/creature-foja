@@ -238,7 +238,7 @@ func newRefsFromRefNames(refNames []byte) []git.Reference {
 type Commit struct {
 	Commit       *git.Commit
 	User         *user_model.User
-	Verification *asymkey_model.CommitVerification
+	Verification *asymkey_model.ObjectVerification
 	Status       *git_model.CommitStatus
 	Flow         int64
 	Row          int
