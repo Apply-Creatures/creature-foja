@@ -2,7 +2,6 @@
 	<form class="ui form ignore-dirty gt-f1">
 		<input type="hidden" name="sort" value="{{$.SortType}}">
 		<input type="hidden" name="language" value="{{$.Language}}">
-		<input type="hidden" name="topic" value="{{$.TopicOnly}}">
 		<div class="ui fluid action input">
 			{{template "shared/searchinput" dict "Value" .Keyword}}
 			{{if .PageIsExploreRepositories}}
