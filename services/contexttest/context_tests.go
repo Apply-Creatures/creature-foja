@@ -40,8 +40,19 @@ func mockRequest(t *testing.T, reqPath string) *http.Request {
 	return req
 }
 
+type MockContextOption struct {
+	Render context.Render
+}
+
 // MockContext mock context for unit tests
-func MockContext(t *testing.T, reqPath string) (*context.Context, *httptest.ResponseRecorder) {
+func MockContext(t *testing.T, reqPath string, opts ...MockContextOption) (*context.Context, *httptest.ResponseRecorder) {
+	var opt MockContextOption
+	if len(opts) > 0 {
+		opt = opts[0]
+	}
+	if opt.Render == nil {
+		opt.Render = &MockRender{}
+	}
 	resp := httptest.NewRecorder()
 	req := mockRequest(t, reqPath)
 	base, baseCleanUp := context.NewBaseContext(resp, req)
