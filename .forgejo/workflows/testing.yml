@@ -43,8 +43,11 @@ jobs:
       image: 'docker.io/node:20-bookworm'
     services:
       minio:
-        image: 'docker.io/bitnami/minio:2023.8.31'
+        image: bitnami/minio:2024.2.26
+        options: >-
+          --hostname gitea.minio
         env:
+          MINIO_DOMAIN: minio
           MINIO_ROOT_USER: 123456
           MINIO_ROOT_PASSWORD: 12345678
     steps:
@@ -130,10 +133,10 @@ jobs:
       image: 'docker.io/node:20-bookworm'
     services:
       minio:
-        image: bitnami/minio:2021.3.17
+        image: bitnami/minio:2024.2.26
         env:
-          MINIO_ACCESS_KEY: 123456
-          MINIO_SECRET_KEY: 12345678
+          MINIO_ROOT_USER: 123456
+          MINIO_ROOT_PASSWORD: 12345678
       pgsql:
         image: 'docker.io/postgres:15'
         env:
