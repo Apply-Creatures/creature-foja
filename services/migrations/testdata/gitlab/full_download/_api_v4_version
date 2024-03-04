@@ -1,22 +1,17 @@
-Etag: W/"4e5c0a031c3aacb6ba0a3c19e67d7592"
-Ratelimit-Observed: 1
-Content-Type: application/json
-Ratelimit-Remaining: 1999
-Set-Cookie: _cfuvid=qtYbzv8YeGg4q7XaV0aAE2.YqWIp_xrYPGilXrlecsk-1701333885742-0-604800000; path=/; domain=.gitlab.com; HttpOnly; Secure; SameSite=None
-X-Gitlab-Meta: {"correlation_id":"c7c75f0406e1b1b9705a6d7e9bdb06a5","version":"1"}
-X-Runtime: 0.039264
-Cf-Cache-Status: MISS
-Content-Security-Policy: default-src 'none'
-Ratelimit-Reset: 1701333945
-Gitlab-Sv: localhost
-Strict-Transport-Security: max-age=31536000
-Vary: Origin, Accept-Encoding
+Etag: W/"796348ca31c2f886c4bf67753358302b"
 X-Content-Type-Options: nosniff
-Referrer-Policy: strict-origin-when-cross-origin
-Ratelimit-Resettime: Thu, 30 Nov 2023 08:45:45 GMT
-Gitlab-Lb: haproxy-main-23-lb-gprd
+Gitlab-Lb: haproxy-main-22-lb-gprd
+Set-Cookie: _cfuvid=XONUYaYMv2vYBZLhOZoclracol_W8SXVwL7kwoXROjM-1709516920902-0.0.1.1-604800000; path=/; domain=.gitlab.com; HttpOnly; Secure; SameSite=None
+X-Gitlab-Meta: {"correlation_id":"0defa7748a7bd70616af6bd0f338094c","version":"1"}
+Strict-Transport-Security: max-age=31536000
+Gitlab-Sv: api-gke-us-east1-c
+Cf-Cache-Status: MISS
+Content-Type: application/json
 Cache-Control: max-age=0, private, must-revalidate
+Content-Security-Policy: default-src 'none'
 X-Frame-Options: SAMEORIGIN
-Ratelimit-Limit: 2000
+X-Runtime: 0.035674
+Vary: Origin, Accept-Encoding
+Referrer-Policy: strict-origin-when-cross-origin
 
-{"version":"16.7.0-pre","revision":"acd848a9228","kas":{"enabled":true,"externalUrl":"wss://kas.gitlab.com","version":"v16.7.0-rc2"},"enterprise":true}
+{"version":"16.10.0-pre","revision":"432cc3c7389","kas":{"enabled":true,"externalUrl":"wss://kas.gitlab.com","version":"v16.10.0-rc1"},"enterprise":true}
