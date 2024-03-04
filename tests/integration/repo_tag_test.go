@@ -59,7 +59,7 @@ func TestTagViewWithoutRelease(t *testing.T) {
 	assert.False(t, releaseLink.HasClass("active"))
 
 	// Test that the title is displayed
-	releaseTitle := strings.TrimSpace(htmlDoc.Find("h4.release-list-title").Text())
+	releaseTitle := strings.TrimSpace(htmlDoc.Find("h4.release-list-title > a").Text())
 	assert.Equal(t, "no-release", releaseTitle)
 
 	// Test that there is no "Stable" link
