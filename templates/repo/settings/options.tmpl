@@ -742,7 +742,13 @@
 					<input type="hidden" name="repo_id" value="{{.Repository.ID}}">
 					<div class="text right actions">
 						<button class="ui cancel button">{{ctx.Locale.Tr "settings.cancel"}}</button>
-						<button class="ui red button">{{ctx.Locale.Tr "repo.settings.archive.button"}}</button>
+						<button class="ui red button">
+							{{if .Repository.IsArchived}}
+								{{ctx.Locale.Tr "repo.settings.unarchive.button"}}
+							{{else}}
+								{{ctx.Locale.Tr "repo.settings.archive.button"}}
+							{{end}}
+						</button>
 					</div>
 			</form>
 			</div>
