@@ -13,10 +13,7 @@ $ git clone https://codeberg.org/forgejo/forgejo/
 $ git -C forgejo log --oneline --no-merges v1.21.6-0..v1.21.7-0
 ```
 
-This stable release contains bug fixes and a **security fix**. It was built with Go v1.21.8 which [includes vulnerability fixes](https://groups.google.com/g/golang-announce/c/5pwGVUPoMbg).
-
-* [CVE-2023-45290](https://go.dev/issue/65383) which could lead to memory exhaustion when parsing a multipart form.
-* [CVE-2023-45289](https://go.dev/issue/65065) which could allow incorrect forwarding of sensitive headers and cookies on HTTP redirect.
+This stable release contains bug fixes and a **security fix**.
 
 * Recommended Action
 
@@ -25,6 +22,13 @@ This stable release contains bug fixes and a **security fix**. It was built with
 * [Forgejo Semantic Version](https://forgejo.org/docs/v1.21/user/semver/)
 
   The semantic version was updated to `6.0.7+0-gitea-1.21.7`
+
+* Built with Go 1.21.8
+
+  It [includes vulnerability fixes](https://groups.google.com/g/golang-announce/c/5pwGVUPoMbg).
+
+  * [CVE-2023-45290](https://go.dev/issue/65383) which could lead to memory exhaustion when parsing a multipart form.
+  * [CVE-2023-45289](https://go.dev/issue/65065) which could allow incorrect forwarding of sensitive headers and cookies on HTTP redirect.
 
 * Security fix
 
