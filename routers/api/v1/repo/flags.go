@@ -6,9 +6,9 @@ package repo
 import (
 	"net/http"
 
-	"code.gitea.io/gitea/modules/context"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/web"
+	"code.gitea.io/gitea/services/context"
 )
 
 func ListFlags(ctx *context.APIContext) {

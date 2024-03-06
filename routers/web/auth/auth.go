@@ -17,7 +17,6 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/auth/password"
 	"code.gitea.io/gitea/modules/base"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/eventsource"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/optional"
@@ -30,6 +29,7 @@ import (
 	"code.gitea.io/gitea/routers/utils"
 	auth_service "code.gitea.io/gitea/services/auth"
 	"code.gitea.io/gitea/services/auth/source/oauth2"
+	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/externalaccount"
 	"code.gitea.io/gitea/services/forms"
 	"code.gitea.io/gitea/services/mailer"
@@ -171,7 +171,7 @@ func SignIn(ctx *context.Context) {
 		return
 	}
 
-	oauth2Providers, err := oauth2.GetOAuth2Providers(ctx, util.OptionalBoolTrue)
+	oauth2Providers, err := oauth2.GetOAuth2Providers(ctx, optional.Some(true))
 	if err != nil {
 		ctx.ServerError("UserSignIn", err)
 		return
@@ -194,7 +194,7 @@ func SignIn(ctx *context.Context) {
 func SignInPost(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("sign_in")
 
-	oauth2Providers, err := oauth2.GetOAuth2Providers(ctx, util.OptionalBoolTrue)
+	oauth2Providers, err := oauth2.GetOAuth2Providers(ctx, optional.Some(true))
 	if err != nil {
 		ctx.ServerError("UserSignIn", err)
 		return
@@ -414,7 +414,7 @@ func SignUp(ctx *context.Context) {
 
 	ctx.Data["SignUpLink"] = setting.AppSubURL + "/user/sign_up"
 
-	oauth2Providers, err := oauth2.GetOAuth2Providers(ctx, util.OptionalBoolTrue)
+	oauth2Providers, err := oauth2.GetOAuth2Providers(ctx, optional.Some(true))
 	if err != nil {
 		ctx.ServerError("UserSignUp", err)
 		return
@@ -443,7 +443,7 @@ func SignUpPost(ctx *context.Context) {
 
 	ctx.Data["SignUpLink"] = setting.AppSubURL + "/user/sign_up"
 
-	oauth2Providers, err := oauth2.GetOAuth2Providers(ctx, util.OptionalBoolTrue)
+	oauth2Providers, err := oauth2.GetOAuth2Providers(ctx, optional.Some(true))
 	if err != nil {
 		ctx.ServerError("UserSignUp", err)
 		return
