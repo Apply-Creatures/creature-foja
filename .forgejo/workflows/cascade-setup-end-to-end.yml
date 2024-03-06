@@ -104,7 +104,7 @@ jobs:
           origin-repo: ${{ github.repository }}
           origin-token: ${{ secrets.END_TO_END_CASCADING_PR_ORIGIN }}
           origin-pr: ${{ github.event.pull_request.number }}
-          origin-ref: ${{ github.event_name == 'push' && github.event.ref }}
+          origin-ref: ${{ github.event_name == 'push' && github.event.ref || '' }}
           destination-url: https://code.forgejo.org
           destination-fork-repo: cascading-pr/end-to-end
           destination-repo: forgejo/end-to-end
