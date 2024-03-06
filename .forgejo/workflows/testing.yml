@@ -17,7 +17,7 @@ jobs:
       - uses: https://code.forgejo.org/actions/checkout@v3
       - uses: https://code.forgejo.org/actions/setup-go@v4
         with:
-          go-version: "1.21.8"
+          go-version: "1.21"
           check-latest: true
       - run: make deps-backend deps-tools
       - run: make --always-make -j$(nproc) lint-backend checks-backend # ensure the "go-licenses" make target runs
@@ -51,7 +51,7 @@ jobs:
       - uses: https://code.forgejo.org/actions/checkout@v3
       - uses: https://code.forgejo.org/actions/setup-go@v4
         with:
-          go-version: "1.21.8"
+          go-version: "1.21"
       - run: |
           git config --add safe.directory '*'
           adduser --quiet --comment forgejo --disabled-password forgejo
@@ -96,7 +96,7 @@ jobs:
       - uses: https://code.forgejo.org/actions/checkout@v3
       - uses: https://code.forgejo.org/actions/setup-go@v4
         with:
-          go-version: "1.21.8"
+          go-version: "1.21"
       - name: install dependencies & git >= 2.42
         run: |
           export DEBIAN_FRONTEND=noninteractive
@@ -143,7 +143,7 @@ jobs:
       - uses: https://code.forgejo.org/actions/checkout@v3
       - uses: https://code.forgejo.org/actions/setup-go@v4
         with:
-          go-version: "1.21.8"
+          go-version: "1.21"
       - name: install dependencies & git >= 2.42
         run: |
           export DEBIAN_FRONTEND=noninteractive
@@ -180,7 +180,7 @@ jobs:
       - uses: https://code.forgejo.org/actions/checkout@v3
       - uses: https://code.forgejo.org/actions/setup-go@v4
         with:
-          go-version: "1.21.8"
+          go-version: "1.21"
       - name: install dependencies & git >= 2.42
         run: |
           export DEBIAN_FRONTEND=noninteractive

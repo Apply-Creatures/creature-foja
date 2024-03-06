@@ -67,7 +67,7 @@ jobs:
           chown -R forgejo:forgejo .
       - uses: https://code.forgejo.org/actions/setup-go@v4
         with:
-          go-version: "1.21.8"
+          go-version: "1.21"
       - name: make deps-backend
         run: |
           su forgejo -c 'make deps-backend'
