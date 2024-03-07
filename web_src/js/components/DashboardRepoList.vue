@@ -340,21 +340,18 @@ export default sfc; // activate the IDE's Vue plugin
 </script>
 <template>
   <div>
-    <div v-if="!isOrganization" class="ui two item menu">
-      <a :class="{item: true, active: tab === 'repos'}" @click="changeTab('repos')">{{ textRepository }}</a>
-      <a :class="{item: true, active: tab === 'organizations'}" @click="changeTab('organizations')">{{ textOrganization }}</a>
+    <div v-if="!isOrganization" class="ui secondary stackable menu">
+      <a :class="{item: true, active: tab === 'repos'}" @click="changeTab('repos')">{{ textMyRepos }} <span class="ui grey label gt-ml-3">{{ reposTotalCount }}</span></a>
+      <a :class="{item: true, active: tab === 'organizations'}" @click="changeTab('organizations')">{{ textMyOrgs }} <span class="ui grey label gt-ml-3">{{ organizationsTotalCount }}</span></a>
     </div>
     <div v-show="tab === 'repos'" class="ui tab active list dashboard-repos">
-      <h4 class="ui top attached header gt-df gt-ac">
+      <h4 v-if="isOrganization" class="ui top attached gt-mt-4 gt-df gt-ac">
         <div class="gt-f1 gt-df gt-ac">
           {{ textMyRepos }}
           <span class="ui grey label gt-ml-3">{{ reposTotalCount }}</span>
         </div>
-        <a class="gt-df gt-ac muted" :href="subUrl + '/repo/create' + (isOrganization ? '?org=' + organizationId : '')" :data-tooltip-content="textNewRepo">
-          <svg-icon name="octicon-plus"/>
-        </a>
       </h4>
-      <div class="ui attached segment repos-search">
+      <div class="ui top attached segment repos-search gt-rounded-top">
         <div class="ui fluid action left icon input" :class="{loading: isLoading}">
           <input type="search" spellcheck="false" maxlength="255" @input="changeReposFilter(reposFilter)" v-model="searchQuery" ref="search" @keydown="reposFilterKeyControl" :placeholder="textSearchRepos">
           <i class="icon"><svg-icon name="octicon-search" :size="16"/></i>
@@ -455,16 +452,7 @@ export default sfc; // activate the IDE's Vue plugin
       </div>
     </div>
     <div v-if="!isOrganization" v-show="tab === 'organizations'" class="ui tab active list dashboard-orgs">
-      <h4 class="ui top attached header gt-df gt-ac">
-        <div class="gt-f1 gt-df gt-ac">
-          {{ textMyOrgs }}
-          <span class="ui grey label gt-ml-3">{{ organizationsTotalCount }}</span>
-        </div>
-        <a class="gt-df gt-ac muted" v-if="canCreateOrganization" :href="subUrl + '/org/create'" :data-tooltip-content="textNewOrg">
-          <svg-icon name="octicon-plus"/>
-        </a>
-      </h4>
-      <div v-if="organizations.length" class="ui attached table segment gt-rounded-bottom">
+      <div v-if="organizations.length" class="ui attached table segment gt-rounded">
         <ul class="repo-owner-name-list">
           <li class="gt-df gt-ac gt-py-3" v-for="org in organizations" :key="org.name">
             <a class="repo-list-link muted" :href="subUrl + '/' + encodeURIComponent(org.name)">
