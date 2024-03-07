@@ -470,6 +470,64 @@ func TestSignInOAuthCallbackSignIn(t *testing.T) {
 	assert.Greater(t, userAfterLogin.LastLoginUnix, userGitLab.LastLoginUnix)
 }
 
+func TestSignInOAuthCallbackRedirectToEscaping(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	//
+	// OAuth2 authentication source GitLab
+	//
+	gitlabName := "gitlab"
+	gitlab := addAuthSource(t, authSourcePayloadGitLabCustom(gitlabName))
+
+	//
+	// Create a user as if it had been previously been created by the GitLab
+	// authentication source.
+	//
+	userGitLabUserID := "5678"
+	userGitLab := &user_model.User{
+		Name:        "gitlabuser",
+		Email:       "gitlabuser@example.com",
+		Passwd:      "gitlabuserpassword",
+		Type:        user_model.UserTypeIndividual,
+		LoginType:   auth_model.OAuth2,
+		LoginSource: gitlab.ID,
+		LoginName:   userGitLabUserID,
+	}
+	defer createUser(context.Background(), t, userGitLab)()
+
+	//
+	// A request for user information sent to Goth will return a
+	// goth.User exactly matching the user created above.
+	//
+	defer mockCompleteUserAuth(func(res http.ResponseWriter, req *http.Request) (goth.User, error) {
+		return goth.User{
+			Provider: gitlabName,
+			UserID:   userGitLabUserID,
+			Email:    userGitLab.Email,
+		}, nil
+	})()
+	req := NewRequest(t, "GET", fmt.Sprintf("/user/oauth2/%s/callback?code=XYZ&state=XYZ", gitlabName))
+	req.AddCookie(&http.Cookie{
+		Name:  "redirect_to",
+		Value: "/login/oauth/authorize?redirect_uri=https%3A%2F%2Ftranslate.example.org",
+		Path:  "/",
+	})
+	resp := MakeRequest(t, req, http.StatusSeeOther)
+
+	hasNewSessionCookie := false
+	sessionCookieName := setting.SessionConfig.CookieName
+	for _, c := range resp.Result().Cookies() {
+		if c.Name == sessionCookieName {
+			hasNewSessionCookie = true
+			break
+		}
+		t.Log("Got cookie", c.Name)
+	}
+
+	assert.True(t, hasNewSessionCookie, "Session cookie %q is missing", sessionCookieName)
+	assert.Equal(t, "/login/oauth/authorize?redirect_uri=https://translate.example.org", test.RedirectURL(resp))
+}
+
 func TestSignUpViaOAuthWithMissingFields(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	// enable auto-creation of accounts via OAuth2
