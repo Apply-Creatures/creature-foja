@@ -22,8 +22,12 @@ const (
 
 var RecognisedRepositoryDownloadOrCloneMethods = []string{"download-zip", "download-targz", "download-bundle", "vscode-clone", "vscodium-clone", "cite"}
 
-// ItemsPerPage maximum items per page in forks, watchers and stars of a repo
-const ItemsPerPage = 40
+// MaxUserCardsPerPage sets maximum amount of watchers and stargazers shown per page
+// those pages use 2 or 3 column layout, so the value should be divisible by 2 and 3
+const MaxUserCardsPerPage = 36
+
+// MaxForksPerPage sets maximum amount of forks shown per page
+const MaxForksPerPage = 40
 
 // Repository settings
 var (

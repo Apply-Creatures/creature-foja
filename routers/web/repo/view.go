@@ -1127,12 +1127,12 @@ func RenderUserCards(ctx *context.Context, total int, getter func(opts db.ListOp
 	if page <= 0 {
 		page = 1
 	}
-	pager := context.NewPagination(total, setting.ItemsPerPage, page, 5)
+	pager := context.NewPagination(total, setting.MaxUserCardsPerPage, page, 5)
 	ctx.Data["Page"] = pager
 
 	items, err := getter(db.ListOptions{
 		Page:     pager.Paginater.Current(),
-		PageSize: setting.ItemsPerPage,
+		PageSize: setting.MaxUserCardsPerPage,
 	})
 	if err != nil {
 		ctx.ServerError("getter", err)
@@ -1173,12 +1173,12 @@ func Forks(ctx *context.Context) {
 		page = 1
 	}
 
-	pager := context.NewPagination(ctx.Repo.Repository.NumForks, setting.ItemsPerPage, page, 5)
+	pager := context.NewPagination(ctx.Repo.Repository.NumForks, setting.MaxForksPerPage, page, 5)
 	ctx.Data["Page"] = pager
 
 	forks, err := repo_model.GetForks(ctx, ctx.Repo.Repository, db.ListOptions{
 		Page:     pager.Paginater.Current(),
-		PageSize: setting.ItemsPerPage,
+		PageSize: setting.MaxForksPerPage,
 	})
 	if err != nil {
 		ctx.ServerError("GetForks", err)
