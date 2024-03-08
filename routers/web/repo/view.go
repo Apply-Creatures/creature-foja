@@ -36,6 +36,7 @@ import (
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/charset"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/gitrepo"
 	"code.gitea.io/gitea/modules/highlight"
 	"code.gitea.io/gitea/modules/lfs"
 	"code.gitea.io/gitea/modules/log"
@@ -1073,7 +1074,7 @@ func renderCode(ctx *context.Context) {
 			if err != nil {
 				continue
 			}
-			defaultBranch, err := gitRepo.GetDefaultBranch()
+			defaultBranch, err := gitrepo.GetDefaultBranch(ctx, repo)
 			if err != nil {
 				continue
 			}

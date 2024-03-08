@@ -317,7 +317,7 @@ func RenameBranch(ctx context.Context, repo *repo_model.Repository, doer *user_m
 		}
 
 		if isDefault {
-			err2 = gitRepo.SetDefaultBranch(to)
+			err2 = gitrepo.SetDefaultBranch(ctx, repo, to)
 			if err2 != nil {
 				return err2
 			}
