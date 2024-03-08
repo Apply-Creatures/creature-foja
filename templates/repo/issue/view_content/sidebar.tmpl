@@ -168,6 +168,11 @@
 			</div>
 			{{end}}
 			<div class="no-select item">{{ctx.Locale.Tr "repo.issues.new.clear_projects"}}</div>
+			{{if and (not .OpenProjects) (not .ClosedProjects)}}
+				<div class="disabled item">
+					{{ctx.Locale.Tr "repo.issues.new.no_items"}}
+				</div>
+			{{end}}
 			{{if .OpenProjects}}
 				<div class="divider"></div>
 				<div class="header">
