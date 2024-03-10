@@ -351,7 +351,7 @@ func TestPullRequest(ctx context.Context, doer *user_model.User, repoID, maxPR i
 		}
 		if err == nil {
 			for _, pr := range prs {
-				objectFormat, _ := git.GetObjectFormatOfRepo(ctx, pr.BaseRepo.RepoPath())
+				objectFormat := git.ObjectFormatFromName(pr.BaseRepo.ObjectFormatName)
 				if newCommitID != "" && newCommitID != objectFormat.EmptyObjectID().String() {
 					changed, err := checkIfPRContentChanged(ctx, pr, oldCommitID, newCommitID)
 					if err != nil {
