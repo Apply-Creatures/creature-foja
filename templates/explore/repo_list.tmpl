@@ -37,10 +37,10 @@
 							</a>
 						{{end}}
 						{{if not $.DisableStars}}
-							<a class="text grey flex-text-inline" href="{{.Link}}/stars">{{svg "octicon-star" 16}}{{.NumStars}}</a>
+							<a class="text grey flex-text-inline" href="{{.Link}}/stars" aria-label="{{ctx.Locale.TrN .NumStars "explore.stars_one" "explore.stars_few" .NumStars}}">{{svg "octicon-star" 16}}{{.NumStars}}</a>
 						{{end}}
 						{{if not $.DisableForks}}
-							<a class="text grey flex-text-inline" href="{{.Link}}/forks">{{svg "octicon-git-branch" 16}}{{.NumForks}}</a>
+							<a class="text grey flex-text-inline" href="{{.Link}}/forks" aria-label="{{ctx.Locale.TrN .NumForks "explore.forks_one" "explore.forks_few" .NumForks}}">{{svg "octicon-git-branch" 16}}{{.NumForks}}</a>
 						{{end}}
 					</div>
 				</div>
