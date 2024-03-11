@@ -233,7 +233,8 @@ func TestWebhookDeliverSpecificTypes(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 
 	type hookCase struct {
-		gotBody chan []byte
+		gotBody        chan []byte
+		expectedMethod string
 	}
 
 	cases := map[string]hookCase{
@@ -256,7 +257,8 @@ func TestWebhookDeliverSpecificTypes(t *testing.T) {
 			gotBody: make(chan []byte, 1),
 		},
 		webhook_module.MATRIX: {
-			gotBody: make(chan []byte, 1),
+			gotBody:        make(chan []byte, 1),
+			expectedMethod: "PUT",
 		},
 		webhook_module.WECHATWORK: {
 			gotBody: make(chan []byte, 1),
@@ -271,6 +273,13 @@ func TestWebhookDeliverSpecificTypes(t *testing.T) {
 
 		typ := strings.Split(r.URL.Path, "/")[1] // take first segment (after skipping leading slash)
 		hc := cases[typ]
+
+		if hc.expectedMethod != "" {
+			assert.Equal(t, hc.expectedMethod, r.Method, r.URL.Path)
+		} else {
+			assert.Equal(t, "POST", r.Method, r.URL.Path)
+		}
+
 		require.NotNil(t, hc.gotBody, r.URL.Path)
 		body, err := io.ReadAll(r.Body)
 		assert.NoError(t, err)
@@ -293,8 +302,8 @@ func TestWebhookDeliverSpecificTypes(t *testing.T) {
 				IsActive:    true,
 				Type:        typ,
 				URL:         s.URL + "/" + typ,
-				HTTPMethod:  "POST",
-				ContentType: 0, // set to 0 so that falling back to default request fails with "invalid content type"
+				HTTPMethod:  "", // should fallback to POST, when left unset by the specific hook
+				ContentType: 0,  // set to 0 so that falling back to default request fails with "invalid content type"
 				Meta:        "{}",
 			}
 			assert.NoError(t, webhook_model.CreateWebhook(db.DefaultContext, hook))
