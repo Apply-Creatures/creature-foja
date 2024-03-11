@@ -336,7 +336,7 @@
 					<div class="divider"></div>
 					<div class="inline field">
 						<div class="right-content">
-							These configuration options will be written into: {{.CustomConfFile}}
+							{{ctx.Locale.Tr "install.config_location_hint"}} {{.CustomConfFile}}
 						</div>
 						<div class="right-content gt-mt-3">
 							<button class="ui primary button">{{ctx.Locale.Tr "install.install_btn_confirm"}}</button>
