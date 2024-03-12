@@ -1413,7 +1413,7 @@ func registerRoutes(m *web.Route) {
 					})
 					m.Post("/cancel", reqRepoActionsWriter, actions.Cancel)
 					m.Post("/approve", reqRepoActionsWriter, actions.Approve)
-					m.Post("/artifacts", actions.ArtifactsView)
+					m.Get("/artifacts", actions.ArtifactsView)
 					m.Get("/artifacts/{artifact_name}", actions.ArtifactsDownloadView)
 					m.Delete("/artifacts/{artifact_name}", reqRepoActionsWriter, actions.ArtifactsDeleteView)
 					m.Post("/rerun", reqRepoActionsWriter, actions.Rerun)
