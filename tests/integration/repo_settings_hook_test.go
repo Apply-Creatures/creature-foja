@@ -1,0 +1,62 @@
+// Copyright 2022 The Forgejo Authors c/o Codeberg e.V.. All rights reserved.
+// SPDX-License-Identifier: MIT
+
+package integration
+
+import (
+	"net/http"
+	"strings"
+	"testing"
+
+	"code.gitea.io/gitea/tests"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestRepoSettingsHookHistory(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	session := loginUser(t, "user2")
+
+	// Request repository hook page with history
+	req := NewRequest(t, "GET", "/user2/repo1/settings/hooks/1")
+	resp := session.MakeRequest(t, req, http.StatusOK)
+
+	doc := NewHTMLParser(t, resp.Body)
+
+	t.Run("1/delivered", func(t *testing.T) {
+		html, err := doc.doc.Find(".webhook div[data-tab='request-1']").Html()
+		assert.NoError(t, err)
+		assert.Contains(t, html, "<strong>Request URL:</strong> /matrix-delivered\n")
+		assert.Contains(t, html, "<strong>Request method:</strong> PUT")
+		assert.Contains(t, html, "<strong>X-Head:</strong> 42")
+		assert.Contains(t, html, `<code class="json">{}</code>`)
+
+		val, ok := doc.doc.Find(".webhook div.item:has(div#info-1) svg").Attr("class")
+		assert.True(t, ok)
+		assert.Equal(t, "svg octicon-alert", val)
+	})
+
+	t.Run("2/undelivered", func(t *testing.T) {
+		html, err := doc.doc.Find(".webhook div[data-tab='request-2']").Html()
+		assert.NoError(t, err)
+		assert.Equal(t, "-", strings.TrimSpace(html))
+
+		val, ok := doc.doc.Find(".webhook div.item:has(div#info-2) svg").Attr("class")
+		assert.True(t, ok)
+		assert.Equal(t, "svg octicon-stopwatch", val)
+	})
+
+	t.Run("3/success", func(t *testing.T) {
+		html, err := doc.doc.Find(".webhook div[data-tab='request-3']").Html()
+		assert.NoError(t, err)
+		assert.Contains(t, html, "<strong>Request URL:</strong> /matrix-success\n")
+		assert.Contains(t, html, "<strong>Request method:</strong> PUT")
+		assert.Contains(t, html, "<strong>X-Head:</strong> 42")
+		assert.Contains(t, html, `<code class="json">{&#34;key&#34;:&#34;value&#34;}</code>`)
+
+		val, ok := doc.doc.Find(".webhook div.item:has(div#info-3) svg").Attr("class")
+		assert.True(t, ok)
+		assert.Equal(t, "svg octicon-check", val)
+	})
+}

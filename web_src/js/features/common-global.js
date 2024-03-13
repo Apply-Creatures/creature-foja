@@ -105,8 +105,10 @@ async function fetchActionDoRequest(actionElem, url, opt) {
       showErrorToast(`server error: ${resp.status}`);
     }
   } catch (e) {
-    console.error('error when doRequest', e);
-    showErrorToast(`${i18n.network_error} ${e}`);
+    if (e.name !== 'AbortError') {
+      console.error('error when doRequest', e);
+      showErrorToast(`${i18n.network_error} ${e}`);
+    }
   }
   actionElem.classList.remove('is-loading', 'small-loading-icon');
 }
@@ -234,7 +236,7 @@ export function initDropzone(el) {
         // Create a "Copy Link" element, to conveniently copy the image
         // or file link as Markdown to the clipboard
         const copyLinkElement = document.createElement('div');
-        copyLinkElement.className = 'gt-text-center';
+        copyLinkElement.className = 'tw-text-center';
         // The a element has a hardcoded cursor: pointer because the default is overridden by .dropzone
         copyLinkElement.innerHTML = `<a href="#" style="cursor: pointer;">${svg('octicon-copy', 14, 'copy link')} Copy link</a>`;
         copyLinkElement.addEventListener('click', async (e) => {

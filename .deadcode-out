@@ -189,6 +189,7 @@ package "code.gitea.io/gitea/modules/gitgraph"
 
 package "code.gitea.io/gitea/modules/gitrepo"
 	func GetBranchCommitID
+	func GetWikiDefaultBranch
 
 package "code.gitea.io/gitea/modules/graceful"
 	func (*Manager).TerminateContext

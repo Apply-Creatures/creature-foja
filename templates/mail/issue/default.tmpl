@@ -16,7 +16,7 @@
 </head>
 
 <body>
-	{{if .IsMention}}<p>{{.locale.Tr "mail.issue.x_mentioned_you" .Doer.Name | SanitizeHTML}}</p>{{end}}
+	{{if .IsMention}}<p>{{.locale.Tr "mail.issue.x_mentioned_you" .Doer.Name}}</p>{{end}}
 	{{if eq .ActionName "push"}}
 		<p>
 			{{if .Comment.IsForcePush}}
@@ -58,7 +58,7 @@
 				{{.locale.Tr "mail.issue.action.new" .Doer.Name .Issue.Index}}
 			{{end}}
 		{{else}}
-			{{.Body | SanitizeHTML}}
+			{{.Body}}
 		{{end -}}
 		{{- range .ReviewComments}}
 			<hr>
