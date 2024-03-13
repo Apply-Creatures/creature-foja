@@ -7,6 +7,10 @@ import (
 	"net/http"
 	"testing"
 
+	auth_model "code.gitea.io/gitea/models/auth"
+	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/unittest"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/tests"
 
@@ -115,4 +119,39 @@ func TestSettingLandingPage(t *testing.T) {
 	assert.Equal(t, "/user/login", resp.Header().Get("Location"))
 
 	setting.LandingPageURL = landingPage
+}
+
+func TestSettingSecurityAuthSource(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+
+	active := addAuthSource(t, authSourcePayloadGitLabCustom("gitlab-active"))
+	activeExternalLoginUser := &user_model.ExternalLoginUser{
+		ExternalID:    "12345",
+		UserID:        user.ID,
+		LoginSourceID: active.ID,
+	}
+	err := user_model.LinkExternalToUser(db.DefaultContext, user, activeExternalLoginUser)
+	assert.NoError(t, err)
+
+	inactive := addAuthSource(t, authSourcePayloadGitLabCustom("gitlab-inactive"))
+	inactiveExternalLoginUser := &user_model.ExternalLoginUser{
+		ExternalID:    "5678",
+		UserID:        user.ID,
+		LoginSourceID: inactive.ID,
+	}
+	err = user_model.LinkExternalToUser(db.DefaultContext, user, inactiveExternalLoginUser)
+	assert.NoError(t, err)
+
+	// mark the authSource as inactive
+	inactive.IsActive = false
+	err = auth_model.UpdateSource(db.DefaultContext, inactive)
+	assert.NoError(t, err)
+
+	session := loginUser(t, "user1")
+	req := NewRequest(t, "GET", "user/settings/security")
+	resp := session.MakeRequest(t, req, http.StatusOK)
+	assert.Contains(t, resp.Body.String(), `gitlab-active`)
+	assert.Contains(t, resp.Body.String(), `gitlab-inactive`)
 }
