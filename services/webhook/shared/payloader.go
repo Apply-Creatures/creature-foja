@@ -9,6 +9,7 @@ import (
 	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,6 +19,8 @@ import (
 	api "code.gitea.io/gitea/modules/structs"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 )
+
+var ErrPayloadTypeNotSupported = errors.New("unsupported webhook event")
 
 // PayloadConvertor defines the interface to convert system payload to webhook payload
 type PayloadConvertor[T any] interface {

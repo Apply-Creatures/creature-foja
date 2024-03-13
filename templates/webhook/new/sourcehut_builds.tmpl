@@ -1,0 +1,33 @@
+<p>{{ctx.Locale.Tr "repo.settings.add_web_hook_desc" "https://sourcehut.org/" (ctx.Locale.Tr "repo.settings.web_hook_name_sourcehut_builds")}}</p>
+<form class="ui form" action="{{.BaseLink}}/{{or .Webhook.ID "sourcehut_builds/new"}}" method="post">
+	{{.CsrfTokenHtml}}
+	<div class="required field {{if .Err_PayloadURL}}error{{end}}">
+		<label for="payload_url">{{ctx.Locale.Tr "repo.settings.sourcehut_builds.graphql_url"}}</label>
+		<input id="payload_url" name="payload_url" type="url" value="{{.Webhook.URL}}" autofocus required>
+	</div>
+	<div class="required field {{if .Err_ManifestPath}}error{{end}}">
+		<label for="manifest_path">{{ctx.Locale.Tr "repo.settings.sourcehut_builds.manifest_path"}}</label>
+		<input id="manifest_path" name="manifest_path" type="text" value="{{.HookMetadata.ManifestPath}}" required>
+	</div>
+	<div class="field">
+		<label>{{ctx.Locale.Tr "repo.settings.sourcehut_builds.visibility"}}</label>
+		<div class="ui selection dropdown">
+			<input type="hidden" id="visibility" name="visibility" value="{{if .HookMetadata.Visibility}}{{.HookMetadata.Visibility}}{{else}}PRIVATE{{end}}">
+			<div class="default text"></div>
+			{{svg "octicon-triangle-down" 14 "dropdown icon"}}
+			<div class="menu">
+				<div class="item" data-value="PUBLIC">PUBLIC</div>
+				<div class="item" data-value="UNLISTED">UNLISTED</div>
+				<div class="item" data-value="PRIVATE">PRIVATE</div>
+			</div>
+		</div>
+	</div>
+	<div class="field">
+		<div class="ui checkbox">
+			<input name="secrets" type="checkbox" {{if .HookMetadata.Secrets}}checked{{end}}>
+			<label>{{ctx.Locale.Tr "repo.settings.sourcehut_builds.secrets"}}</label>
+			<span class="help">{{ctx.Locale.Tr "repo.settings.sourcehut_builds.secrets_helper"}}</span>
+		</div>
+	</div>
+	{{template "repo/settings/webhook/settings" .}}
+</form>

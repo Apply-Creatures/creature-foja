@@ -25,6 +25,7 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 	"code.gitea.io/gitea/services/forms"
+	"code.gitea.io/gitea/services/webhook/sourcehut"
 
 	"github.com/gobwas/glob"
 )
@@ -53,6 +54,7 @@ var webhookHandlers = []Handler{
 	matrixHandler{},
 	wechatworkHandler{},
 	packagistHandler{},
+	sourcehut.BuildsHandler{},
 }
 
 // GetWebhookHandler return the handler for a given webhook type (nil if not found)

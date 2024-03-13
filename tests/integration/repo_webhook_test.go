@@ -238,6 +238,34 @@ func TestWebhookForms(t *testing.T) {
 		"branch_filter":        "packagist/*",
 		"authorization_header": "Bearer 123456",
 	}))
+
+	t.Run("sourcehut_builds/required", testWebhookForms("sourcehut_builds", session, map[string]string{
+		"payload_url":          "https://sourcehut_builds.example.com",
+		"manifest_path":        ".build.yml",
+		"visibility":           "PRIVATE",
+		"authorization_header": "Bearer 123456",
+	}, map[string]string{
+		"authorization_header": "",
+	}, map[string]string{
+		"authorization_header": "token ",
+	}, map[string]string{
+		"manifest_path": "",
+	}, map[string]string{
+		"manifest_path": "/absolute",
+	}, map[string]string{
+		"visibility": "",
+	}, map[string]string{
+		"visibility": "INVALID",
+	}))
+	t.Run("sourcehut_builds/optional", testWebhookForms("sourcehut_builds", session, map[string]string{
+		"payload_url":   "https://sourcehut_builds.example.com",
+		"manifest_path": ".build.yml",
+		"visibility":    "PRIVATE",
+		"secrets":       "on",
+
+		"branch_filter":        "srht/*",
+		"authorization_header": "Bearer 123456",
+	}))
 }
 
 func assertInput(t testing.TB, form *goquery.Selection, name string) string {
@@ -247,7 +275,15 @@ func assertInput(t testing.TB, form *goquery.Selection, name string) string {
 		t.Log(form.Html())
 		t.Errorf("field <input name=%q /> found %d times, expected once", name, input.Length())
 	}
-	return input.AttrOr("value", "")
+	switch input.AttrOr("type", "") {
+	case "checkbox":
+		if _, checked := input.Attr("checked"); checked {
+			return "on"
+		}
+		return ""
+	default:
+		return input.AttrOr("value", "")
+	}
 }
 
 func testWebhookForms(name string, session *TestSession, validFields map[string]string, invalidPatches ...map[string]string) func(t *testing.T) {

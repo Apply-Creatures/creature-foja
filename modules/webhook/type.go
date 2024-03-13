@@ -73,18 +73,19 @@ type HookType = string
 
 // Types of webhooks
 const (
-	FORGEJO    HookType = "forgejo"
-	GITEA      HookType = "gitea"
-	GOGS       HookType = "gogs"
-	SLACK      HookType = "slack"
-	DISCORD    HookType = "discord"
-	DINGTALK   HookType = "dingtalk"
-	TELEGRAM   HookType = "telegram"
-	MSTEAMS    HookType = "msteams"
-	FEISHU     HookType = "feishu"
-	MATRIX     HookType = "matrix"
-	WECHATWORK HookType = "wechatwork"
-	PACKAGIST  HookType = "packagist"
+	FORGEJO          HookType = "forgejo"
+	GITEA            HookType = "gitea"
+	GOGS             HookType = "gogs"
+	SLACK            HookType = "slack"
+	DISCORD          HookType = "discord"
+	DINGTALK         HookType = "dingtalk"
+	TELEGRAM         HookType = "telegram"
+	MSTEAMS          HookType = "msteams"
+	FEISHU           HookType = "feishu"
+	MATRIX           HookType = "matrix"
+	WECHATWORK       HookType = "wechatwork"
+	PACKAGIST        HookType = "packagist"
+	SOURCEHUT_BUILDS HookType = "sourcehut_builds" //nolint:revive
 )
 
 // HookStatus is the status of a web hook
