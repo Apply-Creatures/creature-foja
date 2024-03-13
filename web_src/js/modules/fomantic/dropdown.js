@@ -39,6 +39,7 @@ function updateMenuItem(dropdown, item) {
   item.setAttribute('role', dropdown[ariaPatchKey].listItemRole);
   item.setAttribute('tabindex', '-1');
   for (const a of item.querySelectorAll('a')) a.setAttribute('tabindex', '-1');
+  for (const input of item.querySelectorAll('input')) input.setAttribute('tabindex', '-1');
 }
 
 // make the label item and its "delete icon" has correct aria attributes
