@@ -21,8 +21,6 @@ jobs:
           check-latest: true
       - run: make deps-backend deps-tools
       - run: make --always-make -j$(nproc) lint-backend checks-backend # ensure the "go-licenses" make target runs
-        env:
-          TAGS: bindata sqlite sqlite_unlock_notify
   frontend-checks:
     if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
     runs-on: docker
