@@ -271,13 +271,19 @@ package "code.gitea.io/gitea/modules/sync"
 
 package "code.gitea.io/gitea/modules/testlogger"
 	func (*testLoggerWriterCloser).pushT
-	func (*testLoggerWriterCloser).Write
+	func (*testLoggerWriterCloser).Log
+	func (*testLoggerWriterCloser).recordError
+	func (*testLoggerWriterCloser).printMsg
 	func (*testLoggerWriterCloser).popT
-	func (*testLoggerWriterCloser).Close
 	func (*testLoggerWriterCloser).Reset
 	func PrintCurrentTest
 	func Printf
 	func NewTestLoggerWriter
+	func (*TestLogEventWriter).Base
+	func (*TestLogEventWriter).GetLevel
+	func (*TestLogEventWriter).GetWriterName
+	func (*TestLogEventWriter).GetWriterType
+	func (*TestLogEventWriter).Run
 
 package "code.gitea.io/gitea/modules/timeutil"
 	func GetExecutableModTime

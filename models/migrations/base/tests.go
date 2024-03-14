@@ -160,6 +160,10 @@ func MainTest(m *testing.M) {
 
 	exitStatus := m.Run()
 
+	if err := testlogger.WriterCloser.Reset(); err != nil && exitStatus == 0 {
+		fmt.Printf("testlogger.WriterCloser.Reset: %v\n", err)
+		os.Exit(1)
+	}
 	if err := removeAllWithRetry(setting.RepoRootPath); err != nil {
 		fmt.Fprintf(os.Stderr, "os.RemoveAll: %v\n", err)
 	}

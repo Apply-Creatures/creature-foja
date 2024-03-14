@@ -59,8 +59,10 @@ func TestMain(m *testing.M) {
 
 	exitVal := m.Run()
 
-	testlogger.WriterCloser.Reset()
-
+	if err := testlogger.WriterCloser.Reset(); err != nil {
+		fmt.Printf("testlogger.WriterCloser.Reset: %v\n", err)
+		os.Exit(1)
+	}
 	if err = util.RemoveAll(setting.Indexer.IssuePath); err != nil {
 		fmt.Printf("util.RemoveAll: %v\n", err)
 		os.Exit(1)
