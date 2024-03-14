@@ -932,7 +932,7 @@ func PullRequestCodeOwnersReview(ctx context.Context, pull *Issue, pr *PullReque
 	}
 	// Use the merge base as the base instead of the main branch to avoid problems
 	// if the pull request is out of date with the base branch.
-	changedFiles, err := repo.GetFilesChangedBetween(prInfo.MergeBase, pr.HeadCommitID)
+	changedFiles, err := repo.GetFilesChangedBetween(prInfo.MergeBase, prInfo.HeadCommitID)
 	if err != nil {
 		return err
 	}
