@@ -13,6 +13,8 @@ import {readFileSync} from 'node:fs';
 import {env} from 'node:process';
 import tailwindcss from 'tailwindcss';
 import tailwindConfig from './tailwind.config.js';
+import tailwindcssNesting from 'tailwindcss/nesting/index.js';
+import postcssNesting from 'postcss-nesting';
 
 const {EsbuildPlugin} = EsBuildLoader;
 const {SourceMapDevToolPlugin, DefinePlugin} = webpack;
@@ -149,6 +151,7 @@ export default {
               sourceMap: sourceMaps === 'true',
               url: {filter: filterCssImport},
               import: {filter: filterCssImport},
+              importLoaders: 1,
             },
           },
           {
@@ -156,7 +159,10 @@ export default {
             options: {
               postcssOptions: {
                 map: false, // https://github.com/postcss/postcss/issues/1914
-                plugins: [tailwindcss(tailwindConfig)],
+                plugins: [
+                  tailwindcssNesting(postcssNesting({edition: '2024-02'})),
+                  tailwindcss(tailwindConfig),
+                ],
               },
             },
           }
