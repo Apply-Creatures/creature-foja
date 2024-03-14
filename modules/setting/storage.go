@@ -41,6 +41,7 @@ type MinioStorageConfig struct {
 	AccessKeyID        string `ini:"MINIO_ACCESS_KEY_ID" json:",omitempty"`
 	SecretAccessKey    string `ini:"MINIO_SECRET_ACCESS_KEY" json:",omitempty"`
 	Bucket             string `ini:"MINIO_BUCKET" json:",omitempty"`
+	BucketLookup       string `ini:"MINIO_BUCKET_LOOKUP" json:",omitempty"`
 	Location           string `ini:"MINIO_LOCATION" json:",omitempty"`
 	BasePath           string `ini:"MINIO_BASE_PATH" json:",omitempty"`
 	UseSSL             bool   `ini:"MINIO_USE_SSL"`
@@ -78,6 +79,7 @@ func getDefaultStorageSection(rootCfg ConfigProvider) ConfigSection {
 	storageSec.Key("MINIO_ACCESS_KEY_ID").MustString("")
 	storageSec.Key("MINIO_SECRET_ACCESS_KEY").MustString("")
 	storageSec.Key("MINIO_BUCKET").MustString("gitea")
+	storageSec.Key("MINIO_BUCKET_LOOKUP").MustString("auto")
 	storageSec.Key("MINIO_LOCATION").MustString("us-east-1")
 	storageSec.Key("MINIO_USE_SSL").MustBool(false)
 	storageSec.Key("MINIO_INSECURE_SKIP_VERIFY").MustBool(false)

@@ -792,6 +792,10 @@ Gitea 创建以下非唯一队列：
 - `MINIO_ACCESS_KEY_ID`: Minio accessKeyID 以连接，仅当 STORAGE_TYPE 为 `minio` 时可用。
 - `MINIO_SECRET_ACCESS_KEY`: Minio secretAccessKey 以连接，仅当 STORAGE_TYPE 为 `minio` 时可用。
 - `MINIO_BUCKET`: **gitea**: Minio 存储附件的存储桶，仅当 STORAGE_TYPE 为 `minio` 时可用。
+- `MINIO_BUCKET_LOOKUP`: **auto**: Minio 存储桶寻址方式, 仅当 `STORAGE_TYPE` 为 `minio` 时可用。
+  - `auto` 自动检测
+  - `dns`  子域名寻址
+  - `path` 路径寻址
 - `MINIO_LOCATION`: **us-east-1**: Minio 存储桶的位置以创建，仅当 STORAGE_TYPE 为 `minio` 时可用。
 - `MINIO_BASE_PATH`: **attachments/**: Minio 存储桶上的基本路径，仅当 STORAGE_TYPE 为 `minio` 时可用。
 - `MINIO_USE_SSL`: **false**: Minio 启用 SSL，仅当 STORAGE_TYPE 为 `minio` 时可用。
@@ -1207,6 +1211,10 @@ ALLOW_DATA_URI_IMAGES = true
 - `MINIO_ACCESS_KEY_ID`：Minio 的 accessKeyID，仅在 `STORAGE_TYPE` 为 `minio` 时可用。
 - `MINIO_SECRET_ACCESS_KEY`：Minio 的 secretAccessKey，仅在 `STORAGE_TYPE` 为 `minio` 时可用。
 - `MINIO_BUCKET`：**gitea**：用于存储 lfs 的 Minio 桶，仅在 `STORAGE_TYPE` 为 `minio` 时可用。
+- `MINIO_BUCKET_LOOKUP`: **auto**: Minio 存储桶寻址方式,可选值为 `auto`, `dns`, `path` 仅当 `STORAGE_TYPE` 为 `minio` 时可用。
+  - `auto` 自动检测
+  - `dns`  子域名寻址
+  - `path` 路径寻址
 - `MINIO_LOCATION`：**us-east-1**：创建桶的 Minio 位置，仅在 `STORAGE_TYPE` 为 `minio` 时可用。
 - `MINIO_BASE_PATH`：**lfs/**：桶上的 Minio 基本路径，仅在 `STORAGE_TYPE` 为 `minio` 时可用。
 - `MINIO_USE_SSL`：**false**：Minio 启用 ssl，仅在 `STORAGE_TYPE` 为 `minio` 时可用。
@@ -1222,6 +1230,10 @@ ALLOW_DATA_URI_IMAGES = true
 - `MINIO_ACCESS_KEY_ID`：Minio 的 accessKeyID，仅在 `STORAGE_TYPE` 为 `minio` 时可用。
 - `MINIO_SECRET_ACCESS_KEY`：Minio 的 secretAccessKey，仅在 `STORAGE_TYPE` 为 `minio` 时可用。
 - `MINIO_BUCKET`：**gitea**：用于存储数据的 Minio 桶，仅在 `STORAGE_TYPE` 为 `minio` 时可用。
+- `MINIO_BUCKET_LOOKUP`: **auto**: Minio 存储桶寻址方式,可选值为 `auto`, `dns`, `path` 仅当 `STORAGE_TYPE` 为 `minio` 时可用。
+  - `auto` 自动检测
+  - `dns`  子域名寻址
+  - `path` 路径寻址
 - `MINIO_LOCATION`：**us-east-1**：创建桶的 Minio 位置，仅在 `STORAGE_TYPE` 为 `minio` 时可用。
 - `MINIO_USE_SSL`：**false**：Minio 启用 ssl，仅在 `STORAGE_TYPE` 为 `minio` 时可用。
 - `MINIO_INSECURE_SKIP_VERIFY`：**false**：Minio 跳过 SSL 验证，仅在 `STORAGE_TYPE` 为 `minio` 时可用。
@@ -1305,6 +1317,10 @@ MINIO_INSECURE_SKIP_VERIFY = false
 - `MINIO_ACCESS_KEY_ID`: Minio的accessKeyID，仅在`STORAGE_TYPE`为`minio`时可用。
 - `MINIO_SECRET_ACCESS_KEY`: Minio的secretAccessKey，仅在`STORAGE_TYPE`为`minio`时可用。
 - `MINIO_BUCKET`: **gitea**：用于存储归档的Minio存储桶，仅在`STORAGE_TYPE`为`minio`时可用。
+- `MINIO_BUCKET_LOOKUP`: **auto**: Minio 存储桶寻址方式,可选值为 `auto`, `dns`, `path` 仅当 `STORAGE_TYPE` 为 `minio` 时可用。
+  - `auto` 自动检测
+  - `dns`  子域名寻址
+  - `path` 路径寻址
 - `MINIO_LOCATION`: **us-east-1**：用于创建存储桶的Minio位置，仅在`STORAGE_TYPE`为`minio`时可用。
 - `MINIO_BASE_PATH`: **repo-archive/**：存储桶上的Minio基本路径，仅在`STORAGE_TYPE`为`minio`时可用。
 - `MINIO_USE_SSL`: **false**：启用Minio的SSL，仅在`STORAGE_TYPE`为`minio`时可用。
