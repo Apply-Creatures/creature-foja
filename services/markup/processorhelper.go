@@ -87,7 +87,10 @@ func ProcessorHelper() *markup.ProcessorHelper {
 			}
 			defer dataRc.Close()
 
-			buf, _ := io.ReadAll(dataRc)
+			buf, err := io.ReadAll(dataRc)
+			if err != nil {
+				log.Error("failed to completly read blob for %-v:%s. Error: %v", repo, filePath, err)
+			}
 
 			fileContent, _, err := highlight.File(blob.Name(), language, buf)
 			if err != nil {
