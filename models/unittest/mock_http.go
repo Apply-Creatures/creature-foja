@@ -34,7 +34,7 @@ func NewMockWebServer(t *testing.T, liveServerBaseURL, testDataDir string, liveM
 		path := NormalizedFullPath(r.URL)
 		log.Info("Mock HTTP Server: got request for path %s", r.URL.Path)
 		// TODO check request method (support POST?)
-		fixturePath := fmt.Sprintf("%s/%s", testDataDir, strings.NewReplacer("/", "_", "?", "!").Replace(path))
+		fixturePath := fmt.Sprintf("%s/%s_%s", testDataDir, r.Method, url.PathEscape(path))
 		if liveMode {
 			liveURL := fmt.Sprintf("%s%s", liveServerBaseURL, path)
 
@@ -51,6 +51,7 @@ func NewMockWebServer(t *testing.T, liveServerBaseURL, testDataDir string, liveM
 
 			response, err := http.DefaultClient.Do(request)
 			assert.NoError(t, err, "HTTP request to %s failed: %s", liveURL)
+			assert.Less(t, response.StatusCode, 400, "unexpected status code for %s", liveURL)
 
 			fixture, err := os.Create(fixturePath)
 			assert.NoError(t, err, "failed to open the fixture file %s for writing", fixturePath)
