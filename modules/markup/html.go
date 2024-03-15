@@ -10,6 +10,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -64,7 +65,7 @@ var (
 	validLinksPattern = regexp.MustCompile(`^[a-z][\w-]+://`)
 
 	// filePreviewPattern matches "http://domain/org/repo/src/commit/COMMIT/filepath#L1-L2"
-	filePreviewPattern = regexp.MustCompile(`https?://((?:\S+/){3})src/commit/([0-9a-f]{7,64})/(\S+)#(L\d+(?:-L\d+)?)`)
+	filePreviewPattern = regexp.MustCompile(`https?://((?:\S+/){4,5})src/commit/([0-9a-f]{7,64})/(\S+)#(L\d+(?:-L\d+)?)`)
 
 	// While this email regex is definitely not perfect and I'm sure you can come up
 	// with edge cases, it is still accepted by the CommonMark specification, as
@@ -1075,11 +1076,9 @@ func filePreviewPatternProcessor(ctx *RenderContext, node *html.Node) {
 			return
 		}
 
-		// Ensure that every group (m[0]...m[9]) has a match
-		for i := 0; i < 10; i++ {
-			if m[i] == -1 {
-				return
-			}
+		// Ensure that every group has a match
+		if slices.Contains(m, -1) {
+			return
 		}
 
 		urlFull := node.Data[m[0]:m[1]]
@@ -1089,8 +1088,7 @@ func filePreviewPatternProcessor(ctx *RenderContext, node *html.Node) {
 			return
 		}
 
-		projPath := node.Data[m[2]:m[3]]
-		projPath = strings.TrimSuffix(projPath, "/")
+		projPath := strings.TrimSuffix(node.Data[m[2]:m[3]], "/")
 
 		commitSha := node.Data[m[4]:m[5]]
 		filePath := node.Data[m[6]:m[7]]
