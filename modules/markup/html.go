@@ -65,7 +65,7 @@ var (
 	validLinksPattern = regexp.MustCompile(`^[a-z][\w-]+://`)
 
 	// filePreviewPattern matches "http://domain/org/repo/src/commit/COMMIT/filepath#L1-L2"
-	filePreviewPattern = regexp.MustCompile(`https?://((?:\S+/){4,5})src/commit/([0-9a-f]{7,64})/(\S+)#(L\d+(?:-L\d+)?)`)
+	filePreviewPattern = regexp.MustCompile(`https?://((?:\S+/){4,5})src/commit/([0-9a-f]{4,64})/(\S+)#(L\d+(?:-L\d+)?)`)
 
 	// While this email regex is definitely not perfect and I'm sure you can come up
 	// with edge cases, it is still accepted by the CommonMark specification, as
