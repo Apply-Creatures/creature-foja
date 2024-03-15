@@ -451,7 +451,8 @@
   text-decoration: inherit;
 }
 
-.markup pre > code {
+.markup pre > code,
+.markup .file-preview code {
   padding: 0;
   margin: 0;
   font-size: 100%;
