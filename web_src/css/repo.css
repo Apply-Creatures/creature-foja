@@ -2034,13 +2034,8 @@
 }
 
 #cite-repo-modal #citation-panel {
-  width: 500px;
-}
-
-@media (max-width: 767.98px) {
-  #cite-repo-modal #citation-panel {
-    width: 100%;
-  }
+  display: flex;
+  width: 100%;
 }
 
 #cite-repo-modal #citation-panel input {
@@ -2060,6 +2055,7 @@
   padding: 5px 10px;
   font-size: 1.2em;
   line-height: 1.4;
+  flex: 1;
 }
 
 #cite-repo-modal #citation-panel #citation-copy-apa,
