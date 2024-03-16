@@ -17,7 +17,6 @@ import (
 
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/translation"
 	"code.gitea.io/gitea/modules/util"
 
 	"github.com/yuin/goldmark/ast"
@@ -34,7 +33,6 @@ const (
 type ProcessorHelper struct {
 	IsUsernameMentionable func(ctx context.Context, username string) bool
 	GetRepoFileContent    func(ctx context.Context, ownerName, repoName, commitSha, filePath string) ([]template.HTML, error)
-	GetLocale             func(ctx context.Context) (translation.Locale, error)
 
 	ElementDir string // the direction of the elements, eg: "ltr", "rtl", "auto", default to no direction attribute
 }

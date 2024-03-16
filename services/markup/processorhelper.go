@@ -17,7 +17,6 @@ import (
 	"code.gitea.io/gitea/modules/highlight"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markup"
-	"code.gitea.io/gitea/modules/translation"
 	gitea_context "code.gitea.io/gitea/services/context"
 	file_service "code.gitea.io/gitea/services/repository/files"
 )
@@ -99,19 +98,6 @@ func ProcessorHelper() *markup.ProcessorHelper {
 			}
 
 			return fileContent, nil
-		},
-		GetLocale: func(ctx context.Context) (translation.Locale, error) {
-			giteaCtx, ok := ctx.(*gitea_context.Context)
-			if ok {
-				return giteaCtx.Locale, nil
-			}
-
-			giteaBaseCtx, ok := ctx.(*gitea_context.Base)
-			if ok {
-				return giteaBaseCtx.Locale, nil
-			}
-
-			return nil, fmt.Errorf("could not retrieve locale from context")
 		},
 	}
 }

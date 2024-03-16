@@ -5,6 +5,7 @@ package markup
 
 import (
 	"bytes"
+	"html/template"
 	"io"
 	"net/url"
 	"path"
@@ -1065,7 +1066,7 @@ func filePreviewPatternProcessor(ctx *RenderContext, node *html.Node) {
 	if ctx.Metas == nil {
 		return
 	}
-	if DefaultProcessorHelper.GetRepoFileContent == nil || DefaultProcessorHelper.GetLocale == nil {
+	if DefaultProcessorHelper.GetRepoFileContent == nil {
 		return
 	}
 
@@ -1119,8 +1120,16 @@ func filePreviewPatternProcessor(ctx *RenderContext, node *html.Node) {
 		lineSpecs := strings.Split(hash, "-")
 		lineCount := len(fileContent)
 
-		var subTitle string
+		commitLinkBuffer := new(bytes.Buffer)
+		html.Render(commitLinkBuffer, createLink(node.Data[m[0]:m[5]], commitSha[0:7], "text black"))
+
+		var subTitle template.HTML
 		var lineOffset int
+
+		locale, ok := ctx.Ctx.Value(translation.ContextKey).(translation.Locale)
+		if !ok {
+			locale = translation.NewLocale("en-US")
+		}
 
 		if len(lineSpecs) == 1 {
 			line, _ := strconv.Atoi(strings.TrimPrefix(lineSpecs[0], "L"))
@@ -1129,7 +1138,10 @@ func filePreviewPatternProcessor(ctx *RenderContext, node *html.Node) {
 			}
 
 			fileContent = fileContent[line-1 : line]
-			subTitle = "Line " + strconv.Itoa(line)
+			subTitle = locale.Tr(
+				"markup.filepreview.line", line,
+				template.HTML(commitLinkBuffer.String()),
+			)
 
 			lineOffset = line - 1
 		} else {
@@ -1141,7 +1153,10 @@ func filePreviewPatternProcessor(ctx *RenderContext, node *html.Node) {
 			}
 
 			fileContent = fileContent[startLine-1 : endLine]
-			subTitle = "Lines " + strconv.Itoa(startLine) + " to " + strconv.Itoa(endLine)
+			subTitle = locale.Tr(
+				"markup.filepreview.lines", startLine, endLine,
+				template.HTML(commitLinkBuffer.String()),
+			)
 
 			lineOffset = startLine - 1
 		}
@@ -1154,12 +1169,6 @@ func filePreviewPatternProcessor(ctx *RenderContext, node *html.Node) {
 		tbody := &html.Node{
 			Type: html.ElementNode,
 			Data: atom.Tbody.String(),
-		}
-
-		locale, err := DefaultProcessorHelper.GetLocale(ctx.Ctx)
-		if err != nil {
-			log.Error("Unable to get locale. Error: %v", err)
-			return
 		}
 
 		status := &charset.EscapeStatus{}
@@ -1286,10 +1295,9 @@ func filePreviewPatternProcessor(ctx *RenderContext, node *html.Node) {
 			Attr: []html.Attribute{{Key: "class", Val: "text small grey"}},
 		}
 		psubtitle.AppendChild(&html.Node{
-			Type: html.TextNode,
-			Data: subTitle + " in ",
+			Type: html.RawNode,
+			Data: string(subTitle),
 		})
-		psubtitle.AppendChild(createLink(urlFull[m[0]:m[5]], commitSha[0:7], "text black"))
 		header.AppendChild(psubtitle)
 
 		preview := &html.Node{

@@ -19,7 +19,6 @@ import (
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
 	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/translation"
 	"code.gitea.io/gitea/modules/util"
 
 	"github.com/stretchr/testify/assert"
@@ -683,9 +682,6 @@ func TestRender_FilePreview(t *testing.T) {
 		GetRepoFileContent: func(ctx context.Context, ownerName, repoName, commitSha, filePath string) ([]template.HTML, error) {
 			buf := []byte("A\nB\nC\nD\n")
 			return highlight.PlainText(buf), nil
-		},
-		GetLocale: func(ctx context.Context) (translation.Locale, error) {
-			return translation.NewLocale("en-US"), nil
 		},
 	})
 
