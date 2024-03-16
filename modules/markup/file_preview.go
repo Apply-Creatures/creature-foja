@@ -9,16 +9,15 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/modules/charset"
+	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/translation"
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
 )
 
-var (
-	// filePreviewPattern matches "http://domain/org/repo/src/commit/COMMIT/filepath#L1-L2"
-	filePreviewPattern = regexp.MustCompile(`https?://((?:\S+/){3})src/commit/([0-9a-f]{4,64})/(\S+)#(L\d+(?:-L\d+)?)`)
-)
+// filePreviewPattern matches "http://domain/org/repo/src/commit/COMMIT/filepath#L1-L2"
+var filePreviewPattern = regexp.MustCompile(`https?://((?:\S+/){3})src/commit/([0-9a-f]{4,64})/(\S+)#(L\d+(?:-L\d+)?)`)
 
 type FilePreview struct {
 	fileContent []template.HTML
@@ -82,7 +81,10 @@ func NewFilePreview(ctx *RenderContext, node *html.Node, locale translation.Loca
 	lineCount := len(fileContent)
 
 	commitLinkBuffer := new(bytes.Buffer)
-	html.Render(commitLinkBuffer, createLink(node.Data[m[0]:m[5]], commitSha[0:7], "text black"))
+	err = html.Render(commitLinkBuffer, createLink(node.Data[m[0]:m[5]], commitSha[0:7], "text black"))
+	if err != nil {
+		log.Error("failed to render commitLink: %v", err)
+	}
 
 	if len(lineSpecs) == 1 {
 		line, _ := strconv.Atoi(strings.TrimPrefix(lineSpecs[0], "L"))
@@ -117,7 +119,7 @@ func NewFilePreview(ctx *RenderContext, node *html.Node, locale translation.Loca
 	return preview
 }
 
-func (p *FilePreview) CreateHtml(locale translation.Locale) *html.Node {
+func (p *FilePreview) CreateHTML(locale translation.Locale) *html.Node {
 	table := &html.Node{
 		Type: html.ElementNode,
 		Data: atom.Table.String(),
@@ -257,13 +259,13 @@ func (p *FilePreview) CreateHtml(locale translation.Locale) *html.Node {
 	})
 	header.AppendChild(psubtitle)
 
-	preview_node := &html.Node{
+	node := &html.Node{
 		Type: html.ElementNode,
 		Data: atom.Div.String(),
 		Attr: []html.Attribute{{Key: "class", Val: "file-preview-box"}},
 	}
-	preview_node.AppendChild(header)
-	preview_node.AppendChild(twrapper)
+	node.AppendChild(header)
+	node.AppendChild(twrapper)
 
-	return preview_node
+	return node
 }

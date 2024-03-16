@@ -1075,7 +1075,7 @@ func filePreviewPatternProcessor(ctx *RenderContext, node *html.Node) {
 			return
 		}
 
-		preview_node := preview.CreateHtml(locale)
+		previewNode := preview.CreateHTML(locale)
 
 		// Specialized version of replaceContent, so the parent paragraph element is not destroyed from our div
 		before := node.Data[:preview.start]
@@ -1086,7 +1086,7 @@ func filePreviewPatternProcessor(ctx *RenderContext, node *html.Node) {
 			Type: html.RawNode,
 			Data: "</p>",
 		}, nextSibling)
-		node.Parent.InsertBefore(preview_node, nextSibling)
+		node.Parent.InsertBefore(previewNode, nextSibling)
 		node.Parent.InsertBefore(&html.Node{
 			Type: html.RawNode,
 			Data: "<p>" + after,
