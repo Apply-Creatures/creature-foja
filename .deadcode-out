@@ -84,7 +84,6 @@ package "code.gitea.io/gitea/models/repo"
 	func (*releaseSorter).Swap
 	func SortReleases
 	func FindReposMapByIDs
-	func RepositoryListOfMap
 	func (SearchOrderBy).String
 	func IsErrTopicNotExist
 	func (ErrTopicNotExist).Error
@@ -178,6 +177,7 @@ package "code.gitea.io/gitea/modules/git"
 	func (ErrExecTimeout).Error
 	func (ErrUnsupportedVersion).Error
 	func SetUpdateHook
+	func GetObjectFormatOfRepo
 	func openRepositoryWithDefaultContext
 	func IsTagExist
 	func ToEntryMode
