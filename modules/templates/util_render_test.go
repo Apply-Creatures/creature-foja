@@ -61,7 +61,7 @@ func TestMain(m *testing.M) {
 
 func TestApostrophesInMentions(t *testing.T) {
 	rendered := RenderMarkdownToHtml(context.Background(), "@mention-user's comment")
-	assert.EqualValues(t, "<p><a href=\"http://localhost:3000/mention-user\" rel=\"nofollow\">@mention-user</a>&#39;s comment</p>\n", rendered)
+	assert.EqualValues(t, template.HTML("<p><a href=\"/mention-user\" rel=\"nofollow\">@mention-user</a>&#39;s comment</p>\n"), rendered)
 }
 
 func TestRenderCommitBody(t *testing.T) {
