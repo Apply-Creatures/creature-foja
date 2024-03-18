@@ -1,3 +1,6 @@
+// Copyright The Forgejo Authors.
+// SPDX-License-Identifier: MIT
+
 package markup
 
 import (
