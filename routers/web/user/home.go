@@ -743,7 +743,6 @@ func UsernameSubRoute(ctx *context.Context) {
 			return
 		}
 		if reloadParam(".rss") {
-			context.UserAssignmentWeb()(ctx)
 			feed.ShowUserFeedRSS(ctx)
 		}
 	case strings.HasSuffix(username, ".atom"):
