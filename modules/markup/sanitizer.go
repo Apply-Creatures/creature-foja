@@ -128,7 +128,6 @@ func createDefaultPolicy() *bluemonday.Policy {
 	policy.AllowAttrs("class").Matching(regexp.MustCompile("^header$")).OnElements("div")
 	policy.AllowAttrs("data-line-number").Matching(regexp.MustCompile("^[0-9]+$")).OnElements("span")
 	policy.AllowAttrs("class").Matching(regexp.MustCompile("^text small grey$")).OnElements("span")
-	policy.AllowAttrs("rel").Matching(regexp.MustCompile("^L[0-9]+$")).OnElements("td")
 	policy.AllowAttrs("class").Matching(regexp.MustCompile("^file-preview*")).OnElements("table")
 	policy.AllowAttrs("class").Matching(regexp.MustCompile("^lines-escape$")).OnElements("td")
 	policy.AllowAttrs("class").Matching(regexp.MustCompile("^toggle-escape-button btn interact-bg$")).OnElements("button")

@@ -149,7 +149,6 @@ func (p *FilePreview) CreateHTML(locale translation.Locale) *html.Node {
 			Type: html.ElementNode,
 			Data: atom.Td.String(),
 			Attr: []html.Attribute{
-				{Key: "id", Val: "L" + lineNum},
 				{Key: "class", Val: "lines-num"},
 			},
 		}
@@ -157,7 +156,6 @@ func (p *FilePreview) CreateHTML(locale translation.Locale) *html.Node {
 			Type: html.ElementNode,
 			Data: atom.Span.String(),
 			Attr: []html.Attribute{
-				{Key: "id", Val: "L" + lineNum},
 				{Key: "data-line-number", Val: lineNum},
 			},
 		}
@@ -200,7 +198,6 @@ func (p *FilePreview) CreateHTML(locale translation.Locale) *html.Node {
 			Type: html.ElementNode,
 			Data: atom.Td.String(),
 			Attr: []html.Attribute{
-				{Key: "rel", Val: "L" + lineNum},
 				{Key: "class", Val: "lines-code chroma"},
 			},
 		}
