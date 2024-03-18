@@ -17,6 +17,195 @@
   updated: 1683636626
   need_approval: 0
   approved_by: 0
+  event_payload: |
+    {
+      "after": "7a3858dc7f059543a8807a8b551304b7e362a7ef",
+      "before": "0000000000000000000000000000000000000000",
+      "commits": [
+        {
+          "added": [
+            ".forgejo/workflows/test.yml"
+          ],
+          "author": {
+            "email": "root@example.com",
+            "name": "username",
+            "username": "root"
+          },
+          "committer": {
+            "email": "root@example.com",
+            "name": "username",
+            "username": "root"
+          },
+          "id": "7a3858dc7f059543a8807a8b551304b7e362a7ef",
+          "message": "initial commit\n",
+          "modified": [],
+          "removed": [],
+          "timestamp": "2024-01-24T18:59:25Z",
+          "url": "http://10.201.14.40:3000/root/example-push/commit/7a3858dc7f059543a8807a8b551304b7e362a7ef",
+          "verification": null
+        }
+      ],
+      "compare_url": "http://10.201.14.40:3000/",
+      "head_commit": {
+        "added": [
+          ".forgejo/workflows/test.yml"
+        ],
+        "author": {
+          "email": "root@example.com",
+          "name": "username",
+          "username": "root"
+        },
+        "committer": {
+          "email": "root@example.com",
+          "name": "username",
+          "username": "root"
+        },
+        "id": "7a3858dc7f059543a8807a8b551304b7e362a7ef",
+        "message": "initial commit\n",
+        "modified": [],
+        "removed": [],
+        "timestamp": "2024-01-24T18:59:25Z",
+        "url": "http://10.201.14.40:3000/root/example-push/commit/7a3858dc7f059543a8807a8b551304b7e362a7ef",
+        "verification": null
+      },
+      "pusher": {
+        "active": false,
+        "avatar_url": "http://10.201.14.40:3000/avatars/04edfc0ef6c6cf6d6b88fbc69f9f9071",
+        "created": "2024-01-24T18:57:32Z",
+        "description": "",
+        "email": "root@noreply.10.201.14.40",
+        "followers_count": 0,
+        "following_count": 0,
+        "full_name": "",
+        "id": 1,
+        "is_admin": false,
+        "language": "",
+        "last_login": "0001-01-01T00:00:00Z",
+        "location": "",
+        "login": "root",
+        "login_name": "",
+        "prohibit_login": false,
+        "restricted": false,
+        "starred_repos_count": 0,
+        "username": "root",
+        "visibility": "public",
+        "website": ""
+      },
+      "ref": "refs/heads/main",
+      "repository": {
+        "allow_merge_commits": true,
+        "allow_rebase": true,
+        "allow_rebase_explicit": true,
+        "allow_rebase_update": true,
+        "allow_squash_merge": true,
+        "archived": false,
+        "archived_at": "1970-01-01T00:00:00Z",
+        "avatar_url": "",
+        "clone_url": "http://10.201.14.40:3000/root/example-push.git",
+        "created_at": "2024-01-24T18:59:25Z",
+        "default_allow_maintainer_edit": false,
+        "default_branch": "main",
+        "default_delete_branch_after_merge": false,
+        "default_merge_style": "merge",
+        "description": "",
+        "empty": false,
+        "fork": false,
+        "forks_count": 0,
+        "full_name": "root/example-push",
+        "has_actions": true,
+        "has_issues": true,
+        "has_packages": true,
+        "has_projects": true,
+        "has_pull_requests": true,
+        "has_releases": true,
+        "has_wiki": true,
+        "html_url": "http://10.201.14.40:3000/root/example-push",
+        "id": 2,
+        "ignore_whitespace_conflicts": false,
+        "internal": false,
+        "internal_tracker": {
+          "allow_only_contributors_to_track_time": true,
+          "enable_issue_dependencies": true,
+          "enable_time_tracker": true
+        },
+        "language": "",
+        "languages_url": "http://10.201.14.40:3000/api/v1/repos/root/example-push/languages",
+        "link": "",
+        "mirror": false,
+        "mirror_interval": "",
+        "mirror_updated": "0001-01-01T00:00:00Z",
+        "name": "example-push",
+        "object_format_name": "",
+        "open_issues_count": 0,
+        "open_pr_counter": 0,
+        "original_url": "",
+        "owner": {
+          "active": false,
+          "avatar_url": "http://10.201.14.40:3000/avatars/04edfc0ef6c6cf6d6b88fbc69f9f9071",
+          "created": "2024-01-24T18:57:32Z",
+          "description": "",
+          "email": "root@example.com",
+          "followers_count": 0,
+          "following_count": 0,
+          "full_name": "",
+          "id": 1,
+          "is_admin": false,
+          "language": "",
+          "last_login": "0001-01-01T00:00:00Z",
+          "location": "",
+          "login": "root",
+          "login_name": "",
+          "prohibit_login": false,
+          "restricted": false,
+          "starred_repos_count": 0,
+          "username": "root",
+          "visibility": "public",
+          "website": ""
+        },
+        "parent": null,
+        "permissions": {
+          "admin": true,
+          "pull": true,
+          "push": true
+        },
+        "private": false,
+        "release_counter": 0,
+        "repo_transfer": null,
+        "size": 25,
+        "ssh_url": "forgejo@10.201.14.40:root/example-push.git",
+        "stars_count": 0,
+        "template": false,
+        "updated_at": "2024-01-24T18:59:25Z",
+        "url": "http://10.201.14.40:3000/api/v1/repos/root/example-push",
+        "watchers_count": 1,
+        "website": ""
+      },
+      "sender": {
+        "active": false,
+        "avatar_url": "http://10.201.14.40:3000/avatars/04edfc0ef6c6cf6d6b88fbc69f9f9071",
+        "created": "2024-01-24T18:57:32Z",
+        "description": "",
+        "email": "root@noreply.10.201.14.40",
+        "followers_count": 0,
+        "following_count": 0,
+        "full_name": "",
+        "id": 1,
+        "is_admin": false,
+        "language": "",
+        "last_login": "0001-01-01T00:00:00Z",
+        "location": "",
+        "login": "root",
+        "login_name": "",
+        "prohibit_login": false,
+        "restricted": false,
+        "starred_repos_count": 0,
+        "username": "root",
+        "visibility": "public",
+        "website": ""
+      },
+      "total_commits": 0
+    }
+
 -
   id: 792
   title: "update actions"
@@ -36,3 +225,191 @@
   updated: 1683636626
   need_approval: 0
   approved_by: 0
+  event_payload: |
+    {
+      "after": "7a3858dc7f059543a8807a8b551304b7e362a7ef",
+      "before": "0000000000000000000000000000000000000000",
+      "commits": [
+        {
+          "added": [
+            ".forgejo/workflows/test.yml"
+          ],
+          "author": {
+            "email": "root@example.com",
+            "name": "username",
+            "username": "root"
+          },
+          "committer": {
+            "email": "root@example.com",
+            "name": "username",
+            "username": "root"
+          },
+          "id": "7a3858dc7f059543a8807a8b551304b7e362a7ef",
+          "message": "initial commit\n",
+          "modified": [],
+          "removed": [],
+          "timestamp": "2024-01-24T18:59:25Z",
+          "url": "http://10.201.14.40:3000/root/example-push/commit/7a3858dc7f059543a8807a8b551304b7e362a7ef",
+          "verification": null
+        }
+      ],
+      "compare_url": "http://10.201.14.40:3000/",
+      "head_commit": {
+        "added": [
+          ".forgejo/workflows/test.yml"
+        ],
+        "author": {
+          "email": "root@example.com",
+          "name": "username",
+          "username": "root"
+        },
+        "committer": {
+          "email": "root@example.com",
+          "name": "username",
+          "username": "root"
+        },
+        "id": "7a3858dc7f059543a8807a8b551304b7e362a7ef",
+        "message": "initial commit\n",
+        "modified": [],
+        "removed": [],
+        "timestamp": "2024-01-24T18:59:25Z",
+        "url": "http://10.201.14.40:3000/root/example-push/commit/7a3858dc7f059543a8807a8b551304b7e362a7ef",
+        "verification": null
+      },
+      "pusher": {
+        "active": false,
+        "avatar_url": "http://10.201.14.40:3000/avatars/04edfc0ef6c6cf6d6b88fbc69f9f9071",
+        "created": "2024-01-24T18:57:32Z",
+        "description": "",
+        "email": "root@noreply.10.201.14.40",
+        "followers_count": 0,
+        "following_count": 0,
+        "full_name": "",
+        "id": 1,
+        "is_admin": false,
+        "language": "",
+        "last_login": "0001-01-01T00:00:00Z",
+        "location": "",
+        "login": "root",
+        "login_name": "",
+        "prohibit_login": false,
+        "restricted": false,
+        "starred_repos_count": 0,
+        "username": "root",
+        "visibility": "public",
+        "website": ""
+      },
+      "ref": "refs/heads/main",
+      "repository": {
+        "allow_merge_commits": true,
+        "allow_rebase": true,
+        "allow_rebase_explicit": true,
+        "allow_rebase_update": true,
+        "allow_squash_merge": true,
+        "archived": false,
+        "archived_at": "1970-01-01T00:00:00Z",
+        "avatar_url": "",
+        "clone_url": "http://10.201.14.40:3000/root/example-push.git",
+        "created_at": "2024-01-24T18:59:25Z",
+        "default_allow_maintainer_edit": false,
+        "default_branch": "main",
+        "default_delete_branch_after_merge": false,
+        "default_merge_style": "merge",
+        "description": "",
+        "empty": false,
+        "fork": false,
+        "forks_count": 0,
+        "full_name": "root/example-push",
+        "has_actions": true,
+        "has_issues": true,
+        "has_packages": true,
+        "has_projects": true,
+        "has_pull_requests": true,
+        "has_releases": true,
+        "has_wiki": true,
+        "html_url": "http://10.201.14.40:3000/root/example-push",
+        "id": 2,
+        "ignore_whitespace_conflicts": false,
+        "internal": false,
+        "internal_tracker": {
+          "allow_only_contributors_to_track_time": true,
+          "enable_issue_dependencies": true,
+          "enable_time_tracker": true
+        },
+        "language": "",
+        "languages_url": "http://10.201.14.40:3000/api/v1/repos/root/example-push/languages",
+        "link": "",
+        "mirror": false,
+        "mirror_interval": "",
+        "mirror_updated": "0001-01-01T00:00:00Z",
+        "name": "example-push",
+        "object_format_name": "",
+        "open_issues_count": 0,
+        "open_pr_counter": 0,
+        "original_url": "",
+        "owner": {
+          "active": false,
+          "avatar_url": "http://10.201.14.40:3000/avatars/04edfc0ef6c6cf6d6b88fbc69f9f9071",
+          "created": "2024-01-24T18:57:32Z",
+          "description": "",
+          "email": "root@example.com",
+          "followers_count": 0,
+          "following_count": 0,
+          "full_name": "",
+          "id": 1,
+          "is_admin": false,
+          "language": "",
+          "last_login": "0001-01-01T00:00:00Z",
+          "location": "",
+          "login": "root",
+          "login_name": "",
+          "prohibit_login": false,
+          "restricted": false,
+          "starred_repos_count": 0,
+          "username": "root",
+          "visibility": "public",
+          "website": ""
+        },
+        "parent": null,
+        "permissions": {
+          "admin": true,
+          "pull": true,
+          "push": true
+        },
+        "private": false,
+        "release_counter": 0,
+        "repo_transfer": null,
+        "size": 25,
+        "ssh_url": "forgejo@10.201.14.40:root/example-push.git",
+        "stars_count": 0,
+        "template": false,
+        "updated_at": "2024-01-24T18:59:25Z",
+        "url": "http://10.201.14.40:3000/api/v1/repos/root/example-push",
+        "watchers_count": 1,
+        "website": ""
+      },
+      "sender": {
+        "active": false,
+        "avatar_url": "http://10.201.14.40:3000/avatars/04edfc0ef6c6cf6d6b88fbc69f9f9071",
+        "created": "2024-01-24T18:57:32Z",
+        "description": "",
+        "email": "root@noreply.10.201.14.40",
+        "followers_count": 0,
+        "following_count": 0,
+        "full_name": "",
+        "id": 1,
+        "is_admin": false,
+        "language": "",
+        "last_login": "0001-01-01T00:00:00Z",
+        "location": "",
+        "login": "root",
+        "login_name": "",
+        "prohibit_login": false,
+        "restricted": false,
+        "starred_repos_count": 0,
+        "username": "root",
+        "visibility": "public",
+        "website": ""
+      },
+      "total_commits": 0
+    }
