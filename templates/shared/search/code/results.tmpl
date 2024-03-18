@@ -24,10 +24,10 @@
 				{{else}}
 					<span class="file gt-f1">{{.Filename}}</span>
 				{{end}}
-				<a role="button" class="ui basic tiny button" rel="nofollow" href="{{$repo.Link}}/src/commit/{{$result.CommitID | PathEscape}}/{{.Filename | PathEscapeSegments}}">{{ctx.Locale.Tr "repo.diff.view_file"}}</a>
+				<a role="button" class="ui basic tiny button" rel="nofollow" href="{{$repo.Link}}/src/{{if eq $.CodeIndexerEnabled false}}branch{{else}}commit{{end}}/{{$result.CommitID | PathEscape}}/{{.Filename | PathEscapeSegments}}">{{ctx.Locale.Tr "repo.diff.view_file"}}</a>
 			</h4>
 			<div class="ui attached table segment">
-				{{template "shared/searchfile" dict "RepoLink" $repo.Link "IsIndexer" true "SearchResult" .}}
+				{{template "shared/searchfile" dict "RepoLink" $repo.Link "CodeIndexerEnabled" $.CodeIndexerEnabled "SearchResult" .}}
 			</div>
 			{{template "shared/searchbottom" dict "root" $ "result" .}}
 		</div>
