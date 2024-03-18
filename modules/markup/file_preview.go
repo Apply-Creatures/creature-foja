@@ -15,6 +15,7 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/translation"
+
 	"golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
 )
