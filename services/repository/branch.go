@@ -283,7 +283,7 @@ func SyncBranchesToDB(ctx context.Context, repoID, pusherID int64, branchNames, 
 				continue
 			}
 
-			commit, err := getCommit(branchName)
+			commit, err := getCommit(commitID)
 			if err != nil {
 				return fmt.Errorf("get commit of %s failed: %v", branchName, err)
 			}
