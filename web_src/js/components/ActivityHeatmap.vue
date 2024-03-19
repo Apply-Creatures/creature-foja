@@ -59,8 +59,22 @@ export default {
   </div>
   <calendar-heatmap
     :locale="locale"
-    :no-data-text="locale.no_contributions"
-    :tooltip-unit="locale.contributions"
+    :no-data-text="locale.contributions_zero"
+    :tooltip-formatter="
+      (v) =>
+        locale.contributions_format
+          .replace(
+            '{contributions}',
+            `<b>${v.count} ${
+              v.count === 1
+                ? locale.contributions_one
+                : locale.contributions_few
+            }</b>`
+          )
+          .replace('{month}', locale.months[v.date.getMonth()])
+          .replace('{day}', v.date.getDate())
+          .replace('{year}', v.date.getFullYear())
+    "
     :end-date="endDate"
     :values="values"
     :range-color="colorRange"
