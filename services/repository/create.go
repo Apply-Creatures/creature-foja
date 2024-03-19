@@ -157,7 +157,7 @@ func initRepository(ctx context.Context, repoPath string, u *user_model.User, re
 		}
 
 		// Apply changes and commit.
-		if err = repo_module.InitRepoCommit(ctx, tmpDir, repo, u, opts.DefaultBranch); err != nil {
+		if err = initRepoCommit(ctx, tmpDir, repo, u, opts.DefaultBranch); err != nil {
 			return fmt.Errorf("initRepoCommit: %w", err)
 		}
 	}
@@ -177,12 +177,7 @@ func initRepository(ctx context.Context, repoPath string, u *user_model.User, re
 
 	if len(opts.DefaultBranch) > 0 {
 		repo.DefaultBranch = opts.DefaultBranch
-		gitRepo, err := gitrepo.OpenRepository(ctx, repo)
-		if err != nil {
-			return fmt.Errorf("openRepository: %w", err)
-		}
-		defer gitRepo.Close()
-		if err = gitRepo.SetDefaultBranch(repo.DefaultBranch); err != nil {
+		if err = gitrepo.SetDefaultBranch(ctx, repo, repo.DefaultBranch); err != nil {
 			return fmt.Errorf("setDefaultBranch: %w", err)
 		}
 

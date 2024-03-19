@@ -162,9 +162,6 @@ package "code.gitea.io/gitea/modules/cache"
 package "code.gitea.io/gitea/modules/charset"
 	func (*BreakWriter).Write
 
-package "code.gitea.io/gitea/modules/context"
-	func GetPrivateContext
-
 package "code.gitea.io/gitea/modules/emoji"
 	func ReplaceCodes
 
@@ -192,6 +189,7 @@ package "code.gitea.io/gitea/modules/gitgraph"
 
 package "code.gitea.io/gitea/modules/gitrepo"
 	func GetBranchCommitID
+	func GetWikiDefaultBranch
 
 package "code.gitea.io/gitea/modules/graceful"
 	func (*Manager).TerminateContext
@@ -296,7 +294,6 @@ package "code.gitea.io/gitea/modules/translation"
 
 package "code.gitea.io/gitea/modules/util"
 	func UnsafeStringToBytes
-	func OptionalBoolFromGeneric
 
 package "code.gitea.io/gitea/modules/util/filebuffer"
 	func CreateFromReader
@@ -315,6 +312,9 @@ package "code.gitea.io/gitea/routers/web/org"
 	func MustEnableProjects
 	func getActionIssues
 	func UpdateIssueProject
+
+package "code.gitea.io/gitea/services/context"
+	func GetPrivateContext
 
 package "code.gitea.io/gitea/services/convert"
 	func ToSecret

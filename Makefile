@@ -93,6 +93,14 @@ ifneq ($(STORED_VERSION),)
 else
   FORGEJO_VERSION ?= $(shell git describe --exclude '*-test' --tags --always | sed 's/^v//')+${GITEA_COMPATIBILITY}
 endif
+FORGEJO_VERSION_MAJOR=$(shell echo $(FORGEJO_VERSION) | sed -e 's/\..*//')
+
+show-version-full:
+	@echo ${FORGEJO_VERSION}
+
+show-version-major:
+	@echo ${FORGEJO_VERSION_MAJOR}
+
 RELEASE_VERSION ?= ${FORGEJO_VERSION}
 VERSION ?= ${RELEASE_VERSION}
 
@@ -100,8 +108,10 @@ LDFLAGS := $(LDFLAGS) -X "main.ReleaseVersion=$(RELEASE_VERSION)" -X "main.MakeV
 
 LINUX_ARCHS ?= linux/amd64,linux/386,linux/arm-5,linux/arm-6,linux/arm64
 
-GO_PACKAGES ?= $(filter-out code.gitea.io/gitea/tests/integration/migration-test code.gitea.io/gitea/tests code.gitea.io/gitea/tests/integration code.gitea.io/gitea/tests/e2e,$(shell $(GO) list ./... | grep -v /vendor/))
-GO_TEST_PACKAGES ?= $(filter-out $(shell $(GO) list code.gitea.io/gitea/models/migrations/...) $(shell $(GO) list code.gitea.io/gitea/models/forgejo_migrations/...) code.gitea.io/gitea/tests/integration/migration-test code.gitea.io/gitea/tests code.gitea.io/gitea/tests/integration code.gitea.io/gitea/tests/e2e,$(shell $(GO) list ./... | grep -v /vendor/))
+ifeq ($(HAS_GO), yes)
+	GO_PACKAGES ?= $(filter-out code.gitea.io/gitea/tests/integration/migration-test code.gitea.io/gitea/tests code.gitea.io/gitea/tests/integration code.gitea.io/gitea/tests/e2e,$(shell $(GO) list ./... | grep -v /vendor/))
+	GO_TEST_PACKAGES ?= $(filter-out $(shell $(GO) list code.gitea.io/gitea/models/migrations/...) $(shell $(GO) list code.gitea.io/gitea/models/forgejo_migrations/...) code.gitea.io/gitea/tests/integration/migration-test code.gitea.io/gitea/tests code.gitea.io/gitea/tests/integration code.gitea.io/gitea/tests/e2e,$(shell $(GO) list ./... | grep -v /vendor/))
+endif
 
 FOMANTIC_WORK_DIR := web_src/fomantic
 
@@ -140,7 +150,9 @@ GO_SOURCES += $(shell find $(GO_DIRS) -type f -name "*.go" ! -path modules/optio
 GO_SOURCES += $(GENERATED_GO_DEST)
 GO_SOURCES_NO_BINDATA := $(GO_SOURCES)
 
-MIGRATION_PACKAGES := $(shell $(GO) list code.gitea.io/gitea/models/migrations/... code.gitea.io/gitea/models/forgejo_migrations/...)
+ifeq ($(HAS_GO), yes)
+	MIGRATION_PACKAGES := $(shell $(GO) list code.gitea.io/gitea/models/migrations/... code.gitea.io/gitea/models/forgejo_migrations/...)
+endif
 
 ifeq ($(filter $(TAGS_SPLIT),bindata),bindata)
 	GO_SOURCES += $(BINDATA_DEST)
@@ -219,6 +231,8 @@ help:
 	@echo " - checks-frontend                  check frontend files"
 	@echo " - checks-backend                   check backend files"
 	@echo " - test                             test everything"
+	@echo " - show-version-full                show the same version as the API endpoint"
+	@echo " - show-version-major               show major release number only"
 	@echo " - test-frontend                    test frontend files"
 	@echo " - test-backend                     test backend files"
 	@echo " - test-e2e[\#TestSpecificName]     test end to end using playwright"
@@ -299,12 +313,8 @@ fmt:
 
 .PHONY: fmt-check
 fmt-check: fmt
-	@diff=$$(git diff --color=always $(GO_SOURCES) templates $(WEB_DIRS)); \
-	if [ -n "$$diff" ]; then \
-	  echo "Please run 'make fmt' and commit the result:"; \
-	  echo "$${diff}"; \
-	  exit 1; \
-	fi
+	@git diff --exit-code --color=always $(GO_SOURCES) templates $(WEB_DIRS) \
+	|| (code=$$?; echo "Please run 'make fmt' and commit the result"; exit $${code})
 
 .PHONY: $(TAGS_EVIDENCE)
 $(TAGS_EVIDENCE):
@@ -325,12 +335,8 @@ generate-forgejo-api: $(FORGEJO_API_SPEC)
 
 .PHONY: forgejo-api-check
 forgejo-api-check: generate-forgejo-api
-	@diff=$$(git diff $(FORGEJO_API_SERVER) ; \
-	if [ -n "$$diff" ]; then \
-		echo "Please run 'make generate-forgejo-api' and commit the result:"; \
-		echo "$${diff}"; \
-		exit 1; \
-	fi
+	@git diff --exit-code --color=always $(FORGEJO_API_SERVER) \
+	|| (code=$$?; echo "Please run 'make generate-forgejo-api' and commit the result"; exit $${code})
 
 .PHONY: forgejo-api-validate
 forgejo-api-validate:
@@ -347,12 +353,8 @@ $(SWAGGER_SPEC): $(GO_SOURCES_NO_BINDATA)
 
 .PHONY: swagger-check
 swagger-check: generate-swagger
-	@diff=$$(git diff --color=always '$(SWAGGER_SPEC)'); \
-	if [ -n "$$diff" ]; then \
-		echo "Please run 'make generate-swagger' and commit the result:"; \
-		echo "$${diff}"; \
-		exit 1; \
-	fi
+	@git diff --exit-code --color=always '$(SWAGGER_SPEC)' \
+	|| (code=$$?; echo "Please run 'make generate-swagger' and commit the result"; exit $${code})
 
 .PHONY: swagger-validate
 swagger-validate:
@@ -423,11 +425,8 @@ lint-spell-fix:
 lint-go:
 	$(GO) run $(GOLANGCI_LINT_PACKAGE) run $(GOLANGCI_LINT_ARGS)
 	$(GO) run $(DEADCODE_PACKAGE) -generated=false -test code.gitea.io/gitea > .cur-deadcode-out
-	@$(DIFF) .deadcode-out .cur-deadcode-out; \
-	if [ $$? -eq 1 ]; then \
-		echo "Please run 'make lint-go-fix' and commit the result"; \
-		exit 1; \
-	fi
+	@$(DIFF) .deadcode-out .cur-deadcode-out \
+	|| (code=$$?; echo "Please run 'make lint-go-fix' and commit the result"; exit $${code})
 
 .PHONY: lint-go-fix
 lint-go-fix:
@@ -527,12 +526,8 @@ vendor: go.mod go.sum
 
 .PHONY: tidy-check
 tidy-check: tidy
-	@diff=$$(git diff --color=always go.mod go.sum $(GO_LICENSE_FILE)); \
-	if [ -n "$$diff" ]; then \
-		echo "Please run 'make tidy' and commit the result:"; \
-		echo "$${diff}"; \
-		exit 1; \
-	fi
+	@git diff --exit-code --color=always go.mod go.sum $(GO_LICENSE_FILE) \
+	|| (code=$$?; echo "Please run 'make tidy' and commit the result"; exit $${code})
 
 .PHONY: go-licenses
 go-licenses: $(GO_LICENSE_FILE)
@@ -947,6 +942,7 @@ fomantic:
 	cd $(FOMANTIC_WORK_DIR) && npm install --no-save
 	cp -f $(FOMANTIC_WORK_DIR)/theme.config.less $(FOMANTIC_WORK_DIR)/node_modules/fomantic-ui/src/theme.config
 	cp -rf $(FOMANTIC_WORK_DIR)/_site $(FOMANTIC_WORK_DIR)/node_modules/fomantic-ui/src/
+	$(SED_INPLACE) -e 's/  overrideBrowserslist\r/  overrideBrowserslist: ["defaults"]\r/g' $(FOMANTIC_WORK_DIR)/node_modules/fomantic-ui/tasks/config/tasks.js
 	cd $(FOMANTIC_WORK_DIR) && npx gulp -f node_modules/fomantic-ui/gulpfile.js build
 	# fomantic uses "touchstart" as click event for some browsers, it's not ideal, so we force fomantic to always use "click" as click event
 	$(SED_INPLACE) -e 's/clickEvent[ \t]*=/clickEvent = "click", unstableClickEvent =/g' $(FOMANTIC_WORK_DIR)/build/semantic.js
@@ -970,23 +966,14 @@ svg: node-check | node_modules
 .PHONY: svg-check
 svg-check: svg
 	@git add $(SVG_DEST_DIR)
-	@diff=$$(git diff --color=always --cached $(SVG_DEST_DIR)); \
-	if [ -n "$$diff" ]; then \
-		echo "Please run 'make svg' and 'git add $(SVG_DEST_DIR)' and commit the result:"; \
-		echo "$${diff}"; \
-		exit 1; \
-	fi
+	@git diff --exit-code --color=always --cached $(SVG_DEST_DIR) \
+	|| (code=$$?; echo "Please run 'make svg' and commit the result"; exit $${code})
 
 .PHONY: lockfile-check
 lockfile-check:
 	npm install --package-lock-only
-	@diff=$$(git diff --color=always package-lock.json); \
-	if [ -n "$$diff" ]; then \
-		echo "package-lock.json is inconsistent with package.json"; \
-		echo "Please run 'npm install --package-lock-only' and commit the result:"; \
-		echo "$${diff}"; \
-		exit 1; \
-	fi
+	@git diff --exit-code --color=always package-lock.json \
+	|| (code=$$?; echo "Please run 'npm install --package-lock-only' and commit the result"; exit $${code})
 
 .PHONY: update-translations
 update-translations:

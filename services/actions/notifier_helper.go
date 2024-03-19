@@ -117,6 +117,9 @@ func notify(ctx context.Context, input *notifyInput) error {
 		log.Debug("ignore executing %v for event %v whose doer is %v", getMethod(ctx), input.Event, input.Doer.Name)
 		return nil
 	}
+	if input.Repo.IsEmpty {
+		return nil
+	}
 	if unit_model.TypeActions.UnitGlobalDisabled() {
 		return nil
 	}
@@ -302,7 +305,18 @@ func handleWorkflows(
 			run.NeedApproval = need
 		}
 
-		jobs, err := jobparser.Parse(dwf.Content)
+		if err := run.LoadAttributes(ctx); err != nil {
+			log.Error("LoadAttributes: %v", err)
+			continue
+		}
+
+		vars, err := actions_model.GetVariablesOfRun(ctx, run)
+		if err != nil {
+			log.Error("GetVariablesOfRun: %v", err)
+			continue
+		}
+
+		jobs, err := jobparser.Parse(dwf.Content, jobparser.WithVars(vars))
 		if err != nil {
 			log.Error("jobparser.Parse: %v", err)
 			continue

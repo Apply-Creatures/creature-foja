@@ -388,7 +388,7 @@ func TestRender_ShortLinks(t *testing.T) {
 			},
 		}, input)
 		assert.NoError(t, err)
-		assert.Equal(t, strings.TrimSpace(expected), strings.TrimSpace(buffer))
+		assert.Equal(t, strings.TrimSpace(expected), strings.TrimSpace(string(buffer)))
 		buffer, err = markdown.RenderString(&markup.RenderContext{
 			Ctx: git.DefaultContext,
 			Links: markup.Links{
@@ -398,7 +398,7 @@ func TestRender_ShortLinks(t *testing.T) {
 			IsWiki: true,
 		}, input)
 		assert.NoError(t, err)
-		assert.Equal(t, strings.TrimSpace(expectedWiki), strings.TrimSpace(buffer))
+		assert.Equal(t, strings.TrimSpace(expectedWiki), strings.TrimSpace(string(buffer)))
 	}
 
 	mediatree := util.URLJoin(markup.TestRepoURL, "media", "master")
@@ -501,7 +501,7 @@ func TestRender_RelativeImages(t *testing.T) {
 			Metas: localMetas,
 		}, input)
 		assert.NoError(t, err)
-		assert.Equal(t, strings.TrimSpace(expected), strings.TrimSpace(buffer))
+		assert.Equal(t, strings.TrimSpace(expected), strings.TrimSpace(string(buffer)))
 		buffer, err = markdown.RenderString(&markup.RenderContext{
 			Ctx: git.DefaultContext,
 			Links: markup.Links{
@@ -511,7 +511,7 @@ func TestRender_RelativeImages(t *testing.T) {
 			IsWiki: true,
 		}, input)
 		assert.NoError(t, err)
-		assert.Equal(t, strings.TrimSpace(expectedWiki), strings.TrimSpace(buffer))
+		assert.Equal(t, strings.TrimSpace(expectedWiki), strings.TrimSpace(string(buffer)))
 	}
 
 	rawwiki := util.URLJoin(markup.TestRepoURL, "wiki", "raw")

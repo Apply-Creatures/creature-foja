@@ -7,11 +7,12 @@ import (
 	"net/http"
 
 	repo_model "code.gitea.io/gitea/models/repo"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/gitrepo"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/routers/web/repo"
+	"code.gitea.io/gitea/services/context"
 	notify_service "code.gitea.io/gitea/services/notify"
 )
 
@@ -40,7 +41,7 @@ func SetDefaultBranchPost(ctx *context.Context) {
 			return
 		} else if repo.DefaultBranch != branch {
 			repo.DefaultBranch = branch
-			if err := ctx.Repo.GitRepo.SetDefaultBranch(branch); err != nil {
+			if err := gitrepo.SetDefaultBranch(ctx, repo, branch); err != nil {
 				if !git.IsErrUnsupportedVersion(err) {
 					ctx.ServerError("SetDefaultBranch", err)
 					return

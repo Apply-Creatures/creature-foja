@@ -16,6 +16,7 @@ import (
 	"code.gitea.io/gitea/models/unit"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/gitrepo"
 	"code.gitea.io/gitea/modules/log"
 	repo_module "code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/sync"
@@ -87,7 +88,7 @@ func NormalizeWikiBranch(ctx context.Context, repo *repo_model.Repository, to st
 		return err
 	}
 
-	if err := gitRepo.SetDefaultBranch(to); err != nil {
+	if err := gitrepo.SetDefaultBranch(ctx, repo, to); err != nil {
 		return err
 	}
 

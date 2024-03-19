@@ -17,7 +17,6 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/auth/password"
 	"code.gitea.io/gitea/modules/base"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/eventsource"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/optional"
@@ -30,6 +29,7 @@ import (
 	"code.gitea.io/gitea/routers/utils"
 	auth_service "code.gitea.io/gitea/services/auth"
 	"code.gitea.io/gitea/services/auth/source/oauth2"
+	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/externalaccount"
 	"code.gitea.io/gitea/services/forms"
 	"code.gitea.io/gitea/services/mailer"
@@ -135,9 +135,21 @@ func resetLocale(ctx *context.Context, u *user_model.User) error {
 	return nil
 }
 
+func RedirectAfterLogin(ctx *context.Context) {
+	redirectTo := ctx.FormString("redirect_to")
+	if redirectTo == "" {
+		redirectTo = ctx.GetSiteCookie("redirect_to")
+	}
+	middleware.DeleteRedirectToCookie(ctx.Resp)
+	nextRedirectTo := setting.AppSubURL + string(setting.LandingPageURL)
+	if setting.LandingPageURL == setting.LandingPageLogin {
+		nextRedirectTo = setting.AppSubURL + "/" // do not cycle-redirect to the login page
+	}
+	ctx.RedirectToFirst(redirectTo, nextRedirectTo)
+}
+
 func CheckAutoLogin(ctx *context.Context) bool {
-	// Check auto-login
-	isSucceed, err := autoSignIn(ctx)
+	isSucceed, err := autoSignIn(ctx) // try to auto-login
 	if err != nil {
 		ctx.ServerError("autoSignIn", err)
 		return true
@@ -146,17 +158,10 @@ func CheckAutoLogin(ctx *context.Context) bool {
 	redirectTo := ctx.FormString("redirect_to")
 	if len(redirectTo) > 0 {
 		middleware.SetRedirectToCookie(ctx.Resp, redirectTo)
-	} else {
-		redirectTo = ctx.GetSiteCookie("redirect_to")
 	}
 
 	if isSucceed {
-		middleware.DeleteRedirectToCookie(ctx.Resp)
-		nextRedirectTo := setting.AppSubURL + string(setting.LandingPageURL)
-		if setting.LandingPageURL == setting.LandingPageLogin {
-			nextRedirectTo = setting.AppSubURL + "/" // do not cycle-redirect to the login page
-		}
-		ctx.RedirectToFirst(redirectTo, nextRedirectTo)
+		RedirectAfterLogin(ctx)
 		return true
 	}
 
@@ -171,7 +176,12 @@ func SignIn(ctx *context.Context) {
 		return
 	}
 
-	oauth2Providers, err := oauth2.GetOAuth2Providers(ctx, util.OptionalBoolTrue)
+	if ctx.IsSigned {
+		RedirectAfterLogin(ctx)
+		return
+	}
+
+	oauth2Providers, err := oauth2.GetOAuth2Providers(ctx, optional.Some(true))
 	if err != nil {
 		ctx.ServerError("UserSignIn", err)
 		return
@@ -194,7 +204,7 @@ func SignIn(ctx *context.Context) {
 func SignInPost(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("sign_in")
 
-	oauth2Providers, err := oauth2.GetOAuth2Providers(ctx, util.OptionalBoolTrue)
+	oauth2Providers, err := oauth2.GetOAuth2Providers(ctx, optional.Some(true))
 	if err != nil {
 		ctx.ServerError("UserSignIn", err)
 		return
@@ -414,7 +424,7 @@ func SignUp(ctx *context.Context) {
 
 	ctx.Data["SignUpLink"] = setting.AppSubURL + "/user/sign_up"
 
-	oauth2Providers, err := oauth2.GetOAuth2Providers(ctx, util.OptionalBoolTrue)
+	oauth2Providers, err := oauth2.GetOAuth2Providers(ctx, optional.Some(true))
 	if err != nil {
 		ctx.ServerError("UserSignUp", err)
 		return
@@ -443,7 +453,7 @@ func SignUpPost(ctx *context.Context) {
 
 	ctx.Data["SignUpLink"] = setting.AppSubURL + "/user/sign_up"
 
-	oauth2Providers, err := oauth2.GetOAuth2Providers(ctx, util.OptionalBoolTrue)
+	oauth2Providers, err := oauth2.GetOAuth2Providers(ctx, optional.Some(true))
 	if err != nil {
 		ctx.ServerError("UserSignUp", err)
 		return

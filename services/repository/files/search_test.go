@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"code.gitea.io/gitea/models/unittest"
-	"code.gitea.io/gitea/modules/contexttest"
+	"code.gitea.io/gitea/services/contexttest"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -25,14 +25,16 @@ func TestNewRepoGrep(t *testing.T) {
 
 		expected := []*Result{
 			{
-				RepoID:         0,
-				Filename:       "README.md",
-				CommitID:       "master",
-				UpdatedUnix:    0,
-				Language:       "Markdown",
-				Color:          "#083fa1",
-				LineNumbers:    []int64{2, 3},
-				FormattedLines: "\nDescription for repo1",
+				RepoID:      0,
+				Filename:    "README.md",
+				CommitID:    "master",
+				UpdatedUnix: 0,
+				Language:    "Markdown",
+				Color:       "#083fa1",
+				Lines: []ResultLine{
+					{Num: 2, FormattedContent: ""},
+					{Num: 3, FormattedContent: "Description for repo1"},
+				},
 			},
 		}
 

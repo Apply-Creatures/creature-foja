@@ -891,6 +891,14 @@ func PullRequestCodeOwnersReview(ctx context.Context, pull *Issue, pr *PullReque
 		return nil
 	}
 
+	if err := pull.LoadRepo(ctx); err != nil {
+		return err
+	}
+
+	if pull.Repo.IsFork {
+		return nil
+	}
+
 	if err := pr.LoadBaseRepo(ctx); err != nil {
 		return err
 	}
@@ -901,12 +909,7 @@ func PullRequestCodeOwnersReview(ctx context.Context, pull *Issue, pr *PullReque
 	}
 	defer repo.Close()
 
-	branch, err := repo.GetDefaultBranch()
-	if err != nil {
-		return err
-	}
-
-	commit, err := repo.GetBranchCommit(branch)
+	commit, err := repo.GetBranchCommit(pr.BaseRepo.DefaultBranch)
 	if err != nil {
 		return err
 	}
@@ -929,7 +932,7 @@ func PullRequestCodeOwnersReview(ctx context.Context, pull *Issue, pr *PullReque
 	}
 	// Use the merge base as the base instead of the main branch to avoid problems
 	// if the pull request is out of date with the base branch.
-	changedFiles, err := repo.GetFilesChangedBetween(prInfo.MergeBase, pr.HeadCommitID)
+	changedFiles, err := repo.GetFilesChangedBetween(prInfo.MergeBase, prInfo.HeadCommitID)
 	if err != nil {
 		return err
 	}

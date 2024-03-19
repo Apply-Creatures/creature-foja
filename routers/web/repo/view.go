@@ -35,9 +35,8 @@ import (
 	"code.gitea.io/gitea/modules/actions"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/charset"
-	"code.gitea.io/gitea/modules/container"
-	"code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/gitrepo"
 	"code.gitea.io/gitea/modules/highlight"
 	"code.gitea.io/gitea/modules/lfs"
 	"code.gitea.io/gitea/modules/log"
@@ -48,6 +47,7 @@ import (
 	"code.gitea.io/gitea/modules/typesniffer"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/routers/web/feed"
+	"code.gitea.io/gitea/services/context"
 	issue_service "code.gitea.io/gitea/services/issue"
 	files_service "code.gitea.io/gitea/services/repository/files"
 
@@ -881,24 +881,17 @@ func renderDirectoryFiles(ctx *context.Context, timeout time.Duration) git.Entri
 		defer cancel()
 	}
 
-	selected := make(container.Set[string])
-	selected.AddMultiple(ctx.FormStrings("f[]")...)
-
-	entries := allEntries
-	if len(selected) > 0 {
-		entries = make(git.Entries, 0, len(selected))
-		for _, entry := range allEntries {
-			if selected.Contains(entry.Name()) {
-				entries = append(entries, entry)
-			}
-		}
-	}
-
-	var latestCommit *git.Commit
-	ctx.Data["Files"], latestCommit, err = entries.GetCommitsInfo(commitInfoCtx, ctx.Repo.Commit, ctx.Repo.TreePath)
+	files, latestCommit, err := allEntries.GetCommitsInfo(commitInfoCtx, ctx.Repo.Commit, ctx.Repo.TreePath)
 	if err != nil {
 		ctx.ServerError("GetCommitsInfo", err)
 		return nil
+	}
+	ctx.Data["Files"] = files
+	for _, f := range files {
+		if f.Commit == nil {
+			ctx.Data["HasFilesWithoutLatestCommit"] = true
+			break
+		}
 	}
 
 	if !loadLatestCommitData(ctx, latestCommit) {
@@ -1004,6 +997,8 @@ func renderCode(ctx *context.Context) {
 		return
 	}
 
+	checkOutdatedBranch(ctx)
+
 	checkCitationFile(ctx, entry)
 	if ctx.Written() {
 		return
@@ -1079,7 +1074,7 @@ func renderCode(ctx *context.Context) {
 			if err != nil {
 				continue
 			}
-			defaultBranch, err := gitRepo.GetDefaultBranch()
+			defaultBranch, err := gitrepo.GetDefaultBranch(ctx, repo)
 			if err != nil {
 				continue
 			}
@@ -1129,18 +1124,43 @@ PostRecentBranchCheck:
 	ctx.HTML(http.StatusOK, tplRepoHome)
 }
 
+func checkOutdatedBranch(ctx *context.Context) {
+	if !(ctx.Repo.IsAdmin() || ctx.Repo.IsOwner()) {
+		return
+	}
+
+	// get the head commit of the branch since ctx.Repo.CommitID is not always the head commit of `ctx.Repo.BranchName`
+	commit, err := ctx.Repo.GitRepo.GetBranchCommit(ctx.Repo.BranchName)
+	if err != nil {
+		log.Error("GetBranchCommitID: %v", err)
+		// Don't return an error page, as it can be rechecked the next time the user opens the page.
+		return
+	}
+
+	dbBranch, err := git_model.GetBranch(ctx, ctx.Repo.Repository.ID, ctx.Repo.BranchName)
+	if err != nil {
+		log.Error("GetBranch: %v", err)
+		// Don't return an error page, as it can be rechecked the next time the user opens the page.
+		return
+	}
+
+	if dbBranch.CommitID != commit.ID.String() {
+		ctx.Flash.Warning(ctx.Tr("repo.error.broken_git_hook", "https://docs.gitea.com/help/faq#push-hook--webhook--actions-arent-running"), true)
+	}
+}
+
 // RenderUserCards render a page show users according the input template
 func RenderUserCards(ctx *context.Context, total int, getter func(opts db.ListOptions) ([]*user_model.User, error), tpl base.TplName) {
 	page := ctx.FormInt("page")
 	if page <= 0 {
 		page = 1
 	}
-	pager := context.NewPagination(total, setting.ItemsPerPage, page, 5)
+	pager := context.NewPagination(total, setting.MaxUserCardsPerPage, page, 5)
 	ctx.Data["Page"] = pager
 
 	items, err := getter(db.ListOptions{
 		Page:     pager.Paginater.Current(),
-		PageSize: setting.ItemsPerPage,
+		PageSize: setting.MaxUserCardsPerPage,
 	})
 	if err != nil {
 		ctx.ServerError("getter", err)
@@ -1181,12 +1201,12 @@ func Forks(ctx *context.Context) {
 		page = 1
 	}
 
-	pager := context.NewPagination(ctx.Repo.Repository.NumForks, setting.ItemsPerPage, page, 5)
+	pager := context.NewPagination(ctx.Repo.Repository.NumForks, setting.MaxForksPerPage, page, 5)
 	ctx.Data["Page"] = pager
 
 	forks, err := repo_model.GetForks(ctx, ctx.Repo.Repository, db.ListOptions{
 		Page:     pager.Paginater.Current(),
-		PageSize: setting.ItemsPerPage,
+		PageSize: setting.MaxForksPerPage,
 	})
 	if err != nil {
 		ctx.ServerError("GetForks", err)

@@ -47,7 +47,8 @@ var microcmdUserCreate = &cli.Command{
 		},
 		&cli.BoolFlag{
 			Name:  "must-change-password",
-			Usage: "Set this option to false to prevent forcing the user to change their password after initial login, (Default: true)",
+			Usage: "Set this option to false to prevent forcing the user to change their password after initial login",
+			Value: true,
 		},
 		&cli.IntFlag{
 			Name:  "random-password-length",
@@ -110,17 +111,12 @@ func runCreateUser(c *cli.Context) error {
 		return errors.New("must set either password or random-password flag")
 	}
 
-	// always default to true
-	changePassword := true
+	changePassword := c.Bool("must-change-password")
 
 	// If this is the first user being created.
 	// Take it as the admin and don't force a password update.
 	if n := user_model.CountUsers(ctx, nil); n == 0 {
 		changePassword = false
-	}
-
-	if c.IsSet("must-change-password") {
-		changePassword = c.Bool("must-change-password")
 	}
 
 	restricted := optional.None[bool]()

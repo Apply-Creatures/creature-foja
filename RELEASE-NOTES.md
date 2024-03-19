@@ -4,6 +4,43 @@ A Forgejo release is published shortly after a Gitea release is published and th
 
 The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.21.1-0 or v1.21.2-0) does not require manual actions but others might (e.g. v1.20, v1.21).
 
+## 1.21.7-0
+
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.7-0` release can be reviewed from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo/
+$ git -C forgejo log --oneline --no-merges v1.21.6-0..v1.21.7-0
+```
+
+This stable release contains bug fixes and a **security fix**.
+
+* Recommended Action
+
+  We recommend that all Forgejo installations are [upgraded](https://forgejo.org/docs/v1.21/admin/upgrade/) to the latest version as soon as possible.
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.21/user/semver/)
+
+  The semantic version was updated to `6.0.7+0-gitea-1.21.7`
+
+* Built with Go 1.21.8
+
+  It [includes vulnerability fixes](https://groups.google.com/g/golang-announce/c/5pwGVUPoMbg).
+
+  * [CVE-2023-45290](https://go.dev/issue/65383) which could lead to memory exhaustion when parsing a multipart form.
+  * [CVE-2023-45289](https://go.dev/issue/65065) which could allow incorrect forwarding of sensitive headers and cookies on HTTP redirect.
+
+* Security fix
+
+  * The google.golang.org/protobuf module was bumped to version v1.33.0 to fix a bug in the google.golang.org/protobuf/encoding/protojson package which could cause the Unmarshal function to enter an infinite loop when handling some invalid inputs. [Read more in the announcement](https://groups.google.com/g/golang-announce/c/ArQ6CDgtEjY).
+
+* Bug fixes
+
+  The most prominent ones are described here, others can be found in the list of commits included in the release as described above.
+
+  * [Fix tarball/zipball download bug](https://codeberg.org/forgejo/forgejo/commit/8e2c991b35de8c94899ad053e89339cea4538589).
+  * [Ensure `HasIssueContentHistory` takes into account `comment_id`](https://codeberg.org/forgejo/forgejo/commit/8fb027fea5e9525293802d977fd3ee0c374ba9ba).
+
 ## 1.21.6-0
 
 The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.6-0` release can be reviewed from the command line with:

@@ -497,6 +497,10 @@ Gitea 创建以下非唯一队列：
 
 - `DEFAULT_EMAIL_NOTIFICATIONS`: **enabled**：用户电子邮件通知的默认配置（用户可配置）。选项：enabled、onmention、disabled
 - `DISABLE_REGULAR_ORG_CREATION`: **false**：禁止普通（非管理员）用户创建组织。
+- `USER_DISABLED_FEATURES`:**_empty_** 禁用的用户特性，当前允许为空或者 `deletion`，`manage_ssh_keys`， `manage_gpg_keys` 未来可以增加更多设置。
+  - `deletion`: 用户不能通过界面或者API删除他自己。
+  - `manage_ssh_keys`: 用户不能通过界面或者API配置SSH Keys。
+  - `manage_gpg_keys`: 用户不能配置 GPG 密钥。
 
 ## 安全性 (`security`)
 
@@ -778,7 +782,7 @@ Gitea 创建以下非唯一队列：
 ## 工单和合并请求的附件 (`attachment`)
 
 - `ENABLED`: **true**: 是否允许用户上传附件。
-- `ALLOWED_TYPES`: **.csv,.docx,.fodg,.fodp,.fods,.fodt,.gif,.gz,.jpeg,.jpg,.log,.md,.mov,.mp4,.odf,.odg,.odp,.ods,.odt,.patch,.pdf,.png,.pptx,.svg,.tgz,.txt,.webm,.xls,.xlsx,.zip**: 允许的文件扩展名（`.zip`）、mime 类型（`text/plain`）或通配符类型（`image/*`、`audio/*`、`video/*`）的逗号分隔列表。空值或 `*/*` 允许所有类型。
+- `ALLOWED_TYPES`: **.cpuprofile,.csv,.dmp,.docx,.fodg,.fodp,.fods,.fodt,.gif,.gz,.jpeg,.jpg,.json,.jsonc,.log,.md,.mov,.mp4,.odf,.odg,.odp,.ods,.odt,.patch,.pdf,.png,.pptx,.svg,.tgz,.txt,.webm,.xls,.xlsx,.zip**: 允许的文件扩展名（`.zip`）、mime 类型（`text/plain`）或通配符类型（`image/*`、`audio/*`、`video/*`）的逗号分隔列表。空值或 `*/*` 允许所有类型。
 - `MAX_SIZE`: **2048**: 附件的最大限制（MB）。
 - `MAX_FILES`: **5**: 一次最多上传的附件数量。
 - `STORAGE_TYPE`: **local**: 附件的存储类型，`local` 表示本地磁盘，`minio` 表示兼容 S3 的对象存储服务，如果未设置将使用默认值 `local` 或其他在 `[storage.xxx]` 中定义的名称。
@@ -788,6 +792,10 @@ Gitea 创建以下非唯一队列：
 - `MINIO_ACCESS_KEY_ID`: Minio accessKeyID 以连接，仅当 STORAGE_TYPE 为 `minio` 时可用。
 - `MINIO_SECRET_ACCESS_KEY`: Minio secretAccessKey 以连接，仅当 STORAGE_TYPE 为 `minio` 时可用。
 - `MINIO_BUCKET`: **gitea**: Minio 存储附件的存储桶，仅当 STORAGE_TYPE 为 `minio` 时可用。
+- `MINIO_BUCKET_LOOKUP`: **auto**: Minio 存储桶寻址方式, 仅当 `STORAGE_TYPE` 为 `minio` 时可用。
+  - `auto` 自动检测
+  - `dns`  子域名寻址
+  - `path` 路径寻址
 - `MINIO_LOCATION`: **us-east-1**: Minio 存储桶的位置以创建，仅当 STORAGE_TYPE 为 `minio` 时可用。
 - `MINIO_BASE_PATH`: **attachments/**: Minio 存储桶上的基本路径，仅当 STORAGE_TYPE 为 `minio` 时可用。
 - `MINIO_USE_SSL`: **false**: Minio 启用 SSL，仅当 STORAGE_TYPE 为 `minio` 时可用。
@@ -1203,6 +1211,10 @@ ALLOW_DATA_URI_IMAGES = true
 - `MINIO_ACCESS_KEY_ID`：Minio 的 accessKeyID，仅在 `STORAGE_TYPE` 为 `minio` 时可用。
 - `MINIO_SECRET_ACCESS_KEY`：Minio 的 secretAccessKey，仅在 `STORAGE_TYPE` 为 `minio` 时可用。
 - `MINIO_BUCKET`：**gitea**：用于存储 lfs 的 Minio 桶，仅在 `STORAGE_TYPE` 为 `minio` 时可用。
+- `MINIO_BUCKET_LOOKUP`: **auto**: Minio 存储桶寻址方式,可选值为 `auto`, `dns`, `path` 仅当 `STORAGE_TYPE` 为 `minio` 时可用。
+  - `auto` 自动检测
+  - `dns`  子域名寻址
+  - `path` 路径寻址
 - `MINIO_LOCATION`：**us-east-1**：创建桶的 Minio 位置，仅在 `STORAGE_TYPE` 为 `minio` 时可用。
 - `MINIO_BASE_PATH`：**lfs/**：桶上的 Minio 基本路径，仅在 `STORAGE_TYPE` 为 `minio` 时可用。
 - `MINIO_USE_SSL`：**false**：Minio 启用 ssl，仅在 `STORAGE_TYPE` 为 `minio` 时可用。
@@ -1218,6 +1230,10 @@ ALLOW_DATA_URI_IMAGES = true
 - `MINIO_ACCESS_KEY_ID`：Minio 的 accessKeyID，仅在 `STORAGE_TYPE` 为 `minio` 时可用。
 - `MINIO_SECRET_ACCESS_KEY`：Minio 的 secretAccessKey，仅在 `STORAGE_TYPE` 为 `minio` 时可用。
 - `MINIO_BUCKET`：**gitea**：用于存储数据的 Minio 桶，仅在 `STORAGE_TYPE` 为 `minio` 时可用。
+- `MINIO_BUCKET_LOOKUP`: **auto**: Minio 存储桶寻址方式,可选值为 `auto`, `dns`, `path` 仅当 `STORAGE_TYPE` 为 `minio` 时可用。
+  - `auto` 自动检测
+  - `dns`  子域名寻址
+  - `path` 路径寻址
 - `MINIO_LOCATION`：**us-east-1**：创建桶的 Minio 位置，仅在 `STORAGE_TYPE` 为 `minio` 时可用。
 - `MINIO_USE_SSL`：**false**：Minio 启用 ssl，仅在 `STORAGE_TYPE` 为 `minio` 时可用。
 - `MINIO_INSECURE_SKIP_VERIFY`：**false**：Minio 跳过 SSL 验证，仅在 `STORAGE_TYPE` 为 `minio` 时可用。
@@ -1301,6 +1317,10 @@ MINIO_INSECURE_SKIP_VERIFY = false
 - `MINIO_ACCESS_KEY_ID`: Minio的accessKeyID，仅在`STORAGE_TYPE`为`minio`时可用。
 - `MINIO_SECRET_ACCESS_KEY`: Minio的secretAccessKey，仅在`STORAGE_TYPE`为`minio`时可用。
 - `MINIO_BUCKET`: **gitea**：用于存储归档的Minio存储桶，仅在`STORAGE_TYPE`为`minio`时可用。
+- `MINIO_BUCKET_LOOKUP`: **auto**: Minio 存储桶寻址方式,可选值为 `auto`, `dns`, `path` 仅当 `STORAGE_TYPE` 为 `minio` 时可用。
+  - `auto` 自动检测
+  - `dns`  子域名寻址
+  - `path` 路径寻址
 - `MINIO_LOCATION`: **us-east-1**：用于创建存储桶的Minio位置，仅在`STORAGE_TYPE`为`minio`时可用。
 - `MINIO_BASE_PATH`: **repo-archive/**：存储桶上的Minio基本路径，仅在`STORAGE_TYPE`为`minio`时可用。
 - `MINIO_USE_SSL`: **false**：启用Minio的SSL，仅在`STORAGE_TYPE`为`minio`时可用。

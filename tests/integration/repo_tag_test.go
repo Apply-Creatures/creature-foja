@@ -7,6 +7,7 @@ package integration
 import (
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 
 	"code.gitea.io/gitea/models"
@@ -56,6 +57,13 @@ func TestTagViewWithoutRelease(t *testing.T) {
 	// Test that the release sub-menu isn't active
 	releaseLink := htmlDoc.Find(".small-menu-items .item[href*='/releases']")
 	assert.False(t, releaseLink.HasClass("active"))
+
+	// Test that the title is displayed
+	releaseTitle := strings.TrimSpace(htmlDoc.Find("h4.release-list-title > a").Text())
+	assert.Equal(t, "no-release", releaseTitle)
+
+	// Test that there is no "Stable" link
+	htmlDoc.AssertElement(t, "h4.release-list-title > span.ui.green.label", false)
 }
 
 func TestCreateNewTagProtected(t *testing.T) {

@@ -11,8 +11,8 @@ import (
 	actions_model "code.gitea.io/gitea/models/actions"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unit"
-	context_module "code.gitea.io/gitea/modules/context"
 	"code.gitea.io/gitea/modules/setting"
+	context_module "code.gitea.io/gitea/services/context"
 )
 
 func getBadgeURL(ctx *context_module.Context, label, text, color string) string {

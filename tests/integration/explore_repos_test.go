@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"code.gitea.io/gitea/tests"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,12 +21,11 @@ func TestExploreRepos(t *testing.T) {
 	t.Run("Persistent parameters", func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 
-		req := NewRequest(t, "GET", "/explore/repos?topic=1&language=Go&sort=moststars")
+		req := NewRequest(t, "GET", "/explore/repos?topic=1&language=Go")
 		resp := MakeRequest(t, req, http.StatusOK)
-		htmlDoc := NewHTMLParser(t, resp.Body)
+		htmlDoc := NewHTMLParser(t, resp.Body).Find("#repo-search-form")
 
-		assert.EqualValues(t, "moststars", htmlDoc.Find("input[type='hidden'][name='sort']").AttrOr("value", "not found"))
-		assert.EqualValues(t, "Go", htmlDoc.Find("input[type='hidden'][name='language']").AttrOr("value", "not found"))
-		assert.EqualValues(t, "true", htmlDoc.Find("input[type='hidden'][name='topic']").AttrOr("value", "not found"))
+		assert.EqualValues(t, "Go", htmlDoc.Find("input[name='language']").AttrOr("value", "not found"))
+		assert.EqualValues(t, "true", htmlDoc.Find("input[name='topic']").AttrOr("value", "not found"))
 	})
 }

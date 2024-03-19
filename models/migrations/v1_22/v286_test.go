@@ -14,58 +14,74 @@ import (
 
 func PrepareOldRepository(t *testing.T) (*xorm.Engine, func()) {
 	type Repository struct { // old struct
-		ID               int64  `xorm:"pk autoincr"`
-		ObjectFormatName string `xorm:"VARCHAR(6) NOT NULL DEFAULT 'sha1'"`
+		ID int64 `xorm:"pk autoincr"`
 	}
 
-	type CommitStatus struct { // old struct
-		ID          int64  `xorm:"pk autoincr"`
-		ContextHash string `xorm:"char(40)"`
+	type CommitStatus struct {
+		ID          int64
+		ContextHash string
 	}
 
-	type Comment struct { // old struct
-		ID        int64  `xorm:"pk autoincr"`
-		CommitSHA string `xorm:"VARCHAR(40)"`
+	type RepoArchiver struct {
+		ID       int64
+		RepoID   int64
+		Type     int
+		CommitID string
 	}
 
-	type PullRequest struct { // old struct
-		ID             int64  `xorm:"pk autoincr"`
-		MergeBase      string `xorm:"VARCHAR(40)"`
-		MergedCommitID string `xorm:"VARCHAR(40)"`
+	type ReviewState struct {
+		ID        int64
+		CommitSHA string
+		UserID    int64
+		PullID    int64
 	}
 
-	type Review struct { // old struct
-		ID       int64  `xorm:"pk autoincr"`
-		CommitID string `xorm:"VARCHAR(40)"`
+	type Comment struct {
+		ID        int64
+		CommitSHA string
 	}
 
-	type ReviewState struct { // old struct
-		ID        int64  `xorm:"pk autoincr"`
-		CommitSHA string `xorm:"VARCHAR(40)"`
+	type PullRequest struct {
+		ID             int64
+		CommitSHA      string
+		MergeBase      string
+		MergedCommitID string
 	}
 
-	type RepoArchiver struct { // old struct
-		ID       int64  `xorm:"pk autoincr"`
-		CommitID string `xorm:"VARCHAR(40)"`
+	type Release struct {
+		ID   int64
+		Sha1 string
 	}
 
-	type Release struct { // old struct
-		ID   int64  `xorm:"pk autoincr"`
-		Sha1 string `xorm:"VARCHAR(40)"`
+	type RepoIndexerStatus struct {
+		ID        int64
+		CommitSHA string
 	}
 
-	type RepoIndexerStatus struct { // old struct
-		ID        int64  `xorm:"pk autoincr"`
-		CommitSha string `xorm:"VARCHAR(40)"`
+	type Review struct {
+		ID       int64
+		CommitID string
 	}
 
 	// Prepare and load the testing database
-	return base.PrepareTestEnv(t, 0, new(Repository), new(CommitStatus), new(Comment), new(PullRequest), new(Review), new(ReviewState), new(RepoArchiver), new(Release), new(RepoIndexerStatus))
+	return base.PrepareTestEnv(t, 0,
+		new(Repository),
+		new(CommitStatus),
+		new(RepoArchiver),
+		new(ReviewState),
+		new(Review),
+		new(Comment),
+		new(PullRequest),
+		new(Release),
+		new(RepoIndexerStatus),
+	)
 }
 
 func Test_RepositoryFormat(t *testing.T) {
 	x, deferable := PrepareOldRepository(t)
 	defer deferable()
+
+	assert.NoError(t, AdjustDBForSha256(x))
 
 	type Repository struct {
 		ID               int64  `xorm:"pk autoincr"`
@@ -79,12 +95,10 @@ func Test_RepositoryFormat(t *testing.T) {
 	assert.NoError(t, err)
 	assert.EqualValues(t, 4, count)
 
-	assert.NoError(t, AdjustDBForSha256(x))
-
-	repo.ID = 20
 	repo.ObjectFormatName = "sha256"
 	_, err = x.Insert(repo)
 	assert.NoError(t, err)
+	id := repo.ID
 
 	count, err = x.Count(new(Repository))
 	assert.NoError(t, err)
@@ -97,7 +111,7 @@ func Test_RepositoryFormat(t *testing.T) {
 	assert.EqualValues(t, "sha1", repo.ObjectFormatName)
 
 	repo = new(Repository)
-	ok, err = x.ID(20).Get(repo)
+	ok, err = x.ID(id).Get(repo)
 	assert.NoError(t, err)
 	assert.EqualValues(t, true, ok)
 	assert.EqualValues(t, "sha256", repo.ObjectFormatName)

@@ -16,14 +16,18 @@ import (
 )
 
 type Result struct {
-	RepoID         int64 // ignored
-	Filename       string
-	CommitID       string             // branch
-	UpdatedUnix    timeutil.TimeStamp // ignored
-	Language       string
-	Color          string
-	LineNumbers    []int64
-	FormattedLines template.HTML
+	RepoID      int64 // ignored
+	Filename    string
+	CommitID    string             // branch
+	UpdatedUnix timeutil.TimeStamp // ignored
+	Language    string
+	Color       string
+	Lines       []ResultLine
+}
+
+type ResultLine struct {
+	Num              int64
+	FormattedContent template.HTML
 }
 
 const pHEAD = "HEAD:"
@@ -46,7 +50,8 @@ func NewRepoGrep(ctx context.Context, repo *repo_model.Repository, keyword strin
 		"-n",              // line nums
 		"-i",              // ignore case
 		"--full-name",     // full file path, rel to repo
-		//"--column",        // for adding better highlighting support
+		//"--column",      // for adding better highlighting support
+		"-e", // for queries starting with "-"
 	).
 		AddDynamicArguments(keyword).
 		AddArguments("HEAD").
@@ -57,6 +62,8 @@ func NewRepoGrep(ctx context.Context, repo *repo_model.Repository, keyword strin
 
 	for _, block := range strings.Split(stdout, "\n\n") {
 		res := Result{CommitID: repo.DefaultBranch}
+
+		linenum := []int64{}
 		code := []string{}
 
 		for _, line := range strings.Split(block, "\n") {
@@ -71,17 +78,31 @@ func NewRepoGrep(ctx context.Context, repo *repo_model.Repository, keyword strin
 					continue
 				}
 
-				res.LineNumbers = append(res.LineNumbers, i)
+				linenum = append(linenum, i)
 				code = append(code, after)
 			}
 		}
 
-		if res.Filename == "" || len(code) == 0 || len(res.LineNumbers) == 0 {
+		if res.Filename == "" || len(code) == 0 || len(linenum) == 0 {
 			continue
 		}
 
-		res.FormattedLines, res.Language = highlight.Code(res.Filename, "", strings.Join(code, "\n"))
+		var hl template.HTML
+
+		hl, res.Language = highlight.Code(res.Filename, "", strings.Join(code, "\n"))
 		res.Color = enry.GetColor(res.Language)
+
+		hlCode := strings.Split(string(hl), "\n")
+		n := min(len(hlCode), len(linenum))
+
+		res.Lines = make([]ResultLine, n)
+
+		for i := 0; i < n; i++ {
+			res.Lines[i] = ResultLine{
+				Num:              linenum[i],
+				FormattedContent: template.HTML(hlCode[i]),
+			}
+		}
 
 		data = append(data, &res)
 	}

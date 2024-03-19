@@ -61,7 +61,7 @@
 			<div class="field">
 				<label for="tracker_url_format">{{ctx.Locale.Tr "repo.settings.tracker_url_format"}}</label>
 				<input id="tracker_url_format" name="tracker_url_format" type="url" value="{{(.Repository.MustGetUnit $.Context $.UnitTypeExternalTracker).ExternalTrackerConfig.ExternalTrackerFormat}}" placeholder="https://github.com/{user}/{repo}/issues/{index}">
-				<p class="help">{{ctx.Locale.Tr "repo.settings.tracker_url_format_desc" | Str2html}}</p>
+				<p class="help">{{ctx.Locale.Tr "repo.settings.tracker_url_format_desc"}}</p>
 			</div>
 			<div class="inline fields">
 				<label for="issue_style">{{ctx.Locale.Tr "repo.settings.tracker_issue_style"}}</label>
@@ -89,7 +89,7 @@
 			<div class="field {{if ne $externalTrackerStyle "regexp"}}disabled{{end}}" id="tracker-issue-style-regex-box">
 				<label for="external_tracker_regexp_pattern">{{ctx.Locale.Tr "repo.settings.tracker_issue_style.regexp_pattern"}}</label>
 				<input id="external_tracker_regexp_pattern" name="external_tracker_regexp_pattern" value="{{(.Repository.MustGetUnit $.Context $.UnitTypeExternalTracker).ExternalTrackerConfig.ExternalTrackerRegexpPattern}}">
-				<p class="help">{{ctx.Locale.Tr "repo.settings.tracker_issue_style.regexp_pattern_desc" | Str2html}}</p>
+				<p class="help">{{ctx.Locale.Tr "repo.settings.tracker_issue_style.regexp_pattern_desc"}}</p>
 			</div>
 		</div>
 	</div>
