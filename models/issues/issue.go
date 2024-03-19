@@ -500,7 +500,7 @@ func (issue *Issue) GetLastEventLabelFake() string {
 // GetIssueByIndex returns raw issue without loading attributes by index in a repository.
 func GetIssueByIndex(ctx context.Context, repoID, index int64) (*Issue, error) {
 	if index < 1 {
-		return nil, ErrIssueNotExist{}
+		return nil, ErrIssueNotExist{0, repoID, index}
 	}
 	issue := &Issue{
 		RepoID: repoID,
