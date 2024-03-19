@@ -383,7 +383,7 @@ func TestRepoHTMLTitle(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
 			htmlTitle := GetHTMLTitle(t, nil, "/user2/repo1/pulls")
-			assert.EqualValues(t, "Pull Requests - user2/repo1 - Gitea: Git with a cup of tea", htmlTitle)
+			assert.EqualValues(t, "Pull requests - user2/repo1 - Gitea: Git with a cup of tea", htmlTitle)
 		})
 		t.Run("View pull request", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
