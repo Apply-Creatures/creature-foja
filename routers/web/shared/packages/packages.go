@@ -4,16 +4,19 @@
 package packages
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
 
 	"code.gitea.io/gitea/models/db"
 	packages_model "code.gitea.io/gitea/models/packages"
+	repo_model "code.gitea.io/gitea/models/repo"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/optional"
+	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/forms"
@@ -29,6 +32,12 @@ func SetPackagesContext(ctx *context.Context, owner *user_model.User) {
 	}
 
 	ctx.Data["CleanupRules"] = pcrs
+
+	ctx.Data["CargoIndexExists"], err = repo_model.IsRepositoryModelExist(ctx, owner, cargo_service.IndexRepositoryName)
+	if err != nil {
+		ctx.ServerError("IsRepositoryModelExist", err)
+		return
+	}
 }
 
 func SetRuleAddContext(ctx *context.Context) {
@@ -240,7 +249,11 @@ func RebuildCargoIndex(ctx *context.Context, owner *user_model.User) {
 	err := cargo_service.RebuildIndex(ctx, owner, owner)
 	if err != nil {
 		log.Error("RebuildIndex failed: %v", err)
-		ctx.Flash.Error(ctx.Tr("packages.owner.settings.cargo.rebuild.error", err))
+		if errors.Is(err, util.ErrNotExist) {
+			ctx.Flash.Error(ctx.Tr("packages.owner.settings.cargo.rebuild.no_index"))
+		} else {
+			ctx.Flash.Error(ctx.Tr("packages.owner.settings.cargo.rebuild.error", err))
+		}
 	} else {
 		ctx.Flash.Success(ctx.Tr("packages.owner.settings.cargo.rebuild.success"))
 	}

@@ -23,6 +23,7 @@ import (
 	cargo_module "code.gitea.io/gitea/modules/packages/cargo"
 	"code.gitea.io/gitea/modules/setting"
 	cargo_router "code.gitea.io/gitea/routers/api/packages/cargo"
+	gitea_context "code.gitea.io/gitea/services/context"
 	cargo_service "code.gitea.io/gitea/services/packages/cargo"
 	"code.gitea.io/gitea/tests"
 
@@ -383,5 +384,64 @@ func testPackageCargo(t *testing.T, _ *neturl.URL) {
 		assert.Equal(t, user.ID, owners.Users[0].ID)
 		assert.Equal(t, user.Name, owners.Users[0].Login)
 		assert.Equal(t, user.DisplayName(), owners.Users[0].Name)
+	})
+}
+
+func TestRebuildCargo(t *testing.T) {
+	onGiteaRun(t, func(t *testing.T, u *neturl.URL) {
+		user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+		session := loginUser(t, user.Name)
+		unittest.AssertExistsIf(t, false, &repo_model.Repository{OwnerID: user.ID, Name: cargo_service.IndexRepositoryName})
+
+		t.Run("No index", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequestWithValues(t, "POST", "/user/settings/packages/cargo/rebuild", map[string]string{
+				"_csrf": GetCSRF(t, session, "/user/settings/packages"),
+			})
+			session.MakeRequest(t, req, http.StatusSeeOther)
+
+			flashCookie := session.GetCookie(gitea_context.CookieNameFlash)
+			assert.NotNil(t, flashCookie)
+			assert.EqualValues(t, "error%3DCannot%2Brebuild%252C%2Bno%2Bindex%2Bis%2Binitialized.", flashCookie.Value)
+			unittest.AssertExistsIf(t, false, &repo_model.Repository{OwnerID: user.ID, Name: cargo_service.IndexRepositoryName})
+		})
+
+		t.Run("Initialize Cargo", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequest(t, "GET", "/user/settings/packages")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+
+			htmlDoc.AssertElement(t, `form[action="/user/settings/packages/cargo/rebuild"]`, false)
+			htmlDoc.AssertElement(t, `form[action="/user/settings/packages/cargo/initialize"]`, true)
+
+			req = NewRequestWithValues(t, "POST", "/user/settings/packages/cargo/initialize", map[string]string{
+				"_csrf": htmlDoc.GetCSRF(),
+			})
+			session.MakeRequest(t, req, http.StatusSeeOther)
+			unittest.AssertExistsIf(t, true, &repo_model.Repository{OwnerID: user.ID, Name: cargo_service.IndexRepositoryName})
+
+			req = NewRequest(t, "GET", "/user/settings/packages")
+			resp = session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc = NewHTMLParser(t, resp.Body)
+
+			htmlDoc.AssertElement(t, `form[action="/user/settings/packages/cargo/rebuild"]`, true)
+			htmlDoc.AssertElement(t, `form[action="/user/settings/packages/cargo/initialize"]`, false)
+		})
+
+		t.Run("With index", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequestWithValues(t, "POST", "/user/settings/packages/cargo/rebuild", map[string]string{
+				"_csrf": GetCSRF(t, session, "/user/settings/packages"),
+			})
+			session.MakeRequest(t, req, http.StatusSeeOther)
+
+			flashCookie := session.GetCookie(gitea_context.CookieNameFlash)
+			assert.NotNil(t, flashCookie)
+			assert.EqualValues(t, "success%3DThe%2BCargo%2Bindex%2Bwas%2Bsuccessfully%2Brebuild.", flashCookie.Value)
+		})
 	})
 }

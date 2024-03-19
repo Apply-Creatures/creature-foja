@@ -3,13 +3,7 @@
 </h4>
 <div class="ui attached segment">
 	<div class="ui form">
-		<div class="field">
-			<label>{{ctx.Locale.Tr "packages.owner.settings.cargo.initialize.description"}}</label>
-		</div>
-		<form class="field" action="{{.Link}}/cargo/initialize" method="post">
-			{{.CsrfTokenHtml}}
-			<button class="ui primary button">{{ctx.Locale.Tr "packages.owner.settings.cargo.initialize"}}</button>
-		</form>
+		{{if .CargoIndexExists}}
 		<div class="field">
 			<label>{{ctx.Locale.Tr "packages.owner.settings.cargo.rebuild.description"}}</label>
 		</div>
@@ -17,6 +11,15 @@
 			{{.CsrfTokenHtml}}
 			<button class="ui primary button">{{ctx.Locale.Tr "packages.owner.settings.cargo.rebuild"}}</button>
 		</form>
+		{{else}}
+		<div class="field">
+			<label>{{ctx.Locale.Tr "packages.owner.settings.cargo.initialize.description"}}</label>
+		</div>
+		<form class="field" action="{{.Link}}/cargo/initialize" method="post">
+			{{.CsrfTokenHtml}}
+			<button class="ui primary button">{{ctx.Locale.Tr "packages.owner.settings.cargo.initialize"}}</button>
+		</form>
+		{{end}}
 		<div class="field">
 			<label>{{ctx.Locale.Tr "packages.registry.documentation" "Cargo" "https://forgejo.org/docs/latest/user/packages/cargo/"}}</label>
 		</div>

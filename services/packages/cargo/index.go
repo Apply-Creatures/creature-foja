@@ -62,9 +62,9 @@ func InitializeIndexRepository(ctx context.Context, doer, owner *user_model.User
 }
 
 func RebuildIndex(ctx context.Context, doer, owner *user_model.User) error {
-	repo, err := getOrCreateIndexRepository(ctx, doer, owner)
+	repo, err := repo_model.GetRepositoryByOwnerAndName(ctx, owner.Name, IndexRepositoryName)
 	if err != nil {
-		return err
+		return fmt.Errorf("GetRepositoryByOwnerAndName: %w", err)
 	}
 
 	ps, err := packages_model.GetPackagesByType(ctx, owner.ID, packages_model.TypeCargo)
