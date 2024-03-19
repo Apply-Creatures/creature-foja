@@ -18,13 +18,14 @@ export function initHeatmap() {
       return {date: new Date(v), count: heatmap[v]};
     });
 
-    // last heatmap tooltip localization attempt https://github.com/go-gitea/gitea/pull/24131/commits/a83761cbbae3c2e3b4bced71e680f44432073ac8
     const locale = {
       months: new Array(12).fill().map((_, idx) => translateMonth(idx)),
       days: new Array(7).fill().map((_, idx) => translateDay(idx)),
-      contributions: 'contributions',
       contributions_in_the_last_12_months: el.getAttribute('data-locale-total-contributions'),
-      no_contributions: el.getAttribute('data-locale-no-contributions'),
+      contributions_zero: el.getAttribute('data-locale-contributions-zero'),
+      contributions_format: el.getAttribute('data-locale-contributions-format'),
+      contributions_one: el.getAttribute('data-locale-contributions-one'),
+      contributions_few: el.getAttribute('data-locale-contributions-few'),
       more: el.getAttribute('data-locale-more'),
       less: el.getAttribute('data-locale-less'),
     };
