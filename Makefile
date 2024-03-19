@@ -91,7 +91,8 @@ STORED_VERSION=$(shell cat $(STORED_VERSION_FILE) 2>/dev/null)
 ifneq ($(STORED_VERSION),)
   FORGEJO_VERSION ?= $(STORED_VERSION)
 else
-  FORGEJO_VERSION ?= $(shell git describe --exclude '*-test' --tags --always | sed 's/^v//')+${GITEA_COMPATIBILITY}
+  # drop the "g" prefix prepended by git describe to the commit hash
+  FORGEJO_VERSION ?= $(shell git describe --exclude '*-test' --tags --always | sed 's/^v//' | sed 's/\-g/-/')+${GITEA_COMPATIBILITY}
 endif
 FORGEJO_VERSION_MAJOR=$(shell echo $(FORGEJO_VERSION) | sed -e 's/\..*//')
 
