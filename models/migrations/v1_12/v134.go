@@ -81,7 +81,7 @@ func RefixMergeBase(x *xorm.Engine) error {
 
 			parentsString, _, err := git.NewCommand(git.DefaultContext, "rev-list", "--parents", "-n", "1").AddDynamicArguments(pr.MergedCommitID).RunStdString(&git.RunOpts{Dir: repoPath})
 			if err != nil {
-				log.Error("Unable to get parents for merged PR ID %d, Index %d in %s/%s. Error: %v", pr.ID, pr.Index, baseRepo.OwnerName, baseRepo.Name, err)
+				log.Warn("Unable to get parents for merged PR ID %d, Index %d in %s/%s. Error: %v", pr.ID, pr.Index, baseRepo.OwnerName, baseRepo.Name, err)
 				continue
 			}
 			parents := strings.Split(strings.TrimSpace(parentsString), " ")
