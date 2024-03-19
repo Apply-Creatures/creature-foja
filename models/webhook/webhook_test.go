@@ -124,6 +124,9 @@ func TestGetWebhookByOwnerID(t *testing.T) {
 
 func TestGetActiveWebhooksByRepoID(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	activateWebhook(t, 1)
+
 	hooks, err := db.Find[Webhook](db.DefaultContext, ListWebhookOptions{RepoID: 1, IsActive: optional.Some(true)})
 	assert.NoError(t, err)
 	if assert.Len(t, hooks, 1) {
@@ -144,6 +147,9 @@ func TestGetWebhooksByRepoID(t *testing.T) {
 
 func TestGetActiveWebhooksByOwnerID(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	activateWebhook(t, 3)
+
 	hooks, err := db.Find[Webhook](db.DefaultContext, ListWebhookOptions{OwnerID: 3, IsActive: optional.Some(true)})
 	assert.NoError(t, err)
 	if assert.Len(t, hooks, 1) {
@@ -152,8 +158,18 @@ func TestGetActiveWebhooksByOwnerID(t *testing.T) {
 	}
 }
 
+func activateWebhook(t *testing.T, hookID int64) {
+	t.Helper()
+	updated, err := db.GetEngine(db.DefaultContext).ID(hookID).Cols("is_active").Update(Webhook{IsActive: true})
+	assert.Equal(t, int64(1), updated)
+	assert.NoError(t, err)
+}
+
 func TestGetWebhooksByOwnerID(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	activateWebhook(t, 3)
+
 	hooks, err := db.Find[Webhook](db.DefaultContext, ListWebhookOptions{OwnerID: 3})
 	assert.NoError(t, err)
 	if assert.Len(t, hooks, 1) {
