@@ -65,7 +65,7 @@ func MergeRequiredContextsCommitStatus(commitStatuses []*git_model.CommitStatus,
 		if status != nil {
 			return status.State
 		}
-		return structs.CommitStatusSuccess
+		return ""
 	}
 
 	return returnedStatus
