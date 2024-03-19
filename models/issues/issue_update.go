@@ -173,7 +173,7 @@ func ChangeIssueTitle(ctx context.Context, issue *Issue, doer *user_model.User, 
 		return fmt.Errorf("createComment: %w", err)
 	}
 	if err = issue.AddCrossReferences(ctx, doer, true); err != nil {
-		return err
+		return fmt.Errorf("addCrossReferences: %w", err)
 	}
 
 	return committer.Commit()
