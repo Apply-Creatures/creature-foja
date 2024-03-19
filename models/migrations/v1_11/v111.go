@@ -23,9 +23,9 @@ func AddBranchProtectionCanPushAndEnableWhitelist(x *xorm.Engine) error {
 		Type int
 
 		// Permissions
-		IsAdmin      bool
-		IsRestricted bool `xorm:"NOT NULL DEFAULT false"`
-		Visibility   int  `xorm:"NOT NULL DEFAULT 0"`
+		IsAdmin bool
+		// IsRestricted bool `xorm:"NOT NULL DEFAULT false"` glitch: this column was added in v1_12/v121.go
+		// Visibility int `xorm:"NOT NULL DEFAULT 0"` glitch: this column was added in v1_12/v124.go
 	}
 
 	type Review struct {
@@ -51,9 +51,9 @@ func AddBranchProtectionCanPushAndEnableWhitelist(x *xorm.Engine) error {
 		ReviewTypeReject int = 3
 
 		// VisibleTypePublic Visible for everyone
-		VisibleTypePublic int = 0
+		// VisibleTypePublic int = 0
 		// VisibleTypePrivate Visible only for organization's members
-		VisibleTypePrivate int = 2
+		// VisibleTypePrivate int = 2
 
 		// unit.UnitTypeCode is unit type code
 		UnitTypeCode int = 1
@@ -145,9 +145,9 @@ func AddBranchProtectionCanPushAndEnableWhitelist(x *xorm.Engine) error {
 		hasOrgVisible := true
 		// Not SignedUser
 		if user == nil {
-			hasOrgVisible = repoOwner.Visibility == VisibleTypePublic
+			// hasOrgVisible = repoOwner.Visibility == VisibleTypePublic // VisibleTypePublic is the default
 		} else if !user.IsAdmin {
-			hasMemberWithUserID, err := sess.
+			_, err := sess.
 				Where("uid=?", user.ID).
 				And("org_id=?", repoOwner.ID).
 				Table("org_user").
@@ -155,9 +155,10 @@ func AddBranchProtectionCanPushAndEnableWhitelist(x *xorm.Engine) error {
 			if err != nil {
 				hasOrgVisible = false
 			}
-			if (repoOwner.Visibility == VisibleTypePrivate || user.IsRestricted) && !hasMemberWithUserID {
-				hasOrgVisible = false
-			}
+			// VisibleTypePublic is the default so the condition below is always false
+			// if (repoOwner.Visibility == VisibleTypePrivate) && !hasMemberWithUserID {
+			// 	hasOrgVisible = false
+			// }
 		}
 
 		isCollaborator, err := sess.Get(&Collaboration{RepoID: repo.ID, UserID: user.ID})
@@ -195,7 +196,7 @@ func AddBranchProtectionCanPushAndEnableWhitelist(x *xorm.Engine) error {
 
 			if user != nil {
 				userID = user.ID
-				restricted = user.IsRestricted
+				restricted = false
 			}
 
 			if !restricted && !repo.IsPrivate {
@@ -284,7 +285,7 @@ func AddBranchProtectionCanPushAndEnableWhitelist(x *xorm.Engine) error {
 			}
 
 			// for a public repo on an organization, a non-restricted user has read permission on non-team defined units.
-			if !found && !repo.IsPrivate && !user.IsRestricted {
+			if !found && !repo.IsPrivate {
 				if _, ok := perm.UnitsMode[u.Type]; !ok {
 					perm.UnitsMode[u.Type] = AccessModeRead
 				}
