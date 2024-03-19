@@ -7,8 +7,11 @@ import (
 	"net/http"
 	"testing"
 
+	auth_model "code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
+	"code.gitea.io/gitea/modules/test"
+	"code.gitea.io/gitea/routers"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
@@ -17,11 +20,43 @@ import (
 func TestVersion(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
-	setting.AppVer = "test-version-1"
-	req := NewRequest(t, "GET", "/api/v1/version")
-	resp := MakeRequest(t, req, http.StatusOK)
+	t.Run("Version", func(t *testing.T) {
+		setting.AppVer = "test-version-1"
+		req := NewRequest(t, "GET", "/api/v1/version")
+		resp := MakeRequest(t, req, http.StatusOK)
 
-	var version structs.ServerVersion
-	DecodeJSON(t, resp, &version)
-	assert.Equal(t, setting.AppVer, version.Version)
+		var version structs.ServerVersion
+		DecodeJSON(t, resp, &version)
+		assert.Equal(t, setting.AppVer, version.Version)
+	})
+
+	t.Run("Versions with REQUIRE_SIGNIN_VIEW enabled", func(t *testing.T) {
+		defer test.MockVariableValue(&setting.Service.RequireSignInView, true)()
+		defer test.MockVariableValue(&testWebRoutes, routers.NormalRoutes())()
+
+		setting.AppVer = "test-version-1"
+
+		t.Run("Get version without auth", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			// GET api without auth
+			req := NewRequest(t, "GET", "/api/v1/version")
+			MakeRequest(t, req, http.StatusForbidden)
+		})
+
+		t.Run("Get version without auth", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+			username := "user1"
+			session := loginUser(t, username)
+			token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository)
+
+			// GET api with auth
+			req := NewRequest(t, "GET", "/api/v1/version").AddTokenAuth(token)
+			resp := MakeRequest(t, req, http.StatusOK)
+
+			var version structs.ServerVersion
+			DecodeJSON(t, resp, &version)
+			assert.Equal(t, setting.AppVer, version.Version)
+		})
+	})
 }
