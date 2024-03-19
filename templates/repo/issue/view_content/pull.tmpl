@@ -375,7 +375,7 @@
 			{{if and $.StillCanManualMerge (not $showGeneralMergeForm)}}
 				<div class="divider"></div>
 				<div class="ui form">
-					<form action="{{.Link}}/merge" method="post">
+					<form action="{{.Link}}/merge" method="post" class="form-fetch-action">
 						{{.CsrfTokenHtml}}
 						<div class="field">
 							<input type="text" name="merge_commit_id" placeholder="{{ctx.Locale.Tr "repo.pulls.merge_commit_id"}}">
