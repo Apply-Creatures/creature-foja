@@ -165,9 +165,13 @@ func createPackageAndVersion(ctx context.Context, pvci *PackageCreationInfo, all
 	if pv, err = packages_model.GetOrInsertVersion(ctx, pv); err != nil {
 		if err == packages_model.ErrDuplicatePackageVersion {
 			versionCreated = false
-		}
-		if err != packages_model.ErrDuplicatePackageVersion || !allowDuplicate {
+		} else {
 			log.Error("Error inserting package: %v", err)
+			return nil, false, err
+		}
+
+		if !allowDuplicate {
+			// no need to log an error
 			return nil, false, err
 		}
 	}
