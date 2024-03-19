@@ -39,7 +39,7 @@
 					<tr>
 						<td><a href="{{$.PackageDescriptor.PackageWebLink}}/{{PathEscape .Digest}}">{{.Digest}}</a></td>
 						<td>{{.Platform}}</td>
-						<td>{{FileSize .Size}}</td>
+						<td>{{ctx.Locale.TrSize .Size}}</td>
 					</tr>
 					{{end}}
 				</tbody>

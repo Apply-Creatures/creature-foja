@@ -43,7 +43,7 @@
 				{{range .Release.Attachments}}
 					<li>
 						<a target="_blank" rel="noopener noreferrer" href="{{.DownloadURL}}">
-							<strong>{{.Name}} ({{.Size | FileSize}})</strong>
+							<strong>{{.Name}} ({{.Size | $.locale.TrSize}})</strong>
 						</a>
 					</li>
 				{{end}}

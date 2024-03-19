@@ -15,6 +15,7 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/translation/i18n"
 	"code.gitea.io/gitea/modules/util"
+	"github.com/dustin/go-humanize"
 
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -32,6 +33,8 @@ type Locale interface {
 
 	Tr(key string, args ...any) template.HTML
 	TrN(cnt any, key1, keyN string, args ...any) template.HTML
+
+	TrSize(size int64) ByteSize
 
 	PrettyNumber(v any) string
 }
@@ -250,6 +253,35 @@ func (l *locale) TrN(cnt any, key1, keyN string, args ...any) template.HTML {
 		return l.Tr(key1, args...)
 	}
 	return l.Tr(keyN, args...)
+}
+
+type ByteSize struct {
+	PrettyNumber   string
+	TranslatedUnit string
+}
+
+func (bs ByteSize) String() string {
+	return bs.PrettyNumber + " " + bs.TranslatedUnit
+}
+
+// TrSize returns array containing pretty formatted size and localized output of FileSize
+// output of humanize.IBytes has to be split in order to be localized
+func (l *locale) TrSize(s int64) ByteSize {
+	us := uint64(s)
+	if s < 0 {
+		us = uint64(-s)
+	}
+	untranslated := humanize.IBytes(us)
+	if s < 0 {
+		untranslated = "-" + untranslated
+	}
+	numberVal, unitVal, found := strings.Cut(untranslated, " ")
+	if !found {
+		log.Error("no space in go-humanized size of %d: %q", s, untranslated)
+	}
+	numberVal = l.PrettyNumber(numberVal)
+	unitVal = l.TrString("munits.data." + strings.ToLower(unitVal))
+	return ByteSize{numberVal, unitVal}
 }
 
 func (l *locale) PrettyNumber(v any) string {

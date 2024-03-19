@@ -295,6 +295,7 @@ package "code.gitea.io/gitea/modules/translation"
 	func (MockLocale).TrString
 	func (MockLocale).Tr
 	func (MockLocale).TrN
+	func (MockLocale).TrSize
 	func (MockLocale).PrettyNumber
 
 package "code.gitea.io/gitea/modules/util/filebuffer"
