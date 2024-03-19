@@ -61,7 +61,7 @@ func validateArtifactHash(ctx *ArtifactContext, artifactName string) bool {
 	if paramHash == artifactHash {
 		return true
 	}
-	log.Error("Invalid artifact hash: %s", paramHash)
+	log.Warn("Invalid artifact hash: %s", paramHash)
 	ctx.Error(http.StatusBadRequest, "Invalid artifact hash")
 	return false
 }
