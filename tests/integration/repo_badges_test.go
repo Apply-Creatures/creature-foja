@@ -12,13 +12,16 @@ import (
 	"testing"
 
 	actions_model "code.gitea.io/gitea/models/actions"
+	auth_model "code.gitea.io/gitea/models/auth"
 	repo_model "code.gitea.io/gitea/models/repo"
 	unit_model "code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/test"
 	"code.gitea.io/gitea/routers"
+	"code.gitea.io/gitea/services/release"
 	files_service "code.gitea.io/gitea/services/repository/files"
 	"code.gitea.io/gitea/tests"
 
@@ -39,10 +42,14 @@ func TestBadges(t *testing.T) {
 						TreePath:      ".gitea/workflows/pr.yml",
 						ContentReader: strings.NewReader("name: test\non:\n  push:\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo helloworld\n"),
 					},
+					{
+						Operation:     "create",
+						TreePath:      ".gitea/workflows/self-test.yaml",
+						ContentReader: strings.NewReader("name: test\non:\n  push:\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo helloworld\n"),
+					},
 				},
 			)
-
-			assert.Equal(t, 1, unittest.GetCount(t, &actions_model.ActionRun{RepoID: repo.ID}))
+			assert.Equal(t, 2, unittest.GetCount(t, &actions_model.ActionRun{RepoID: repo.ID}))
 
 			return repo, f
 		}
@@ -83,6 +90,11 @@ func TestBadges(t *testing.T) {
 			req = NewRequestf(t, "GET", "/user2/%s/badges/workflows/pr.yml/badge.svg?event=cron", repo.Name)
 			resp = MakeRequest(t, req, http.StatusSeeOther)
 			assertBadge(t, resp, "pr.yml-Not%20found-crimson")
+
+			// Workflow with a dash in its name
+			req = NewRequestf(t, "GET", "/user2/%s/badges/workflows/self-test.yaml/badge.svg", repo.Name)
+			resp = MakeRequest(t, req, http.StatusSeeOther)
+			assertBadge(t, resp, "self--test.yaml-waiting-lightgrey")
 
 			// GitHub compatibility
 			req = NewRequestf(t, "GET", "/user2/%s/actions/workflows/pr.yml/badge.svg", repo.Name)
@@ -195,6 +207,20 @@ func TestBadges(t *testing.T) {
 			req = NewRequestf(t, "GET", "/user2/%s/badges/release.svg", repo.Name)
 			resp = MakeRequest(t, req, http.StatusSeeOther)
 			assertBadge(t, resp, "release-Not%20found-crimson")
+
+			t.Run("Dashes in the name", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				session := loginUser(t, repo.Owner.Name)
+				token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository)
+				err := release.CreateNewTag(git.DefaultContext, repo.Owner, repo, "main", "repo-name-2.0", "dash in the tag name")
+				assert.NoError(t, err)
+				createNewReleaseUsingAPI(t, session, token, repo.Owner, repo, "repo-name-2.0", "main", "dashed release", "dashed release")
+
+				req := NewRequestf(t, "GET", "/user2/%s/badges/release.svg", repo.Name)
+				resp := MakeRequest(t, req, http.StatusSeeOther)
+				assertBadge(t, resp, "release-repo--name--2.0-blue")
+			})
 		})
 	})
 }
