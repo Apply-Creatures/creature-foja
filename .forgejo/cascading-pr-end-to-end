@@ -9,9 +9,15 @@ forgejo_pr_or_ref=$4
 
 cd $forgejo
 full_version=$(make show-version-full)
-major_version=$(make show-version-major)
+minor_version=$(make show-version-minor)
 
 cd $end_to_end
+
+if ! test -f forgejo/sources/$minor_version ; then
+    echo "FAIL: forgejo/sources/$minor_version does not exist in the end-to-end repository"
+    false
+fi
+
 date > last-upgrade
 
 if test -f "$forgejo_pr_or_ref" ; then
@@ -20,11 +26,8 @@ if test -f "$forgejo_pr_or_ref" ; then
     test "$head_url" != null
     branch=$(jq --raw-output .head.ref < $forgejo_pr)
     test "$branch" != null
-    echo $head_url $branch $full_version > forgejo/sources/$major_version
+    echo $head_url $branch $full_version > forgejo/sources/$minor_version
 else
     forgejo_ref=$forgejo_pr_or_ref
-    echo $GITHUB_SERVER_URL/$GITHUB_REPOSITORY ${forgejo_ref#refs/heads/} $full_version > forgejo/sources/$major_version
+    echo $GITHUB_SERVER_URL/$GITHUB_REPOSITORY ${forgejo_ref#refs/heads/} $full_version > forgejo/sources/$minor_version
 fi
-
-test "$GITHUB_RUN_NUMBER"
-echo $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_NUMBER/artifacts/forgejo > forgejo/binary-url

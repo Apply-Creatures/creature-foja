@@ -42,45 +42,6 @@ jobs:
           ${{ toJSON(github.event) }}
           EOF
 
-  build:
-    if: >
-      !startsWith(vars.ROLE, 'forgejo-') && (
-        github.event_name == 'push' ||
-        (
-          github.event.action == 'label_updated' && contains(github.event.pull_request.labels.*.name, 'run-end-to-end-tests')
-        )
-      )
-    runs-on: docker
-    container:
-      image: 'docker.io/node:20-bookworm'
-    steps:
-      - uses: https://code.forgejo.org/actions/checkout@v3
-        with:
-          fetch-depth: '0'
-          show-progress: 'false'
-      - name: adduser forgejo
-        run: |
-          git config --add safe.directory '*'
-          git config user.email "you@example.com"
-          git config user.name "Your Name"
-          adduser --quiet --comment forgejo --disabled-password forgejo
-          chown -R forgejo:forgejo .
-      - uses: https://code.forgejo.org/actions/setup-go@v4
-        with:
-          go-version: "1.21"
-      - name: make deps-backend
-        run: |
-          su forgejo -c 'make deps-backend'
-      - name: make forgejo
-        run: |
-          su forgejo -c 'make generate-backend static-executable && ln gitea forgejo'
-        env:
-          TAGS: bindata sqlite sqlite_unlock_notify
-      - uses: actions/upload-artifact@v3
-        with:
-          name: forgejo
-          path: forgejo
-
   cascade:
     if: >
       !startsWith(vars.ROLE, 'forgejo-') && (
@@ -89,7 +50,6 @@ jobs:
           github.event.action == 'label_updated' && contains(github.event.pull_request.labels.*.name, 'run-end-to-end-tests')
         )
       )
-    needs: [build]
     runs-on: docker
     container:
       image: node:20-bookworm
@@ -108,7 +68,7 @@ jobs:
           destination-url: https://code.forgejo.org
           destination-fork-repo: cascading-pr/end-to-end
           destination-repo: forgejo/end-to-end
-          destination-branch: forgejo-pr
+          destination-branch: main
           destination-token: ${{ secrets.END_TO_END_CASCADING_PR_DESTINATION }}
           close-merge: true
           update: .forgejo/cascading-pr-end-to-end

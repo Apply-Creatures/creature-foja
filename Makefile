@@ -95,12 +95,16 @@ else
   FORGEJO_VERSION ?= $(shell git describe --exclude '*-test' --tags --always | sed 's/^v//' | sed 's/\-g/-/')+${GITEA_COMPATIBILITY}
 endif
 FORGEJO_VERSION_MAJOR=$(shell echo $(FORGEJO_VERSION) | sed -e 's/\..*//')
+FORGEJO_VERSION_MINOR=$(shell echo $(FORGEJO_VERSION) | sed -E -e 's/^([0-9]+\.[0-9]+).*/\1/')
 
 show-version-full:
 	@echo ${FORGEJO_VERSION}
 
 show-version-major:
 	@echo ${FORGEJO_VERSION_MAJOR}
+
+show-version-minor:
+	@echo ${FORGEJO_VERSION_MINOR}
 
 RELEASE_VERSION ?= ${FORGEJO_VERSION}
 VERSION ?= ${RELEASE_VERSION}
