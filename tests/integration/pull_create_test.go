@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"path"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -42,14 +43,16 @@ func testPullCreate(t *testing.T, session *TestSession, user, repo string, toSel
 		link = strings.Replace(link, targetUser, user, 1)
 	}
 
-	if targetBranch != "master" {
-		link = strings.Replace(link, "master...", targetBranch+"...", 1)
+	// get main out of /user/project/main...some:other/branch
+	defaultBranch := regexp.MustCompile(`^.*/(.*)\.\.\.`).FindStringSubmatch(link)[1]
+	if targetBranch != defaultBranch {
+		link = strings.Replace(link, defaultBranch+"...", targetBranch+"...", 1)
 	}
-	if sourceBranch != "master" {
+	if sourceBranch != defaultBranch {
 		if targetUser == user {
-			link = strings.Replace(link, "...master", "..."+sourceBranch, 1)
+			link = strings.Replace(link, "..."+defaultBranch, "..."+sourceBranch, 1)
 		} else {
-			link = strings.Replace(link, ":master", ":"+sourceBranch, 1)
+			link = strings.Replace(link, ":"+defaultBranch, ":"+sourceBranch, 1)
 		}
 	}
 
