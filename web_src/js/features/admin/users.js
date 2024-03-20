@@ -12,7 +12,7 @@ export function initAdminUserListSearchForm() {
   if (searchForm.StatusFilterMap) {
     for (const [k, v] of Object.entries(searchForm.StatusFilterMap)) {
       if (!v) continue;
-      $form.find(`input[name="status_filter[${k}]"][value=${v}]`).prop('checked', true);
+      $form.find(`input[name="status_filter[${k}]"][value=${v}]`).checked = true;
     }
   }
 
@@ -25,7 +25,7 @@ export function initAdminUserListSearchForm() {
     $form.find(`input[type=radio]`).each((_, e) => {
       const $e = $(e);
       if ($e.attr('name').startsWith('status_filter[')) {
-        $e.prop('checked', false);
+        $e.checked = false;
       }
     });
     $form.trigger('submit');
