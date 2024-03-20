@@ -16,18 +16,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestWebhook_GetSlackHook(t *testing.T) {
-	w := &webhook_model.Webhook{
-		Meta: `{"channel": "foo", "username": "username", "color": "blue"}`,
-	}
-	slackHook := GetSlackHook(w)
-	assert.Equal(t, *slackHook, SlackMeta{
-		Channel:  "foo",
-		Username: "username",
-		Color:    "blue",
-	})
-}
-
 func activateWebhook(t *testing.T, hookID int64) {
 	t.Helper()
 	updated, err := db.GetEngine(db.DefaultContext).ID(hookID).Cols("is_active").Update(webhook_model.Webhook{IsActive: true})

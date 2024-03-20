@@ -17,13 +17,17 @@ var ErrInvalidReceiveHook = errors.New("Invalid JSON payload received over webho
 
 // Hook a hook is a web hook when one repository changed
 type Hook struct {
-	ID                  int64             `json:"id"`
-	Type                string            `json:"type"`
-	BranchFilter        string            `json:"branch_filter"`
-	URL                 string            `json:"-"`
+	ID           int64  `json:"id"`
+	Type         string `json:"type"`
+	BranchFilter string `json:"branch_filter"`
+	URL          string `json:"url"`
+
+	// Deprecated: use Metadata instead
 	Config              map[string]string `json:"config"`
 	Events              []string          `json:"events"`
 	AuthorizationHeader string            `json:"authorization_header"`
+	ContentType         string            `json:"content_type"`
+	Metadata            any               `json:"metadata"`
 	Active              bool              `json:"active"`
 	// swagger:strfmt date-time
 	Updated time.Time `json:"updated_at"`

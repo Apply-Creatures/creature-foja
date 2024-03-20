@@ -24,10 +24,14 @@ import (
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 )
 
-func newMatrixRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
+type matrixHandler struct{}
+
+func (matrixHandler) Type() webhook_module.HookType { return webhook_module.MATRIX }
+
+func (matrixHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
 	meta := &MatrixMeta{}
 	if err := json.Unmarshal([]byte(w.Meta), meta); err != nil {
-		return nil, nil, fmt.Errorf("GetMatrixPayload meta json: %w", err)
+		return nil, nil, fmt.Errorf("matrixHandler.NewRequest meta json: %w", err)
 	}
 	mc := matrixConvertor{
 		MsgType: messageTypeText[meta.MessageType],
@@ -69,11 +73,11 @@ var messageTypeText = map[int]string{
 	2: "m.text",
 }
 
-// GetMatrixHook returns Matrix metadata
-func GetMatrixHook(w *webhook_model.Webhook) *MatrixMeta {
+// Metadata returns Matrix metadata
+func (matrixHandler) Metadata(w *webhook_model.Webhook) any {
 	s := &MatrixMeta{}
 	if err := json.Unmarshal([]byte(w.Meta), s); err != nil {
-		log.Error("webhook.GetMatrixHook(%d): %v", w.ID, err)
+		log.Error("matrixHandler.Metadata(%d): %v", w.ID, err)
 	}
 	return s
 }

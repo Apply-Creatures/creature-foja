@@ -236,7 +236,7 @@ func TestDingTalkJSONPayload(t *testing.T) {
 		PayloadVersion: 2,
 	}
 
-	req, reqBody, err := newDingtalkRequest(context.Background(), hook, task)
+	req, reqBody, err := dingtalkHandler{}.NewRequest(context.Background(), hook, task)
 	require.NotNil(t, req)
 	require.NotNil(t, reqBody)
 	require.NoError(t, err)

@@ -19,6 +19,10 @@ import (
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 )
 
+type slackHandler struct{}
+
+func (slackHandler) Type() webhook_module.HookType { return webhook_module.SLACK }
+
 // SlackMeta contains the slack metadata
 type SlackMeta struct {
 	Channel  string `json:"channel"`
@@ -27,11 +31,11 @@ type SlackMeta struct {
 	Color    string `json:"color"`
 }
 
-// GetSlackHook returns slack metadata
-func GetSlackHook(w *webhook_model.Webhook) *SlackMeta {
+// Metadata returns slack metadata
+func (slackHandler) Metadata(w *webhook_model.Webhook) any {
 	s := &SlackMeta{}
 	if err := json.Unmarshal([]byte(w.Meta), s); err != nil {
-		log.Error("webhook.GetSlackHook(%d): %v", w.ID, err)
+		log.Error("slackHandler.Metadata(%d): %v", w.ID, err)
 	}
 	return s
 }
@@ -283,10 +287,10 @@ type slackConvertor struct {
 
 var _ payloadConvertor[SlackPayload] = slackConvertor{}
 
-func newSlackRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
+func (slackHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
 	meta := &SlackMeta{}
 	if err := json.Unmarshal([]byte(w.Meta), meta); err != nil {
-		return nil, nil, fmt.Errorf("newSlackRequest meta json: %w", err)
+		return nil, nil, fmt.Errorf("slackHandler.NewRequest meta json: %w", err)
 	}
 	sc := slackConvertor{
 		Channel:  meta.Channel,

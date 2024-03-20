@@ -19,6 +19,11 @@ import (
 	dingtalk "gitea.com/lunny/dingtalk_webhook"
 )
 
+type dingtalkHandler struct{}
+
+func (dingtalkHandler) Type() webhook_module.HookType       { return webhook_module.DINGTALK }
+func (dingtalkHandler) Metadata(*webhook_model.Webhook) any { return nil }
+
 type (
 	// DingtalkPayload represents
 	DingtalkPayload dingtalk.Payload
@@ -190,6 +195,6 @@ type dingtalkConvertor struct{}
 
 var _ payloadConvertor[DingtalkPayload] = dingtalkConvertor{}
 
-func newDingtalkRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
+func (dingtalkHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
 	return newJSONRequest(dingtalkConvertor{}, w, t, true)
 }

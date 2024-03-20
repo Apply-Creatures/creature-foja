@@ -22,6 +22,10 @@ import (
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 )
 
+type discordHandler struct{}
+
+func (discordHandler) Type() webhook_module.HookType { return webhook_module.DISCORD }
+
 type (
 	// DiscordEmbedFooter for Embed Footer Structure.
 	DiscordEmbedFooter struct {
@@ -69,11 +73,11 @@ type (
 	}
 )
 
-// GetDiscordHook returns discord metadata
-func GetDiscordHook(w *webhook_model.Webhook) *DiscordMeta {
+// Metadata returns discord metadata
+func (discordHandler) Metadata(w *webhook_model.Webhook) any {
 	s := &DiscordMeta{}
 	if err := json.Unmarshal([]byte(w.Meta), s); err != nil {
-		log.Error("webhook.GetDiscordHook(%d): %v", w.ID, err)
+		log.Error("discordHandler.Metadata(%d): %v", w.ID, err)
 	}
 	return s
 }
@@ -260,10 +264,10 @@ type discordConvertor struct {
 
 var _ payloadConvertor[DiscordPayload] = discordConvertor{}
 
-func newDiscordRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
+func (discordHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
 	meta := &DiscordMeta{}
 	if err := json.Unmarshal([]byte(w.Meta), meta); err != nil {
-		return nil, nil, fmt.Errorf("newDiscordRequest meta json: %w", err)
+		return nil, nil, fmt.Errorf("discordHandler.NewRequest meta json: %w", err)
 	}
 	sc := discordConvertor{
 		Username:  meta.Username,

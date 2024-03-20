@@ -15,6 +15,11 @@ import (
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 )
 
+type feishuHandler struct{}
+
+func (feishuHandler) Type() webhook_module.HookType       { return webhook_module.FEISHU }
+func (feishuHandler) Metadata(*webhook_model.Webhook) any { return nil }
+
 type (
 	// FeishuPayload represents
 	FeishuPayload struct {
@@ -168,6 +173,6 @@ type feishuConvertor struct{}
 
 var _ payloadConvertor[FeishuPayload] = feishuConvertor{}
 
-func newFeishuRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
+func (feishuHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
 	return newJSONRequest(feishuConvertor{}, w, t, true)
 }
