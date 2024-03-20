@@ -9,4 +9,14 @@ forgejo_ref=$4
 
 cd $end_to_end
 date > last-upgrade
-echo $FORGEJO_BINARY > forgejo/binary-url
+organizations=lib/ORGANIZATIONS
+if ! test -f $organizations ; then
+    echo "$organizations file not found"
+    false
+fi
+#
+# do not include forgejo-experimental so that 7.0-test is found
+# in forgejo-integration where it was just built instead of
+# forgejo-experimental which was published by the previous build
+#
+echo forgejo forgejo-integration > $organizations

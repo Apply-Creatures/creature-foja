@@ -203,11 +203,9 @@ jobs:
           destination-url: https://code.forgejo.org
           destination-fork-repo: ${{ vars.CASCADE_DESTINATION_DOER }}/end-to-end
           destination-repo: forgejo/end-to-end
-          destination-branch: forgejo-pr
+          destination-branch: main
           destination-token: ${{ secrets.CASCADE_DESTINATION_TOKEN }}
           update: .forgejo/cascading-release-end-to-end
-        env:
-          FORGEJO_BINARY: "${{ env.GITHUB_SERVER_URL }}/${{ github.repository }}/releases/download/v${{ steps.release-info.outputs.version }}/forgejo-${{ steps.release-info.outputs.version }}-linux-amd64"
 
       - name: copy to experimental
         if: vars.ROLE == 'forgejo-integration' && secrets.TOKEN != ''
