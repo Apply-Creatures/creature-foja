@@ -41,7 +41,7 @@ func Search(ctx *context.Context) {
 	}
 
 	if setting.Indexer.RepoIndexerEnabled {
-		ctx.Data["CodeIndexerEnabled"] = true
+		ctx.Data["CodeIndexerDisabled"] = false
 
 		total, searchResults, searchResultLanguages, err := code_indexer.PerformSearch(ctx, &code_indexer.SearchOptions{
 			RepoIDs:        []int64{ctx.Repo.Repository.ID},
@@ -77,7 +77,7 @@ func Search(ctx *context.Context) {
 			return
 		}
 
-		ctx.Data["CodeIndexerEnabled"] = false
+		ctx.Data["CodeIndexerDisabled"] = true
 		ctx.Data["SearchResults"] = data
 
 		pager := context.NewPagination(len(data), setting.UI.RepoSearchPagingNum, page, 5)
