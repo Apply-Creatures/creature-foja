@@ -82,6 +82,14 @@
   padding-right: 0.5rem;
 }
 
+.dashboard .dashboard-navbar .right.menu {
+  gap: .35714286em;
+}
+
+.dashboard .dashboard-navbar .right.menu div.item {
+  padding-left: 0.5rem;
+}
+
 .dashboard .dashboard-navbar .org-visibility .label {
   margin-left: 5px;
 }
