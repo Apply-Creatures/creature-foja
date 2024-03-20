@@ -451,6 +451,13 @@ func (opts ListWebhookOptions) ToConds() builder.Cond {
 	return cond
 }
 
+var _ db.FindOptionsOrder = ListWebhookOptions{}
+
+// ToOrders implements db.FindOptionsOrder, to sort the webhooks by id asc
+func (opts ListWebhookOptions) ToOrders() string {
+	return "webhook.id"
+}
+
 // UpdateWebhook updates information of webhook.
 func UpdateWebhook(ctx context.Context, w *Webhook) error {
 	_, err := db.GetEngine(ctx).ID(w.ID).AllCols().Update(w)

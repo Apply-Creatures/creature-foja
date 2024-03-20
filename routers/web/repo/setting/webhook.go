@@ -214,9 +214,10 @@ func createWebhook(ctx *context.Context, params webhookParams) {
 		return
 	}
 	ctx.Data["BaseLink"] = orCtx.LinkNew
+	ctx.Data["BaseLinkNew"] = orCtx.LinkNew
 
 	if ctx.HasError() {
-		ctx.HTML(http.StatusOK, orCtx.NewTemplate)
+		ctx.HTML(http.StatusUnprocessableEntity, orCtx.NewTemplate)
 		return
 	}
 
@@ -271,7 +272,7 @@ func editWebhook(ctx *context.Context, params webhookParams) {
 	ctx.Data["Webhook"] = w
 
 	if ctx.HasError() {
-		ctx.HTML(http.StatusOK, orCtx.NewTemplate)
+		ctx.HTML(http.StatusUnprocessableEntity, orCtx.NewTemplate)
 		return
 	}
 
