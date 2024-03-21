@@ -23,6 +23,9 @@ type dingtalkHandler struct{}
 
 func (dingtalkHandler) Type() webhook_module.HookType       { return webhook_module.DINGTALK }
 func (dingtalkHandler) Metadata(*webhook_model.Webhook) any { return nil }
+func (dingtalkHandler) FormFields(bind func(any)) FormFields {
+	panic("TODO")
+}
 
 type (
 	// DingtalkPayload represents

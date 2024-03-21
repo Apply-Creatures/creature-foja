@@ -22,6 +22,10 @@ type msteamsHandler struct{}
 func (msteamsHandler) Type() webhook_module.HookType       { return webhook_module.MSTEAMS }
 func (msteamsHandler) Metadata(*webhook_model.Webhook) any { return nil }
 
+func (msteamsHandler) FormFields(bind func(any)) FormFields {
+	panic("TODO")
+}
+
 type (
 	// MSTeamsFact for Fact Structure
 	MSTeamsFact struct {

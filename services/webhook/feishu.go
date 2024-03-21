@@ -17,7 +17,12 @@ import (
 
 type feishuHandler struct{}
 
-func (feishuHandler) Type() webhook_module.HookType       { return webhook_module.FEISHU }
+func (feishuHandler) Type() webhook_module.HookType { return webhook_module.FEISHU }
+
+func (feishuHandler) FormFields(bind func(any)) FormFields {
+	panic("TODO")
+}
+
 func (feishuHandler) Metadata(*webhook_model.Webhook) any { return nil }
 
 type (

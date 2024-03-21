@@ -24,11 +24,14 @@ import (
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
+	"code.gitea.io/gitea/modules/web/middleware"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 	"code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/convert"
 	"code.gitea.io/gitea/services/forms"
 	webhook_service "code.gitea.io/gitea/services/webhook"
+
+	"gitea.com/go-chi/binding"
 )
 
 const (
@@ -201,6 +204,29 @@ type webhookParams struct {
 	Meta        any
 }
 
+func WebhookCreate(ctx *context.Context) {
+	typ := ctx.Params(":type")
+	handler := webhook_service.GetWebhookHandler(typ)
+	if handler == nil {
+		ctx.NotFound("GetWebhookHandler", nil)
+		return
+	}
+
+	fields := handler.FormFields(func(form any) {
+		errs := binding.Bind(ctx.Req, form)
+		middleware.Validate(errs, ctx.Data, form, ctx.Locale) // error will be checked later in ctx.HasError
+	})
+	createWebhook(ctx, webhookParams{
+		Type:        typ,
+		URL:         fields.URL,
+		ContentType: fields.ContentType,
+		Secret:      fields.Secret,
+		HTTPMethod:  fields.HTTPMethod,
+		WebhookForm: fields.WebhookForm,
+		Meta:        fields.Metadata,
+	})
+}
+
 func createWebhook(ctx *context.Context, params webhookParams) {
 	ctx.Data["Title"] = ctx.Tr("repo.settings.add_webhook")
 	ctx.Data["PageIsSettingsHooks"] = true
@@ -258,6 +284,29 @@ func createWebhook(ctx *context.Context, params webhookParams) {
 
 	ctx.Flash.Success(ctx.Tr("repo.settings.add_hook_success"))
 	ctx.Redirect(orCtx.Link)
+}
+
+func WebhookUpdate(ctx *context.Context) {
+	typ := ctx.Params(":type")
+	handler := webhook_service.GetWebhookHandler(typ)
+	if handler == nil {
+		ctx.NotFound("GetWebhookHandler", nil)
+		return
+	}
+
+	fields := handler.FormFields(func(form any) {
+		errs := binding.Bind(ctx.Req, form)
+		middleware.Validate(errs, ctx.Data, form, ctx.Locale) // error will be checked later in ctx.HasError
+	})
+	editWebhook(ctx, webhookParams{
+		Type:        typ,
+		URL:         fields.URL,
+		ContentType: fields.ContentType,
+		Secret:      fields.Secret,
+		HTTPMethod:  fields.HTTPMethod,
+		WebhookForm: fields.WebhookForm,
+		Meta:        fields.Metadata,
+	})
 }
 
 func editWebhook(ctx *context.Context, params webhookParams) {
@@ -463,33 +512,6 @@ func telegramHookParams(ctx *context.Context) webhookParams {
 			BotToken: form.BotToken,
 			ChatID:   form.ChatID,
 			ThreadID: form.ThreadID,
-		},
-	}
-}
-
-// MatrixHooksNewPost response for creating Matrix webhook
-func MatrixHooksNewPost(ctx *context.Context) {
-	createWebhook(ctx, matrixHookParams(ctx))
-}
-
-// MatrixHooksEditPost response for editing Matrix webhook
-func MatrixHooksEditPost(ctx *context.Context) {
-	editWebhook(ctx, matrixHookParams(ctx))
-}
-
-func matrixHookParams(ctx *context.Context) webhookParams {
-	form := web.GetForm(ctx).(*forms.NewMatrixHookForm)
-
-	return webhookParams{
-		Type:        webhook_module.MATRIX,
-		URL:         fmt.Sprintf("%s/_matrix/client/r0/rooms/%s/send/m.room.message", form.HomeserverURL, url.PathEscape(form.RoomID)),
-		ContentType: webhook.ContentTypeJSON,
-		HTTPMethod:  http.MethodPut,
-		WebhookForm: form.WebhookForm,
-		Meta: &webhook_service.MatrixMeta{
-			HomeserverURL: form.HomeserverURL,
-			Room:          form.RoomID,
-			MessageType:   form.MessageType,
 		},
 	}
 }

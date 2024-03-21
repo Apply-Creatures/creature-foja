@@ -23,6 +23,10 @@ type slackHandler struct{}
 
 func (slackHandler) Type() webhook_module.HookType { return webhook_module.SLACK }
 
+func (slackHandler) FormFields(bind func(any)) FormFields {
+	panic("TODO")
+}
+
 // SlackMeta contains the slack metadata
 type SlackMeta struct {
 	Channel  string `json:"channel"`

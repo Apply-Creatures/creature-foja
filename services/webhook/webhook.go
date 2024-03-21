@@ -23,14 +23,27 @@ import (
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/util"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
+	"code.gitea.io/gitea/services/forms"
 
 	"github.com/gobwas/glob"
 )
 
 type Handler interface {
 	Type() webhook_module.HookType
-	NewRequest(context.Context, *webhook_model.Webhook, *webhook_model.HookTask) (req *http.Request, body []byte, err error)
 	Metadata(*webhook_model.Webhook) any
+	// FormFields provides a function to bind the request to the form.
+	// If form implements the [binding.Validator] interface, the Validate method will be called
+	FormFields(bind func(form any)) FormFields
+	NewRequest(context.Context, *webhook_model.Webhook, *webhook_model.HookTask) (req *http.Request, body []byte, err error)
+}
+
+type FormFields struct {
+	forms.WebhookForm
+	URL         string
+	ContentType webhook_model.HookContentType
+	Secret      string
+	HTTPMethod  string
+	Metadata    any
 }
 
 var webhookHandlers = []Handler{

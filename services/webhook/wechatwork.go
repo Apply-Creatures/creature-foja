@@ -20,6 +20,10 @@ type wechatworkHandler struct{}
 func (wechatworkHandler) Type() webhook_module.HookType       { return webhook_module.WECHATWORK }
 func (wechatworkHandler) Metadata(*webhook_model.Webhook) any { return nil }
 
+func (wechatworkHandler) FormFields(bind func(any)) FormFields {
+	panic("TODO")
+}
+
 type (
 	// WechatworkPayload represents
 	WechatworkPayload struct {

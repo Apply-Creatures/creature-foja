@@ -35,6 +35,10 @@ func (dh defaultHandler) Type() webhook_module.HookType {
 
 func (defaultHandler) Metadata(*webhook_model.Webhook) any { return nil }
 
+func (defaultHandler) FormFields(bind func(any)) FormFields {
+	panic("TODO")
+}
+
 func (defaultHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (req *http.Request, body []byte, err error) {
 	switch w.HTTPMethod {
 	case "":

@@ -26,6 +26,10 @@ type discordHandler struct{}
 
 func (discordHandler) Type() webhook_module.HookType { return webhook_module.DISCORD }
 
+func (discordHandler) FormFields(bind func(any)) FormFields {
+	panic("TODO")
+}
+
 type (
 	// DiscordEmbedFooter for Embed Footer Structure.
 	DiscordEmbedFooter struct {

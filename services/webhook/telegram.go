@@ -21,6 +21,10 @@ type telegramHandler struct{}
 
 func (telegramHandler) Type() webhook_module.HookType { return webhook_module.TELEGRAM }
 
+func (telegramHandler) FormFields(bind func(any)) FormFields {
+	panic("TODO")
+}
+
 type (
 	// TelegramPayload represents
 	TelegramPayload struct {

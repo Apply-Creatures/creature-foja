@@ -18,6 +18,10 @@ type packagistHandler struct{}
 
 func (packagistHandler) Type() webhook_module.HookType { return webhook_module.PACKAGIST }
 
+func (packagistHandler) FormFields(bind func(any)) FormFields {
+	panic("TODO")
+}
+
 type (
 	// PackagistPayload represents a packagist payload
 	// as expected by https://packagist.org/about

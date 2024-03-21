@@ -371,20 +371,6 @@ func (f *NewTelegramHookForm) Validate(req *http.Request, errs binding.Errors) b
 	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
 }
 
-// NewMatrixHookForm form for creating Matrix hook
-type NewMatrixHookForm struct {
-	HomeserverURL string `binding:"Required;ValidUrl"`
-	RoomID        string `binding:"Required"`
-	MessageType   int
-	WebhookForm
-}
-
-// Validate validates the fields
-func (f *NewMatrixHookForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
-	ctx := context.GetValidateContext(req)
-	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
-}
-
 // NewMSTeamsHookForm form for creating MS Teams hook
 type NewMSTeamsHookForm struct {
 	PayloadURL string `binding:"Required;ValidUrl"`

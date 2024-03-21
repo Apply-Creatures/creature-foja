@@ -22,11 +22,39 @@ import (
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/util"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
+	"code.gitea.io/gitea/services/forms"
 )
 
 type matrixHandler struct{}
 
 func (matrixHandler) Type() webhook_module.HookType { return webhook_module.MATRIX }
+
+func (matrixHandler) FormFields(bind func(any)) FormFields {
+	var form struct {
+		forms.WebhookForm
+		HomeserverURL string `binding:"Required;ValidUrl"`
+		RoomID        string `binding:"Required"`
+		MessageType   int
+
+		// enforce requirement of authorization_header
+		// (value will still be set in the embedded WebhookForm)
+		AuthorizationHeader string `binding:"Required"`
+	}
+	bind(&form)
+
+	return FormFields{
+		WebhookForm: form.WebhookForm,
+		URL:         fmt.Sprintf("%s/_matrix/client/r0/rooms/%s/send/m.room.message", form.HomeserverURL, url.PathEscape(form.RoomID)),
+		ContentType: webhook_model.ContentTypeJSON,
+		Secret:      "",
+		HTTPMethod:  http.MethodPut,
+		Metadata: &MatrixMeta{
+			HomeserverURL: form.HomeserverURL,
+			Room:          form.RoomID,
+			MessageType:   form.MessageType,
+		},
+	}
+}
 
 func (matrixHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
 	meta := &MatrixMeta{}
