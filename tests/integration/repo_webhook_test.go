@@ -52,7 +52,7 @@ func TestNewWebHookLink(t *testing.T) {
 	htmlDoc := NewHTMLParser(t, resp.Body)
 	assert.Equal(t, webhooksLen, htmlDoc.Find(`a[href^="`+baseurl+`/"][href$="/new"]`).Length(), "not all webhooks are listed in the 'new' dropdown on failure")
 
-	resp = session.MakeRequest(t, NewRequestWithValues(t, "POST", baseurl+"/gitea/1", map[string]string{"_csrf": csrfToken}), http.StatusUnprocessableEntity)
+	resp = session.MakeRequest(t, NewRequestWithValues(t, "POST", baseurl+"/1", map[string]string{"_csrf": csrfToken}), http.StatusUnprocessableEntity)
 	htmlDoc = NewHTMLParser(t, resp.Body)
 	assert.Equal(t, webhooksLen, htmlDoc.Find(`a[href^="`+baseurl+`/"][href$="/new"]`).Length(), "not all webhooks are listed in the 'new' dropdown on failure")
 }
