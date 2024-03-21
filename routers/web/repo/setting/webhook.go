@@ -388,32 +388,6 @@ func gogsHookParams(ctx *context.Context) webhookParams {
 	}
 }
 
-// PackagistHooksNewPost response for creating Packagist webhook
-func PackagistHooksNewPost(ctx *context.Context) {
-	createWebhook(ctx, packagistHookParams(ctx))
-}
-
-// PackagistHooksEditPost response for editing Packagist webhook
-func PackagistHooksEditPost(ctx *context.Context) {
-	editWebhook(ctx, packagistHookParams(ctx))
-}
-
-func packagistHookParams(ctx *context.Context) webhookParams {
-	form := web.GetForm(ctx).(*forms.NewPackagistHookForm)
-
-	return webhookParams{
-		Type:        webhook_module.PACKAGIST,
-		URL:         fmt.Sprintf("https://packagist.org/api/update-package?username=%s&apiToken=%s", url.QueryEscape(form.Username), url.QueryEscape(form.APIToken)),
-		ContentType: webhook.ContentTypeJSON,
-		WebhookForm: form.WebhookForm,
-		Meta: &webhook_service.PackagistMeta{
-			Username:   form.Username,
-			APIToken:   form.APIToken,
-			PackageURL: form.PackageURL,
-		},
-	}
-}
-
 func checkWebhook(ctx *context.Context) (*ownerRepoCtx, *webhook.Webhook) {
 	orCtx, err := getOwnerRepoCtx(ctx)
 	if err != nil {

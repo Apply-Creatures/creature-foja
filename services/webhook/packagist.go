@@ -7,11 +7,13 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 
 	webhook_model "code.gitea.io/gitea/models/webhook"
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
+	"code.gitea.io/gitea/services/forms"
 )
 
 type packagistHandler struct{}
@@ -19,7 +21,26 @@ type packagistHandler struct{}
 func (packagistHandler) Type() webhook_module.HookType { return webhook_module.PACKAGIST }
 
 func (packagistHandler) FormFields(bind func(any)) FormFields {
-	panic("TODO")
+	var form struct {
+		forms.WebhookForm
+		Username   string `binding:"Required"`
+		APIToken   string `binding:"Required"`
+		PackageURL string `binding:"Required;ValidUrl"`
+	}
+	bind(&form)
+
+	return FormFields{
+		WebhookForm: form.WebhookForm,
+		URL:         fmt.Sprintf("https://packagist.org/api/update-package?username=%s&apiToken=%s", url.QueryEscape(form.Username), url.QueryEscape(form.APIToken)),
+		ContentType: webhook_model.ContentTypeJSON,
+		Secret:      "",
+		HTTPMethod:  http.MethodPost,
+		Metadata: &PackagistMeta{
+			Username:   form.Username,
+			APIToken:   form.APIToken,
+			PackageURL: form.PackageURL,
+		},
+	}
 }
 
 type (
