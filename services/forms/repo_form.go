@@ -292,20 +292,6 @@ func (f *NewGogshookForm) Validate(req *http.Request, errs binding.Errors) bindi
 	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
 }
 
-// NewDiscordHookForm form for creating discord hook
-type NewDiscordHookForm struct {
-	PayloadURL string `binding:"Required;ValidUrl"`
-	Username   string
-	IconURL    string
-	WebhookForm
-}
-
-// Validate validates the fields
-func (f *NewDiscordHookForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
-	ctx := context.GetValidateContext(req)
-	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
-}
-
 // NewDingtalkHookForm form for creating dingtalk hook
 type NewDingtalkHookForm struct {
 	PayloadURL string `binding:"Required;ValidUrl"`

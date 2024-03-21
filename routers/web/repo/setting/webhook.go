@@ -388,31 +388,6 @@ func gogsHookParams(ctx *context.Context) webhookParams {
 	}
 }
 
-// DiscordHooksNewPost response for creating Discord webhook
-func DiscordHooksNewPost(ctx *context.Context) {
-	createWebhook(ctx, discordHookParams(ctx))
-}
-
-// DiscordHooksEditPost response for editing Discord webhook
-func DiscordHooksEditPost(ctx *context.Context) {
-	editWebhook(ctx, discordHookParams(ctx))
-}
-
-func discordHookParams(ctx *context.Context) webhookParams {
-	form := web.GetForm(ctx).(*forms.NewDiscordHookForm)
-
-	return webhookParams{
-		Type:        webhook_module.DISCORD,
-		URL:         form.PayloadURL,
-		ContentType: webhook.ContentTypeJSON,
-		WebhookForm: form.WebhookForm,
-		Meta: &webhook_service.DiscordMeta{
-			Username: form.Username,
-			IconURL:  form.IconURL,
-		},
-	}
-}
-
 // DingtalkHooksNewPost response for creating Dingtalk webhook
 func DingtalkHooksNewPost(ctx *context.Context) {
 	createWebhook(ctx, dingtalkHookParams(ctx))
