@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"strings"
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/perm"
@@ -22,7 +21,6 @@ import (
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
-	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web/middleware"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 	"code.gitea.io/gitea/services/context"
@@ -111,15 +109,6 @@ func getOwnerRepoCtx(ctx *context.Context) (*ownerRepoCtx, error) {
 	return nil, errors.New("unable to set OwnerRepo context")
 }
 
-func checkHookType(ctx *context.Context) string {
-	hookType := strings.ToLower(ctx.Params(":type"))
-	if !util.SliceContainsString(setting.Webhook.Types, hookType, true) {
-		ctx.NotFound("checkHookType", nil)
-		return ""
-	}
-	return hookType
-}
-
 // WebhooksNew render creating webhook page
 func WebhooksNew(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("repo.settings.add_webhook")
@@ -142,16 +131,12 @@ func WebhooksNew(ctx *context.Context) {
 		ctx.Data["PageIsSettingsHooksNew"] = true
 	}
 
-	hookType := checkHookType(ctx)
-	ctx.Data["HookType"] = hookType
-	if ctx.Written() {
+	hookType := ctx.Params(":type")
+	if webhook_service.GetWebhookHandler(hookType) == nil {
+		ctx.NotFound("GetWebhookHandler", nil)
 		return
 	}
-	if hookType == "discord" {
-		ctx.Data["DiscordHook"] = map[string]any{
-			"Username": "Gitea",
-		}
-	}
+	ctx.Data["HookType"] = hookType
 	ctx.Data["BaseLink"] = orCtx.LinkNew
 	ctx.Data["BaseLinkNew"] = orCtx.LinkNew
 
@@ -192,8 +177,8 @@ func ParseHookEvent(form forms.WebhookForm) *webhook_module.HookEvent {
 }
 
 func WebhookCreate(ctx *context.Context) {
-	typ := ctx.Params(":type")
-	handler := webhook_service.GetWebhookHandler(typ)
+	hookType := ctx.Params(":type")
+	handler := webhook_service.GetWebhookHandler(hookType)
 	if handler == nil {
 		ctx.NotFound("GetWebhookHandler", nil)
 		return
@@ -208,7 +193,7 @@ func WebhookCreate(ctx *context.Context) {
 	ctx.Data["PageIsSettingsHooks"] = true
 	ctx.Data["PageIsSettingsHooksNew"] = true
 	ctx.Data["Webhook"] = webhook.Webhook{HookEvent: &webhook_module.HookEvent{}}
-	ctx.Data["HookType"] = typ
+	ctx.Data["HookType"] = hookType
 
 	orCtx, err := getOwnerRepoCtx(ctx)
 	if err != nil {
@@ -256,7 +241,7 @@ func WebhookCreate(ctx *context.Context) {
 		Secret:          fields.Secret,
 		HookEvent:       ParseHookEvent(fields.WebhookForm),
 		IsActive:        fields.WebhookForm.Active,
-		Type:            typ,
+		Type:            hookType,
 		Meta:            string(meta),
 		OwnerID:         orCtx.OwnerID,
 		IsSystemWebhook: orCtx.IsSystemWebhook,

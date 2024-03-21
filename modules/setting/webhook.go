@@ -15,7 +15,6 @@ var Webhook = struct {
 	DeliverTimeout  int
 	SkipTLSVerify   bool
 	AllowedHostList string
-	Types           []string
 	PagingNum       int
 	ProxyURL        string
 	ProxyURLFixed   *url.URL
@@ -35,7 +34,6 @@ func loadWebhookFrom(rootCfg ConfigProvider) {
 	Webhook.DeliverTimeout = sec.Key("DELIVER_TIMEOUT").MustInt(5)
 	Webhook.SkipTLSVerify = sec.Key("SKIP_TLS_VERIFY").MustBool()
 	Webhook.AllowedHostList = sec.Key("ALLOWED_HOST_LIST").MustString("")
-	Webhook.Types = []string{"forgejo", "gitea", "gogs", "slack", "discord", "dingtalk", "telegram", "msteams", "feishu", "matrix", "wechatwork", "packagist"}
 	Webhook.PagingNum = sec.Key("PAGING_NUM").MustInt(10)
 	Webhook.ProxyURL = sec.Key("PROXY_URL").MustString("")
 	if Webhook.ProxyURL != "" {
