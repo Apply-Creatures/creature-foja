@@ -388,27 +388,6 @@ func gogsHookParams(ctx *context.Context) webhookParams {
 	}
 }
 
-// FeishuHooksNewPost response for creating Feishu webhook
-func FeishuHooksNewPost(ctx *context.Context) {
-	createWebhook(ctx, feishuHookParams(ctx))
-}
-
-// FeishuHooksEditPost response for editing Feishu webhook
-func FeishuHooksEditPost(ctx *context.Context) {
-	editWebhook(ctx, feishuHookParams(ctx))
-}
-
-func feishuHookParams(ctx *context.Context) webhookParams {
-	form := web.GetForm(ctx).(*forms.NewFeishuHookForm)
-
-	return webhookParams{
-		Type:        webhook_module.FEISHU,
-		URL:         form.PayloadURL,
-		ContentType: webhook.ContentTypeJSON,
-		WebhookForm: form.WebhookForm,
-	}
-}
-
 // WechatworkHooksNewPost response for creating Wechatwork webhook
 func WechatworkHooksNewPost(ctx *context.Context) {
 	createWebhook(ctx, wechatworkHookParams(ctx))
