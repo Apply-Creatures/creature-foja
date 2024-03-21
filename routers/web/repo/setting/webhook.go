@@ -361,62 +361,6 @@ func editWebhook(ctx *context.Context, params webhookParams) {
 	ctx.Redirect(fmt.Sprintf("%s/%d", orCtx.Link, w.ID))
 }
 
-// ForgejoHooksNewPost response for creating Forgejo webhook
-func ForgejoHooksNewPost(ctx *context.Context) {
-	createWebhook(ctx, forgejoHookParams(ctx))
-}
-
-// ForgejoHooksEditPost response for editing Forgejo webhook
-func ForgejoHooksEditPost(ctx *context.Context) {
-	editWebhook(ctx, forgejoHookParams(ctx))
-}
-
-func forgejoHookParams(ctx *context.Context) webhookParams {
-	form := web.GetForm(ctx).(*forms.NewWebhookForm)
-
-	contentType := webhook.ContentTypeJSON
-	if webhook.HookContentType(form.ContentType) == webhook.ContentTypeForm {
-		contentType = webhook.ContentTypeForm
-	}
-
-	return webhookParams{
-		Type:        webhook_module.FORGEJO,
-		URL:         form.PayloadURL,
-		ContentType: contentType,
-		Secret:      form.Secret,
-		HTTPMethod:  form.HTTPMethod,
-		WebhookForm: form.WebhookForm,
-	}
-}
-
-// GiteaHooksNewPost response for creating Gitea webhook
-func GiteaHooksNewPost(ctx *context.Context) {
-	createWebhook(ctx, giteaHookParams(ctx))
-}
-
-// GiteaHooksEditPost response for editing Gitea webhook
-func GiteaHooksEditPost(ctx *context.Context) {
-	editWebhook(ctx, giteaHookParams(ctx))
-}
-
-func giteaHookParams(ctx *context.Context) webhookParams {
-	form := web.GetForm(ctx).(*forms.NewWebhookForm)
-
-	contentType := webhook.ContentTypeJSON
-	if webhook.HookContentType(form.ContentType) == webhook.ContentTypeForm {
-		contentType = webhook.ContentTypeForm
-	}
-
-	return webhookParams{
-		Type:        webhook_module.GITEA,
-		URL:         form.PayloadURL,
-		ContentType: contentType,
-		Secret:      form.Secret,
-		HTTPMethod:  form.HTTPMethod,
-		WebhookForm: form.WebhookForm,
-	}
-}
-
 // GogsHooksNewPost response for creating Gogs webhook
 func GogsHooksNewPost(ctx *context.Context) {
 	createWebhook(ctx, gogsHookParams(ctx))

@@ -402,8 +402,6 @@ func registerRoutes(m *web.Route) {
 
 	addWebhookAddRoutes := func() {
 		m.Get("/{type}/new", repo_setting.WebhooksNew)
-		m.Post("/forgejo/new", web.Bind(forms.NewWebhookForm{}), repo_setting.ForgejoHooksNewPost)
-		m.Post("/gitea/new", web.Bind(forms.NewWebhookForm{}), repo_setting.GiteaHooksNewPost)
 		m.Post("/gogs/new", web.Bind(forms.NewGogshookForm{}), repo_setting.GogsHooksNewPost)
 		m.Post("/slack/new", web.Bind(forms.NewSlackHookForm{}), repo_setting.SlackHooksNewPost)
 		m.Post("/discord/new", web.Bind(forms.NewDiscordHookForm{}), repo_setting.DiscordHooksNewPost)
@@ -417,8 +415,6 @@ func registerRoutes(m *web.Route) {
 	}
 
 	addWebhookEditRoutes := func() {
-		m.Post("/forgejo/{id}", web.Bind(forms.NewWebhookForm{}), repo_setting.ForgejoHooksEditPost)
-		m.Post("/gitea/{id}", web.Bind(forms.NewWebhookForm{}), repo_setting.GiteaHooksEditPost)
 		m.Post("/gogs/{id}", web.Bind(forms.NewGogshookForm{}), repo_setting.GogsHooksEditPost)
 		m.Post("/slack/{id}", web.Bind(forms.NewSlackHookForm{}), repo_setting.SlackHooksEditPost)
 		m.Post("/discord/{id}", web.Bind(forms.NewDiscordHookForm{}), repo_setting.DiscordHooksEditPost)
