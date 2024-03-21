@@ -18,8 +18,8 @@ import (
 func getBadgeURL(ctx *context_module.Context, label, text, color string) string {
 	sb := &strings.Builder{}
 	_ = setting.Badges.GeneratorURLTemplateTemplate.Execute(sb, map[string]string{
-		"label": url.PathEscape(label),
-		"text":  url.PathEscape(text),
+		"label": url.PathEscape(strings.ReplaceAll(label, "-", "--")),
+		"text":  url.PathEscape(strings.ReplaceAll(text, "-", "--")),
 		"color": url.PathEscape(color),
 	})
 
