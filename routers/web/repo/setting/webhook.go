@@ -388,27 +388,6 @@ func gogsHookParams(ctx *context.Context) webhookParams {
 	}
 }
 
-// DingtalkHooksNewPost response for creating Dingtalk webhook
-func DingtalkHooksNewPost(ctx *context.Context) {
-	createWebhook(ctx, dingtalkHookParams(ctx))
-}
-
-// DingtalkHooksEditPost response for editing Dingtalk webhook
-func DingtalkHooksEditPost(ctx *context.Context) {
-	editWebhook(ctx, dingtalkHookParams(ctx))
-}
-
-func dingtalkHookParams(ctx *context.Context) webhookParams {
-	form := web.GetForm(ctx).(*forms.NewDingtalkHookForm)
-
-	return webhookParams{
-		Type:        webhook_module.DINGTALK,
-		URL:         form.PayloadURL,
-		ContentType: webhook.ContentTypeJSON,
-		WebhookForm: form.WebhookForm,
-	}
-}
-
 // TelegramHooksNewPost response for creating Telegram webhook
 func TelegramHooksNewPost(ctx *context.Context) {
 	createWebhook(ctx, telegramHookParams(ctx))
