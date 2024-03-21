@@ -403,14 +403,12 @@ func registerRoutes(m *web.Route) {
 	addWebhookAddRoutes := func() {
 		m.Get("/{type}/new", repo_setting.WebhooksNew)
 		m.Post("/gogs/new", web.Bind(forms.NewGogshookForm{}), repo_setting.GogsHooksNewPost)
-		m.Post("/wechatwork/new", web.Bind(forms.NewWechatWorkHookForm{}), repo_setting.WechatworkHooksNewPost)
 		m.Post("/packagist/new", web.Bind(forms.NewPackagistHookForm{}), repo_setting.PackagistHooksNewPost)
 		m.Post("/{type}/new", repo_setting.WebhookCreate)
 	}
 
 	addWebhookEditRoutes := func() {
 		m.Post("/gogs/{id}", web.Bind(forms.NewGogshookForm{}), repo_setting.GogsHooksEditPost)
-		m.Post("/wechatwork/{id}", web.Bind(forms.NewWechatWorkHookForm{}), repo_setting.WechatworkHooksEditPost)
 		m.Post("/packagist/{id}", web.Bind(forms.NewPackagistHookForm{}), repo_setting.PackagistHooksEditPost)
 		m.Post("/{type}/{id:[0-9]+}", repo_setting.WebhookUpdate)
 	}

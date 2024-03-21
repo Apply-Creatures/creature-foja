@@ -13,6 +13,7 @@ import (
 	"code.gitea.io/gitea/modules/git"
 	api "code.gitea.io/gitea/modules/structs"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
+	"code.gitea.io/gitea/services/forms"
 )
 
 type wechatworkHandler struct{}
@@ -21,7 +22,20 @@ func (wechatworkHandler) Type() webhook_module.HookType       { return webhook_m
 func (wechatworkHandler) Metadata(*webhook_model.Webhook) any { return nil }
 
 func (wechatworkHandler) FormFields(bind func(any)) FormFields {
-	panic("TODO")
+	var form struct {
+		forms.WebhookForm
+		PayloadURL string `binding:"Required;ValidUrl"`
+	}
+	bind(&form)
+
+	return FormFields{
+		WebhookForm: form.WebhookForm,
+		URL:         form.PayloadURL,
+		ContentType: webhook_model.ContentTypeJSON,
+		Secret:      "",
+		HTTPMethod:  http.MethodPost,
+		Metadata:    nil,
+	}
 }
 
 type (

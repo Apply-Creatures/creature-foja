@@ -388,27 +388,6 @@ func gogsHookParams(ctx *context.Context) webhookParams {
 	}
 }
 
-// WechatworkHooksNewPost response for creating Wechatwork webhook
-func WechatworkHooksNewPost(ctx *context.Context) {
-	createWebhook(ctx, wechatworkHookParams(ctx))
-}
-
-// WechatworkHooksEditPost response for editing Wechatwork webhook
-func WechatworkHooksEditPost(ctx *context.Context) {
-	editWebhook(ctx, wechatworkHookParams(ctx))
-}
-
-func wechatworkHookParams(ctx *context.Context) webhookParams {
-	form := web.GetForm(ctx).(*forms.NewWechatWorkHookForm)
-
-	return webhookParams{
-		Type:        webhook_module.WECHATWORK,
-		URL:         form.PayloadURL,
-		ContentType: webhook.ContentTypeJSON,
-		WebhookForm: form.WebhookForm,
-	}
-}
-
 // PackagistHooksNewPost response for creating Packagist webhook
 func PackagistHooksNewPost(ctx *context.Context) {
 	createWebhook(ctx, packagistHookParams(ctx))
