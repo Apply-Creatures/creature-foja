@@ -481,33 +481,6 @@ func mSTeamsHookParams(ctx *context.Context) webhookParams {
 	}
 }
 
-// SlackHooksNewPost response for creating Slack webhook
-func SlackHooksNewPost(ctx *context.Context) {
-	createWebhook(ctx, slackHookParams(ctx))
-}
-
-// SlackHooksEditPost response for editing Slack webhook
-func SlackHooksEditPost(ctx *context.Context) {
-	editWebhook(ctx, slackHookParams(ctx))
-}
-
-func slackHookParams(ctx *context.Context) webhookParams {
-	form := web.GetForm(ctx).(*forms.NewSlackHookForm)
-
-	return webhookParams{
-		Type:        webhook_module.SLACK,
-		URL:         form.PayloadURL,
-		ContentType: webhook.ContentTypeJSON,
-		WebhookForm: form.WebhookForm,
-		Meta: &webhook_service.SlackMeta{
-			Channel:  strings.TrimSpace(form.Channel),
-			Username: form.Username,
-			IconURL:  form.IconURL,
-			Color:    form.Color,
-		},
-	}
-}
-
 // FeishuHooksNewPost response for creating Feishu webhook
 func FeishuHooksNewPost(ctx *context.Context) {
 	createWebhook(ctx, feishuHookParams(ctx))
