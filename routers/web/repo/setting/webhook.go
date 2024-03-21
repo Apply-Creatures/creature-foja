@@ -23,7 +23,6 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/util"
-	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/modules/web/middleware"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 	"code.gitea.io/gitea/services/context"
@@ -359,33 +358,6 @@ func editWebhook(ctx *context.Context, params webhookParams) {
 
 	ctx.Flash.Success(ctx.Tr("repo.settings.update_hook_success"))
 	ctx.Redirect(fmt.Sprintf("%s/%d", orCtx.Link, w.ID))
-}
-
-// GogsHooksNewPost response for creating Gogs webhook
-func GogsHooksNewPost(ctx *context.Context) {
-	createWebhook(ctx, gogsHookParams(ctx))
-}
-
-// GogsHooksEditPost response for editing Gogs webhook
-func GogsHooksEditPost(ctx *context.Context) {
-	editWebhook(ctx, gogsHookParams(ctx))
-}
-
-func gogsHookParams(ctx *context.Context) webhookParams {
-	form := web.GetForm(ctx).(*forms.NewGogshookForm)
-
-	contentType := webhook.ContentTypeJSON
-	if webhook.HookContentType(form.ContentType) == webhook.ContentTypeForm {
-		contentType = webhook.ContentTypeForm
-	}
-
-	return webhookParams{
-		Type:        webhook_module.GOGS,
-		URL:         form.PayloadURL,
-		ContentType: contentType,
-		Secret:      form.Secret,
-		WebhookForm: form.WebhookForm,
-	}
 }
 
 func checkWebhook(ctx *context.Context) (*ownerRepoCtx, *webhook.Webhook) {

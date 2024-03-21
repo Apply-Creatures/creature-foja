@@ -402,12 +402,10 @@ func registerRoutes(m *web.Route) {
 
 	addWebhookAddRoutes := func() {
 		m.Get("/{type}/new", repo_setting.WebhooksNew)
-		m.Post("/gogs/new", web.Bind(forms.NewGogshookForm{}), repo_setting.GogsHooksNewPost)
 		m.Post("/{type}/new", repo_setting.WebhookCreate)
 	}
 
 	addWebhookEditRoutes := func() {
-		m.Post("/gogs/{id}", web.Bind(forms.NewGogshookForm{}), repo_setting.GogsHooksEditPost)
 		m.Post("/{type}/{id:[0-9]+}", repo_setting.WebhookUpdate)
 	}
 

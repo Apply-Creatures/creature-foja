@@ -278,20 +278,6 @@ func (f WebhookForm) ChooseEvents() bool {
 	return f.Events == "choose_events"
 }
 
-// NewGogshookForm form for creating gogs hook
-type NewGogshookForm struct {
-	PayloadURL  string `binding:"Required;ValidUrl"`
-	ContentType int    `binding:"Required"`
-	Secret      string
-	WebhookForm
-}
-
-// Validate validates the fields
-func (f *NewGogshookForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
-	ctx := context.GetValidateContext(req)
-	return middleware.Validate(errs, ctx.Data, f, ctx.Locale)
-}
-
 // .___
 // |   | ______ ________ __   ____
 // |   |/  ___//  ___/  |  \_/ __ \
