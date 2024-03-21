@@ -39,8 +39,8 @@ const (
 	tplAdminHookNew base.TplName = "admin/hook_new"
 )
 
-// Webhooks render web hooks list page
-func Webhooks(ctx *context.Context) {
+// WebhookList render web hooks list page
+func WebhookList(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("repo.settings.hooks")
 	ctx.Data["PageIsSettingsHooks"] = true
 	ctx.Data["BaseLink"] = ctx.Repo.RepoLink + "/settings/hooks"
@@ -109,8 +109,8 @@ func getOwnerRepoCtx(ctx *context.Context) (*ownerRepoCtx, error) {
 	return nil, errors.New("unable to set OwnerRepo context")
 }
 
-// WebhooksNew render creating webhook page
-func WebhooksNew(ctx *context.Context) {
+// WebhookNew render creating webhook page
+func WebhookNew(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("repo.settings.add_webhook")
 	ctx.Data["Webhook"] = webhook.Webhook{HookEvent: &webhook_module.HookEvent{}}
 
@@ -367,8 +367,8 @@ func checkWebhook(ctx *context.Context) (*ownerRepoCtx, *webhook.Webhook) {
 	return orCtx, w
 }
 
-// WebHooksEdit render editing web hook page
-func WebHooksEdit(ctx *context.Context) {
+// WebhookEdit render editing web hook page
+func WebhookEdit(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("repo.settings.update_webhook")
 	ctx.Data["PageIsSettingsHooks"] = true
 	ctx.Data["PageIsSettingsHooksEdit"] = true
@@ -382,8 +382,8 @@ func WebHooksEdit(ctx *context.Context) {
 	ctx.HTML(http.StatusOK, orCtx.NewTemplate)
 }
 
-// TestWebhook test if web hook is work fine
-func TestWebhook(ctx *context.Context) {
+// WebhookTest test if web hook is work fine
+func WebhookTest(ctx *context.Context) {
 	hookID := ctx.ParamsInt64(":id")
 	w, err := webhook.GetWebhookByRepoID(ctx, ctx.Repo.Repository.ID, hookID)
 	if err != nil {
@@ -443,8 +443,8 @@ func TestWebhook(ctx *context.Context) {
 	}
 }
 
-// ReplayWebhook replays a webhook
-func ReplayWebhook(ctx *context.Context) {
+// WebhookReplay replays a webhook
+func WebhookReplay(ctx *context.Context) {
 	hookTaskUUID := ctx.Params(":uuid")
 
 	orCtx, w := checkWebhook(ctx)
@@ -465,8 +465,8 @@ func ReplayWebhook(ctx *context.Context) {
 	ctx.Redirect(fmt.Sprintf("%s/%d", orCtx.Link, w.ID))
 }
 
-// DeleteWebhook delete a webhook
-func DeleteWebhook(ctx *context.Context) {
+// WebhookDelete delete a webhook
+func WebhookDelete(ctx *context.Context) {
 	if err := webhook.DeleteWebhookByRepoID(ctx, ctx.Repo.Repository.ID, ctx.FormInt64("id")); err != nil {
 		ctx.Flash.Error("DeleteWebhookByRepoID: " + err.Error())
 	} else {
