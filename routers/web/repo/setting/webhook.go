@@ -388,27 +388,6 @@ func gogsHookParams(ctx *context.Context) webhookParams {
 	}
 }
 
-// MSTeamsHooksNewPost response for creating MSTeams webhook
-func MSTeamsHooksNewPost(ctx *context.Context) {
-	createWebhook(ctx, mSTeamsHookParams(ctx))
-}
-
-// MSTeamsHooksEditPost response for editing MSTeams webhook
-func MSTeamsHooksEditPost(ctx *context.Context) {
-	editWebhook(ctx, mSTeamsHookParams(ctx))
-}
-
-func mSTeamsHookParams(ctx *context.Context) webhookParams {
-	form := web.GetForm(ctx).(*forms.NewMSTeamsHookForm)
-
-	return webhookParams{
-		Type:        webhook_module.MSTEAMS,
-		URL:         form.PayloadURL,
-		ContentType: webhook.ContentTypeJSON,
-		WebhookForm: form.WebhookForm,
-	}
-}
-
 // FeishuHooksNewPost response for creating Feishu webhook
 func FeishuHooksNewPost(ctx *context.Context) {
 	createWebhook(ctx, feishuHookParams(ctx))
