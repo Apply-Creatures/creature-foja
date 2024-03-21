@@ -388,32 +388,6 @@ func gogsHookParams(ctx *context.Context) webhookParams {
 	}
 }
 
-// TelegramHooksNewPost response for creating Telegram webhook
-func TelegramHooksNewPost(ctx *context.Context) {
-	createWebhook(ctx, telegramHookParams(ctx))
-}
-
-// TelegramHooksEditPost response for editing Telegram webhook
-func TelegramHooksEditPost(ctx *context.Context) {
-	editWebhook(ctx, telegramHookParams(ctx))
-}
-
-func telegramHookParams(ctx *context.Context) webhookParams {
-	form := web.GetForm(ctx).(*forms.NewTelegramHookForm)
-
-	return webhookParams{
-		Type:        webhook_module.TELEGRAM,
-		URL:         fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage?chat_id=%s&message_thread_id=%s", url.PathEscape(form.BotToken), url.QueryEscape(form.ChatID), url.QueryEscape(form.ThreadID)),
-		ContentType: webhook.ContentTypeJSON,
-		WebhookForm: form.WebhookForm,
-		Meta: &webhook_service.TelegramMeta{
-			BotToken: form.BotToken,
-			ChatID:   form.ChatID,
-			ThreadID: form.ThreadID,
-		},
-	}
-}
-
 // MSTeamsHooksNewPost response for creating MSTeams webhook
 func MSTeamsHooksNewPost(ctx *context.Context) {
 	createWebhook(ctx, mSTeamsHookParams(ctx))
