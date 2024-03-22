@@ -6,6 +6,7 @@ package webhook
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"net/http"
 	"net/url"
 	"strings"
@@ -22,6 +23,8 @@ type dingtalkHandler struct{}
 
 func (dingtalkHandler) Type() webhook_module.HookType       { return webhook_module.DINGTALK }
 func (dingtalkHandler) Metadata(*webhook_model.Webhook) any { return nil }
+func (dingtalkHandler) Icon(size int) template.HTML         { return imgIcon("dingtalk.ico", size) }
+
 func (dingtalkHandler) FormFields(bind func(any)) FormFields {
 	var form struct {
 		forms.WebhookForm

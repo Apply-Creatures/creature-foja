@@ -4,6 +4,7 @@
 package webhook
 
 import (
+	"html/template"
 	"net/http"
 
 	webhook_model "code.gitea.io/gitea/models/webhook"
@@ -14,6 +15,7 @@ import (
 type gogsHandler struct{ defaultHandler }
 
 func (gogsHandler) Type() webhook_module.HookType { return webhook_module.GOGS }
+func (gogsHandler) Icon(size int) template.HTML   { return imgIcon("gogs.ico", size) }
 
 func (gogsHandler) FormFields(bind func(any)) FormFields {
 	var form struct {

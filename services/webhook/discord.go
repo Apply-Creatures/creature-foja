@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"html/template"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -26,6 +27,7 @@ import (
 type discordHandler struct{}
 
 func (discordHandler) Type() webhook_module.HookType { return webhook_module.DISCORD }
+func (discordHandler) Icon(size int) template.HTML   { return imgIcon("discord.png", size) }
 
 func (discordHandler) FormFields(bind func(any)) FormFields {
 	var form struct {
