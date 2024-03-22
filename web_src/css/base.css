@@ -749,9 +749,16 @@ img.ui.avatar,
   padding-bottom: 80px;
 }
 
-.page-content.new:is(.repo,.migrate,.org),
-.page-content.profile:is(.user,.organization) {
-  padding-top: 15px;
+/* add margin below .secondary nav when it is the first child */
+.page-content > :first-child.secondary-nav {
+  margin-bottom: 14px;
+}
+
+/* add padding to all content when there is no .secondary.nav. this uses padding instead of
+   margin because with the negative margin on .ui.grid we would have to set margin-top: 0,
+   but that does not work universally for all pages */
+.page-content > :first-child:not(.secondary-nav) {
+  padding-top: 14px;
 }
 
 /* overwrite semantic width of containers inside the main page content div (div with class "page-content") */
@@ -1337,7 +1344,6 @@ strong.attention-caution, svg.attention-caution {
 }
 
 overflow-menu {
-  margin-bottom: 15px !important;
   border-bottom: 1px solid var(--color-secondary) !important;
   display: flex;
 }
@@ -1349,6 +1355,10 @@ overflow-menu .overflow-menu-items {
 
 overflow-menu .overflow-menu-items .item {
   margin-bottom: 0 !important; /* reset fomantic's margin, because the active menu has special bottom border */
+}
+
+overflow-menu .ui.label {
+  margin-left: 7px !important; /* save some space */
 }
 
 .activity-bar-graph {
