@@ -10,17 +10,33 @@
 	</div>
 </h4>
 <div class="ui attached segment">
-	{{template "repo/settings/webhook/forgejo" .ctxData}}
-	{{template "repo/settings/webhook/gitea" .ctxData}}
-	{{template "repo/settings/webhook/gogs" .ctxData}}
-	{{template "repo/settings/webhook/slack" .ctxData}}
-	{{template "repo/settings/webhook/discord" .ctxData}}
-	{{template "repo/settings/webhook/dingtalk" .ctxData}}
-	{{template "repo/settings/webhook/telegram" .ctxData}}
-	{{template "repo/settings/webhook/msteams" .ctxData}}
-	{{template "repo/settings/webhook/feishu" .ctxData}}
-	{{template "repo/settings/webhook/matrix" .ctxData}}
-	{{template "repo/settings/webhook/wechatwork" .ctxData}}
-	{{template "repo/settings/webhook/packagist" .ctxData}}
+	{{with .ctxData}}
+		<!-- the template argument cannot be dynamic  -->
+		{{if eq .HookType "forgejo"}}
+			{{template "webhook/new/forgejo" .}}
+		{{else if eq .HookType "gitea"}}
+			{{template "webhook/new/gitea" .}}
+		{{else if eq .HookType "gogs"}}
+			{{template "webhook/new/gogs" .}}
+		{{else if eq .HookType "slack"}}
+			{{template "webhook/new/slack" .}}
+		{{else if eq .HookType "discord"}}
+			{{template "webhook/new/discord" .}}
+		{{else if eq .HookType "dingtalk"}}
+			{{template "webhook/new/dingtalk" .}}
+		{{else if eq .HookType "telegram"}}
+			{{template "webhook/new/telegram" .}}
+		{{else if eq .HookType "msteams"}}
+			{{template "webhook/new/msteams" .}}
+		{{else if eq .HookType "feishu"}}
+			{{template "webhook/new/feishu" .}}
+		{{else if eq .HookType "matrix"}}
+			{{template "webhook/new/matrix" .}}
+		{{else if eq .HookType "wechatwork"}}
+			{{template "webhook/new/wechatwork" .}}
+		{{else if eq .HookType "packagist"}}
+			{{template "webhook/new/packagist" .}}
+		{{end}}
+	{{end}}
 </div>
 {{template "repo/settings/webhook/history" .ctxData}}
