@@ -4,6 +4,40 @@ A Forgejo release is published shortly after a Gitea release is published and th
 
 The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.21.1-0 or v1.21.2-0) does not require manual actions but others might (e.g. v1.20, v1.21).
 
+## 1.21.8-0
+
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.8-0` release can be reviewed from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo/
+$ git -C forgejo log --oneline --no-merges v1.21.7-0..v1.21.8-0
+```
+
+This stable release contains bug fixes.
+
+* Recommended Action
+
+  We recommend that all Forgejo installations are [upgraded](https://forgejo.org/docs/v1.21/admin/upgrade/) to the latest version.
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.21/user/semver/)
+
+  The semantic version was updated to `6.0.8+0-gitea-1.21.8`
+
+* Bug fixes
+
+  The most prominent ones are described here, others can be found in the list of commits included in the release as described above.
+
+  * [Fix `/api/v1/{owner}/{repo}/issue_templates`](https://codeberg.org/forgejo/forgejo/commit/969d3f44101402afd9dd848e79dd5823d547a00d) which was always failing with a 500 error.
+  * [Prevent error 500 on /user/settings/security when SignedUser has a linked account from a deactivated authentication source](https://codeberg.org/forgejo/forgejo/commit/d9418651af8c8a3276ebc40a516109c0f33139b0).
+  * [Fix error 500 when pushing release to an empty repo](https://codeberg.org/forgejo/forgejo/commit/b76f370a3f8993638cad91547491b46631776f59).
+  * [Fix incorrect rendering csv file when file size is larger than UI.CSV.MaxFileSize](https://codeberg.org/forgejo/forgejo/commit/e151e0467341bd25a2465ca15e81ebc0c8fa3fc4).
+  * [Fix error 500 when deleting account with incorrect password or unsupported login type](https://codeberg.org/forgejo/forgejo/commit/66061d28286ee3adf69747c284d40121e2e4b280).
+  * [handle user-defined `name` anchors like `[Link](#link)` linking to `<a name="link"></a>Link`](https://codeberg.org/forgejo/forgejo/commit/03caefbb02854d5c98a26d889e0e30c910651395).
+  * [Use correct head commit for CODEOWNER](https://codeberg.org/forgejo/forgejo/commit/d1cebb0e884a88941e27e2280e117cc04d2665fe).
+  * [Fix manual merge button](https://codeberg.org/forgejo/forgejo/commit/c70719c59c410e5378c04926c66461d7b9f72884).
+  * [Make meilisearch do exact search for issues](https://codeberg.org/forgejo/forgejo/commit/a876ac2c7934fa0f8a66424e178b501e4a341e0f).
+  * [Fix PR creation via api between branches of same repo with head field namespaced](https://codeberg.org/forgejo/forgejo/commit/120a173e24fd359b0b57f2bd1021168645fab5a8).
+
 ## 1.21.7-0
 
 The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.7-0` release can be reviewed from the command line with:
