@@ -222,7 +222,6 @@ package "code.gitea.io/gitea/modules/markup/markdown"
 	func IsSummary
 	func IsTaskCheckBoxListItem
 	func IsIcon
-	func IsColorPreview
 	func RenderRawString
 
 package "code.gitea.io/gitea/modules/markup/markdown/math"
