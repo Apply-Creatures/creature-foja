@@ -1230,8 +1230,12 @@ input:-webkit-autofill:active,
   color: var(--color-text) !important;
 }
 
+.attention-header :first-child {
+  display: flex;
+}
+
 .attention-icon {
-  margin: 2px 6px 0 0;
+  margin: auto 0.5em auto 0;
 }
 
 blockquote.attention-note {
