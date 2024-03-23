@@ -174,10 +174,3 @@ func NewColorPreview(color []byte) *ColorPreview {
 		Color:      color,
 	}
 }
-
-// IsColorPreview returns true if the given node implements the ColorPreview interface,
-// otherwise false.
-func IsColorPreview(node ast.Node) bool {
-	_, ok := node.(*ColorPreview)
-	return ok
-}
