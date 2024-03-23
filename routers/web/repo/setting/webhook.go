@@ -219,6 +219,22 @@ func WebhookCreate(ctx *context.Context) {
 	ctx.Data["BaseLinkNew"] = orCtx.LinkNew
 
 	if ctx.HasError() {
+		// pre-fill the form with the submitted data
+		var w webhook.Webhook
+		w.URL = fields.URL
+		w.ContentType = fields.ContentType
+		w.Secret = fields.Secret
+		w.HookEvent = ParseHookEvent(fields.WebhookForm)
+		w.IsActive = fields.WebhookForm.Active
+		w.HTTPMethod = fields.HTTPMethod
+		err := w.SetHeaderAuthorization(fields.WebhookForm.AuthorizationHeader)
+		if err != nil {
+			ctx.ServerError("SetHeaderAuthorization", err)
+			return
+		}
+		ctx.Data["Webhook"] = w
+		ctx.Data["HookMetadata"] = fields.Metadata
+
 		ctx.HTML(http.StatusUnprocessableEntity, orCtx.NewTemplate)
 		return
 	}
@@ -284,13 +300,27 @@ func WebhookUpdate(ctx *context.Context) {
 		middleware.Validate(errs, ctx.Data, form, ctx.Locale) // error checked below in ctx.HasError
 	})
 
+	// pre-fill the form with the submitted data
+	w.URL = fields.URL
+	w.ContentType = fields.ContentType
+	w.Secret = fields.Secret
+	w.HookEvent = ParseHookEvent(fields.WebhookForm)
+	w.IsActive = fields.WebhookForm.Active
+	w.HTTPMethod = fields.HTTPMethod
+
+	err := w.SetHeaderAuthorization(fields.WebhookForm.AuthorizationHeader)
+	if err != nil {
+		ctx.ServerError("SetHeaderAuthorization", err)
+		return
+	}
+
 	if ctx.HasError() {
+		ctx.Data["HookMetadata"] = fields.Metadata
 		ctx.HTML(http.StatusUnprocessableEntity, orCtx.NewTemplate)
 		return
 	}
 
 	var meta []byte
-	var err error
 	if fields.Metadata != nil {
 		meta, err = json.Marshal(fields.Metadata)
 		if err != nil {
@@ -299,19 +329,7 @@ func WebhookUpdate(ctx *context.Context) {
 		}
 	}
 
-	w.URL = fields.URL
-	w.ContentType = fields.ContentType
-	w.Secret = fields.Secret
-	w.HookEvent = ParseHookEvent(fields.WebhookForm)
-	w.IsActive = fields.WebhookForm.Active
-	w.HTTPMethod = fields.HTTPMethod
 	w.Meta = string(meta)
-
-	err = w.SetHeaderAuthorization(fields.WebhookForm.AuthorizationHeader)
-	if err != nil {
-		ctx.ServerError("SetHeaderAuthorization", err)
-		return
-	}
 
 	if err := w.UpdateEvent(); err != nil {
 		ctx.ServerError("UpdateEvent", err)
