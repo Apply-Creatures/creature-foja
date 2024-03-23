@@ -25,9 +25,9 @@ func TestRenderAlertBlocks(t *testing.T) {
 	assertAlertBlock := func(t *testing.T, input, alertType, alertIcon string) {
 		t.Helper()
 
-		blockquoteAttr := fmt.Sprintf(`<blockquote class="gt-py-3 attention attention-%s"`, strings.ToLower(alertType))
+		blockquoteAttr := fmt.Sprintf(`<blockquote class="attention-header attention-%s"`, strings.ToLower(alertType))
 		classAttr := fmt.Sprintf(`class="attention-%s"`, strings.ToLower(alertType))
-		iconAttr := fmt.Sprintf(`class="svg octicon-%s"`, alertIcon)
+		iconAttr := fmt.Sprintf(`svg octicon-%s`, alertIcon)
 
 		req := NewRequestWithJSON(t, "POST", "/api/v1/markdown", &api.MarkdownOption{
 			Text: input,
