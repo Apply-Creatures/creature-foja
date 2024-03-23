@@ -49,7 +49,7 @@ func (g *GitHubLegacyCalloutTransformer) Transform(node *ast.Document, reader te
 			calloutNode.SetAttributeString("class", []byte("attention-"+calloutType))
 
 			// color the blockquote
-			v.SetAttributeString("class", []byte("gt-py-3 attention attention-"+calloutType))
+			v.SetAttributeString("class", []byte("attention-header attention-"+calloutType))
 
 			// Prepend callout icon before the callout node itself
 			firstParagraph.InsertBefore(firstParagraph, calloutNode, NewAttention(calloutType))
