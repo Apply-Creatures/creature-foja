@@ -1,0 +1,81 @@
+# Copyright 2024 The Forgejo Authors
+# SPDX-License-Identifier: MIT
+#
+# To modify this workflow:
+#
+#  - change pull_request_target: to  pull_request:
+#    so that it runs from a pull request instead of the default branch
+#
+#  - push it to the wip-ci-backport branch on the forgejo repository
+#    otherwise it will not have access to the secrets required to push
+#    the PR
+#
+#  - open a pull request targetting wip-ci-backport that includes a change
+#    that can be backported without conflict in v1.21 and set the
+#    `backport/v1.21` label.
+#
+#  - once it works, open a pull request for the sake of keeping track
+#    of the change even if the PR won't run it because it will use
+#    whatever is in the default branch instead
+#
+#  - after it is merged, double check it works by setting a
+#    `backport/v1.21` label on a merged pull request that can be backported
+#    without conflict.
+#
+on:
+  pull_request_target:
+    types:
+      - closed
+      - labeled
+
+jobs:
+  backporting:
+    if: >
+      !startsWith(vars.ROLE, 'forgejo-') && (
+        github.event.pull_request.merged
+        && (
+          github.event.action == 'closed'
+          || (
+            github.event.action == 'labeled'
+            && contains(github.event.label.name, 'backport/')
+          )
+        )
+      )
+    runs-on: docker
+    container:
+      image: 'docker.io/node:20-bookworm'
+    steps:
+      - name: Fetch labels
+        id: fetch-labels
+        shell: bash
+        run: |
+          set -x
+          echo "Labels retrieved below"
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update -qq
+          apt-get -q install -qq -y jq
+          filtered_labels=$(echo "$LABELS" | jq -c 'map(select(.name | startswith("backport/")))')
+          echo "FILTERED_LABELS=${filtered_labels}" >> $GITHUB_ENV
+        env:
+          LABELS: ${{ toJSON(github.event.pull_request.labels) }}
+      - name: Extract targets
+        id: extract-targets
+        shell: bash
+        run: |
+          set -x
+          targets="$(echo $FILTERED_LABELS | jq -c '[.[] | .name | sub("backport/"; "")]')"
+          echo "targets=$(echo $targets)" >> $GITHUB_OUTPUT
+
+      - name: Printing info
+        shell: bash
+        run: |
+          echo "targets: ${{ steps.extract-targets.outputs.targets }}"
+          echo "target-branch: ${{ fromJSON(steps.extract-targets.outputs.targets)[0] }}"
+          echo "pull-request: ${{ github.event.pull_request.url }}"
+
+      - uses: https://code.forgejo.org/actions/git-backporting@v4.5.2
+        with:
+          target-branch: ${{ fromJSON(steps.extract-targets.outputs.targets)[0] }}/forgejo
+          no-squash: true
+          auth: ${{ secrets.BACKPORT_TOKEN }}
+          pull-request: ${{ github.event.pull_request.url }}
