@@ -934,3 +934,64 @@ func TestRepoFollowSymlink(t *testing.T) {
 		assertCase(t, "/user2/readme-test/src/branch/master/README.md", "", false)
 	})
 }
+
+func TestViewRepoOpenWith(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	getOpenWith := func() []string {
+		req := NewRequest(t, "GET", "/user2/repo1")
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		htmlDoc := NewHTMLParser(t, resp.Body)
+		openWithHTML := htmlDoc.doc.Find(".js-clone-url-editor")
+
+		var methods []string
+		openWithHTML.Each(func(i int, s *goquery.Selection) {
+			a, _ := s.Attr("data-href-template")
+			methods = append(methods, a)
+		})
+
+		return methods
+	}
+
+	testOpenWith := func(expected []string) {
+		methods := getOpenWith()
+
+		assert.Len(t, methods, len(expected))
+		for i, expectedMethod := range expected {
+			assert.True(t, strings.HasPrefix(methods[i], expectedMethod))
+		}
+	}
+
+	t.Run("Defaults", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		testOpenWith([]string{"vscode://", "vscodium://", "jetbrains://"})
+	})
+
+	t.Run("Customised", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// Change the methods via the admin settings
+		user := unittest.AssertExistsAndLoadBean(t, &user_model.User{IsAdmin: true})
+		session := loginUser(t, user.Name)
+
+		setEditorApps := func(t *testing.T, apps string) {
+			t.Helper()
+
+			req := NewRequestWithValues(t, "POST", "/admin/config?key=repository.open-with.editor-apps", map[string]string{
+				"value": apps,
+				"_csrf": GetCSRF(t, session, "/admin/config/settings"),
+			})
+			session.MakeRequest(t, req, http.StatusOK)
+		}
+
+		defer func() {
+			setEditorApps(t, "")
+		}()
+
+		setEditorApps(t, "test = test://?url={url}")
+
+		testOpenWith([]string{"test://"})
+	})
+}
