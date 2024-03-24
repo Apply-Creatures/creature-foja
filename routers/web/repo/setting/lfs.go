@@ -145,29 +145,12 @@ func LFSLocks(ctx *context.Context) {
 		return
 	}
 
-	name2attribute2info, err := gitRepo.CheckAttribute(git.CheckAttributeOpts{
-		Attributes: []string{"lockable"},
-		Filenames:  filenames,
-		CachedOnly: true,
-	})
+	ctx.Data["Lockables"], err = lockablesGitAttributes(gitRepo, lfsLocks)
 	if err != nil {
-		log.Error("Unable to check attributes in %s (%v)", tmpBasePath, err)
+		log.Error("Unable to get lockablesGitAttributes in %s (%v)", tmpBasePath, err)
 		ctx.ServerError("LFSLocks", err)
 		return
 	}
-
-	lockables := make([]bool, len(lfsLocks))
-	for i, lock := range lfsLocks {
-		attribute2info, has := name2attribute2info[lock.Path]
-		if !has {
-			continue
-		}
-		if attribute2info["lockable"] != "set" {
-			continue
-		}
-		lockables[i] = true
-	}
-	ctx.Data["Lockables"] = lockables
 
 	filelist, err := gitRepo.LsFiles(filenames...)
 	if err != nil {
@@ -187,6 +170,24 @@ func LFSLocks(ctx *context.Context) {
 
 	ctx.Data["Page"] = pager
 	ctx.HTML(http.StatusOK, tplSettingsLFSLocks)
+}
+
+func lockablesGitAttributes(gitRepo *git.Repository, lfsLocks []*git_model.LFSLock) ([]bool, error) {
+	checker, err := gitRepo.GitAttributeChecker("", "lockable")
+	if err != nil {
+		return nil, fmt.Errorf("could not GitAttributeChecker: %w", err)
+	}
+	defer checker.Close()
+
+	lockables := make([]bool, len(lfsLocks))
+	for i, lock := range lfsLocks {
+		attrs, err := checker.CheckPath(lock.Path)
+		if err != nil {
+			return nil, fmt.Errorf("could not CheckPath(%s): %w", lock.Path, err)
+		}
+		lockables[i] = attrs["lockable"].Bool().Value()
+	}
+	return lockables, nil
 }
 
 // LFSLockFile locks a file

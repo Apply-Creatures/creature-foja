@@ -33,9 +33,10 @@ var (
 	// DefaultContext is the default context to run git commands in, must be initialized by git.InitXxx
 	DefaultContext context.Context
 
-	SupportProcReceive  bool // >= 2.29
-	SupportHashSha256   bool // >= 2.42, SHA-256 repositories no longer an ‘experimental curiosity’
-	InvertedGitFlushEnv bool // 2.43.1
+	SupportProcReceive     bool // >= 2.29
+	SupportHashSha256      bool // >= 2.42, SHA-256 repositories no longer an ‘experimental curiosity’
+	InvertedGitFlushEnv    bool // 2.43.1
+	SupportCheckAttrOnBare bool // >= 2.40
 
 	gitVersion *version.Version
 )
@@ -187,6 +188,7 @@ func InitFull(ctx context.Context) (err error) {
 	}
 	SupportProcReceive = CheckGitVersionAtLeast("2.29") == nil
 	SupportHashSha256 = CheckGitVersionAtLeast("2.42") == nil && !isGogit
+	SupportCheckAttrOnBare = CheckGitVersionAtLeast("2.40") == nil
 	if SupportHashSha256 {
 		SupportedObjectFormats = append(SupportedObjectFormats, Sha256ObjectFormat)
 	} else {

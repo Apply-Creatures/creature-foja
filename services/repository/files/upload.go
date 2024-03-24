@@ -105,23 +105,9 @@ func UploadRepoFiles(ctx context.Context, repo *repo_model.Repository, doer *use
 		}
 	}
 
-	var filename2attribute2info map[string]map[string]string
-	if setting.LFS.StartServer {
-		filename2attribute2info, err = t.gitRepo.CheckAttribute(git.CheckAttributeOpts{
-			Attributes: []string{"filter"},
-			Filenames:  names,
-			CachedOnly: true,
-		})
-		if err != nil {
-			return err
-		}
-	}
-
 	// Copy uploaded files into repository.
-	for i := range infos {
-		if err := copyUploadedLFSFileIntoRepository(&infos[i], filename2attribute2info, t, opts.TreePath); err != nil {
-			return err
-		}
+	if err := copyUploadedLFSFilesIntoRepository(infos, t, opts.TreePath); err != nil {
+		return err
 	}
 
 	// Now write the tree
@@ -169,7 +155,44 @@ func UploadRepoFiles(ctx context.Context, repo *repo_model.Repository, doer *use
 	return repo_model.DeleteUploads(ctx, uploads...)
 }
 
-func copyUploadedLFSFileIntoRepository(info *uploadInfo, filename2attribute2info map[string]map[string]string, t *TemporaryUploadRepository, treePath string) error {
+func copyUploadedLFSFilesIntoRepository(infos []uploadInfo, t *TemporaryUploadRepository, treePath string) error {
+	var storeInLFSFunc func(string) (bool, error)
+
+	if setting.LFS.StartServer {
+		checker, err := t.gitRepo.GitAttributeChecker("", "filter")
+		if err != nil {
+			return err
+		}
+		defer checker.Close()
+
+		storeInLFSFunc = func(name string) (bool, error) {
+			attrs, err := checker.CheckPath(name)
+			if err != nil {
+				return false, fmt.Errorf("could not CheckPath(%s): %w", name, err)
+			}
+			return attrs["filter"] == "lfs", nil
+		}
+	}
+
+	// Copy uploaded files into repository.
+	for i, info := range infos {
+		storeInLFS := false
+		if storeInLFSFunc != nil {
+			var err error
+			storeInLFS, err = storeInLFSFunc(info.upload.Name)
+			if err != nil {
+				return err
+			}
+		}
+
+		if err := copyUploadedLFSFileIntoRepository(&infos[i], storeInLFS, t, treePath); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func copyUploadedLFSFileIntoRepository(info *uploadInfo, storeInLFS bool, t *TemporaryUploadRepository, treePath string) error {
 	file, err := os.Open(info.upload.LocalPath())
 	if err != nil {
 		return err
@@ -177,7 +200,7 @@ func copyUploadedLFSFileIntoRepository(info *uploadInfo, filename2attribute2info
 	defer file.Close()
 
 	var objectHash string
-	if setting.LFS.StartServer && filename2attribute2info[info.upload.Name] != nil && filename2attribute2info[info.upload.Name]["filter"] == "lfs" {
+	if storeInLFS {
 		// Handle LFS
 		// FIXME: Inefficient! this should probably happen in models.Upload
 		pointer, err := lfs.GeneratePointer(file)

@@ -8,8 +8,8 @@ package git
 
 import (
 	"bytes"
+	"cmp"
 	"io"
-	"strings"
 
 	"code.gitea.io/gitea/modules/analyze"
 	"code.gitea.io/gitea/modules/log"
@@ -61,8 +61,11 @@ func (repo *Repository) GetLanguageStats(commitID string) (map[string]int64, err
 		return nil, err
 	}
 
-	checker, deferable := repo.CheckAttributeReader(commitID)
-	defer deferable()
+	checker, err := repo.GitAttributeChecker(commitID, LinguistAttributes...)
+	if err != nil {
+		return nil, err
+	}
+	defer checker.Close()
 
 	contentBuf := bytes.Buffer{}
 	var content []byte
@@ -102,41 +105,25 @@ func (repo *Repository) GetLanguageStats(commitID string) (map[string]int64, err
 		isDocumentation := optional.None[bool]()
 		isDetectable := optional.None[bool]()
 
-		if checker != nil {
-			attrs, err := checker.CheckPath(f.Name())
-			if err == nil {
-				isVendored = attributeToBool(attrs, "linguist-vendored")
-				isGenerated = attributeToBool(attrs, "linguist-generated")
-				isDocumentation = attributeToBool(attrs, "linguist-documentation")
-				isDetectable = attributeToBool(attrs, "linguist-detectable")
-				if language, has := attrs["linguist-language"]; has && language != "unspecified" && language != "" {
-					// group languages, such as Pug -> HTML; SCSS -> CSS
-					group := enry.GetLanguageGroup(language)
-					if len(group) != 0 {
-						language = group
-					}
-
-					// this language will always be added to the size
-					sizes[language] += f.Size()
-					continue
-				} else if language, has := attrs["gitlab-language"]; has && language != "unspecified" && language != "" {
-					// strip off a ? if present
-					if idx := strings.IndexByte(language, '?'); idx >= 0 {
-						language = language[:idx]
-					}
-					if len(language) != 0 {
-						// group languages, such as Pug -> HTML; SCSS -> CSS
-						group := enry.GetLanguageGroup(language)
-						if len(group) != 0 {
-							language = group
-						}
-
-						// this language will always be added to the size
-						sizes[language] += f.Size()
-						continue
-					}
+		attrs, err := checker.CheckPath(f.Name())
+		if err == nil {
+			isVendored = attrs["linguist-vendored"].Bool()
+			isGenerated = attrs["linguist-generated"].Bool()
+			isDocumentation = attrs["linguist-documentation"].Bool()
+			isDetectable = attrs["linguist-detectable"].Bool()
+			if language := cmp.Or(
+				attrs["linguist-language"].String(),
+				attrs["gitlab-language"].Prefix(),
+			); language != "" {
+				// group languages, such as Pug -> HTML; SCSS -> CSS
+				group := enry.GetLanguageGroup(language)
+				if len(group) != 0 {
+					language = group
 				}
 
+				// this language will always be added to the size
+				sizes[language] += f.Size()
+				continue
 			}
 		}
 
