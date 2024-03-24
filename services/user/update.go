@@ -37,6 +37,7 @@ type UpdateOptions struct {
 	EmailNotificationsPreference optional.Option[string]
 	SetLastLogin                 bool
 	RepoAdminChangeTeamAccess    optional.Option[bool]
+	EnableRepoUnitHints          optional.Option[bool]
 }
 
 func UpdateUser(ctx context.Context, u *user_model.User, opts *UpdateOptions) error {
@@ -82,6 +83,11 @@ func UpdateUser(ctx context.Context, u *user_model.User, opts *UpdateOptions) er
 		u.DiffViewStyle = opts.DiffViewStyle.Value()
 
 		cols = append(cols, "diff_view_style")
+	}
+	if opts.EnableRepoUnitHints.Has() {
+		u.EnableRepoUnitHints = opts.EnableRepoUnitHints.Value()
+
+		cols = append(cols, "enable_repo_unit_hints")
 	}
 
 	if opts.AllowGitHook.Has() {

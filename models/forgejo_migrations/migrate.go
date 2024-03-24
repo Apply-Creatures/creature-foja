@@ -50,6 +50,8 @@ var migrations = []*Migration{
 	NewMigration("create the forgejo_repo_flag table", forgejo_v1_22.CreateRepoFlagTable),
 	// v5 -> v6
 	NewMigration("Add wiki_branch to repository", forgejo_v1_22.AddWikiBranchToRepository),
+	// v6 -> v7
+	NewMigration("Add enable_repo_unit_hints to the user table", forgejo_v1_22.AddUserRepoUnitHintsSetting),
 }
 
 // GetCurrentDBVersion returns the current Forgejo database version.

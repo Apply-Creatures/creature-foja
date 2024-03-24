@@ -4,12 +4,14 @@
 package integration
 
 import (
+	"fmt"
 	"net/http"
 	"testing"
 
 	auth_model "code.gitea.io/gitea/models/auth"
 	issues_model "code.gitea.io/gitea/models/issues"
 	repo_model "code.gitea.io/gitea/models/repo"
+	unit_model "code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/setting"
@@ -305,4 +307,124 @@ func TestUserLocationMapLink(t *testing.T) {
 	resp := session.MakeRequest(t, req, http.StatusOK)
 	htmlDoc := NewHTMLParser(t, resp.Body)
 	htmlDoc.AssertElement(t, `a[href="https://example/foo/A%2Fb"]`, true)
+}
+
+func TestUserHints(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: "user2"})
+	session := loginUser(t, user.Name)
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteUser)
+
+	// Create a known-good repo, with only one unit enabled
+	repo, _, f := CreateDeclarativeRepo(t, user, "", []unit_model.Type{
+		unit_model.TypeCode,
+	}, []unit_model.Type{
+		unit_model.TypePullRequests,
+		unit_model.TypeProjects,
+		unit_model.TypePackages,
+		unit_model.TypeActions,
+		unit_model.TypeIssues,
+		unit_model.TypeWiki,
+	}, nil)
+	defer f()
+
+	ensureRepoUnitHints := func(t *testing.T, hints bool) {
+		t.Helper()
+
+		req := NewRequestWithJSON(t, "PATCH", "/api/v1/user/settings", &api.UserSettingsOptions{
+			EnableRepoUnitHints: &hints,
+		}).AddTokenAuth(token)
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		var userSettings api.UserSettings
+		DecodeJSON(t, resp, &userSettings)
+		assert.Equal(t, hints, userSettings.EnableRepoUnitHints)
+	}
+
+	t.Run("API", func(t *testing.T) {
+		t.Run("setting hints on and off", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			ensureRepoUnitHints(t, true)
+			ensureRepoUnitHints(t, false)
+		})
+
+		t.Run("retrieving settings", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			for _, v := range []bool{true, false} {
+				ensureRepoUnitHints(t, v)
+
+				req := NewRequest(t, "GET", "/api/v1/user/settings").AddTokenAuth(token)
+				resp := MakeRequest(t, req, http.StatusOK)
+
+				var userSettings api.UserSettings
+				DecodeJSON(t, resp, &userSettings)
+				assert.Equal(t, v, userSettings.EnableRepoUnitHints)
+			}
+		})
+	})
+
+	t.Run("user settings", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// Set a known-good state, that isn't the default
+		ensureRepoUnitHints(t, false)
+
+		assertHintState := func(t *testing.T, enabled bool) {
+			t.Helper()
+
+			req := NewRequest(t, "GET", "/user/settings/appearance")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+
+			_, hintChecked := htmlDoc.Find(`input[name="enable_repo_unit_hints"]`).Attr("checked")
+			assert.Equal(t, enabled, hintChecked)
+		}
+
+		t.Run("view", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			assertHintState(t, false)
+		})
+
+		t.Run("change", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequestWithValues(t, "POST", "/user/settings/appearance/hints", map[string]string{
+				"_csrf":                  GetCSRF(t, session, "/user/settings/appearance"),
+				"enable_repo_unit_hints": "true",
+			})
+			session.MakeRequest(t, req, http.StatusSeeOther)
+
+			assertHintState(t, true)
+		})
+	})
+
+	t.Run("repo view", func(t *testing.T) {
+		assertAddMore := func(t *testing.T, present bool) {
+			t.Helper()
+
+			req := NewRequest(t, "GET", repo.Link())
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+
+			htmlDoc.AssertElement(t, fmt.Sprintf("a[href='%s/settings/units']", repo.Link()), present)
+		}
+
+		t.Run("hints enabled", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			ensureRepoUnitHints(t, true)
+			assertAddMore(t, true)
+		})
+
+		t.Run("hints disabled", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			ensureRepoUnitHints(t, false)
+			assertAddMore(t, false)
+		})
+	})
 }

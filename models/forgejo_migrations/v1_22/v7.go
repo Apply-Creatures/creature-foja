@@ -1,0 +1,17 @@
+// Copyright 2024 The Forgejo Authors. All rights reserved.
+// SPDX-License-Identifier: MIT
+
+package v1_22 //nolint
+
+import (
+	"xorm.io/xorm"
+)
+
+func AddUserRepoUnitHintsSetting(x *xorm.Engine) error {
+	type User struct {
+		ID                  int64
+		EnableRepoUnitHints bool `xorm:"NOT NULL DEFAULT true"`
+	}
+
+	return x.Sync(&User{})
+}

@@ -393,6 +393,25 @@ func UpdateUserLang(ctx *context.Context) {
 	ctx.Redirect(setting.AppSubURL + "/user/settings/appearance")
 }
 
+// UpdateUserHints updates a user's hints settings
+func UpdateUserHints(ctx *context.Context) {
+	form := web.GetForm(ctx).(*forms.UpdateHintsForm)
+	ctx.Data["Title"] = ctx.Tr("settings")
+	ctx.Data["PageIsSettingsAppearance"] = true
+
+	opts := &user_service.UpdateOptions{
+		EnableRepoUnitHints: optional.Some(form.EnableRepoUnitHints),
+	}
+	if err := user_service.UpdateUser(ctx, ctx.Doer, opts); err != nil {
+		ctx.ServerError("UpdateUser", err)
+		return
+	}
+
+	log.Trace("User settings updated: %s", ctx.Doer.Name)
+	ctx.Flash.Success(translation.NewLocale(ctx.Doer.Language).TrString("settings.update_hints_success"))
+	ctx.Redirect(setting.AppSubURL + "/user/settings/appearance")
+}
+
 // UpdateUserHiddenComments update a user's shown comment types
 func UpdateUserHiddenComments(ctx *context.Context) {
 	err := user_model.SetUserSetting(ctx, ctx.Doer.ID, user_model.SettingsKeyHiddenCommentTypes, forms.UserHiddenCommentTypesFromRequest(ctx).String())
