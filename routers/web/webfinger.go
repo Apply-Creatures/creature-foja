@@ -64,6 +64,19 @@ func WebfingerQuery(ctx *context.Context) {
 		if u != nil && u.KeepEmailPrivate {
 			err = user_model.ErrUserNotExist{}
 		}
+	case "https", "http":
+		if resource.Host != appURL.Host {
+			ctx.Error(http.StatusBadRequest)
+			return
+		}
+
+		parts := strings.Split(resource.Path, "/")
+		if len(parts) < 2 { // fragment[0] is empty space, fragment[1] may be username
+			ctx.Error(http.StatusBadRequest)
+			return
+		}
+
+		u, err = user_model.GetUserByName(ctx, parts[1])
 	default:
 		ctx.Error(http.StatusBadRequest)
 		return
