@@ -344,8 +344,8 @@ export default sfc; // activate the IDE's Vue plugin
       <a :class="{item: true, active: tab === 'organizations'}" @click="changeTab('organizations')">{{ textMyOrgs }} <span class="ui grey label gt-ml-3">{{ organizationsTotalCount }}</span></a>
     </div>
     <div v-show="tab === 'repos'" class="ui tab active list dashboard-repos">
-      <h4 v-if="isOrganization" class="ui top attached gt-mt-4 gt-df gt-ac">
-        <div class="gt-f1 gt-df gt-ac">
+      <h4 v-if="isOrganization" class="ui top attached gt-mt-4 tw-flex tw-content-center">
+        <div class="tw-flex-1 tw-flex tw-content-center">
           {{ textMyRepos }}
           <span class="ui grey label gt-ml-3">{{ reposTotalCount }}</span>
         </div>
@@ -407,7 +407,7 @@ export default sfc; // activate the IDE's Vue plugin
       </div>
       <div v-if="repos.length" class="ui attached table segment tw-rounded-b">
         <ul class="repo-owner-name-list">
-          <li class="gt-df gt-ac gt-py-3" v-for="repo, index in repos" :class="{'active': index === activeIndex}" :key="repo.id">
+          <li class="tw-flex tw-content-center gt-py-3" v-for="repo, index in repos" :class="{'active': index === activeIndex}" :key="repo.id">
             <a class="repo-list-link muted" :href="repo.link">
               <svg-icon :name="repoIcon(repo)" :size="16" class-name="repo-list-icon"/>
               <div class="text truncate">{{ repo.full_name }}</div>
@@ -415,7 +415,7 @@ export default sfc; // activate the IDE's Vue plugin
                 <svg-icon name="octicon-archive" :size="16"/>
               </div>
             </a>
-            <a class="gt-df gt-ac" v-if="repo.latest_commit_status" :href="repo.latest_commit_status.TargetLink" :data-tooltip-content="repo.locale_latest_commit_status.State">
+            <a class="tw-flex tw-content-center" v-if="repo.latest_commit_status" :href="repo.latest_commit_status.TargetLink" :data-tooltip-content="repo.locale_latest_commit_status.State">
               <!-- the commit status icon logic is taken from templates/repo/commit_status.tmpl -->
               <svg-icon :name="statusIcon(repo.latest_commit_status.State)" :class-name="'gt-ml-3 commit-status icon text ' + statusColor(repo.latest_commit_status.State)" :size="16"/>
             </a>
@@ -456,7 +456,7 @@ export default sfc; // activate the IDE's Vue plugin
     <div v-if="!isOrganization" v-show="tab === 'organizations'" class="ui tab active list dashboard-orgs">
       <div v-if="organizations.length" class="ui attached table segment tw-rounded-b">
         <ul class="repo-owner-name-list">
-          <li class="gt-df gt-ac gt-py-3" v-for="org in organizations" :key="org.name">
+          <li class="tw-flex tw-content-center gt-py-3" v-for="org in organizations" :key="org.name">
             <a class="repo-list-link muted" :href="subUrl + '/' + encodeURIComponent(org.name)">
               <svg-icon name="octicon-organization" :size="16" class-name="repo-list-icon"/>
               <div class="text truncate">{{ org.name }}</div>
@@ -466,7 +466,7 @@ export default sfc; // activate the IDE's Vue plugin
                 </span>
               </div>
             </a>
-            <div class="text light grey gt-df gt-ac gt-ml-3">
+            <div class="text light grey tw-flex tw-content-center gt-ml-3">
               {{ org.num_repos }}
               <svg-icon name="octicon-repo" :size="16" class-name="gt-ml-2 gt-mt-1"/>
             </div>
