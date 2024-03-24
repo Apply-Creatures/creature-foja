@@ -11,6 +11,7 @@
 .ui.button:focus {
   background: var(--color-hover);
   color: var(--color-text);
+  border-color: var(--color-secondary-dark-2);
 }
 
 .page-content .ui.button {
@@ -63,11 +64,17 @@ It needs some tricks to tweak the left/right borders with active state */
   border-right: none;
 }
 
-.ui.buttons .button:first-child {
+.ui.buttons .button:hover + .button {
+  border-left: 1px solid var(--color-secondary-dark-2);
+}
+
+.ui.buttons .button:first-child,
+.ui.buttons .button.gt-hidden:first-child + .button {
   border-left: 1px solid var(--color-light-border);
 }
 
-.ui.buttons .button:last-child {
+.ui.buttons .button:last-child,
+.ui.buttons .button:nth-last-child(2):has(+ .button.gt-hidden) {
   border-right: 1px solid var(--color-light-border);
 }
 
@@ -107,6 +114,7 @@ It needs some tricks to tweak the left/right borders with active state */
 .ui.basic.button:focus {
   color: var(--color-text);
   background: var(--color-hover);
+  border-color: var(--color-secondary-dark-2);
 }
 
 .ui.basic.buttons .button:active,
