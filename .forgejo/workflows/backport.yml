@@ -34,10 +34,14 @@ jobs:
       !startsWith(vars.ROLE, 'forgejo-') && (
         github.event.pull_request.merged
         && (
-          github.event.action == 'closed'
-          || (
-            github.event.action == 'labeled'
-            && contains(github.event.label.name, 'backport/')
+          (
+            github.event.action == 'closed' &&
+            contains(toJSON(github.event.pull_request.labels), 'backport/v')
+          )
+          ||
+          (
+            github.event.action == 'labeled' &&
+            contains(github.event.label.name, 'backport/v')
           )
         )
       )
@@ -54,7 +58,7 @@ jobs:
           export DEBIAN_FRONTEND=noninteractive
           apt-get update -qq
           apt-get -q install -qq -y jq
-          filtered_labels=$(echo "$LABELS" | jq -c 'map(select(.name | startswith("backport/")))')
+          filtered_labels=$(echo "$LABELS" | jq -c 'map(select(.name | startswith("backport/v")))')
           echo "FILTERED_LABELS=${filtered_labels}" >> $GITHUB_ENV
         env:
           LABELS: ${{ toJSON(github.event.pull_request.labels) }}
