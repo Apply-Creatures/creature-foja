@@ -108,6 +108,6 @@ func TestActivityPubPersonInbox(t *testing.T) {
 
 		// Unsigned request fails
 		req := NewRequest(t, "POST", user2inboxurl)
-		MakeRequest(t, req, http.StatusInternalServerError)
+		MakeRequest(t, req, http.StatusBadRequest)
 	})
 }

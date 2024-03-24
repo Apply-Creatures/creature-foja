@@ -311,7 +311,7 @@ func (ar artifactRoutes) comfirmUploadArtifact(ctx *ArtifactContext) {
 	}
 	artifactName := ctx.Req.URL.Query().Get("artifactName")
 	if artifactName == "" {
-		log.Error("Error artifact name is empty")
+		log.Warn("Error artifact name is empty")
 		ctx.Error(http.StatusBadRequest, "Error artifact name is empty")
 		return
 	}

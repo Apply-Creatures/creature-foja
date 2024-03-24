@@ -114,15 +114,21 @@ func (l *locale) TrString(trKey string, trArgs ...any) string {
 	format := trKey
 
 	idx, ok := l.store.trKeyToIdxMap[trKey]
+	found := false
 	if ok {
 		if msg, ok := l.idxToMsgMap[idx]; ok {
 			format = msg // use the found translation
+			found = true
 		} else if def, ok := l.store.localeMap[l.store.defaultLang]; ok {
 			// try to use default locale's translation
 			if msg, ok := def.idxToMsgMap[idx]; ok {
 				format = msg
+				found = true
 			}
 		}
+	}
+	if !found {
+		log.Error("Missing translation %q", trKey)
 	}
 
 	msg, err := Format(format, trArgs...)

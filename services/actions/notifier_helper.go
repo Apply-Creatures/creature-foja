@@ -6,6 +6,7 @@ package actions
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -25,6 +26,7 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
+	"code.gitea.io/gitea/modules/util"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 	"code.gitea.io/gitea/services/convert"
 
@@ -190,6 +192,12 @@ func notify(ctx context.Context, input *notifyInput) error {
 		baseRef := git.BranchPrefix + input.PullRequest.BaseBranch
 		baseCommit, err := gitRepo.GetCommit(baseRef)
 		if err != nil {
+			if prp, ok := input.Payload.(*api.PullRequestPayload); ok && errors.Is(err, util.ErrNotExist) {
+				// the baseBranch was deleted and the PR closed: the action can be skipped
+				if prp.Action == api.HookIssueClosed {
+					return nil
+				}
+			}
 			return fmt.Errorf("gitRepo.GetCommit: %w", err)
 		}
 		baseWorkflows, _, err := actions_module.DetectWorkflows(gitRepo, baseCommit, input.Event, input.Payload)

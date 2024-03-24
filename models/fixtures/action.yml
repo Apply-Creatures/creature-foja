@@ -6,6 +6,7 @@
   repo_id: 2 # private
   is_private: true
   created_unix: 1603228283
+  content: '1|' # issueId 4
 
 -
   id: 2

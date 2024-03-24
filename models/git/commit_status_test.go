@@ -141,16 +141,20 @@ func Test_CalcCommitStatus(t *testing.T) {
 			statuses: []*git_model.CommitStatus{
 				{
 					State: structs.CommitStatusSuccess,
+					ID:    1,
 				},
 				{
 					State: structs.CommitStatusSuccess,
+					ID:    2,
 				},
 				{
 					State: structs.CommitStatusSuccess,
+					ID:    3,
 				},
 			},
 			expected: &git_model.CommitStatus{
 				State: structs.CommitStatusSuccess,
+				ID:    3,
 			},
 		},
 		{
@@ -168,6 +172,10 @@ func Test_CalcCommitStatus(t *testing.T) {
 			expected: &git_model.CommitStatus{
 				State: structs.CommitStatusError,
 			},
+		},
+		{
+			statuses: []*git_model.CommitStatus{},
+			expected: nil,
 		},
 	}
 

@@ -145,7 +145,10 @@ func TestMain(m *testing.M) {
 	// Instead, "No tests were found",  last nonsense log is "According to the configuration, subsequent logs will not be printed to the console"
 	exitCode := m.Run()
 
-	testlogger.WriterCloser.Reset()
+	if err := testlogger.WriterCloser.Reset(); err != nil {
+		fmt.Printf("testlogger.WriterCloser.Reset: %v\n", err)
+		os.Exit(1)
+	}
 
 	if err = util.RemoveAll(setting.Indexer.IssuePath); err != nil {
 		fmt.Printf("util.RemoveAll: %v\n", err)

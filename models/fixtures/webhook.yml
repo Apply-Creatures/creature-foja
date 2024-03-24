@@ -1,15 +1,17 @@
 -
   id: 1
   repo_id: 1
-  url: www.example.com/url1
+  url: http://www.example.com/url1
+  http_method: POST
   content_type: 1 # json
   events: '{"push_only":true,"send_everything":false,"choose_events":false,"events":{"create":false,"push":true,"pull_request":false}}'
-  is_active: true
+  is_active: false # disable to prevent sending hook task during unrelated tests
 
 -
   id: 2
   repo_id: 1
-  url: www.example.com/url2
+  url: http://www.example.com/url2
+  http_method: POST
   content_type: 1 # json
   events: '{"push_only":false,"send_everything":false,"choose_events":false,"events":{"create":false,"push":true,"pull_request":true}}'
   is_active: false
@@ -18,14 +20,16 @@
   id: 3
   owner_id: 3
   repo_id: 3
-  url: www.example.com/url3
+  url: http://www.example.com/url3
+  http_method: POST
   content_type: 1 # json
   events: '{"push_only":false,"send_everything":false,"choose_events":false,"events":{"create":false,"push":true,"pull_request":true}}'
-  is_active: true
+  is_active: false
 -
   id: 4
   repo_id: 2
-  url: www.example.com/url4
+  url: http://www.example.com/url4
+  http_method: POST
   content_type: 1 # json
   events: '{"push_only":true,"branch_filter":"{master,feature*}"}'
-  is_active: true
+  is_active: false

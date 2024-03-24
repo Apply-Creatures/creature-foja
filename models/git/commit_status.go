@@ -199,22 +199,17 @@ func (status *CommitStatus) LocaleString(lang translation.Locale) string {
 
 // CalcCommitStatus returns commit status state via some status, the commit statues should order by id desc
 func CalcCommitStatus(statuses []*CommitStatus) *CommitStatus {
-	var lastStatus *CommitStatus
-	state := api.CommitStatusSuccess
-	for _, status := range statuses {
-		if status.State.NoBetterThan(state) {
-			state = status.State
-			lastStatus = status
+	if len(statuses) == 0 {
+		return nil
+	}
+
+	latestWorstStatus := statuses[0]
+	for _, status := range statuses[1:] {
+		if status.State.NoBetterThan(latestWorstStatus.State) {
+			latestWorstStatus = status
 		}
 	}
-	if lastStatus == nil {
-		if len(statuses) > 0 {
-			lastStatus = statuses[0]
-		} else {
-			lastStatus = &CommitStatus{}
-		}
-	}
-	return lastStatus
+	return latestWorstStatus
 }
 
 // CommitStatusOptions holds the options for query commit statuses

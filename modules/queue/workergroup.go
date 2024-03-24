@@ -334,7 +334,10 @@ func (q *WorkerPoolQueue[T]) doRun() {
 			// since we are already in a "flush" operation, so the dispatching function shouldn't read the flush chan.
 			q.doDispatchBatchToWorker(wg, skipFlushChan)
 			q.doFlush(wg, flush)
-		case err := <-wg.popItemErr:
+		case err, errOk := <-wg.popItemErr:
+			if !errOk {
+				return
+			}
 			if !q.isCtxRunCanceled() {
 				log.Error("Failed to pop item from queue %q (doRun): %v", q.GetName(), err)
 			}

@@ -80,10 +80,22 @@ func testPullCleanUp(t *testing.T, session *TestSession, user, repo, pullnum str
 	return resp
 }
 
+func retrieveHookTasks(t *testing.T, hookID int64, activateWebhook bool) []*webhook.HookTask {
+	t.Helper()
+	if activateWebhook {
+		updated, err := db.GetEngine(db.DefaultContext).ID(hookID).Cols("is_active").Update(webhook.Webhook{IsActive: true})
+		assert.Equal(t, int64(1), updated)
+		assert.NoError(t, err)
+	}
+
+	hookTasks, err := webhook.HookTasks(db.DefaultContext, hookID, 1)
+	assert.NoError(t, err)
+	return hookTasks
+}
+
 func TestPullMerge(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, giteaURL *url.URL) {
-		hookTasks, err := webhook.HookTasks(db.DefaultContext, 1, 1) // Retrieve previous hook number
-		assert.NoError(t, err)
+		hookTasks := retrieveHookTasks(t, 1, true)
 		hookTasksLenBefore := len(hookTasks)
 
 		session := loginUser(t, "user1")
@@ -96,16 +108,14 @@ func TestPullMerge(t *testing.T) {
 		assert.EqualValues(t, "pulls", elem[3])
 		testPullMerge(t, session, elem[1], elem[2], elem[4], repo_model.MergeStyleMerge, false)
 
-		hookTasks, err = webhook.HookTasks(db.DefaultContext, 1, 1)
-		assert.NoError(t, err)
+		hookTasks = retrieveHookTasks(t, 1, false)
 		assert.Len(t, hookTasks, hookTasksLenBefore+1)
 	})
 }
 
 func TestPullRebase(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, giteaURL *url.URL) {
-		hookTasks, err := webhook.HookTasks(db.DefaultContext, 1, 1) // Retrieve previous hook number
-		assert.NoError(t, err)
+		hookTasks := retrieveHookTasks(t, 1, true)
 		hookTasksLenBefore := len(hookTasks)
 
 		session := loginUser(t, "user1")
@@ -118,16 +128,14 @@ func TestPullRebase(t *testing.T) {
 		assert.EqualValues(t, "pulls", elem[3])
 		testPullMerge(t, session, elem[1], elem[2], elem[4], repo_model.MergeStyleRebase, false)
 
-		hookTasks, err = webhook.HookTasks(db.DefaultContext, 1, 1)
-		assert.NoError(t, err)
+		hookTasks = retrieveHookTasks(t, 1, false)
 		assert.Len(t, hookTasks, hookTasksLenBefore+1)
 	})
 }
 
 func TestPullRebaseMerge(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, giteaURL *url.URL) {
-		hookTasks, err := webhook.HookTasks(db.DefaultContext, 1, 1) // Retrieve previous hook number
-		assert.NoError(t, err)
+		hookTasks := retrieveHookTasks(t, 1, true)
 		hookTasksLenBefore := len(hookTasks)
 
 		session := loginUser(t, "user1")
@@ -140,16 +148,14 @@ func TestPullRebaseMerge(t *testing.T) {
 		assert.EqualValues(t, "pulls", elem[3])
 		testPullMerge(t, session, elem[1], elem[2], elem[4], repo_model.MergeStyleRebaseMerge, false)
 
-		hookTasks, err = webhook.HookTasks(db.DefaultContext, 1, 1)
-		assert.NoError(t, err)
+		hookTasks = retrieveHookTasks(t, 1, false)
 		assert.Len(t, hookTasks, hookTasksLenBefore+1)
 	})
 }
 
 func TestPullSquash(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, giteaURL *url.URL) {
-		hookTasks, err := webhook.HookTasks(db.DefaultContext, 1, 1) // Retrieve previous hook number
-		assert.NoError(t, err)
+		hookTasks := retrieveHookTasks(t, 1, true)
 		hookTasksLenBefore := len(hookTasks)
 
 		session := loginUser(t, "user1")
@@ -163,8 +169,7 @@ func TestPullSquash(t *testing.T) {
 		assert.EqualValues(t, "pulls", elem[3])
 		testPullMerge(t, session, elem[1], elem[2], elem[4], repo_model.MergeStyleSquash, false)
 
-		hookTasks, err = webhook.HookTasks(db.DefaultContext, 1, 1)
-		assert.NoError(t, err)
+		hookTasks = retrieveHookTasks(t, 1, false)
 		assert.Len(t, hookTasks, hookTasksLenBefore+1)
 	})
 }

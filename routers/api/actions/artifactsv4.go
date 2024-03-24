@@ -359,7 +359,7 @@ func (r *artifactV4Routes) finalizeArtifact(ctx *ArtifactContext) {
 		checksum = req.Hash.Value
 	}
 	if err := mergeChunksForArtifact(ctx, chunks, r.fs, artifact, checksum); err != nil {
-		log.Error("Error merge chunks: %v", err)
+		log.Warn("Error merge chunks: %v", err)
 		ctx.Error(http.StatusInternalServerError, "Error merge chunks")
 		return
 	}

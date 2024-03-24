@@ -49,7 +49,10 @@ var (
 func apiError(ctx *context.Context, status int, obj any) {
 	helper.LogAndProcessError(ctx, status, obj, func(message string) {
 		// The maven client does not present the error message to the user. Log it for users with access to server logs.
-		if status == http.StatusBadRequest || status == http.StatusInternalServerError {
+		switch status {
+		case http.StatusBadRequest:
+			log.Warn(message)
+		case http.StatusInternalServerError:
 			log.Error(message)
 		}
 
