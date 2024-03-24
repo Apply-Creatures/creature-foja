@@ -42,8 +42,8 @@ function initRepoDiffFileViewToggle() {
     $this.addClass('active');
 
     const $target = $($this.data('toggle-selector'));
-    $target.parent().children().addClass('gt-hidden');
-    $target.removeClass('gt-hidden');
+    $target.parent().children().addClass('tw-hidden');
+    $target.removeClass('tw-hidden');
   });
 }
 
@@ -120,7 +120,7 @@ export function initRepoDiffConversationNav() {
   // Previous/Next code review conversation
   $(document).on('click', '.previous-conversation', (e) => {
     const $conversation = $(e.currentTarget).closest('.comment-code-cloud');
-    const $conversations = $('.comment-code-cloud:not(.gt-hidden)');
+    const $conversations = $('.comment-code-cloud:not(.tw-hidden)');
     const index = $conversations.index($conversation);
     const previousIndex = index > 0 ? index - 1 : $conversations.length - 1;
     const $previousConversation = $conversations.eq(previousIndex);
@@ -129,7 +129,7 @@ export function initRepoDiffConversationNav() {
   });
   $(document).on('click', '.next-conversation', (e) => {
     const $conversation = $(e.currentTarget).closest('.comment-code-cloud');
-    const $conversations = $('.comment-code-cloud:not(.gt-hidden)');
+    const $conversations = $('.comment-code-cloud:not(.tw-hidden)');
     const index = $conversations.index($conversation);
     const nextIndex = index < $conversations.length - 1 ? index + 1 : 0;
     const $nextConversation = $conversations.eq(nextIndex);
