@@ -113,10 +113,14 @@
 				{{end}}
 			</div>
 		</div>
-		{{if and (or .HasIssuesOrPullsWritePermission .IsIssuePoster) (not .HasMerged) (not .Issue.IsClosed) (not .IsPullWorkInProgress)}}
+		{{if and (or .HasIssuesOrPullsWritePermission .IsIssuePoster) (not .HasMerged) (not .Issue.IsClosed)}}
 			<div class="toggle-wip" data-title="{{.Issue.Title}}" data-wip-prefix="{{index .PullRequestWorkInProgressPrefixes 0}}" data-update-url="{{.Issue.Link}}/title">
 				<a class="muted">
-					{{ctx.Locale.Tr "repo.pulls.still_in_progress"}} {{ctx.Locale.Tr "repo.pulls.add_prefix" (index .PullRequestWorkInProgressPrefixes 0)}}
+					{{if .IsPullWorkInProgress}}
+						{{ctx.Locale.Tr "repo.pulls.ready_for_review"}} {{ctx.Locale.Tr "repo.pulls.remove_prefix" (index .PullRequestWorkInProgressPrefixes 0)}}
+					{{else}}
+						{{ctx.Locale.Tr "repo.pulls.still_in_progress"}} {{ctx.Locale.Tr "repo.pulls.add_prefix" (index .PullRequestWorkInProgressPrefixes 0)}}
+					{{end}}
 				</a>
 			</div>
 		{{end}}
