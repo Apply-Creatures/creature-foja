@@ -635,7 +635,7 @@ func CreateDeclarativeRepo(t *testing.T, owner *user_model.User, name string, en
 			}
 		}
 
-		err := repo_model.UpdateRepositoryUnits(db.DefaultContext, repo, units, disabledUnits)
+		err := repo_service.UpdateRepositoryUnits(db.DefaultContext, repo, units, disabledUnits)
 		assert.NoError(t, err)
 	}
 

@@ -6,12 +6,11 @@ package setting
 import (
 	"net/http"
 
-	repo_model "code.gitea.io/gitea/models/repo"
-	"code.gitea.io/gitea/modules/git"
-	"code.gitea.io/gitea/modules/gitrepo"
+	git_model "code.gitea.io/gitea/models/git"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/routers/web/repo"
+	"code.gitea.io/gitea/services/context"
 	repo_service "code.gitea.io/gitea/services/repository"
 )
 
@@ -37,7 +36,7 @@ func SetDefaultBranchPost(ctx *context.Context) {
 		branch := ctx.FormString("branch")
 		if err := repo_service.SetRepoDefaultBranch(ctx, ctx.Repo.Repository, ctx.Repo.GitRepo, branch); err != nil {
 			switch {
-			case ctx.Repo.GitRepo.IsErrBranchNotExist(err):
+			case git_model.IsErrBranchNotExist(err):
 				ctx.Status(http.StatusNotFound)
 			default:
 				ctx.ServerError("SetDefaultBranch", err)
