@@ -3,6 +3,7 @@
   "extends": ["config:best-practices", ":approveMajorUpdates"],
   "ignorePresets": [":semanticPrefixFixDepsChoreOthers"],
   "semanticCommits": "disabled",
+  "postUpdateOptions": ["gomodUpdateImportPaths", "npmDedupe"],
   "packageRules": [
     {
       "description": "Require approval for go and python minor version",
@@ -22,25 +23,20 @@
       "matchDatasources": ["docker"],
       "matchDepNames": ["ghcr.io/visualon/renovate"],
       "extends": ["schedule:daily"]
+    },
+    {
+      "description": "Disable actions/cascading-pr for now <https://github.com/renovatebot/renovate/issues/28120>",
+      "matchDepNames": ["actions/cascading-pr"],
+      "matchManagers": ["github-actions"],
+      "enabled": false
     }
   ],
   "customManagers": [
     {
-      "description": "Update docker images in forgejo workflows",
-      "customType": "regex",
-      "fileMatch": ["^.forgejo/workflows/.+\\.yml$"],
-      "matchStrings": [
-        "\\s+image:\\s+['\"]?(?<depName>.+?):(?<currentValue>.+?)['\"]?\\s"
-      ],
-      "datasourceTemplate": "docker"
-    },
-    {
       "description": "Update go-version in forgejo workflows",
       "customType": "regex",
       "fileMatch": ["^.forgejo/workflows/.+\\.yml$"],
-      "matchStrings": [
-        "\\s+go-version: ['\"]?(?<currentValue>.+?)['\"]?\\s"
-      ],
+      "matchStrings": ["\\s+go-version: ['\"]?(?<currentValue>.+?)['\"]?\\s"],
       "depNameTemplate": "go",
       "datasourceTemplate": "golang-version",
       "versioningTemplate": "go-mod-directive"
