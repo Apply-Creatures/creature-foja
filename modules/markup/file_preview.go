@@ -62,14 +62,6 @@ func NewFilePreview(ctx *RenderContext, node *html.Node, locale translation.Loca
 	preview.start = m[0]
 	preview.end = m[1]
 
-	// If url ends in '.', it's very likely that it is not part of the
-	// actual url but used to finish a sentence.
-	if strings.HasSuffix(preview.urlFull, ".") {
-		preview.end--
-		preview.urlFull = preview.urlFull[:len(preview.urlFull)-1]
-		hash = hash[:len(hash)-1]
-	}
-
 	projPathSegments := strings.Split(projPath, "/")
 	fileContent, err := DefaultProcessorHelper.GetRepoFileContent(
 		ctx.Ctx,
