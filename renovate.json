@@ -1,0 +1,49 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:best-practices", ":approveMajorUpdates"],
+  "ignorePresets": [":semanticPrefixFixDepsChoreOthers"],
+  "semanticCommits": "disabled",
+  "packageRules": [
+    {
+      "description": "Require approval for go and python minor version",
+      "matchDepNames": ["go", "python"],
+      "matchUpdateTypes": ["minor"],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Automerge renovate updates",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["ghcr.io/visualon/renovate"],
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "automerge": true
+    },
+    {
+      "description": "Update renovate only daily",
+      "matchDatasources": ["docker"],
+      "matchDepNames": ["ghcr.io/visualon/renovate"],
+      "extends": ["schedule:daily"]
+    }
+  ],
+  "customManagers": [
+    {
+      "description": "Update docker images in forgejo workflows",
+      "customType": "regex",
+      "fileMatch": ["^.forgejo/workflows/.+\\.yml$"],
+      "matchStrings": [
+        "\\s+image:\\s+['\"]?(?<depName>.+?):(?<currentValue>.+?)['\"]?\\s"
+      ],
+      "datasourceTemplate": "docker"
+    },
+    {
+      "description": "Update go-version in forgejo workflows",
+      "customType": "regex",
+      "fileMatch": ["^.forgejo/workflows/.+\\.yml$"],
+      "matchStrings": [
+        "\\s+go-version: ['\"]?(?<currentValue>.+?)['\"]?\\s"
+      ],
+      "depNameTemplate": "go",
+      "datasourceTemplate": "golang-version",
+      "versioningTemplate": "go-mod-directive"
+    }
+  ]
+}
