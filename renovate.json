@@ -3,7 +3,7 @@
   "extends": ["config:best-practices", ":approveMajorUpdates"],
   "ignorePresets": [":semanticPrefixFixDepsChoreOthers"],
   "semanticCommits": "disabled",
-  "postUpdateOptions": ["gomodUpdateImportPaths", "npmDedupe"],
+  "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths", "npmDedupe"],
   "platformAutomerge": false,
   "packageRules": [
     {
