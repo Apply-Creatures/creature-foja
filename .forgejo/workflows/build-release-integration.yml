@@ -9,6 +9,8 @@ on:
       - docker/**
       - .forgejo/workflows/build-release.yml
       - .forgejo/workflows/build-release-integration.yml
+    branches-ignore:
+      - renovate/**
   pull_request:
     paths:
       - Makefile
