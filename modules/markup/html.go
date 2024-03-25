@@ -1059,7 +1059,7 @@ func filePreviewPatternProcessor(ctx *RenderContext, node *html.Node) {
 	if ctx.Metas == nil {
 		return
 	}
-	if DefaultProcessorHelper.GetRepoFileContent == nil {
+	if DefaultProcessorHelper.GetRepoFileBlob == nil {
 		return
 	}
 

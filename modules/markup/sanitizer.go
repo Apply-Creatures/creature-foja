@@ -135,6 +135,7 @@ func createDefaultPolicy() *bluemonday.Policy {
 	policy.AllowAttrs("class").Matching(regexp.MustCompile("^ambiguous-code-point$")).OnElements("span")
 	policy.AllowAttrs("data-tooltip-content").OnElements("span")
 	policy.AllowAttrs("class").Matching(regexp.MustCompile("muted|(text black)")).OnElements("a")
+	policy.AllowAttrs("class").Matching(regexp.MustCompile("^ui warning message tw-text-left$")).OnElements("div")
 
 	// Allow generally safe attributes
 	generalSafeAttrs := []string{

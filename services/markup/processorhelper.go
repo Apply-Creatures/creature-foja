@@ -6,15 +6,17 @@ package markup
 import (
 	"context"
 	"fmt"
-	"html/template"
-	"io"
+
+	// "html/template"
+	// "io"
 
 	"code.gitea.io/gitea/models/perm/access"
 	"code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/gitrepo"
-	"code.gitea.io/gitea/modules/highlight"
+	// "code.gitea.io/gitea/modules/highlight"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markup"
 	gitea_context "code.gitea.io/gitea/services/context"
@@ -39,7 +41,7 @@ func ProcessorHelper() *markup.ProcessorHelper {
 			// when using gitea context (web context), use user's visibility and user's permission to check
 			return user.IsUserVisibleToViewer(giteaCtx, mentionedUser, giteaCtx.Doer)
 		},
-		GetRepoFileContent: func(ctx context.Context, ownerName, repoName, commitSha, filePath string) ([]template.HTML, error) {
+		GetRepoFileBlob: func(ctx context.Context, ownerName, repoName, commitSha, filePath string, language *string) (*git.Blob, error) {
 			repo, err := repo.GetRepositoryByOwnerAndName(ctx, ownerName, repoName)
 			if err != nil {
 				return nil, err
@@ -70,9 +72,11 @@ func ProcessorHelper() *markup.ProcessorHelper {
 				return nil, err
 			}
 
-			language, err := file_service.TryGetContentLanguage(gitRepo, commitSha, filePath)
-			if err != nil {
-				log.Error("Unable to get file language for %-v:%s. Error: %v", repo, filePath, err)
+			if language != nil {
+				*language, err = file_service.TryGetContentLanguage(gitRepo, commitSha, filePath)
+				if err != nil {
+					log.Error("Unable to get file language for %-v:%s. Error: %v", repo, filePath, err)
+				}
 			}
 
 			blob, err := commit.GetBlobByPath(filePath)
@@ -80,7 +84,9 @@ func ProcessorHelper() *markup.ProcessorHelper {
 				return nil, err
 			}
 
-			dataRc, err := blob.DataAsync()
+			return blob, nil
+
+			/*dataRc, err := blob.DataAsync()
 			if err != nil {
 				return nil, err
 			}
@@ -97,7 +103,7 @@ func ProcessorHelper() *markup.ProcessorHelper {
 				fileContent = highlight.PlainText(buf)
 			}
 
-			return fileContent, nil
+			return fileContent, nil*/
 		},
 	}
 }

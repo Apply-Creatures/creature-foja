@@ -8,7 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"html/template"
+	// "html/template"
 	"io"
 	"net/url"
 	"path/filepath"
@@ -32,7 +32,7 @@ const (
 
 type ProcessorHelper struct {
 	IsUsernameMentionable func(ctx context.Context, username string) bool
-	GetRepoFileContent    func(ctx context.Context, ownerName, repoName, commitSha, filePath string) ([]template.HTML, error)
+	GetRepoFileBlob    func(ctx context.Context, ownerName, repoName, commitSha, filePath string, language *string) (*git.Blob, error)
 
 	ElementDir string // the direction of the elements, eg: "ltr", "rtl", "auto", default to no direction attribute
 }

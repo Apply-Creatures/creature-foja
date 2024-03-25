@@ -4,6 +4,7 @@
 package markup
 
 import (
+	"bufio"
 	"bytes"
 	"html/template"
 	"regexp"
@@ -12,6 +13,7 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/modules/charset"
+	"code.gitea.io/gitea/modules/highlight"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/translation"
@@ -31,9 +33,15 @@ type FilePreview struct {
 	filePath    string
 	start       int
 	end         int
+	isTruncated bool
 }
 
 func NewFilePreview(ctx *RenderContext, node *html.Node, locale translation.Locale) *FilePreview {
+	if (setting.FilePreviewMaxLines == 0) {
+		// Feature is disabled
+		return nil
+	}
+
 	preview := &FilePreview{}
 
 	m := filePreviewPattern.FindStringSubmatchIndex(node.Data)
@@ -63,18 +71,20 @@ func NewFilePreview(ctx *RenderContext, node *html.Node, locale translation.Loca
 	preview.end = m[1]
 
 	projPathSegments := strings.Split(projPath, "/")
-	fileContent, err := DefaultProcessorHelper.GetRepoFileContent(
+	var language string
+	fileBlob, err := DefaultProcessorHelper.GetRepoFileBlob(
 		ctx.Ctx,
 		projPathSegments[len(projPathSegments)-2],
 		projPathSegments[len(projPathSegments)-1],
 		commitSha, preview.filePath,
+		&language,
 	)
 	if err != nil {
 		return nil
 	}
 
 	lineSpecs := strings.Split(hash, "-")
-	lineCount := len(fileContent)
+	// lineCount := len(fileContent)
 
 	commitLinkBuffer := new(bytes.Buffer)
 	err = html.Render(commitLinkBuffer, createLink(node.Data[m[0]:m[5]], commitSha[0:7], "text black"))
@@ -82,28 +92,31 @@ func NewFilePreview(ctx *RenderContext, node *html.Node, locale translation.Loca
 		log.Error("failed to render commitLink: %v", err)
 	}
 
-	if len(lineSpecs) == 1 {
-		line, _ := strconv.Atoi(strings.TrimPrefix(lineSpecs[0], "L"))
-		if line < 1 || line > lineCount {
-			return nil
-		}
+	var startLine, endLine int
 
-		preview.fileContent = fileContent[line-1 : line]
+	if len(lineSpecs) == 1 {
+		startLine, _ = strconv.Atoi(strings.TrimPrefix(lineSpecs[0], "L"))
+		endLine = startLine
+		// if line < 1 || line > lineCount {
+		// 	return nil
+		// }
+
+		// preview.fileContent = fileContent[line-1 : line]
 		preview.subTitle = locale.Tr(
-			"markup.filepreview.line", line,
+			"markup.filepreview.line", startLine,
 			template.HTML(commitLinkBuffer.String()),
 		)
 
-		preview.lineOffset = line - 1
+		preview.lineOffset = startLine - 1
 	} else {
-		startLine, _ := strconv.Atoi(strings.TrimPrefix(lineSpecs[0], "L"))
-		endLine, _ := strconv.Atoi(strings.TrimPrefix(lineSpecs[1], "L"))
+		startLine, _ = strconv.Atoi(strings.TrimPrefix(lineSpecs[0], "L"))
+		endLine, _ = strconv.Atoi(strings.TrimPrefix(lineSpecs[1], "L"))
 
-		if startLine < 1 || endLine < 1 || startLine > lineCount || endLine > lineCount || endLine < startLine {
-			return nil
-		}
+		// if startLine < 1 || endLine < 1 || startLine > lineCount || endLine > lineCount || endLine < startLine {
+		// 	return nil
+		// }
 
-		preview.fileContent = fileContent[startLine-1 : endLine]
+		// preview.fileContent = fileContent[startLine-1 : endLine]
 		preview.subTitle = locale.Tr(
 			"markup.filepreview.lines", startLine, endLine,
 			template.HTML(commitLinkBuffer.String()),
@@ -111,6 +124,50 @@ func NewFilePreview(ctx *RenderContext, node *html.Node, locale translation.Loca
 
 		preview.lineOffset = startLine - 1
 	}
+
+	lineCount := endLine - (startLine-1)
+	if startLine < 1 || endLine < 1 || lineCount < 1 {
+		return nil
+	}
+
+	if setting.FilePreviewMaxLines > 0 && lineCount > setting.FilePreviewMaxLines {
+		preview.isTruncated = true
+		lineCount = setting.FilePreviewMaxLines
+	}
+
+	dataRc, err := fileBlob.DataAsync()
+	if err != nil {
+		return nil
+	}
+	defer dataRc.Close()
+
+	reader := bufio.NewReader(dataRc)
+
+	// skip all lines until we find our startLine
+	for i := 1; i < startLine; i++ {
+		_, err := reader.ReadBytes('\n')
+		if err != nil {
+			return nil
+		}
+	}
+
+	// capture the lines we're interested in
+	lineBuffer := new(bytes.Buffer)
+	for i := 0; i < lineCount; i++ {
+		buf, err := reader.ReadBytes('\n')
+		if err != nil {
+			break;
+		}
+		lineBuffer.Write(buf)
+	}
+
+	// highlight the file...
+	fileContent, _, err := highlight.File(fileBlob.Name(), language, lineBuffer.Bytes())
+	if err != nil {
+		log.Error("highlight.File failed, fallback to plain text: %v", err)
+		fileContent = highlight.PlainText(lineBuffer.Bytes())
+	}
+	preview.fileContent = fileContent
 
 	return preview
 }
@@ -258,6 +315,20 @@ func (p *FilePreview) CreateHTML(locale translation.Locale) *html.Node {
 		Attr: []html.Attribute{{Key: "class", Val: "file-preview-box"}},
 	}
 	node.AppendChild(header)
+
+	if (p.isTruncated) {
+		warning := &html.Node{
+			Type: html.ElementNode,
+			Data: atom.Div.String(),
+			Attr: []html.Attribute{{Key: "class", Val: "ui warning message tw-text-left"}},
+		}
+		warning.AppendChild(&html.Node{
+			Type: html.TextNode,
+			Data: locale.TrString("markup.filepreview.truncated"),
+		})
+		node.AppendChild(warning)
+	}
+
 	node.AppendChild(twrapper)
 
 	return node

@@ -25,6 +25,12 @@
   background: var(--color-box-header);
 }
 
+.markup .file-preview-box .warning {
+  border-radius: 0;
+  margin: 0;
+  padding: .5rem .5rem .5rem 1rem;
+}
+
 .markup .file-preview-box .header > a {
   display: block;
 }
