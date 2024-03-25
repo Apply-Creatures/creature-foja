@@ -4,6 +4,7 @@
   "ignorePresets": [":semanticPrefixFixDepsChoreOthers"],
   "semanticCommits": "disabled",
   "postUpdateOptions": ["gomodUpdateImportPaths", "npmDedupe"],
+  "platformAutomerge": false,
   "packageRules": [
     {
       "description": "Require approval for go and python minor version",
