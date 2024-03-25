@@ -8,7 +8,7 @@
   "packageRules": [
     {
       "description": "Require approval for go and python minor version",
-      "matchDepNames": ["go", "python"],
+      "matchDepNames": ["go", "python", "docker.io/library/golang"],
       "matchUpdateTypes": ["minor"],
       "dependencyDashboardApproval": true
     },

@@ -17,7 +17,7 @@ jobs:
 
     runs-on: docker
     container:
-      image: 'ghcr.io/visualon/renovate:37.269.3@sha256:4fb1684ec9e10592b6c4726906d353f88097fbb584748150043949a5aa5ca085'
+      image: ghcr.io/visualon/renovate:37.269.3
 
     steps:
       - uses: https://code.forgejo.org/actions/cache/restore@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
