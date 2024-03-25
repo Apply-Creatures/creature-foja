@@ -29,7 +29,7 @@ require (
 	github.com/djherbis/nio/v3 v3.0.1
 	github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5
 	github.com/dustin/go-humanize v1.0.1
-	github.com/editorconfig/editorconfig-core-go/v2 v2.6.0
+	github.com/editorconfig/editorconfig-core-go/v2 v2.6.1
 	github.com/emersion/go-imap v1.2.1
 	github.com/emirpasic/gods v1.18.1
 	github.com/felixge/fgprof v0.9.3

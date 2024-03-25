@@ -238,8 +238,8 @@ github.com/dsnet/compress v0.0.2-0.20210315054119-f66993602bf5/go.mod h1:qssHWj6
 github.com/dsnet/golib v0.0.0-20171103203638-1ea166775780/go.mod h1:Lj+Z9rebOhdfkVLjJ8T6VcRQv3SXugXy999NBtR9aFY=
 github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
 github.com/dustin/go-humanize v1.0.1/go.mod h1:Mu1zIs6XwVuF/gI1OepvI0qD18qycQx+mFykh5fBlto=
-github.com/editorconfig/editorconfig-core-go/v2 v2.6.0 h1:5O8paxMLmi/5ONoKXzWNYxoSZU7+ITVbGcPga0IrzfE=
-github.com/editorconfig/editorconfig-core-go/v2 v2.6.0/go.mod h1:hdTKe+hwa3mMnMn4JUQziT+yc3pF+6EVmK2LPbLZthE=
+github.com/editorconfig/editorconfig-core-go/v2 v2.6.1 h1:iPCqofzMO41WVbcS/B5Ym7AwHQg9cyQ7Ie/R2XU5L3A=
+github.com/editorconfig/editorconfig-core-go/v2 v2.6.1/go.mod h1:VY4oyqUnpULFB3SCRpl24GFDIN1PmfiQIvN/G4ScSNg=
 github.com/edsrzf/mmap-go v1.0.0/go.mod h1:YO35OhQPt3KJa3ryjFM5Bs14WD66h8eGKpfaBNrHW5M=
 github.com/elazarl/goproxy v0.0.0-20230808193330-2592e75ae04a h1:mATvB/9r/3gvcejNsXKSkQ6lcIaNec2nyfOdlTBR2lU=
 github.com/elazarl/goproxy v0.0.0-20230808193330-2592e75ae04a/go.mod h1:Ro8st/ElPeALwNFlcTpWmkr6IoMFfkjXAvTHpevnDsM=
