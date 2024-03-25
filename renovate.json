@@ -1,7 +1,7 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:best-practices", ":approveMajorUpdates"],
-  "ignorePresets": [":semanticPrefixFixDepsChoreOthers"],
+  "ignorePresets": [":semanticPrefixFixDepsChoreOthers", "docker:pinDigests", "helpers:pinGitHubActionDigests"],
   "semanticCommits": "disabled",
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths", "npmDedupe"],
   "platformAutomerge": false,
