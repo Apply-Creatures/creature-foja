@@ -807,7 +807,7 @@ func TestIssueFilterNoFollow(t *testing.T) {
 	htmlDoc := NewHTMLParser(t, resp.Body)
 
 	// Check that every link in the filter list has rel="nofollow".
-	filterLinks := htmlDoc.Find(".issue-list-toolbar-right a[href*=\"/issues?q=\"]")
+	filterLinks := htmlDoc.Find(".issue-list-toolbar-right a[href*=\"?q=\"]")
 	assert.True(t, filterLinks.Length() > 0)
 	filterLinks.Each(func(i int, link *goquery.Selection) {
 		rel, has := link.Attr("rel")
