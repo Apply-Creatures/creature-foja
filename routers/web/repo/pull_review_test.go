@@ -4,6 +4,7 @@
 package repo
 
 import (
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
@@ -74,5 +75,31 @@ func TestRenderConversation(t *testing.T) {
 		ctx.Data["ShowOutdatedComments"] = false
 		renderConversation(ctx, preparedComment, "timeline")
 		assert.Contains(t, resp.Body.String(), `<div id="code-comments-`)
+	})
+	run("diff non-existing review", func(t *testing.T, ctx *context.Context, resp *httptest.ResponseRecorder) {
+		reviews, err := issues_model.FindReviews(db.DefaultContext, issues_model.FindReviewOptions{
+			IssueID: 2,
+		})
+		assert.NoError(t, err)
+		for _, r := range reviews {
+			assert.NoError(t, issues_model.DeleteReview(db.DefaultContext, r))
+		}
+		ctx.Data["ShowOutdatedComments"] = true
+		renderConversation(ctx, preparedComment, "diff")
+		assert.Equal(t, http.StatusOK, resp.Code)
+		assert.NotContains(t, resp.Body.String(), `status-page-500`)
+	})
+	run("timeline non-existing review", func(t *testing.T, ctx *context.Context, resp *httptest.ResponseRecorder) {
+		reviews, err := issues_model.FindReviews(db.DefaultContext, issues_model.FindReviewOptions{
+			IssueID: 2,
+		})
+		assert.NoError(t, err)
+		for _, r := range reviews {
+			assert.NoError(t, issues_model.DeleteReview(db.DefaultContext, r))
+		}
+		ctx.Data["ShowOutdatedComments"] = true
+		renderConversation(ctx, preparedComment, "timeline")
+		assert.Equal(t, http.StatusOK, resp.Code)
+		assert.NotContains(t, resp.Body.String(), `status-page-500`)
 	})
 }

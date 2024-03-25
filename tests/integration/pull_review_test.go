@@ -16,6 +16,7 @@ import (
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/test"
 	issue_service "code.gitea.io/gitea/services/issue"
 	repo_service "code.gitea.io/gitea/services/repository"
 	files_service "code.gitea.io/gitea/services/repository/files"
@@ -30,10 +31,24 @@ func TestPullView_ReviewerMissed(t *testing.T) {
 	session := loginUser(t, "user1")
 
 	req := NewRequest(t, "GET", "/pulls")
-	session.MakeRequest(t, req, http.StatusOK)
+	resp := session.MakeRequest(t, req, http.StatusOK)
+	assert.True(t, test.IsNormalPageCompleted(resp.Body.String()))
 
 	req = NewRequest(t, "GET", "/user2/repo1/pulls/3")
-	session.MakeRequest(t, req, http.StatusOK)
+	resp = session.MakeRequest(t, req, http.StatusOK)
+	assert.True(t, test.IsNormalPageCompleted(resp.Body.String()))
+
+	// if some reviews are missing, the page shouldn't fail
+	reviews, err := issues_model.FindReviews(db.DefaultContext, issues_model.FindReviewOptions{
+		IssueID: 2,
+	})
+	assert.NoError(t, err)
+	for _, r := range reviews {
+		assert.NoError(t, issues_model.DeleteReview(db.DefaultContext, r))
+	}
+	req = NewRequest(t, "GET", "/user2/repo1/pulls/2")
+	resp = session.MakeRequest(t, req, http.StatusOK)
+	assert.True(t, test.IsNormalPageCompleted(resp.Body.String()))
 }
 
 func loadComment(t *testing.T, commentID string) *issues_model.Comment {
