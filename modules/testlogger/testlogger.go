@@ -109,9 +109,6 @@ var ignoredErrorMessageSuffixes = []string{
 	// TestBlockActions
 	`/gitea-repositories/user10/repo7.git Error: no such file or directory`,
 
-	// TestE2e/explore.test.e2e
-	`TrString() [E] Missing translation "more_items"`,
-
 	// TestRebuildCargo
 	`RebuildCargoIndex() [E] RebuildIndex failed: GetRepositoryByOwnerAndName: repository does not exist [id: 0, uid: 0, owner_name: user2, name: _cargo-index]`,
 }
