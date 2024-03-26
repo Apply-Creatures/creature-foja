@@ -4,6 +4,7 @@
 package setting
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -316,7 +317,12 @@ func RenameBranchPost(ctx *context.Context) {
 
 	msg, err := repository.RenameBranch(ctx, ctx.Repo.Repository, ctx.Doer, ctx.Repo.GitRepo, form.From, form.To)
 	if err != nil {
-		ctx.ServerError("RenameBranch", err)
+		if errors.Is(err, git_model.ErrBranchIsProtected) {
+			ctx.Flash.Error(ctx.Tr("repo.settings.rename_branch_failed_protected", form.To))
+			ctx.Redirect(fmt.Sprintf("%s/branches", ctx.Repo.RepoLink))
+		} else {
+			ctx.ServerError("RenameBranch", err)
+		}
 		return
 	}
 
