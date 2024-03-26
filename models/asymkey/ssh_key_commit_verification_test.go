@@ -40,7 +40,7 @@ func TestParseCommitWithSSHSignature(t *testing.T) {
 			Committer: &git.Signature{
 				Email: "non-existent",
 			},
-			Signature: &git.CommitGPGSignature{
+			Signature: &git.ObjectSignature{
 				Payload: `tree 2d491b2985a7ff848d5c02748e7ea9f9f7619f9f
 parent 45b03601635a1f463b81963a4022c7f87ce96ef9
 author user2 <non-existent> 1699710556 +0100
@@ -67,7 +67,7 @@ AAAAQIMufOuSjZeDUujrkVK4sl7ICa0WwEftas8UAYxx0Thdkiw2qWjR1U1PKfTLm16/w8
 			Committer: &git.Signature{
 				Email: "user2@example.com",
 			},
-			Signature: &git.CommitGPGSignature{
+			Signature: &git.ObjectSignature{
 				Payload: `tree 853694aae8816094a0d875fee7ea26278dbf5d0f
 parent c2780d5c313da2a947eae22efd7dacf4213f4e7f
 author user2 <user2@example.com> 1699707877 +0100
@@ -89,7 +89,7 @@ Add content
 			Committer: &git.Signature{
 				Email: "user2@example.com",
 			},
-			Signature: &git.CommitGPGSignature{
+			Signature: &git.ObjectSignature{
 				Payload: `tree 853694aae8816094a0d875fee7ea26278dbf5d0f
 parent c2780d5c313da2a947eae22efd7dacf4213f4e7f
 author user2 <user2@example.com> 1699707877 +0100
@@ -120,7 +120,7 @@ fs9cMpZVM9BfIKNUSO8QY=
 			Committer: &git.Signature{
 				Email: "user2@noreply.example.com",
 			},
-			Signature: &git.CommitGPGSignature{
+			Signature: &git.ObjectSignature{
 				Payload: `tree 4836c7f639f37388bab4050ef5c97bbbd54272fc
 parent 795be1b0117ea5c65456050bb9fd84744d4fd9c6
 author user2 <user2@noreply.example.com> 1699709594 +0100

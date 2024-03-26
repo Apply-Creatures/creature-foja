@@ -52,6 +52,8 @@ var migrations = []*Migration{
 	NewMigration("Add wiki_branch to repository", forgejo_v1_22.AddWikiBranchToRepository),
 	// v6 -> v7
 	NewMigration("Add enable_repo_unit_hints to the user table", forgejo_v1_22.AddUserRepoUnitHintsSetting),
+	// v7 -> v8
+	NewMigration("Remove SSH signatures from Release notes", forgejo_v1_22.RemoveSSHSignaturesFromReleaseNotes),
 }
 
 // GetCurrentDBVersion returns the current Forgejo database version.

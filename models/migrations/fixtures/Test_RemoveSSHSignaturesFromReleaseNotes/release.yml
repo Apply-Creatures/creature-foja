@@ -1,0 +1,22 @@
+# type Release struct {
+#   ID   int64  `xorm:"pk autoincr"`
+#   Note string `xorm:"TEXT"`
+# }
+-
+  id: 1
+  note: |
+    -----BEGIN SSH SIGNATURE-----
+    some signature
+    -----END SSH SIGNATURE-----
+
+-
+  id: 2
+  note: |
+    A message.
+    -----BEGIN SSH SIGNATURE-----
+    some signature
+    -----END SSH SIGNATURE-----
+
+-
+  id: 3
+  note: "no signature present here"

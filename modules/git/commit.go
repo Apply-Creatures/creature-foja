@@ -25,16 +25,10 @@ type Commit struct {
 	Author        *Signature
 	Committer     *Signature
 	CommitMessage string
-	Signature     *CommitGPGSignature
+	Signature     *ObjectSignature
 
 	Parents        []ObjectID // ID strings
 	submoduleCache *ObjectCache
-}
-
-// CommitGPGSignature represents a git commit signature part.
-type CommitGPGSignature struct {
-	Signature string
-	Payload   string // TODO check if can be reconstruct from the rest of commit information to not have duplicate data
 }
 
 // Message returns the commit message. Same as retrieving CommitMessage directly.

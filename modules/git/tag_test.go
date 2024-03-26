@@ -46,6 +46,41 @@ ono`), tag: Tag{
 			Message:   "test message\no\n\nono",
 			Signature: nil,
 		}},
+		{data: []byte(`object d8d1fdb5b20eaca882e34ee510eb55941a242b24
+type commit
+tag v0
+tagger Jane Doe <jane.doe@example.com> 1709146405 +0100
+
+v0
+-----BEGIN SSH SIGNATURE-----
+U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgvD4pK7baygXxoWoVoKjVEc/xZh
+6w+1FUn5hypFqJXNAAAAADZ2l0AAAAAAAAAAZzaGE1MTIAAABTAAAAC3NzaC1lZDI1NTE5
+AAAAQKFeTnxi9ssRqSg+sJcmjAgpgoPq1k5SXm306+mJmkPwvhim8f9Gz6uy1AddPmXaD7
+5LVB3fV2GmmFDKGB+wCAo=
+-----END SSH SIGNATURE-----
+`), tag: Tag{
+			Name:    "",
+			ID:      Sha1ObjectFormat.EmptyObjectID(),
+			Object:  &Sha1Hash{0xd8, 0xd1, 0xfd, 0xb5, 0xb2, 0x0e, 0xac, 0xa8, 0x82, 0xe3, 0x4e, 0xe5, 0x10, 0xeb, 0x55, 0x94, 0x1a, 0x24, 0x2b, 0x24},
+			Type:    "commit",
+			Tagger:  &Signature{Name: "Jane Doe", Email: "jane.doe@example.com", When: time.Unix(1709146405, 0)},
+			Message: "v0\n",
+			Signature: &ObjectSignature{
+				Signature: `-----BEGIN SSH SIGNATURE-----
+U1NIU0lHAAAAAQAAADMAAAALc3NoLWVkMjU1MTkAAAAgvD4pK7baygXxoWoVoKjVEc/xZh
+6w+1FUn5hypFqJXNAAAAADZ2l0AAAAAAAAAAZzaGE1MTIAAABTAAAAC3NzaC1lZDI1NTE5
+AAAAQKFeTnxi9ssRqSg+sJcmjAgpgoPq1k5SXm306+mJmkPwvhim8f9Gz6uy1AddPmXaD7
+5LVB3fV2GmmFDKGB+wCAo=
+-----END SSH SIGNATURE-----`,
+				Payload: `object d8d1fdb5b20eaca882e34ee510eb55941a242b24
+type commit
+tag v0
+tagger Jane Doe <jane.doe@example.com> 1709146405 +0100
+
+v0
+`,
+			},
+		}},
 	}
 
 	for _, test := range testData {
