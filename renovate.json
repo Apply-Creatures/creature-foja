@@ -17,9 +17,19 @@
   "packageRules": [
     {
       "description": "Require approval for go and python minor version",
-      "matchDepNames": ["go", "python", "docker.io/library/golang"],
+      "matchDepNames": ["go", "python", "golang", "docker.io/golang", "docker.io/library/golang"],
       "matchUpdateTypes": ["minor"],
       "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Group golang packages",
+      "matchDepNames": ["go", "golang", "docker.io/golang", "docker.io/library/golang"],
+      "groupName": "golang packages"
+    },
+    {
+      "description": "Group nodejs packages",
+      "matchDepNames": ["node", "docker.io/node", "docker.io/library/node"],
+      "groupName": "nodejs packages"
     },
     {
       "description": "Automerge renovate updates",
@@ -50,6 +60,14 @@
       "depNameTemplate": "go",
       "datasourceTemplate": "golang-version",
       "versioningTemplate": "go-mod-directive"
+    },
+    {
+      "description": "Update node-version in forgejo workflows",
+      "customType": "regex",
+      "fileMatch": ["^.forgejo/workflows/.+\\.yml$"],
+      "matchStrings": ["\\s+node-version: ['\"]?(?<currentValue>.+?)['\"]?\\s"],
+      "depNameTemplate": "node",
+      "datasourceTemplate": "node-version"
     }
   ]
 }
