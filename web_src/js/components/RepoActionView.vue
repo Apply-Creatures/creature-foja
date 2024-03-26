@@ -637,6 +637,8 @@ export function initRepositoryActionView() {
   flex-direction: column;
   border: 1px solid var(--color-console-border);
   border-radius: var(--border-radius);
+  background: var(--color-console-bg);
+  align-self: flex-start;
 }
 
 /* begin fomantic button overrides */
@@ -696,10 +698,8 @@ export function initRepositoryActionView() {
   justify-content: space-between;
   align-items: center;
   padding: 0 12px;
-  background-color: var(--color-console-bg);
   position: sticky;
   top: 0;
-  border-radius: var(--border-radius);
   height: 60px;
   z-index: 1;
 }
@@ -720,7 +720,6 @@ export function initRepositoryActionView() {
 }
 
 .job-step-container {
-  background-color: var(--color-console-bg);
   max-height: 100%;
   border-radius: 0 0 var(--border-radius) var(--border-radius);
   border-top: 1px solid var(--color-console-border);
