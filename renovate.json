@@ -14,6 +14,7 @@
   "semanticCommits": "disabled",
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths", "npmDedupe"],
   "platformAutomerge": false,
+  "prConcurrentLimit": 5,
   "packageRules": [
     {
       "description": "Require approval for go and python minor version",
