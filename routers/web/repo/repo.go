@@ -618,26 +618,31 @@ func SearchRepo(ctx *context.Context) {
 		}
 	}
 
-	var err error
+	// To improve performance when only the count is requested
+	if ctx.FormBool("count_only") {
+		if count, err := repo_model.CountRepository(ctx, opts); err != nil {
+			log.Error("CountRepository: %v", err)
+			ctx.JSON(http.StatusInternalServerError, nil) // frontend JS doesn't handle error response (same as below)
+		} else {
+			ctx.SetTotalCountHeader(count)
+			ctx.JSONOK()
+		}
+		return
+	}
+
 	repos, count, err := repo_model.SearchRepository(ctx, opts)
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, api.SearchError{
-			OK:    false,
-			Error: err.Error(),
-		})
+		log.Error("SearchRepository: %v", err)
+		ctx.JSON(http.StatusInternalServerError, nil)
 		return
 	}
 
 	ctx.SetTotalCountHeader(count)
 
-	// To improve performance when only the count is requested
-	if ctx.FormBool("count_only") {
-		return
-	}
-
 	latestCommitStatuses, err := commitstatus_service.FindReposLastestCommitStatuses(ctx, repos)
 	if err != nil {
 		log.Error("FindReposLastestCommitStatuses: %v", err)
+		ctx.JSON(http.StatusInternalServerError, nil)
 		return
 	}
 
@@ -679,9 +684,7 @@ func GetBranchesList(ctx *context.Context) {
 	branchOpts := git_model.FindBranchOptions{
 		RepoID:          ctx.Repo.Repository.ID,
 		IsDeletedBranch: optional.Some(false),
-		ListOptions: db.ListOptions{
-			ListAll: true,
-		},
+		ListOptions:     db.ListOptionsAll,
 	}
 	branches, err := git_model.FindBranchNames(ctx, branchOpts)
 	if err != nil {
@@ -714,9 +717,7 @@ func PrepareBranchList(ctx *context.Context) {
 	branchOpts := git_model.FindBranchOptions{
 		RepoID:          ctx.Repo.Repository.ID,
 		IsDeletedBranch: optional.Some(false),
-		ListOptions: db.ListOptions{
-			ListAll: true,
-		},
+		ListOptions:     db.ListOptionsAll,
 	}
 	brs, err := git_model.FindBranchNames(ctx, branchOpts)
 	if err != nil {

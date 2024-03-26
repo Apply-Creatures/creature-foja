@@ -198,6 +198,8 @@ func RegeneratePublicKeys(ctx context.Context, t io.StringWriter) error {
 		if err != nil {
 			return err
 		}
+		defer f.Close()
+
 		scanner := bufio.NewScanner(f)
 		for scanner.Scan() {
 			line := scanner.Text()
@@ -207,11 +209,12 @@ func RegeneratePublicKeys(ctx context.Context, t io.StringWriter) error {
 			}
 			_, err = t.WriteString(line + "\n")
 			if err != nil {
-				f.Close()
 				return err
 			}
 		}
-		f.Close()
+		if err = scanner.Err(); err != nil {
+			return fmt.Errorf("RegeneratePublicKeys scan: %w", err)
+		}
 	}
 	return nil
 }

@@ -1,6 +1,6 @@
 {{range .RecentlyPushedNewBranches}}
-	<div class="ui positive message gt-df gt-ac">
-		<div class="gt-f1">
+	<div class="ui positive message tw-flex tw-items-center">
+		<div class="tw-flex-1">
 			{{$timeSince := TimeSince .CommitTime.AsTime ctx.Locale}}
 			{{$repo := .GetRepo $.Context}}
 			{{$name := .Name}}

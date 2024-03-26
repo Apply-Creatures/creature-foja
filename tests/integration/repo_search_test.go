@@ -46,7 +46,7 @@ func testSearchRepo(t *testing.T, useExternalIndexer bool) {
 
 	if useExternalIndexer {
 		gitReference = "/commit/"
-		executeIndexer(t, repo, code_indexer.UpdateRepoIndexer)
+		code_indexer.UpdateRepoIndexer(repo)
 	}
 
 	testSearch(t, "/user2/repo1/search?q=Description&page=1", gitReference, []string{"README.md"})
@@ -58,12 +58,14 @@ func testSearchRepo(t *testing.T, useExternalIndexer bool) {
 		repo, err = repo_model.GetRepositoryByOwnerAndName(db.DefaultContext, "user2", "glob")
 		assert.NoError(t, err)
 
-		executeIndexer(t, repo, code_indexer.UpdateRepoIndexer)
+		code_indexer.UpdateRepoIndexer(repo)
 
 		testSearch(t, "/user2/glob/search?q=loren&page=1", gitReference, []string{"a.txt"})
-		testSearch(t, "/user2/glob/search?q=file3&page=1", gitReference, []string{"x/b.txt"})
-		testSearch(t, "/user2/glob/search?q=file4&page=1", gitReference, []string{})
-		testSearch(t, "/user2/glob/search?q=file5&page=1", gitReference, []string{})
+		testSearch(t, "/user2/glob/search?q=loren&page=1&t=match", gitReference, []string{"a.txt"})
+		testSearch(t, "/user2/glob/search?q=file3&page=1", gitReference, []string{"x/b.txt", "a.txt"})
+		testSearch(t, "/user2/glob/search?q=file3&page=1&t=match", gitReference, []string{"x/b.txt", "a.txt"})
+		testSearch(t, "/user2/glob/search?q=file4&page=1&t=match", gitReference, []string{"x/b.txt", "a.txt"})
+		testSearch(t, "/user2/glob/search?q=file5&page=1&t=match", gitReference, []string{"x/b.txt", "a.txt"})
 	}
 }
 
@@ -87,8 +89,4 @@ func testSearch(t *testing.T, url, gitRef string, expected []string) {
 	assert.EqualValues(t, expected, filenames)
 
 	checkResultLinks(t, gitRef, doc)
-}
-
-func executeIndexer(t *testing.T, repo *repo_model.Repository, op func(*repo_model.Repository)) {
-	op(repo)
 }

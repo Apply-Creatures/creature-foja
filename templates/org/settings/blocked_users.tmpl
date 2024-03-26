@@ -1,7 +1,7 @@
 {{template "org/settings/layout_head" (dict "ctxData" . "pageClass" "organization settings blocked-users")}}
 <div class="org-setting-content">
 	<div class="ui attached segment">
-		<form class="ui form ignore-dirty gt-df gt-fw gt-gap-3" action="{{$.Link}}/block" method="post">
+		<form class="ui form ignore-dirty tw-flex tw-flex-wrap tw-gap-2" action="{{$.Link}}/block" method="post">
 			{{.CsrfTokenHtml}}
 			<input type="hidden" name="uid" value="">
 			<div class="ui left">
