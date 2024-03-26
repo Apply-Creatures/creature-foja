@@ -39,10 +39,11 @@
       "automerge": true
     },
     {
-      "description": "Update renovate only daily",
+      "description": "Update renovate only daily with higher prio to come through rate limit",
       "matchDatasources": ["docker"],
       "matchDepNames": ["ghcr.io/visualon/renovate"],
-      "extends": ["schedule:daily"]
+      "extends": ["schedule:daily"],
+      "prPriority": 10
     },
     {
       "description": "Disable actions/cascading-pr for now <https://github.com/renovatebot/renovate/issues/28120>",
