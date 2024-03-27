@@ -9,8 +9,8 @@ import (
 
 func AddUserRepoUnitHintsSetting(x *xorm.Engine) error {
 	type User struct {
-		ID                  int64
-		EnableRepoUnitHints bool `xorm:"NOT NULL DEFAULT true"`
+		ID                  int64 `xorm:"pk autoincr"`
+		EnableRepoUnitHints bool  `xorm:"NOT NULL DEFAULT true"`
 	}
 
 	return x.Sync(&User{})
