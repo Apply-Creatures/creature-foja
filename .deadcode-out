@@ -329,7 +329,6 @@ package "code.gitea.io/gitea/services/pull"
 
 package "code.gitea.io/gitea/services/repository"
 	func IsErrForkAlreadyExist
-	func UpdateRepositoryUnits
 
 package "code.gitea.io/gitea/services/repository/archiver"
 	func ArchiveRepository
