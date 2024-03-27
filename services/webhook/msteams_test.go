@@ -439,7 +439,7 @@ func TestMSTeamsJSONPayload(t *testing.T) {
 		PayloadVersion: 2,
 	}
 
-	req, reqBody, err := newMSTeamsRequest(context.Background(), hook, task)
+	req, reqBody, err := msteamsHandler{}.NewRequest(context.Background(), hook, task)
 	require.NotNil(t, req)
 	require.NotNil(t, reqBody)
 	require.NoError(t, err)

@@ -27,25 +27,46 @@ import (
 	"github.com/gobwas/glob"
 )
 
-var webhookRequesters = map[webhook_module.HookType]func(context.Context, *webhook_model.Webhook, *webhook_model.HookTask) (req *http.Request, body []byte, err error){
-	webhook_module.SLACK:      newSlackRequest,
-	webhook_module.DISCORD:    newDiscordRequest,
-	webhook_module.DINGTALK:   newDingtalkRequest,
-	webhook_module.TELEGRAM:   newTelegramRequest,
-	webhook_module.MSTEAMS:    newMSTeamsRequest,
-	webhook_module.FEISHU:     newFeishuRequest,
-	webhook_module.MATRIX:     newMatrixRequest,
-	webhook_module.WECHATWORK: newWechatworkRequest,
-	webhook_module.PACKAGIST:  newPackagistRequest,
+type Handler interface {
+	Type() webhook_module.HookType
+	NewRequest(context.Context, *webhook_model.Webhook, *webhook_model.HookTask) (req *http.Request, body []byte, err error)
+	Metadata(*webhook_model.Webhook) any
+}
+
+var webhookHandlers = []Handler{
+	defaultHandler{true},
+	defaultHandler{false},
+	gogsHandler{},
+
+	slackHandler{},
+	discordHandler{},
+	dingtalkHandler{},
+	telegramHandler{},
+	msteamsHandler{},
+	feishuHandler{},
+	matrixHandler{},
+	wechatworkHandler{},
+	packagistHandler{},
+}
+
+// GetWebhookHandler return the handler for a given webhook type (nil if not found)
+func GetWebhookHandler(name webhook_module.HookType) Handler {
+	for _, h := range webhookHandlers {
+		if h.Type() == name {
+			return h
+		}
+	}
+	return nil
+}
+
+// List provides a list of the supported webhooks
+func List() []Handler {
+	return webhookHandlers
 }
 
 // IsValidHookTaskType returns true if a webhook registered
 func IsValidHookTaskType(name string) bool {
-	if name == webhook_module.FORGEJO || name == webhook_module.GITEA || name == webhook_module.GOGS {
-		return true
-	}
-	_, ok := webhookRequesters[name]
-	return ok
+	return GetWebhookHandler(name) != nil
 }
 
 // hookQueue is a global queue of web hooks

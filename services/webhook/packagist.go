@@ -11,7 +11,12 @@ import (
 	webhook_model "code.gitea.io/gitea/models/webhook"
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
+	webhook_module "code.gitea.io/gitea/modules/webhook"
 )
+
+type packagistHandler struct{}
+
+func (packagistHandler) Type() webhook_module.HookType { return webhook_module.PACKAGIST }
 
 type (
 	// PackagistPayload represents a packagist payload
@@ -30,20 +35,20 @@ type (
 	}
 )
 
-// GetPackagistHook returns packagist metadata
-func GetPackagistHook(w *webhook_model.Webhook) *PackagistMeta {
+// Metadata returns packagist metadata
+func (packagistHandler) Metadata(w *webhook_model.Webhook) any {
 	s := &PackagistMeta{}
 	if err := json.Unmarshal([]byte(w.Meta), s); err != nil {
-		log.Error("webhook.GetPackagistHook(%d): %v", w.ID, err)
+		log.Error("packagistHandler.Metadata(%d): %v", w.ID, err)
 	}
 	return s
 }
 
 // newPackagistRequest creates a request with the [PackagistPayload] for packagist (same payload for all events).
-func newPackagistRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
+func (packagistHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
 	meta := &PackagistMeta{}
 	if err := json.Unmarshal([]byte(w.Meta), meta); err != nil {
-		return nil, nil, fmt.Errorf("newpackagistRequest meta json: %w", err)
+		return nil, nil, fmt.Errorf("packagistHandler.NewRequest meta json: %w", err)
 	}
 
 	payload := PackagistPayload{

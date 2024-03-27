@@ -20952,11 +20952,16 @@
           "x-go-name": "BranchFilter"
         },
         "config": {
+          "description": "Deprecated: use Metadata instead",
           "type": "object",
           "additionalProperties": {
             "type": "string"
           },
           "x-go-name": "Config"
+        },
+        "content_type": {
+          "type": "string",
+          "x-go-name": "ContentType"
         },
         "created_at": {
           "type": "string",
@@ -20975,6 +20980,9 @@
           "format": "int64",
           "x-go-name": "ID"
         },
+        "metadata": {
+          "x-go-name": "Metadata"
+        },
         "type": {
           "type": "string",
           "x-go-name": "Type"
@@ -20983,6 +20991,10 @@
           "type": "string",
           "format": "date-time",
           "x-go-name": "Updated"
+        },
+        "url": {
+          "type": "string",
+          "x-go-name": "URL"
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"

@@ -17,6 +17,11 @@ import (
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 )
 
+type msteamsHandler struct{}
+
+func (msteamsHandler) Type() webhook_module.HookType       { return webhook_module.MSTEAMS }
+func (msteamsHandler) Metadata(*webhook_model.Webhook) any { return nil }
+
 type (
 	// MSTeamsFact for Fact Structure
 	MSTeamsFact struct {
@@ -347,6 +352,6 @@ type msteamsConvertor struct{}
 
 var _ payloadConvertor[MSTeamsPayload] = msteamsConvertor{}
 
-func newMSTeamsRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
+func (msteamsHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
 	return newJSONRequest(msteamsConvertor{}, w, t, true)
 }

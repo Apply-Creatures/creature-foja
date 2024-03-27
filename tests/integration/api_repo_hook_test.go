@@ -40,5 +40,6 @@ func TestAPICreateHook(t *testing.T) {
 	var apiHook *api.Hook
 	DecodeJSON(t, resp, &apiHook)
 	assert.Equal(t, "http://example.com/", apiHook.Config["url"])
+	assert.Equal(t, "http://example.com/", apiHook.URL)
 	assert.Equal(t, "Bearer s3cr3t", apiHook.AuthorizationHeader)
 }

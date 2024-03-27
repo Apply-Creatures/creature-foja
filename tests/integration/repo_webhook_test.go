@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	gitea_context "code.gitea.io/gitea/services/context"
+	"code.gitea.io/gitea/services/webhook"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/PuerkitoBio/goquery"
@@ -21,7 +22,7 @@ func TestNewWebHookLink(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	session := loginUser(t, "user2")
 
-	webhooksLen := 12
+	webhooksLen := len(webhook.List())
 	baseurl := "/user2/repo1/settings/hooks"
 	tests := []string{
 		// webhook list page

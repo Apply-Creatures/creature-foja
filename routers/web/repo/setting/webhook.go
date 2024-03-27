@@ -637,17 +637,9 @@ func checkWebhook(ctx *context.Context) (*ownerRepoCtx, *webhook.Webhook) {
 	}
 
 	ctx.Data["HookType"] = w.Type
-	switch w.Type {
-	case webhook_module.SLACK:
-		ctx.Data["SlackHook"] = webhook_service.GetSlackHook(w)
-	case webhook_module.DISCORD:
-		ctx.Data["DiscordHook"] = webhook_service.GetDiscordHook(w)
-	case webhook_module.TELEGRAM:
-		ctx.Data["TelegramHook"] = webhook_service.GetTelegramHook(w)
-	case webhook_module.MATRIX:
-		ctx.Data["MatrixHook"] = webhook_service.GetMatrixHook(w)
-	case webhook_module.PACKAGIST:
-		ctx.Data["PackagistHook"] = webhook_service.GetPackagistHook(w)
+
+	if handler := webhook_service.GetWebhookHandler(w.Type); handler != nil {
+		ctx.Data["HookMetadata"] = handler.Metadata(w)
 	}
 
 	ctx.Data["History"], err = w.History(ctx, 1)

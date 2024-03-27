@@ -17,6 +17,10 @@ import (
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 )
 
+type telegramHandler struct{}
+
+func (telegramHandler) Type() webhook_module.HookType { return webhook_module.TELEGRAM }
+
 type (
 	// TelegramPayload represents
 	TelegramPayload struct {
@@ -33,11 +37,11 @@ type (
 	}
 )
 
-// GetTelegramHook returns telegram metadata
-func GetTelegramHook(w *webhook_model.Webhook) *TelegramMeta {
+// Metadata returns telegram metadata
+func (telegramHandler) Metadata(w *webhook_model.Webhook) any {
 	s := &TelegramMeta{}
 	if err := json.Unmarshal([]byte(w.Meta), s); err != nil {
-		log.Error("webhook.GetTelegramHook(%d): %v", w.ID, err)
+		log.Error("telegramHandler.Metadata(%d): %v", w.ID, err)
 	}
 	return s
 }
@@ -191,6 +195,6 @@ type telegramConvertor struct{}
 
 var _ payloadConvertor[TelegramPayload] = telegramConvertor{}
 
-func newTelegramRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
+func (telegramHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
 	return newJSONRequest(telegramConvertor{}, w, t, true)
 }

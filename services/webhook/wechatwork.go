@@ -15,6 +15,11 @@ import (
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 )
 
+type wechatworkHandler struct{}
+
+func (wechatworkHandler) Type() webhook_module.HookType       { return webhook_module.WECHATWORK }
+func (wechatworkHandler) Metadata(*webhook_model.Webhook) any { return nil }
+
 type (
 	// WechatworkPayload represents
 	WechatworkPayload struct {
@@ -177,6 +182,6 @@ type wechatworkConvertor struct{}
 
 var _ payloadConvertor[WechatworkPayload] = wechatworkConvertor{}
 
-func newWechatworkRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
+func (wechatworkHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
 	return newJSONRequest(wechatworkConvertor{}, w, t, true)
 }

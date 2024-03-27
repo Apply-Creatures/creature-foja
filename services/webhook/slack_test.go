@@ -178,7 +178,7 @@ func TestSlackJSONPayload(t *testing.T) {
 		PayloadVersion: 2,
 	}
 
-	req, reqBody, err := newSlackRequest(context.Background(), hook, task)
+	req, reqBody, err := slackHandler{}.NewRequest(context.Background(), hook, task)
 	require.NotNil(t, req)
 	require.NotNil(t, reqBody)
 	require.NoError(t, err)
@@ -210,4 +210,55 @@ func TestIsValidSlackChannel(t *testing.T) {
 	for _, v := range tt {
 		assert.Equal(t, v.expected, IsValidSlackChannel(v.channelName))
 	}
+}
+
+func TestSlackMetadata(t *testing.T) {
+	w := &webhook_model.Webhook{
+		Meta: `{"channel": "foo", "username": "username", "color": "blue"}`,
+	}
+	slackHook := slackHandler{}.Metadata(w)
+	assert.Equal(t, *slackHook.(*SlackMeta), SlackMeta{
+		Channel:  "foo",
+		Username: "username",
+		Color:    "blue",
+	})
+}
+
+func TestSlackToHook(t *testing.T) {
+	w := &webhook_model.Webhook{
+		Type:        webhook_module.SLACK,
+		ContentType: webhook_model.ContentTypeJSON,
+		URL:         "https://slack.example.com",
+		Meta:        `{"channel": "foo", "username": "username", "color": "blue"}`,
+		HookEvent: &webhook_module.HookEvent{
+			PushOnly:       true,
+			SendEverything: false,
+			ChooseEvents:   false,
+			HookEvents: webhook_module.HookEvents{
+				Create:      false,
+				Push:        true,
+				PullRequest: false,
+			},
+		},
+	}
+	h, err := ToHook("repoLink", w)
+	assert.NoError(t, err)
+
+	assert.Equal(t, h.Config, map[string]string{
+		"url":          "https://slack.example.com",
+		"content_type": "json",
+
+		"channel":  "foo",
+		"color":    "blue",
+		"icon_url": "",
+		"username": "username",
+	})
+	assert.Equal(t, h.URL, "https://slack.example.com")
+	assert.Equal(t, h.ContentType, "json")
+	assert.Equal(t, h.Metadata, &SlackMeta{
+		Channel:  "foo",
+		Username: "username",
+		IconURL:  "",
+		Color:    "blue",
+	})
 }
