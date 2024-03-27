@@ -79,8 +79,8 @@ func GetInclude(field reflect.StructField) string {
 	return getRuleBody(field, "Include(")
 }
 
-// Validate validate TODO:
-func Validate(errs binding.Errors, data map[string]any, f Form, l translation.Locale) binding.Errors {
+// Validate populates the data with validation error (if any).
+func Validate(errs binding.Errors, data map[string]any, f any, l translation.Locale) binding.Errors {
 	if errs.Len() == 0 {
 		return errs
 	}

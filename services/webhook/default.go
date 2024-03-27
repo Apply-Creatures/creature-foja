@@ -18,6 +18,7 @@ import (
 	webhook_model "code.gitea.io/gitea/models/webhook"
 	"code.gitea.io/gitea/modules/log"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
+	"code.gitea.io/gitea/services/forms"
 )
 
 var _ Handler = defaultHandler{}
@@ -34,6 +35,30 @@ func (dh defaultHandler) Type() webhook_module.HookType {
 }
 
 func (defaultHandler) Metadata(*webhook_model.Webhook) any { return nil }
+
+func (defaultHandler) FormFields(bind func(any)) FormFields {
+	var form struct {
+		forms.WebhookForm
+		PayloadURL  string `binding:"Required;ValidUrl"`
+		HTTPMethod  string `binding:"Required;In(POST,GET)"`
+		ContentType int    `binding:"Required"`
+		Secret      string
+	}
+	bind(&form)
+
+	contentType := webhook_model.ContentTypeJSON
+	if webhook_model.HookContentType(form.ContentType) == webhook_model.ContentTypeForm {
+		contentType = webhook_model.ContentTypeForm
+	}
+	return FormFields{
+		WebhookForm: form.WebhookForm,
+		URL:         form.PayloadURL,
+		ContentType: contentType,
+		Secret:      form.Secret,
+		HTTPMethod:  form.HTTPMethod,
+		Metadata:    nil,
+	}
+}
 
 func (defaultHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (req *http.Request, body []byte, err error) {
 	switch w.HTTPMethod {

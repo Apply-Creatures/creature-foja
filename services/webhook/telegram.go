@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	webhook_model "code.gitea.io/gitea/models/webhook"
@@ -15,11 +16,35 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	api "code.gitea.io/gitea/modules/structs"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
+	"code.gitea.io/gitea/services/forms"
 )
 
 type telegramHandler struct{}
 
 func (telegramHandler) Type() webhook_module.HookType { return webhook_module.TELEGRAM }
+
+func (telegramHandler) FormFields(bind func(any)) FormFields {
+	var form struct {
+		forms.WebhookForm
+		BotToken string `binding:"Required"`
+		ChatID   string `binding:"Required"`
+		ThreadID string
+	}
+	bind(&form)
+
+	return FormFields{
+		WebhookForm: form.WebhookForm,
+		URL:         fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage?chat_id=%s&message_thread_id=%s", url.PathEscape(form.BotToken), url.QueryEscape(form.ChatID), url.QueryEscape(form.ThreadID)),
+		ContentType: webhook_model.ContentTypeJSON,
+		Secret:      "",
+		HTTPMethod:  http.MethodPost,
+		Metadata: &TelegramMeta{
+			BotToken: form.BotToken,
+			ChatID:   form.ChatID,
+			ThreadID: form.ThreadID,
+		},
+	}
+}
 
 type (
 	// TelegramPayload represents

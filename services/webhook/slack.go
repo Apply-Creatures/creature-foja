@@ -17,11 +17,58 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
+	gitea_context "code.gitea.io/gitea/services/context"
+	"code.gitea.io/gitea/services/forms"
+
+	"gitea.com/go-chi/binding"
 )
 
 type slackHandler struct{}
 
 func (slackHandler) Type() webhook_module.HookType { return webhook_module.SLACK }
+
+type slackForm struct {
+	forms.WebhookForm
+	PayloadURL string `binding:"Required;ValidUrl"`
+	Channel    string `binding:"Required"`
+	Username   string
+	IconURL    string
+	Color      string
+}
+
+var _ binding.Validator = &slackForm{}
+
+// Validate implements binding.Validator.
+func (s *slackForm) Validate(req *http.Request, errs binding.Errors) binding.Errors {
+	ctx := gitea_context.GetWebContext(req)
+	if !IsValidSlackChannel(strings.TrimSpace(s.Channel)) {
+		errs = append(errs, binding.Error{
+			FieldNames:     []string{"Channel"},
+			Classification: "",
+			Message:        ctx.Locale.TrString("repo.settings.add_webhook.invalid_channel_name"),
+		})
+	}
+	return errs
+}
+
+func (slackHandler) FormFields(bind func(any)) FormFields {
+	var form slackForm
+	bind(&form)
+
+	return FormFields{
+		WebhookForm: form.WebhookForm,
+		URL:         form.PayloadURL,
+		ContentType: webhook_model.ContentTypeJSON,
+		Secret:      "",
+		HTTPMethod:  http.MethodPost,
+		Metadata: &SlackMeta{
+			Channel:  strings.TrimSpace(form.Channel),
+			Username: form.Username,
+			IconURL:  form.IconURL,
+			Color:    form.Color,
+		},
+	}
+}
 
 // SlackMeta contains the slack metadata
 type SlackMeta struct {

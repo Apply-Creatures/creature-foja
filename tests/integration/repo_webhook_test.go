@@ -203,8 +203,8 @@ func TestWebhookForms(t *testing.T) {
 		"homeserver_url":       "https://matrix.example.com",
 		"room_id":              "123",
 		"authorization_header": "Bearer 123456",
-		// }, map[string]string{ // authorization_header is actually required, but not enforced (yet)
-		// "authorization_header": "",
+	}, map[string]string{
+		"authorization_header": "",
 	}))
 	t.Run("matrix/optional", testWebhookForms("matrix", session, map[string]string{
 		"homeserver_url": "https://matrix.example.com",

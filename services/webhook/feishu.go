@@ -13,11 +13,30 @@ import (
 	"code.gitea.io/gitea/modules/git"
 	api "code.gitea.io/gitea/modules/structs"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
+	"code.gitea.io/gitea/services/forms"
 )
 
 type feishuHandler struct{}
 
-func (feishuHandler) Type() webhook_module.HookType       { return webhook_module.FEISHU }
+func (feishuHandler) Type() webhook_module.HookType { return webhook_module.FEISHU }
+
+func (feishuHandler) FormFields(bind func(any)) FormFields {
+	var form struct {
+		forms.WebhookForm
+		PayloadURL string `binding:"Required;ValidUrl"`
+	}
+	bind(&form)
+
+	return FormFields{
+		WebhookForm: form.WebhookForm,
+		URL:         form.PayloadURL,
+		ContentType: webhook_model.ContentTypeJSON,
+		Secret:      "",
+		HTTPMethod:  http.MethodPost,
+		Metadata:    nil,
+	}
+}
+
 func (feishuHandler) Metadata(*webhook_model.Webhook) any { return nil }
 
 type (

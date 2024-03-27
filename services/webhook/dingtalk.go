@@ -15,6 +15,7 @@ import (
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/util"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
+	"code.gitea.io/gitea/services/forms"
 
 	dingtalk "gitea.com/lunny/dingtalk_webhook"
 )
@@ -23,6 +24,22 @@ type dingtalkHandler struct{}
 
 func (dingtalkHandler) Type() webhook_module.HookType       { return webhook_module.DINGTALK }
 func (dingtalkHandler) Metadata(*webhook_model.Webhook) any { return nil }
+func (dingtalkHandler) FormFields(bind func(any)) FormFields {
+	var form struct {
+		forms.WebhookForm
+		PayloadURL string `binding:"Required;ValidUrl"`
+	}
+	bind(&form)
+
+	return FormFields{
+		WebhookForm: form.WebhookForm,
+		URL:         form.PayloadURL,
+		ContentType: webhook_model.ContentTypeJSON,
+		Secret:      "",
+		HTTPMethod:  http.MethodPost,
+		Metadata:    nil,
+	}
+}
 
 type (
 	// DingtalkPayload represents
