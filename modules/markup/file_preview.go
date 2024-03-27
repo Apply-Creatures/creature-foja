@@ -37,7 +37,7 @@ type FilePreview struct {
 }
 
 func NewFilePreview(ctx *RenderContext, node *html.Node, locale translation.Locale) *FilePreview {
-	if (setting.FilePreviewMaxLines == 0) {
+	if setting.FilePreviewMaxLines == 0 {
 		// Feature is disabled
 		return nil
 	}
@@ -84,7 +84,6 @@ func NewFilePreview(ctx *RenderContext, node *html.Node, locale translation.Loca
 	}
 
 	lineSpecs := strings.Split(hash, "-")
-	// lineCount := len(fileContent)
 
 	commitLinkBuffer := new(bytes.Buffer)
 	err = html.Render(commitLinkBuffer, createLink(node.Data[m[0]:m[5]], commitSha[0:7], "text black"))
@@ -97,11 +96,6 @@ func NewFilePreview(ctx *RenderContext, node *html.Node, locale translation.Loca
 	if len(lineSpecs) == 1 {
 		startLine, _ = strconv.Atoi(strings.TrimPrefix(lineSpecs[0], "L"))
 		endLine = startLine
-		// if line < 1 || line > lineCount {
-		// 	return nil
-		// }
-
-		// preview.fileContent = fileContent[line-1 : line]
 		preview.subTitle = locale.Tr(
 			"markup.filepreview.line", startLine,
 			template.HTML(commitLinkBuffer.String()),
@@ -111,12 +105,6 @@ func NewFilePreview(ctx *RenderContext, node *html.Node, locale translation.Loca
 	} else {
 		startLine, _ = strconv.Atoi(strings.TrimPrefix(lineSpecs[0], "L"))
 		endLine, _ = strconv.Atoi(strings.TrimPrefix(lineSpecs[1], "L"))
-
-		// if startLine < 1 || endLine < 1 || startLine > lineCount || endLine > lineCount || endLine < startLine {
-		// 	return nil
-		// }
-
-		// preview.fileContent = fileContent[startLine-1 : endLine]
 		preview.subTitle = locale.Tr(
 			"markup.filepreview.lines", startLine, endLine,
 			template.HTML(commitLinkBuffer.String()),
@@ -125,7 +113,7 @@ func NewFilePreview(ctx *RenderContext, node *html.Node, locale translation.Loca
 		preview.lineOffset = startLine - 1
 	}
 
-	lineCount := endLine - (startLine-1)
+	lineCount := endLine - (startLine - 1)
 	if startLine < 1 || endLine < 1 || lineCount < 1 {
 		return nil
 	}
@@ -156,7 +144,7 @@ func NewFilePreview(ctx *RenderContext, node *html.Node, locale translation.Loca
 	for i := 0; i < lineCount; i++ {
 		buf, err := reader.ReadBytes('\n')
 		if err != nil {
-			break;
+			break
 		}
 		lineBuffer.Write(buf)
 	}
@@ -316,7 +304,7 @@ func (p *FilePreview) CreateHTML(locale translation.Locale) *html.Node {
 	}
 	node.AppendChild(header)
 
-	if (p.isTruncated) {
+	if p.isTruncated {
 		warning := &html.Node{
 			Type: html.ElementNode,
 			Data: atom.Div.String(),
