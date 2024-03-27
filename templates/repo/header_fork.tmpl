@@ -13,7 +13,7 @@
 		<a class="ui compact{{if $.ShowForkModal}} show-modal{{end}} small basic button"
 			{{if not $.CanSignedUserFork}}
 				{{if gt (len $.UserAndOrgForks) 1}}
-					data-modal="#fork-repo-modal"
+					href="#" data-modal="#fork-repo-modal"
 				{{else if eq (len $.UserAndOrgForks) 1}}
 					href="{{AppSubUrl}}/{{(index $.UserAndOrgForks 0).FullName}}"
 				{{/*else is not required here, because the button shouldn't link to any site if you can't create a fork*/}}
@@ -21,10 +21,10 @@
 			{{else if not $.UserAndOrgForks}}
 				href="{{$.RepoLink}}/fork"
 			{{else}}
-				data-modal="#fork-repo-modal"
+				href="#" data-modal="#fork-repo-modal"
 			{{end}}
 		>
-			{{svg "octicon-repo-forked"}}<span class="text">{{ctx.Locale.Tr "repo.fork"}}</span>
+			{{svg "octicon-repo-forked"}}<span class="text not-mobile">{{ctx.Locale.Tr "repo.fork"}}</span>
 		</a>
 		<div class="ui small modal" id="fork-repo-modal">
 			<div class="header">
