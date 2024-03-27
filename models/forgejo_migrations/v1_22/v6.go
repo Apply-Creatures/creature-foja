@@ -9,7 +9,7 @@ import (
 
 func AddWikiBranchToRepository(x *xorm.Engine) error {
 	type Repository struct {
-		ID         int64
+		ID         int64 `xorm:"pk autoincr"`
 		WikiBranch string
 	}
 
