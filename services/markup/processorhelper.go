@@ -66,6 +66,7 @@ func ProcessorHelper() *markup.ProcessorHelper {
 			if err != nil {
 				return nil, err
 			}
+			defer gitRepo.Close()
 
 			commit, err := gitRepo.GetCommit(commitSha)
 			if err != nil {
