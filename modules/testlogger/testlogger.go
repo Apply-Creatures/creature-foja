@@ -128,6 +128,11 @@ func (w *testLoggerWriterCloser) recordError(msg string) {
 		err = w.errs[len(w.errs)-1]
 	}
 
+	if len(w.t) > 0 {
+		// format error message to easily add it to the ignore list
+		msg = fmt.Sprintf("// %s\n\t`%s`,", w.t[len(w.t)-1].Name(), msg)
+	}
+
 	err = errors.Join(err, errors.New(msg))
 
 	if len(w.errs) > 0 {

@@ -4,8 +4,11 @@ package integration
 
 import (
 	gocontext "context"
+	"errors"
+	"io"
 	"net/url"
 	"os"
+	"os/exec"
 	"strings"
 	"testing"
 
@@ -19,16 +22,18 @@ import (
 
 func Test_CmdForgejo_Actions(t *testing.T) {
 	onGiteaRun(t, func(*testing.T, *url.URL) {
-		token, err := cmdForgejoCaptureOutput(t, []string{"forgejo", "forgejo-cli", "actions", "generate-runner-token"})
+		token, err := runMainApp("forgejo-cli", "actions", "generate-runner-token")
 		assert.NoError(t, err)
 		assert.EqualValues(t, 40, len(token))
 
-		secret, err := cmdForgejoCaptureOutput(t, []string{"forgejo", "forgejo-cli", "actions", "generate-secret"})
+		secret, err := runMainApp("forgejo-cli", "actions", "generate-secret")
 		assert.NoError(t, err)
 		assert.EqualValues(t, 40, len(secret))
 
-		_, err = cmdForgejoCaptureOutput(t, []string{"forgejo", "forgejo-cli", "actions", "register"})
-		assert.ErrorContains(t, err, "at least one of the --secret")
+		_, err = runMainApp("forgejo-cli", "actions", "register")
+		var exitErr *exec.ExitError
+		assert.True(t, errors.As(err, &exitErr))
+		assert.Contains(t, string(exitErr.Stderr), "at least one of the --secret")
 
 		for _, testCase := range []struct {
 			testName     string
@@ -62,10 +67,12 @@ func Test_CmdForgejo_Actions(t *testing.T) {
 			},
 		} {
 			t.Run(testCase.testName, func(t *testing.T) {
-				cmd := []string{"forgejo", "forgejo-cli", "actions", "register", "--secret", testCase.secret, "--scope", testCase.scope}
-				output, err := cmdForgejoCaptureOutput(t, cmd)
-				assert.ErrorContains(t, err, testCase.errorMessage)
+				output, err := runMainApp("forgejo-cli", "actions", "register", "--secret", testCase.secret, "--scope", testCase.scope)
 				assert.EqualValues(t, "", output)
+
+				var exitErr *exec.ExitError
+				assert.True(t, errors.As(err, &exitErr))
+				assert.Contains(t, string(exitErr.Stderr), testCase.errorMessage)
 			})
 		}
 
@@ -75,7 +82,7 @@ func Test_CmdForgejo_Actions(t *testing.T) {
 		for _, testCase := range []struct {
 			testName     string
 			secretOption func() string
-			stdin        []string
+			stdin        io.Reader
 		}{
 			{
 				testName: "secret from argument",
@@ -88,7 +95,7 @@ func Test_CmdForgejo_Actions(t *testing.T) {
 				secretOption: func() string {
 					return "--secret-stdin"
 				},
-				stdin: []string{secret},
+				stdin: strings.NewReader(secret),
 			},
 			{
 				testName: "secret from file",
@@ -100,8 +107,7 @@ func Test_CmdForgejo_Actions(t *testing.T) {
 			},
 		} {
 			t.Run(testCase.testName, func(t *testing.T) {
-				cmd := []string{"forgejo", "forgejo-cli", "actions", "register", testCase.secretOption(), "--scope=org26"}
-				uuid, err := cmdForgejoCaptureOutput(t, cmd, testCase.stdin...)
+				uuid, err := runMainAppWithStdin(testCase.stdin, "forgejo-cli", "actions", "register", testCase.secretOption(), "--scope=org26")
 				assert.NoError(t, err)
 				assert.EqualValues(t, expecteduuid, uuid)
 			})
@@ -161,7 +167,7 @@ func Test_CmdForgejo_Actions(t *testing.T) {
 		} {
 			t.Run(testCase.testName, func(t *testing.T) {
 				cmd := []string{
-					"forgejo", "forgejo-cli", "actions", "register",
+					"actions", "register",
 					"--secret", testCase.secret, "--scope", testCase.scope,
 				}
 				if testCase.name != "" {
@@ -177,7 +183,7 @@ func Test_CmdForgejo_Actions(t *testing.T) {
 				// Run twice to verify it is idempotent
 				//
 				for i := 0; i < 2; i++ {
-					uuid, err := cmdForgejoCaptureOutput(t, cmd)
+					uuid, err := runMainApp("forgejo-cli", cmd...)
 					assert.NoError(t, err)
 					if assert.EqualValues(t, testCase.uuid, uuid) {
 						ownerName, repoName, found := strings.Cut(testCase.scope, "/")
