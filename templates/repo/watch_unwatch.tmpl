@@ -2,9 +2,9 @@
 	<div class="ui labeled button" {{if not $.IsSigned}}data-tooltip-content="{{ctx.Locale.Tr "repo.watch_guest_user"}}"{{end}}>
 		<button type="submit" class="ui compact small basic button"{{if not $.IsSigned}} disabled{{end}}>
 			{{if $.IsWatchingRepo}}
-				{{svg "octicon-eye-closed" 16}}<span class="text">{{ctx.Locale.Tr "repo.unwatch"}}</span>
+				{{svg "octicon-eye-closed" 16}}<span class="text not-mobile">{{ctx.Locale.Tr "repo.unwatch"}}</span>
 			{{else}}
-				{{svg "octicon-eye"}}<span class="text">{{ctx.Locale.Tr "repo.watch"}}</span>
+				{{svg "octicon-eye"}}<span class="text not-mobile">{{ctx.Locale.Tr "repo.watch"}}</span>
 			{{end}}
 		</button>
 		<a hx-boost="false" class="ui basic label" href="{{.RepoLink}}/watchers">

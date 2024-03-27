@@ -2,9 +2,9 @@
 	<div class="ui labeled button" {{if not $.IsSigned}}data-tooltip-content="{{ctx.Locale.Tr "repo.star_guest_user"}}"{{end}}>
 		<button type="submit" class="ui compact small basic button"{{if not $.IsSigned}} disabled{{end}}>
 			{{if $.IsStaringRepo}}
-				{{svg "octicon-star-fill"}}<span class="text">{{ctx.Locale.Tr "repo.unstar"}}</span>
+				{{svg "octicon-star-fill"}}<span class="text not-mobile">{{ctx.Locale.Tr "repo.unstar"}}</span>
 			{{else}}
-				{{svg "octicon-star"}}<span class="text">{{ctx.Locale.Tr "repo.star"}}</span>
+				{{svg "octicon-star"}}<span class="text not-mobile">{{ctx.Locale.Tr "repo.star"}}</span>
 			{{end}}
 		</button>
 		<a hx-boost="false" class="ui basic label" href="{{$.RepoLink}}/stars">
