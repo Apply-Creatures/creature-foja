@@ -7,6 +7,7 @@ package gitdiff
 import (
 	"bufio"
 	"bytes"
+	"cmp"
 	"context"
 	"fmt"
 	"html"
@@ -1172,38 +1173,32 @@ func GetDiff(ctx context.Context, gitRepo *git.Repository, opts *DiffOptions, fi
 	}
 	diff.Start = opts.SkipTo
 
-	checker, deferable := gitRepo.CheckAttributeReader(opts.AfterCommitID)
-	defer deferable()
+	checker, err := gitRepo.GitAttributeChecker(opts.AfterCommitID, git.LinguistAttributes...)
+	if err != nil {
+		return nil, fmt.Errorf("unable to GitAttributeChecker: %w", err)
+	}
+	defer checker.Close()
 
 	for _, diffFile := range diff.Files {
-
 		gotVendor := false
 		gotGenerated := false
-		if checker != nil {
-			attrs, err := checker.CheckPath(diffFile.Name)
-			if err == nil {
-				if vendored, has := attrs["linguist-vendored"]; has {
-					if vendored == "set" || vendored == "true" {
-						diffFile.IsVendored = true
-						gotVendor = true
-					} else {
-						gotVendor = vendored == "false"
-					}
-				}
-				if generated, has := attrs["linguist-generated"]; has {
-					if generated == "set" || generated == "true" {
-						diffFile.IsGenerated = true
-						gotGenerated = true
-					} else {
-						gotGenerated = generated == "false"
-					}
-				}
-				if language, has := attrs["linguist-language"]; has && language != "unspecified" && language != "" {
-					diffFile.Language = language
-				} else if language, has := attrs["gitlab-language"]; has && language != "unspecified" && language != "" {
-					diffFile.Language = language
-				}
-			}
+
+		attrs, err := checker.CheckPath(diffFile.Name)
+		if err != nil {
+			log.Error("checker.CheckPath(%s) failed: %v", diffFile.Name, err)
+		} else {
+			vendored := attrs["linguist-vendored"].Bool()
+			diffFile.IsVendored = vendored.Value()
+			gotVendor = vendored.Has()
+
+			generated := attrs["linguist-generated"].Bool()
+			diffFile.IsGenerated = generated.Value()
+			gotGenerated = generated.Has()
+
+			diffFile.Language = cmp.Or(
+				attrs["linguist-language"].String(),
+				attrs["gitlab-language"].Prefix(),
+			)
 		}
 
 		if !gotVendor {

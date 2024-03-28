@@ -643,17 +643,12 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 	}
 
 	if ctx.Repo.GitRepo != nil {
-		checker, deferable := ctx.Repo.GitRepo.CheckAttributeReader(ctx.Repo.CommitID)
-		if checker != nil {
-			defer deferable()
-			attrs, err := checker.CheckPath(ctx.Repo.TreePath)
-			if err == nil {
-				vendored, has := attrs["linguist-vendored"]
-				ctx.Data["IsVendored"] = has && (vendored == "set" || vendored == "true")
-
-				generated, has := attrs["linguist-generated"]
-				ctx.Data["IsGenerated"] = has && (generated == "set" || generated == "true")
-			}
+		attrs, err := ctx.Repo.GitRepo.GitAttributes(ctx.Repo.CommitID, ctx.Repo.TreePath, "linguist-vendored", "linguist-generated")
+		if err != nil {
+			log.Error("GitAttributes(%s, %s) failed: %v", ctx.Repo.CommitID, ctx.Repo.TreePath, err)
+		} else {
+			ctx.Data["IsVendored"] = attrs["linguist-vendored"].Bool().Value()
+			ctx.Data["IsGenerated"] = attrs["linguist-generated"].Bool().Value()
 		}
 	}
 
