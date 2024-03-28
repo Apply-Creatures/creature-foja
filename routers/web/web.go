@@ -400,15 +400,6 @@ func registerRoutes(m *web.Route) {
 		}
 	}
 
-	addWebhookAddRoutes := func() {
-		m.Get("/{type}/new", repo_setting.WebhooksNew)
-		m.Post("/{type}/new", repo_setting.WebhookCreate)
-	}
-
-	addWebhookEditRoutes := func() {
-		m.Post("/{type}/{id:[0-9]+}", repo_setting.WebhookUpdate)
-	}
-
 	addSettingsVariablesRoutes := func() {
 		m.Group("/variables", func() {
 			m.Get("", repo_setting.Variables)
@@ -618,12 +609,13 @@ func registerRoutes(m *web.Route) {
 		m.Group("/hooks", func() {
 			m.Get("", user_setting.Webhooks)
 			m.Post("/delete", user_setting.DeleteWebhook)
-			addWebhookAddRoutes()
+			m.Get("/{type}/new", repo_setting.WebhookNew)
+			m.Post("/{type}/new", repo_setting.WebhookCreate)
 			m.Group("/{id}", func() {
-				m.Get("", repo_setting.WebHooksEdit)
-				m.Post("/replay/{uuid}", repo_setting.ReplayWebhook)
+				m.Get("", repo_setting.WebhookEdit)
+				m.Post("", repo_setting.WebhookUpdate)
+				m.Post("/replay/{uuid}", repo_setting.WebhookReplay)
 			})
-			addWebhookEditRoutes()
 		}, webhooksEnabled)
 
 		m.Group("/blocked_users", func() {
@@ -722,14 +714,15 @@ func registerRoutes(m *web.Route) {
 			m.Get("", admin.DefaultOrSystemWebhooks)
 			m.Post("/delete", admin.DeleteDefaultOrSystemWebhook)
 			m.Group("/{id}", func() {
-				m.Get("", repo_setting.WebHooksEdit)
-				m.Post("/replay/{uuid}", repo_setting.ReplayWebhook)
+				m.Get("", repo_setting.WebhookEdit)
+				m.Post("", repo_setting.WebhookUpdate)
+				m.Post("/replay/{uuid}", repo_setting.WebhookReplay)
 			})
-			addWebhookEditRoutes()
 		}, webhooksEnabled)
 
 		m.Group("/{configType:default-hooks|system-hooks}", func() {
-			addWebhookAddRoutes()
+			m.Get("/{type}/new", repo_setting.WebhookNew)
+			m.Post("/{type}/new", repo_setting.WebhookCreate)
 		})
 
 		m.Group("/auths", func() {
@@ -887,12 +880,13 @@ func registerRoutes(m *web.Route) {
 				m.Group("/hooks", func() {
 					m.Get("", org.Webhooks)
 					m.Post("/delete", org.DeleteWebhook)
-					addWebhookAddRoutes()
+					m.Get("/{type}/new", repo_setting.WebhookNew)
+					m.Post("/{type}/new", repo_setting.WebhookCreate)
 					m.Group("/{id}", func() {
-						m.Get("", repo_setting.WebHooksEdit)
-						m.Post("/replay/{uuid}", repo_setting.ReplayWebhook)
+						m.Get("", repo_setting.WebhookEdit)
+						m.Post("", repo_setting.WebhookUpdate)
+						m.Post("/replay/{uuid}", repo_setting.WebhookReplay)
 					})
-					addWebhookEditRoutes()
 				}, webhooksEnabled)
 
 				m.Group("/labels", func() {
@@ -1059,15 +1053,16 @@ func registerRoutes(m *web.Route) {
 			}, context.GitHookService())
 
 			m.Group("/hooks", func() {
-				m.Get("", repo_setting.Webhooks)
-				m.Post("/delete", repo_setting.DeleteWebhook)
-				addWebhookAddRoutes()
+				m.Get("", repo_setting.WebhookList)
+				m.Post("/delete", repo_setting.WebhookDelete)
+				m.Get("/{type}/new", repo_setting.WebhookNew)
+				m.Post("/{type}/new", repo_setting.WebhookCreate)
 				m.Group("/{id}", func() {
-					m.Get("", repo_setting.WebHooksEdit)
-					m.Post("/test", repo_setting.TestWebhook)
-					m.Post("/replay/{uuid}", repo_setting.ReplayWebhook)
+					m.Get("", repo_setting.WebhookEdit)
+					m.Post("", repo_setting.WebhookUpdate)
+					m.Post("/test", repo_setting.WebhookTest)
+					m.Post("/replay/{uuid}", repo_setting.WebhookReplay)
 				})
-				addWebhookEditRoutes()
 			}, webhooksEnabled)
 
 			m.Group("/keys", func() {

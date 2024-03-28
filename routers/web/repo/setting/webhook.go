@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"strings"
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/perm"
@@ -22,7 +21,6 @@ import (
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
-	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web/middleware"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 	"code.gitea.io/gitea/services/context"
@@ -41,8 +39,8 @@ const (
 	tplAdminHookNew base.TplName = "admin/hook_new"
 )
 
-// Webhooks render web hooks list page
-func Webhooks(ctx *context.Context) {
+// WebhookList render web hooks list page
+func WebhookList(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("repo.settings.hooks")
 	ctx.Data["PageIsSettingsHooks"] = true
 	ctx.Data["BaseLink"] = ctx.Repo.RepoLink + "/settings/hooks"
@@ -111,17 +109,8 @@ func getOwnerRepoCtx(ctx *context.Context) (*ownerRepoCtx, error) {
 	return nil, errors.New("unable to set OwnerRepo context")
 }
 
-func checkHookType(ctx *context.Context) string {
-	hookType := strings.ToLower(ctx.Params(":type"))
-	if !util.SliceContainsString(setting.Webhook.Types, hookType, true) {
-		ctx.NotFound("checkHookType", nil)
-		return ""
-	}
-	return hookType
-}
-
-// WebhooksNew render creating webhook page
-func WebhooksNew(ctx *context.Context) {
+// WebhookNew render creating webhook page
+func WebhookNew(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("repo.settings.add_webhook")
 	ctx.Data["Webhook"] = webhook.Webhook{HookEvent: &webhook_module.HookEvent{}}
 
@@ -142,16 +131,12 @@ func WebhooksNew(ctx *context.Context) {
 		ctx.Data["PageIsSettingsHooksNew"] = true
 	}
 
-	hookType := checkHookType(ctx)
-	ctx.Data["HookType"] = hookType
-	if ctx.Written() {
+	hookType := ctx.Params(":type")
+	if webhook_service.GetWebhookHandler(hookType) == nil {
+		ctx.NotFound("GetWebhookHandler", nil)
 		return
 	}
-	if hookType == "discord" {
-		ctx.Data["DiscordHook"] = map[string]any{
-			"Username": "Gitea",
-		}
-	}
+	ctx.Data["HookType"] = hookType
 	ctx.Data["BaseLink"] = orCtx.LinkNew
 	ctx.Data["BaseLinkNew"] = orCtx.LinkNew
 
@@ -191,21 +176,9 @@ func ParseHookEvent(form forms.WebhookForm) *webhook_module.HookEvent {
 	}
 }
 
-type webhookParams struct {
-	// Type should be imported from webhook package (webhook.XXX)
-	Type string
-
-	URL         string
-	ContentType webhook.HookContentType
-	Secret      string
-	HTTPMethod  string
-	WebhookForm forms.WebhookForm
-	Meta        any
-}
-
 func WebhookCreate(ctx *context.Context) {
-	typ := ctx.Params(":type")
-	handler := webhook_service.GetWebhookHandler(typ)
+	hookType := ctx.Params(":type")
+	handler := webhook_service.GetWebhookHandler(hookType)
 	if handler == nil {
 		ctx.NotFound("GetWebhookHandler", nil)
 		return
@@ -213,25 +186,14 @@ func WebhookCreate(ctx *context.Context) {
 
 	fields := handler.FormFields(func(form any) {
 		errs := binding.Bind(ctx.Req, form)
-		middleware.Validate(errs, ctx.Data, form, ctx.Locale) // error will be checked later in ctx.HasError
+		middleware.Validate(errs, ctx.Data, form, ctx.Locale) // error checked below in ctx.HasError
 	})
-	createWebhook(ctx, webhookParams{
-		Type:        typ,
-		URL:         fields.URL,
-		ContentType: fields.ContentType,
-		Secret:      fields.Secret,
-		HTTPMethod:  fields.HTTPMethod,
-		WebhookForm: fields.WebhookForm,
-		Meta:        fields.Metadata,
-	})
-}
 
-func createWebhook(ctx *context.Context, params webhookParams) {
 	ctx.Data["Title"] = ctx.Tr("repo.settings.add_webhook")
 	ctx.Data["PageIsSettingsHooks"] = true
 	ctx.Data["PageIsSettingsHooksNew"] = true
 	ctx.Data["Webhook"] = webhook.Webhook{HookEvent: &webhook_module.HookEvent{}}
-	ctx.Data["HookType"] = params.Type
+	ctx.Data["HookType"] = hookType
 
 	orCtx, err := getOwnerRepoCtx(ctx)
 	if err != nil {
@@ -242,13 +204,29 @@ func createWebhook(ctx *context.Context, params webhookParams) {
 	ctx.Data["BaseLinkNew"] = orCtx.LinkNew
 
 	if ctx.HasError() {
+		// pre-fill the form with the submitted data
+		var w webhook.Webhook
+		w.URL = fields.URL
+		w.ContentType = fields.ContentType
+		w.Secret = fields.Secret
+		w.HookEvent = ParseHookEvent(fields.WebhookForm)
+		w.IsActive = fields.WebhookForm.Active
+		w.HTTPMethod = fields.HTTPMethod
+		err := w.SetHeaderAuthorization(fields.WebhookForm.AuthorizationHeader)
+		if err != nil {
+			ctx.ServerError("SetHeaderAuthorization", err)
+			return
+		}
+		ctx.Data["Webhook"] = w
+		ctx.Data["HookMetadata"] = fields.Metadata
+
 		ctx.HTML(http.StatusUnprocessableEntity, orCtx.NewTemplate)
 		return
 	}
 
 	var meta []byte
-	if params.Meta != nil {
-		meta, err = json.Marshal(params.Meta)
+	if fields.Metadata != nil {
+		meta, err = json.Marshal(fields.Metadata)
 		if err != nil {
 			ctx.ServerError("Marshal", err)
 			return
@@ -257,18 +235,18 @@ func createWebhook(ctx *context.Context, params webhookParams) {
 
 	w := &webhook.Webhook{
 		RepoID:          orCtx.RepoID,
-		URL:             params.URL,
-		HTTPMethod:      params.HTTPMethod,
-		ContentType:     params.ContentType,
-		Secret:          params.Secret,
-		HookEvent:       ParseHookEvent(params.WebhookForm),
-		IsActive:        params.WebhookForm.Active,
-		Type:            params.Type,
+		URL:             fields.URL,
+		HTTPMethod:      fields.HTTPMethod,
+		ContentType:     fields.ContentType,
+		Secret:          fields.Secret,
+		HookEvent:       ParseHookEvent(fields.WebhookForm),
+		IsActive:        fields.WebhookForm.Active,
+		Type:            hookType,
 		Meta:            string(meta),
 		OwnerID:         orCtx.OwnerID,
 		IsSystemWebhook: orCtx.IsSystemWebhook,
 	}
-	err = w.SetHeaderAuthorization(params.WebhookForm.AuthorizationHeader)
+	err = w.SetHeaderAuthorization(fields.WebhookForm.AuthorizationHeader)
 	if err != nil {
 		ctx.ServerError("SetHeaderAuthorization", err)
 		return
@@ -286,29 +264,6 @@ func createWebhook(ctx *context.Context, params webhookParams) {
 }
 
 func WebhookUpdate(ctx *context.Context) {
-	typ := ctx.Params(":type")
-	handler := webhook_service.GetWebhookHandler(typ)
-	if handler == nil {
-		ctx.NotFound("GetWebhookHandler", nil)
-		return
-	}
-
-	fields := handler.FormFields(func(form any) {
-		errs := binding.Bind(ctx.Req, form)
-		middleware.Validate(errs, ctx.Data, form, ctx.Locale) // error will be checked later in ctx.HasError
-	})
-	editWebhook(ctx, webhookParams{
-		Type:        typ,
-		URL:         fields.URL,
-		ContentType: fields.ContentType,
-		Secret:      fields.Secret,
-		HTTPMethod:  fields.HTTPMethod,
-		WebhookForm: fields.WebhookForm,
-		Meta:        fields.Metadata,
-	})
-}
-
-func editWebhook(ctx *context.Context, params webhookParams) {
 	ctx.Data["Title"] = ctx.Tr("repo.settings.update_webhook")
 	ctx.Data["PageIsSettingsHooks"] = true
 	ctx.Data["PageIsSettingsHooksEdit"] = true
@@ -319,34 +274,47 @@ func editWebhook(ctx *context.Context, params webhookParams) {
 	}
 	ctx.Data["Webhook"] = w
 
+	handler := webhook_service.GetWebhookHandler(w.Type)
+	if handler == nil {
+		ctx.NotFound("GetWebhookHandler", nil)
+		return
+	}
+
+	fields := handler.FormFields(func(form any) {
+		errs := binding.Bind(ctx.Req, form)
+		middleware.Validate(errs, ctx.Data, form, ctx.Locale) // error checked below in ctx.HasError
+	})
+
+	// pre-fill the form with the submitted data
+	w.URL = fields.URL
+	w.ContentType = fields.ContentType
+	w.Secret = fields.Secret
+	w.HookEvent = ParseHookEvent(fields.WebhookForm)
+	w.IsActive = fields.WebhookForm.Active
+	w.HTTPMethod = fields.HTTPMethod
+
+	err := w.SetHeaderAuthorization(fields.WebhookForm.AuthorizationHeader)
+	if err != nil {
+		ctx.ServerError("SetHeaderAuthorization", err)
+		return
+	}
+
 	if ctx.HasError() {
+		ctx.Data["HookMetadata"] = fields.Metadata
 		ctx.HTML(http.StatusUnprocessableEntity, orCtx.NewTemplate)
 		return
 	}
 
 	var meta []byte
-	var err error
-	if params.Meta != nil {
-		meta, err = json.Marshal(params.Meta)
+	if fields.Metadata != nil {
+		meta, err = json.Marshal(fields.Metadata)
 		if err != nil {
 			ctx.ServerError("Marshal", err)
 			return
 		}
 	}
 
-	w.URL = params.URL
-	w.ContentType = params.ContentType
-	w.Secret = params.Secret
-	w.HookEvent = ParseHookEvent(params.WebhookForm)
-	w.IsActive = params.WebhookForm.Active
-	w.HTTPMethod = params.HTTPMethod
 	w.Meta = string(meta)
-
-	err = w.SetHeaderAuthorization(params.WebhookForm.AuthorizationHeader)
-	if err != nil {
-		ctx.ServerError("SetHeaderAuthorization", err)
-		return
-	}
 
 	if err := w.UpdateEvent(); err != nil {
 		ctx.ServerError("UpdateEvent", err)
@@ -399,8 +367,8 @@ func checkWebhook(ctx *context.Context) (*ownerRepoCtx, *webhook.Webhook) {
 	return orCtx, w
 }
 
-// WebHooksEdit render editing web hook page
-func WebHooksEdit(ctx *context.Context) {
+// WebhookEdit render editing web hook page
+func WebhookEdit(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("repo.settings.update_webhook")
 	ctx.Data["PageIsSettingsHooks"] = true
 	ctx.Data["PageIsSettingsHooksEdit"] = true
@@ -414,8 +382,8 @@ func WebHooksEdit(ctx *context.Context) {
 	ctx.HTML(http.StatusOK, orCtx.NewTemplate)
 }
 
-// TestWebhook test if web hook is work fine
-func TestWebhook(ctx *context.Context) {
+// WebhookTest test if web hook is work fine
+func WebhookTest(ctx *context.Context) {
 	hookID := ctx.ParamsInt64(":id")
 	w, err := webhook.GetWebhookByRepoID(ctx, ctx.Repo.Repository.ID, hookID)
 	if err != nil {
@@ -475,8 +443,8 @@ func TestWebhook(ctx *context.Context) {
 	}
 }
 
-// ReplayWebhook replays a webhook
-func ReplayWebhook(ctx *context.Context) {
+// WebhookReplay replays a webhook
+func WebhookReplay(ctx *context.Context) {
 	hookTaskUUID := ctx.Params(":uuid")
 
 	orCtx, w := checkWebhook(ctx)
@@ -497,8 +465,8 @@ func ReplayWebhook(ctx *context.Context) {
 	ctx.Redirect(fmt.Sprintf("%s/%d", orCtx.Link, w.ID))
 }
 
-// DeleteWebhook delete a webhook
-func DeleteWebhook(ctx *context.Context) {
+// WebhookDelete delete a webhook
+func WebhookDelete(ctx *context.Context) {
 	if err := webhook.DeleteWebhookByRepoID(ctx, ctx.Repo.Repository.ID, ctx.FormInt64("id")); err != nil {
 		ctx.Flash.Error("DeleteWebhookByRepoID: " + err.Error())
 	} else {

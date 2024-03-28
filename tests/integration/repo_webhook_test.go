@@ -52,7 +52,7 @@ func TestNewWebHookLink(t *testing.T) {
 	htmlDoc := NewHTMLParser(t, resp.Body)
 	assert.Equal(t, webhooksLen, htmlDoc.Find(`a[href^="`+baseurl+`/"][href$="/new"]`).Length(), "not all webhooks are listed in the 'new' dropdown on failure")
 
-	resp = session.MakeRequest(t, NewRequestWithValues(t, "POST", baseurl+"/gitea/1", map[string]string{"_csrf": csrfToken}), http.StatusUnprocessableEntity)
+	resp = session.MakeRequest(t, NewRequestWithValues(t, "POST", baseurl+"/1", map[string]string{"_csrf": csrfToken}), http.StatusUnprocessableEntity)
 	htmlDoc = NewHTMLParser(t, resp.Body)
 	assert.Equal(t, webhooksLen, htmlDoc.Find(`a[href^="`+baseurl+`/"][href$="/new"]`).Length(), "not all webhooks are listed in the 'new' dropdown on failure")
 }
@@ -330,7 +330,16 @@ func testWebhookForms(name string, session *TestSession, validFields map[string]
 						}
 					}
 
-					session.MakeRequest(t, NewRequestWithValues(t, "POST", "/user2/repo1/settings/hooks/"+name+"/new", payload), http.StatusUnprocessableEntity)
+					resp := session.MakeRequest(t, NewRequestWithValues(t, "POST", "/user2/repo1/settings/hooks/"+name+"/new", payload), http.StatusUnprocessableEntity)
+					// check that the invalid form is pre-filled
+					htmlForm = NewHTMLParser(t, resp.Body).Find(`form[action^="/user2/repo1/settings/hooks/"]`)
+					for k, v := range payload {
+						if k == "_csrf" || k == "events" || v == "" {
+							// the 'events' is a radio input, which is buggy below
+							continue
+						}
+						assert.Equal(t, v, assertInput(t, htmlForm, k), "input %q did not contain value %q", k, v)
+					}
 					if t.Failed() {
 						t.Log(invalidPatch)
 					}
