@@ -688,7 +688,7 @@ func TestRender_FilePreview(t *testing.T) {
 			gitRepo, err := git.OpenRepository(git.DefaultContext, "./tests/repo/repo1_filepreview")
 			require.NoError(t, err)
 			defer gitRepo.Close()
-	
+
 			commit, err := gitRepo.GetCommit("HEAD")
 			require.NoError(t, err)
 
