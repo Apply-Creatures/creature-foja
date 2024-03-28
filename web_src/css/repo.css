@@ -569,6 +569,10 @@
   display: flex;
 }
 
+.issue-title-buttons {
+  gap: 0.5rem;
+}
+
 @media (max-width: 767.98px) {
   .repository.view.issue .issue-title {
     flex-direction: column;
@@ -611,7 +615,7 @@
   line-height: 40px;
   margin: 0;
   padding-right: 0.25rem;
-  min-height: 41px; /* avoid layout shift on edit */
+  min-height: var(--repo-header-issue-min-height);
 }
 
 .repository.view.issue .issue-title h1 .ui.input {
@@ -2180,7 +2184,7 @@
   margin: 0 !important;
   position: relative;
   color: var(--color-text);
-  min-height: 41px;
+  min-height: var(--repo-header-issue-min-height);
   background-color: var(--color-box-header);
   display: flex;
   justify-content: space-between;
