@@ -6,14 +6,13 @@ package git
 import (
 	"bufio"
 	"bytes"
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
-
-	"code.gitea.io/gitea/modules/util"
 )
 
 type GrepResult struct {
@@ -59,8 +58,8 @@ func GrepSearch(ctx context.Context, repo *Repository, search string, opts GrepO
 	} else {
 		cmd.AddOptionValues("-e", strings.TrimLeft(search, "-"))
 	}
-	cmd.AddDynamicArguments(util.IfZero(opts.RefName, "HEAD"))
-	opts.MaxResultLimit = util.IfZero(opts.MaxResultLimit, 50)
+	cmd.AddDynamicArguments(cmp.Or(opts.RefName, "HEAD"))
+	opts.MaxResultLimit = cmp.Or(opts.MaxResultLimit, 50)
 	stderr := bytes.Buffer{}
 	err = cmd.Run(&RunOpts{
 		Dir:    repo.Path,
