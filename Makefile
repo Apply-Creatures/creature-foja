@@ -814,6 +814,10 @@ generate-go: $(TAGS_PREREQ)
 	@echo "Running go generate..."
 	@CC= GOOS= GOARCH= $(GO) generate -tags '$(TAGS)' $(GO_PACKAGES)
 
+.PHONY: merge-locales
+merge-locales:
+	@echo "NOT NEEDED: THIS IS A NOOP AS OF Forgejo 7.0 BUT KEPT FOR BACKWARD COMPATIBILITY"
+
 .PHONY: security-check
 security-check:
 	go run $(GOVULNCHECK_PACKAGE) ./...
