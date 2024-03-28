@@ -162,6 +162,7 @@ func ToBranchProtection(ctx context.Context, bp *git_model.ProtectedBranch) *api
 		RequireSignedCommits:          bp.RequireSignedCommits,
 		ProtectedFilePatterns:         bp.ProtectedFilePatterns,
 		UnprotectedFilePatterns:       bp.UnprotectedFilePatterns,
+		ApplyToAdmins:                 bp.ApplyToAdmins,
 		Created:                       bp.CreatedUnix.AsTime(),
 		Updated:                       bp.UpdatedUnix.AsTime(),
 	}

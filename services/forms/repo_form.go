@@ -219,6 +219,7 @@ type ProtectBranchForm struct {
 	RequireSignedCommits          bool
 	ProtectedFilePatterns         string
 	UnprotectedFilePatterns       string
+	ApplyToAdmins                 bool
 }
 
 // Validate validates the fields

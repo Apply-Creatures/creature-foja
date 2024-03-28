@@ -621,6 +621,7 @@ func CreateBranchProtection(ctx *context.APIContext) {
 		ProtectedFilePatterns:         form.ProtectedFilePatterns,
 		UnprotectedFilePatterns:       form.UnprotectedFilePatterns,
 		BlockOnOutdatedBranch:         form.BlockOnOutdatedBranch,
+		ApplyToAdmins:                 form.ApplyToAdmins,
 	}
 
 	err = git_model.UpdateProtectBranch(ctx, ctx.Repo.Repository, protectBranch, git_model.WhitelistOptions{
@@ -806,6 +807,10 @@ func EditBranchProtection(ctx *context.APIContext) {
 
 	if form.BlockOnOutdatedBranch != nil {
 		protectBranch.BlockOnOutdatedBranch = *form.BlockOnOutdatedBranch
+	}
+
+	if form.ApplyToAdmins != nil {
+		protectBranch.ApplyToAdmins = *form.ApplyToAdmins
 	}
 
 	var whitelistUsers []int64

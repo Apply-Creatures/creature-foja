@@ -260,6 +260,14 @@
 						<p class="help">{{ctx.Locale.Tr "repo.settings.block_outdated_branch_desc"}}</p>
 					</div>
 				</div>
+				<h5 class="ui dividing header">{{ctx.Locale.Tr "repo.settings.event_pull_request_enforcement"}}</h5>
+				<div class="field">
+					<div class="ui checkbox">
+						<input name="apply_to_admins" type="checkbox" {{if .Rule.ApplyToAdmins}}checked{{end}}>
+						<label>{{ctx.Locale.Tr "repo.settings.enforce_on_admins"}}</label>
+						<p class="help">{{ctx.Locale.Tr "repo.settings.enforce_on_admins_desc"}}</p>
+					</div>
+				</div>
 				<div class="divider"></div>
 
 				<div class="field">
