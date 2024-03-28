@@ -293,9 +293,32 @@ Forgejo or set your environment appropriately.`, "")
 	return nil
 }
 
+// runHookUpdate process the update hook: https://git-scm.com/docs/githooks#update
 func runHookUpdate(c *cli.Context) error {
-	// Update is empty and is kept only for backwards compatibility
-	return nil
+	// Now if we're an internal don't do anything else
+	if isInternal, _ := strconv.ParseBool(os.Getenv(repo_module.EnvIsInternal)); isInternal {
+		return nil
+	}
+
+	ctx, cancel := installSignals()
+	defer cancel()
+
+	// The last three arguments given to the hook are in order: reference name, old commit ID and new commit ID.
+	args := os.Args[len(os.Args)-3:]
+	refFullName := git.RefName(args[0])
+	newCommitID := args[2]
+
+	// Only process pull references.
+	if !refFullName.IsPull() {
+		return nil
+	}
+
+	// Deletion of the ref means that the new commit ID is only composed of '0'.
+	if strings.ContainsFunc(newCommitID, func(e rune) bool { return e != '0' }) {
+		return nil
+	}
+
+	return fail(ctx, fmt.Sprintf("The deletion of %s is skipped as it's an internal reference.", refFullName), "")
 }
 
 func runHookPostReceive(c *cli.Context) error {
