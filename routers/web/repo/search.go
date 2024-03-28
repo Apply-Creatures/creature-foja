@@ -5,13 +5,14 @@ package repo
 
 import (
 	"net/http"
+	"strings"
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/modules/base"
+	"code.gitea.io/gitea/modules/git"
 	code_indexer "code.gitea.io/gitea/modules/indexer/code"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/services/context"
-	"code.gitea.io/gitea/services/repository/files"
 )
 
 const tplSearch base.TplName = "repo/search"
@@ -33,17 +34,17 @@ func Search(ctx *context.Context) {
 		return
 	}
 
-	ctx.Data["Repo"] = ctx.Repo.Repository
-
 	page := ctx.FormInt("page")
 	if page <= 0 {
 		page = 1
 	}
 
+	var total int
+	var searchResults []*code_indexer.Result
+	var searchResultLanguages []*code_indexer.SearchResultLanguages
 	if setting.Indexer.RepoIndexerEnabled {
-		ctx.Data["CodeIndexerDisabled"] = false
-
-		total, searchResults, searchResultLanguages, err := code_indexer.PerformSearch(ctx, &code_indexer.SearchOptions{
+		var err error
+		total, searchResults, searchResultLanguages, err = code_indexer.PerformSearch(ctx, &code_indexer.SearchOptions{
 			RepoIDs:        []int64{ctx.Repo.Repository.ID},
 			Keyword:        keyword,
 			IsKeywordFuzzy: isFuzzy,
@@ -62,28 +63,39 @@ func Search(ctx *context.Context) {
 		} else {
 			ctx.Data["CodeIndexerUnavailable"] = !code_indexer.IsAvailable(ctx)
 		}
-
-		ctx.Data["SearchResults"] = searchResults
-		ctx.Data["SearchResultLanguages"] = searchResultLanguages
-
-		pager := context.NewPagination(total, setting.UI.RepoSearchPagingNum, page, 5)
-		pager.SetDefaultParams(ctx)
-		pager.AddParam(ctx, "l", "Language")
-		ctx.Data["Page"] = pager
 	} else {
-		data, err := files.NewRepoGrep(ctx, ctx.Repo.Repository, keyword)
+		res, err := git.GrepSearch(ctx, ctx.Repo.GitRepo, keyword, git.GrepOptions{ContextLineNumber: 3, IsFuzzy: isFuzzy})
 		if err != nil {
-			ctx.ServerError("NewRepoGrep", err)
+			ctx.ServerError("GrepSearch", err)
 			return
 		}
-
-		ctx.Data["CodeIndexerDisabled"] = true
-		ctx.Data["SearchResults"] = data
-
-		pager := context.NewPagination(len(data), setting.UI.RepoSearchPagingNum, page, 5)
-		pager.SetDefaultParams(ctx)
-		ctx.Data["Page"] = pager
+		total = len(res)
+		pageStart := min((page-1)*setting.UI.RepoSearchPagingNum, len(res))
+		pageEnd := min(page*setting.UI.RepoSearchPagingNum, len(res))
+		res = res[pageStart:pageEnd]
+		for _, r := range res {
+			searchResults = append(searchResults, &code_indexer.Result{
+				RepoID:   ctx.Repo.Repository.ID,
+				Filename: r.Filename,
+				CommitID: ctx.Repo.CommitID,
+				// UpdatedUnix: not supported yet
+				// Language:    not supported yet
+				// Color:       not supported yet
+				Lines: code_indexer.HighlightSearchResultCode(r.Filename, r.LineNumbers, strings.Join(r.LineCodes, "\n")),
+			})
+		}
 	}
+
+	ctx.Data["CodeIndexerEnabled"] = setting.Indexer.RepoIndexerEnabled
+	ctx.Data["Repo"] = ctx.Repo.Repository
+	ctx.Data["SourcePath"] = ctx.Repo.Repository.Link()
+	ctx.Data["SearchResults"] = searchResults
+	ctx.Data["SearchResultLanguages"] = searchResultLanguages
+
+	pager := context.NewPagination(total, setting.UI.RepoSearchPagingNum, page, 5)
+	pager.SetDefaultParams(ctx)
+	pager.AddParam(ctx, "l", "Language")
+	ctx.Data["Page"] = pager
 
 	ctx.HTML(http.StatusOK, tplSearch)
 }

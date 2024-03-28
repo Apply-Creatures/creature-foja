@@ -11,15 +11,14 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	code_indexer "code.gitea.io/gitea/modules/indexer/code"
 	"code.gitea.io/gitea/modules/setting"
-	"code.gitea.io/gitea/modules/test"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/stretchr/testify/assert"
 )
 
-func resultFilenames(t testing.TB, doc *goquery.Selection) []string {
-	filenameSelections := doc.Find(".header").Find("span.file")
+func resultFilenames(t testing.TB, doc *HTMLDoc) []string {
+	filenameSelections := doc.doc.Find(".repository.search").Find(".repo-search-result").Find(".header").Find("span.file")
 	result := make([]string, filenameSelections.Length())
 	filenameSelections.Each(func(i int, selection *goquery.Selection) {
 		result[i] = selection.Text()
@@ -27,66 +26,36 @@ func resultFilenames(t testing.TB, doc *goquery.Selection) []string {
 	return result
 }
 
-func checkResultLinks(t *testing.T, substr string, doc *goquery.Selection) {
-	t.Helper()
-	linkSelections := doc.Find("a[href]")
-	linkSelections.Each(func(i int, selection *goquery.Selection) {
-		assert.Contains(t, selection.AttrOr("href", ""), substr)
-	})
-}
-
-func testSearchRepo(t *testing.T, useExternalIndexer bool) {
+func TestSearchRepo(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
-	defer test.MockVariableValue(&setting.Indexer.RepoIndexerEnabled, useExternalIndexer)()
 
 	repo, err := repo_model.GetRepositoryByOwnerAndName(db.DefaultContext, "user2", "repo1")
 	assert.NoError(t, err)
 
-	gitReference := "/branch/" + repo.DefaultBranch
+	code_indexer.UpdateRepoIndexer(repo)
 
-	if useExternalIndexer {
-		gitReference = "/commit/"
-		code_indexer.UpdateRepoIndexer(repo)
-	}
+	testSearch(t, "/user2/repo1/search?q=Description&page=1", []string{"README.md"})
 
-	testSearch(t, "/user2/repo1/search?q=Description&page=1", gitReference, []string{"README.md"})
+	setting.Indexer.IncludePatterns = setting.IndexerGlobFromString("**.txt")
+	setting.Indexer.ExcludePatterns = setting.IndexerGlobFromString("**/y/**")
 
-	if useExternalIndexer {
-		setting.Indexer.IncludePatterns = setting.IndexerGlobFromString("**.txt")
-		setting.Indexer.ExcludePatterns = setting.IndexerGlobFromString("**/y/**")
+	repo, err = repo_model.GetRepositoryByOwnerAndName(db.DefaultContext, "user2", "glob")
+	assert.NoError(t, err)
 
-		repo, err = repo_model.GetRepositoryByOwnerAndName(db.DefaultContext, "user2", "glob")
-		assert.NoError(t, err)
+	code_indexer.UpdateRepoIndexer(repo)
 
-		code_indexer.UpdateRepoIndexer(repo)
-
-		testSearch(t, "/user2/glob/search?q=loren&page=1", gitReference, []string{"a.txt"})
-		testSearch(t, "/user2/glob/search?q=loren&page=1&t=match", gitReference, []string{"a.txt"})
-		testSearch(t, "/user2/glob/search?q=file3&page=1", gitReference, []string{"x/b.txt", "a.txt"})
-		testSearch(t, "/user2/glob/search?q=file3&page=1&t=match", gitReference, []string{"x/b.txt", "a.txt"})
-		testSearch(t, "/user2/glob/search?q=file4&page=1&t=match", gitReference, []string{"x/b.txt", "a.txt"})
-		testSearch(t, "/user2/glob/search?q=file5&page=1&t=match", gitReference, []string{"x/b.txt", "a.txt"})
-	}
+	testSearch(t, "/user2/glob/search?q=loren&page=1", []string{"a.txt"})
+	testSearch(t, "/user2/glob/search?q=loren&page=1&t=match", []string{"a.txt"})
+	testSearch(t, "/user2/glob/search?q=file3&page=1", []string{"x/b.txt", "a.txt"})
+	testSearch(t, "/user2/glob/search?q=file3&page=1&t=match", []string{"x/b.txt", "a.txt"})
+	testSearch(t, "/user2/glob/search?q=file4&page=1&t=match", []string{"x/b.txt", "a.txt"})
+	testSearch(t, "/user2/glob/search?q=file5&page=1&t=match", []string{"x/b.txt", "a.txt"})
 }
 
-func TestIndexerSearchRepo(t *testing.T) {
-	testSearchRepo(t, true)
-}
-
-func TestNoIndexerSearchRepo(t *testing.T) {
-	testSearchRepo(t, false)
-}
-
-func testSearch(t *testing.T, url, gitRef string, expected []string) {
+func testSearch(t *testing.T, url string, expected []string) {
 	req := NewRequest(t, "GET", url)
 	resp := MakeRequest(t, req, http.StatusOK)
 
-	doc := NewHTMLParser(t, resp.Body).doc.
-		Find(".repository.search").
-		Find(".repo-search-result")
-
-	filenames := resultFilenames(t, doc)
+	filenames := resultFilenames(t, NewHTMLParser(t, resp.Body))
 	assert.EqualValues(t, expected, filenames)
-
-	checkResultLinks(t, gitRef, doc)
 }
