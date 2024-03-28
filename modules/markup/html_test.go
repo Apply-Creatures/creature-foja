@@ -5,7 +5,6 @@ package markup_test
 
 import (
 	"context"
-	"html/template"
 	"io"
 	"os"
 	"strings"
@@ -14,14 +13,15 @@ import (
 	"code.gitea.io/gitea/models/unittest"
 	"code.gitea.io/gitea/modules/emoji"
 	"code.gitea.io/gitea/modules/git"
-	"code.gitea.io/gitea/modules/highlight"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/translation"
 	"code.gitea.io/gitea/modules/util"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var localMetas = map[string]string{
@@ -677,16 +677,30 @@ func TestIssue18471(t *testing.T) {
 }
 
 func TestRender_FilePreview(t *testing.T) {
+	setting.StaticRootPath = "../../"
+	setting.Names = []string{"english"}
+	setting.Langs = []string{"en-US"}
+	translation.InitLocales(context.Background())
+
 	setting.AppURL = markup.TestAppURL
 	markup.Init(&markup.ProcessorHelper{
-		GetRepoFileContent: func(ctx context.Context, ownerName, repoName, commitSha, filePath string) ([]template.HTML, error) {
-			buf := []byte("A\nB\nC\nD\n")
-			return highlight.PlainText(buf), nil
+		GetRepoFileBlob: func(ctx context.Context, ownerName, repoName, commitSha, filePath string, language *string) (*git.Blob, error) {
+			gitRepo, err := git.OpenRepository(git.DefaultContext, "./tests/repo/repo1_filepreview")
+			require.NoError(t, err)
+			defer gitRepo.Close()
+	
+			commit, err := gitRepo.GetCommit("HEAD")
+			require.NoError(t, err)
+
+			blob, err := commit.GetBlobByPath("path/to/file.go")
+			require.NoError(t, err)
+
+			return blob, nil
 		},
 	})
 
-	sha := "b6dd6210eaebc915fd5be5579c58cce4da2e2579"
-	commitFilePreview := util.URLJoin(markup.TestRepoURL, "src", "commit", sha, "path", "to", "file.go") + "#L1-L2"
+	sha := "190d9492934af498c3f669d6a2431dc5459e5b20"
+	commitFilePreview := util.URLJoin(markup.TestRepoURL, "src", "commit", sha, "path", "to", "file.go") + "#L2-L3"
 
 	test := func(input, expected string) {
 		buffer, err := markup.RenderString(&markup.RenderContext{
@@ -703,21 +717,21 @@ func TestRender_FilePreview(t *testing.T) {
 		`<p></p>`+
 			`<div class="file-preview-box">`+
 			`<div class="header">`+
-			`<a href="http://localhost:3000/gogits/gogs/src/commit/b6dd6210eaebc915fd5be5579c58cce4da2e2579/path/to/file.go#L1-L2" class="muted" rel="nofollow">path/to/file.go</a>`+
+			`<a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20/path/to/file.go#L2-L3" class="muted" rel="nofollow">path/to/file.go</a>`+
 			`<span class="text small grey">`+
-			`Lines 1 to 2 in <a href="http://localhost:3000/gogits/gogs/src/commit/b6dd6210eaebc915fd5be5579c58cce4da2e2579" class="text black" rel="nofollow">b6dd621</a>`+
+			`Lines 2 to 3 in <a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20" class="text black" rel="nofollow">190d949</a>`+
 			`</span>`+
 			`</div>`+
 			`<div class="ui table">`+
 			`<table class="file-preview">`+
 			`<tbody>`+
 			`<tr>`+
-			`<td id="user-content-L1" class="lines-num"><span id="user-content-L1" data-line-number="1"></span></td>`+
-			`<td rel="L1" class="lines-code chroma"><code class="code-inner">A`+"\n"+`</code></td>`+
+			`<td class="lines-num"><span data-line-number="2"></span></td>`+
+			`<td class="lines-code chroma"><code class="code-inner"><span class="nx">B</span>`+"\n"+`</code></td>`+
 			`</tr>`+
 			`<tr>`+
-			`<td id="user-content-L2" class="lines-num"><span id="user-content-L2" data-line-number="2"></span></td>`+
-			`<td rel="L2" class="lines-code chroma"><code class="code-inner">B`+"\n"+`</code></td>`+
+			`<td class="lines-num"><span data-line-number="3"></span></td>`+
+			`<td class="lines-code chroma"><code class="code-inner"><span class="nx">C</span>`+"\n"+`</code></td>`+
 			`</tr>`+
 			`</tbody>`+
 			`</table>`+
