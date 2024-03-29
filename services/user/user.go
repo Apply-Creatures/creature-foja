@@ -304,5 +304,5 @@ func DeleteInactiveUsers(ctx context.Context, olderThan time.Duration) error {
 		}
 	}
 
-	return user_model.DeleteInactiveEmailAddresses(ctx)
+	return nil
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/models/auth"
@@ -16,6 +17,7 @@ import (
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/timeutil"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -183,4 +185,34 @@ func TestCreateUser_Issue5882(t *testing.T) {
 
 		assert.NoError(t, DeleteUser(db.DefaultContext, v.user, false))
 	}
+}
+
+func TestDeleteInactiveUsers(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+	// Add an inactive user older than a minute, with an associated email_address record.
+	oldUser := &user_model.User{Name: "OldInactive", LowerName: "oldinactive", Email: "old@example.com", CreatedUnix: timeutil.TimeStampNow().Add(-120)}
+	_, err := db.GetEngine(db.DefaultContext).NoAutoTime().Insert(oldUser)
+	assert.NoError(t, err)
+	oldEmail := &user_model.EmailAddress{UID: oldUser.ID, IsPrimary: true, Email: "old@example.com", LowerEmail: "old@example.com"}
+	err = db.Insert(db.DefaultContext, oldEmail)
+	assert.NoError(t, err)
+
+	// Add an inactive user that's not older than a minute, with an associated email_address record.
+	newUser := &user_model.User{Name: "NewInactive", LowerName: "newinactive", Email: "new@example.com"}
+	err = db.Insert(db.DefaultContext, newUser)
+	assert.NoError(t, err)
+	newEmail := &user_model.EmailAddress{UID: newUser.ID, IsPrimary: true, Email: "new@example.com", LowerEmail: "new@example.com"}
+	err = db.Insert(db.DefaultContext, newEmail)
+	assert.NoError(t, err)
+
+	err = DeleteInactiveUsers(db.DefaultContext, time.Minute)
+	assert.NoError(t, err)
+
+	// User older than a minute should be deleted along with their email address.
+	unittest.AssertExistsIf(t, false, oldUser)
+	unittest.AssertExistsIf(t, false, oldEmail)
+
+	// User not older than a minute shouldn't be deleted and their emaill address should still exist.
+	unittest.AssertExistsIf(t, true, newUser)
+	unittest.AssertExistsIf(t, true, newEmail)
 }
