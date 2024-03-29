@@ -226,9 +226,9 @@
   --color-nav-bg: var(--steel-900);
   --color-nav-hover-bg: var(--steel-600);
   --color-label-text: #fff;
-  --color-label-bg: #393939;
-  --color-label-hover-bg: #5f5f5f;
-  --color-label-active-bg: #4c4c4c;
+  --color-label-bg: #cacaca5b;
+  --color-label-hover-bg: #cacacaa0;
+  --color-label-active-bg: #cacacaff;
   --color-accent: var(--color-primary-light-1);
   --color-small-accent: var(--color-primary-light-5);
   --color-active-line: var(--color-primary-alpha-20);
