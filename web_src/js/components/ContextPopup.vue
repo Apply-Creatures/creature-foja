@@ -3,6 +3,8 @@ import {SvgIcon} from '../svg.js';
 import {useLightTextOnBackground} from '../utils/color.js';
 import tinycolor from 'tinycolor2';
 import {GET} from '../modules/fetch.js';
+import {emojiHTML} from '../features/emoji.js';
+import {htmlEscape} from 'escape-goat';
 
 const {appSubUrl, i18n} = window.config;
 
@@ -67,6 +69,10 @@ export default {
         } else {
           textColor = '#111111';
         }
+        label.name = htmlEscape(label.name);
+        label.name = label.name.replaceAll(/:[-+\w]+:/g, (emoji) => {
+          return emojiHTML(emoji.substring(1, emoji.length - 1));
+        });
         return {name: label.name, color: `#${label.color}`, textColor};
       });
     },
@@ -104,19 +110,13 @@ export default {
 <template>
   <div ref="root">
     <div v-if="loading" class="tw-h-12 tw-w-12 is-loading"/>
-    <div v-if="!loading && issue !== null">
+    <div v-if="!loading && issue !== null" id="issue-info-popup">
       <p><small>{{ issue.repository.full_name }} on {{ createdAt }}</small></p>
       <p><svg-icon :name="icon" :class="['text', color]"/> <strong>{{ issue.title }}</strong> #{{ issue.number }}</p>
       <p>{{ body }}</p>
       <div>
-        <div
-          v-for="label in labels"
-          :key="label.name"
-          class="ui label"
-          :style="{ color: label.textColor, backgroundColor: label.color }"
-        >
-          {{ label.name }}
-        </div>
+        <!-- eslint-disable-next-line vue/no-v-html -->
+        <div v-for="label in labels" :key="label.name" class="ui label" :style="{ color: label.textColor, backgroundColor: label.color }" v-html="label.name"/>
       </div>
     </div>
     <div v-if="!loading && issue === null">
