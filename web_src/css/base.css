@@ -24,6 +24,7 @@
   --repo-header-issue-min-height: 41px;
   --min-height-textarea: 132px; /* padding + 6 lines + border = calc(1.57142em + 6lh + 2px), but lh is not fully supported */
   --tab-size: 4;
+  --checkbox-size: 16px; /* height and width of checkbox and radio inputs */
 }
 
 :root * {
