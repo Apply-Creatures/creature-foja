@@ -61,7 +61,7 @@
 	{{if or .Labels .Assignees}}
 	<div class="extra content labels-list tw-p-0 tw-pt-1">
 		{{range .Labels}}
-			<a target="_blank" href="{{$.Issue.Repo.Link}}/issues?labels={{.ID}}">{{RenderLabel ctx .}}</a>
+			<a target="_blank" href="{{$.Issue.Repo.Link}}/issues?labels={{.ID}}">{{RenderLabel ctx ctx.Locale .}}</a>
 		{{end}}
 		<div class="right floated">
 			{{range .Assignees}}
