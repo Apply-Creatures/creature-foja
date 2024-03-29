@@ -14,6 +14,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"testing"
 	"time"
 	"unicode"
 
@@ -106,7 +107,10 @@ func fail(ctx context.Context, userMessage, logMsgFmt string, args ...any) error
 				logMsg = userMessage + ". " + logMsg
 			}
 		}
-		_ = private.SSHLog(ctx, true, logMsg)
+		// Don't send an log if this is done in a test and no InternalToken is set.
+		if !testing.Testing() || setting.InternalToken != "" {
+			_ = private.SSHLog(ctx, true, logMsg)
+		}
 	}
 	return cli.Exit("", 1)
 }
