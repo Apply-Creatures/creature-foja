@@ -4,17 +4,75 @@
 package git
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"strings"
+	"sync/atomic"
 
-	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/optional"
 )
 
 var LinguistAttributes = []string{"linguist-vendored", "linguist-generated", "linguist-language", "gitlab-language", "linguist-documentation", "linguist-detectable"}
+
+// newCheckAttrStdoutReader parses the nul-byte separated output of git check-attr on each call of
+// the returned function. The first reading error will stop the reading and be returned on all
+// subsequent calls.
+func newCheckAttrStdoutReader(r io.Reader, count int) func() (map[string]GitAttribute, error) {
+	scanner := bufio.NewScanner(r)
+
+	// adapted from bufio.ScanLines to split on nul-byte \x00
+	scanner.Split(func(data []byte, atEOF bool) (advance int, token []byte, err error) {
+		if atEOF && len(data) == 0 {
+			return 0, nil, nil
+		}
+		if i := bytes.IndexByte(data, '\x00'); i >= 0 {
+			// We have a full nul-terminated line.
+			return i + 1, data[0:i], nil
+		}
+		// If we're at EOF, we have a final, non-terminated line. Return it.
+		if atEOF {
+			return len(data), data, nil
+		}
+		// Request more data.
+		return 0, nil, nil
+	})
+
+	var err error
+	nextText := func() string {
+		if err != nil {
+			return ""
+		}
+		if !scanner.Scan() {
+			err = scanner.Err()
+			if err == nil {
+				err = io.ErrUnexpectedEOF
+			}
+			return ""
+		}
+		return scanner.Text()
+	}
+	nextAttribute := func() (string, GitAttribute, error) {
+		nextText() // discard filename
+		key := nextText()
+		value := GitAttribute(nextText())
+		return key, value, err
+	}
+	return func() (map[string]GitAttribute, error) {
+		values := make(map[string]GitAttribute, count)
+		for range count {
+			k, v, err := nextAttribute()
+			if err != nil {
+				return values, err
+			}
+			values[k] = v
+		}
+		return values, scanner.Err()
+	}
+}
 
 // GitAttribute exposes an attribute from the .gitattribute file
 type GitAttribute string //nolint:revive
@@ -54,29 +112,15 @@ func (ca GitAttribute) Bool() optional.Option[bool] {
 	return optional.None[bool]()
 }
 
-// GitAttributeFirst returns the first specified attribute
-//
-// If treeish is empty, the gitattribute will be read from the current repo (which MUST be a working directory and NOT bare).
-func (repo *Repository) GitAttributeFirst(treeish, filename string, attributes ...string) (GitAttribute, error) {
-	values, err := repo.GitAttributes(treeish, filename, attributes...)
-	if err != nil {
-		return "", err
-	}
-	for _, a := range attributes {
-		if values[a].IsSpecified() {
-			return values[a], nil
-		}
-	}
-	return "", nil
-}
-
+// gitCheckAttrCommand prepares the "git check-attr" command for later use as one-shot or streaming
+// instanciation.
 func (repo *Repository) gitCheckAttrCommand(treeish string, attributes ...string) (*Command, *RunOpts, context.CancelFunc, error) {
 	if len(attributes) == 0 {
 		return nil, nil, nil, fmt.Errorf("no provided attributes to check-attr")
 	}
 
 	env := os.Environ()
-	var deleteTemporaryFile context.CancelFunc
+	var removeTempFiles context.CancelFunc = func() {}
 
 	// git < 2.40 cannot run check-attr on bare repo, but needs INDEX + WORK_TREE
 	hasIndex := treeish == ""
@@ -85,7 +129,7 @@ func (repo *Repository) gitCheckAttrCommand(treeish string, attributes ...string
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		deleteTemporaryFile = cancel
+		removeTempFiles = cancel
 
 		env = append(env, "GIT_INDEX_FILE="+indexFilename, "GIT_WORK_TREE="+worktree)
 
@@ -94,16 +138,8 @@ func (repo *Repository) gitCheckAttrCommand(treeish string, attributes ...string
 		// clear treeish to read from provided index/work_tree
 		treeish = ""
 	}
-	ctx, cancel := context.WithCancel(repo.Ctx)
-	if deleteTemporaryFile != nil {
-		ctxCancel := cancel
-		cancel = func() {
-			ctxCancel()
-			deleteTemporaryFile()
-		}
-	}
 
-	cmd := NewCommand(ctx, "check-attr", "-z")
+	cmd := NewCommand(repo.Ctx, "check-attr", "-z")
 
 	if hasIndex {
 		cmd.AddArguments("--cached")
@@ -126,18 +162,34 @@ func (repo *Repository) gitCheckAttrCommand(treeish string, attributes ...string
 	return cmd, &RunOpts{
 		Env: env,
 		Dir: repo.Path,
-	}, cancel, nil
+	}, removeTempFiles, nil
 }
 
-// GitAttributes returns gitattribute.
+// GitAttributeFirst returns the first specified attribute of the given filename.
+//
+// If treeish is empty, the gitattribute will be read from the current repo (which MUST be a working directory and NOT bare).
+func (repo *Repository) GitAttributeFirst(treeish, filename string, attributes ...string) (GitAttribute, error) {
+	values, err := repo.GitAttributes(treeish, filename, attributes...)
+	if err != nil {
+		return "", err
+	}
+	for _, a := range attributes {
+		if values[a].IsSpecified() {
+			return values[a], nil
+		}
+	}
+	return "", nil
+}
+
+// GitAttributes returns the gitattribute of the given filename.
 //
 // If treeish is empty, the gitattribute will be read from the current repo (which MUST be a working directory and NOT bare).
 func (repo *Repository) GitAttributes(treeish, filename string, attributes ...string) (map[string]GitAttribute, error) {
-	cmd, runOpts, cancel, err := repo.gitCheckAttrCommand(treeish, attributes...)
+	cmd, runOpts, removeTempFiles, err := repo.gitCheckAttrCommand(treeish, attributes...)
 	if err != nil {
 		return nil, err
 	}
-	defer cancel()
+	defer removeTempFiles()
 
 	stdOut := new(bytes.Buffer)
 	runOpts.Stdout = stdOut
@@ -151,163 +203,84 @@ func (repo *Repository) GitAttributes(treeish, filename string, attributes ...st
 		return nil, fmt.Errorf("failed to run check-attr: %w\n%s\n%s", err, stdOut.String(), stdErr.String())
 	}
 
-	// FIXME: This is incorrect on versions < 1.8.5
-	fields := bytes.Split(stdOut.Bytes(), []byte{'\000'})
-
-	if len(fields)%3 != 1 {
-		return nil, fmt.Errorf("wrong number of fields in return from check-attr")
-	}
-
-	values := make(map[string]GitAttribute, len(attributes))
-	for ; len(fields) >= 3; fields = fields[3:] {
-		// filename := string(fields[0])
-		attribute := string(fields[1])
-		value := string(fields[2])
-		values[attribute] = GitAttribute(value)
-	}
-	return values, nil
+	return newCheckAttrStdoutReader(stdOut, len(attributes))()
 }
 
-type attributeTriple struct {
-	Filename  string
-	Attribute string
-	Value     string
-}
-
-type nulSeparatedAttributeWriter struct {
-	tmp        []byte
-	attributes chan attributeTriple
-	closed     chan struct{}
-	working    attributeTriple
-	pos        int
-}
-
-func (wr *nulSeparatedAttributeWriter) Write(p []byte) (n int, err error) {
-	l, read := len(p), 0
-
-	nulIdx := bytes.IndexByte(p, '\x00')
-	for nulIdx >= 0 {
-		wr.tmp = append(wr.tmp, p[:nulIdx]...)
-		switch wr.pos {
-		case 0:
-			wr.working = attributeTriple{
-				Filename: string(wr.tmp),
-			}
-		case 1:
-			wr.working.Attribute = string(wr.tmp)
-		case 2:
-			wr.working.Value = string(wr.tmp)
-		}
-		wr.tmp = wr.tmp[:0]
-		wr.pos++
-		if wr.pos > 2 {
-			wr.attributes <- wr.working
-			wr.pos = 0
-		}
-		read += nulIdx + 1
-		if l > read {
-			p = p[nulIdx+1:]
-			nulIdx = bytes.IndexByte(p, '\x00')
-		} else {
-			return l, nil
-		}
-	}
-	wr.tmp = append(wr.tmp, p...)
-	return len(p), nil
-}
-
-func (wr *nulSeparatedAttributeWriter) Close() error {
-	select {
-	case <-wr.closed:
-		return nil
-	default:
-	}
-	close(wr.attributes)
-	close(wr.closed)
-	return nil
-}
-
-// GitAttributeChecker creates an AttributeChecker for the given repository and provided commit ID.
+// GitAttributeChecker creates an AttributeChecker for the given repository and provided commit ID
+// to retrieve the attributes of multiple files. The AttributeChecker must be closed after use.
 //
 // If treeish is empty, the gitattribute will be read from the current repo (which MUST be a working directory and NOT bare).
 func (repo *Repository) GitAttributeChecker(treeish string, attributes ...string) (AttributeChecker, error) {
-	cmd, runOpts, cancel, err := repo.gitCheckAttrCommand(treeish, attributes...)
+	cmd, runOpts, removeTempFiles, err := repo.gitCheckAttrCommand(treeish, attributes...)
 	if err != nil {
 		return AttributeChecker{}, err
 	}
-
-	ac := AttributeChecker{
-		attributeNumber: len(attributes),
-		ctx:             cmd.parentContext,
-		cancel:          cancel, // will be cancelled on Close
-	}
-
-	stdinReader, stdinWriter, err := os.Pipe()
-	if err != nil {
-		ac.cancel()
-		return AttributeChecker{}, err
-	}
-	ac.stdinWriter = stdinWriter // will be closed on Close
-
-	lw := new(nulSeparatedAttributeWriter)
-	lw.attributes = make(chan attributeTriple, len(attributes))
-	lw.closed = make(chan struct{})
-	ac.attributesCh = lw.attributes
 
 	cmd.AddArguments("--stdin")
+
+	// os.Pipe is needed (and not io.Pipe), otherwise cmd.Wait will wait for the stdinReader
+	// to be closed before returning (which would require another goroutine)
+	// https://go.dev/issue/23019
+	stdinReader, stdinWriter, err := os.Pipe() // reader closed in goroutine / writer closed on ac.Close
+	if err != nil {
+		return AttributeChecker{}, err
+	}
+	stdoutReader, stdoutWriter := io.Pipe() // closed in goroutine
+
+	ac := AttributeChecker{
+		removeTempFiles: removeTempFiles, // called on ac.Close
+		stdinWriter:     stdinWriter,
+		readStdout:      newCheckAttrStdoutReader(stdoutReader, len(attributes)),
+		err:             &atomic.Value{},
+	}
+
 	go func() {
 		defer stdinReader.Close()
-		defer lw.Close()
+		defer stdoutWriter.Close() // in case of a panic (no-op if already closed by CloseWithError at the end)
 
 		stdErr := new(bytes.Buffer)
 		runOpts.Stdin = stdinReader
-		runOpts.Stdout = lw
+		runOpts.Stdout = stdoutWriter
 		runOpts.Stderr = stdErr
+
 		err := cmd.Run(runOpts)
 
-		if err != nil && //                       If there is an error we need to return but:
-			cmd.parentContext.Err() != err && //  1. Ignore the context error if the context is cancelled or exceeds the deadline (RunWithContext could return c.ctx.Err() which is Canceled or DeadlineExceeded)
-			err.Error() != "signal: killed" { // 2. We should not pass up errors due to the program being killed
-			log.Error("failed to run attr-check. Error: %v\nStderr: %s", err, stdErr.String())
+		// if the context was cancelled, Run error is irrelevant
+		if e := cmd.parentContext.Err(); e != nil {
+			err = e
 		}
+
+		if err != nil { // decorate the returned error
+			err = fmt.Errorf("git check-attr (stderr: %q): %w", strings.TrimSpace(stdErr.String()), err)
+			ac.err.Store(err)
+		}
+		stdoutWriter.CloseWithError(err)
 	}()
 
 	return ac, nil
 }
 
 type AttributeChecker struct {
-	ctx             context.Context
-	cancel          context.CancelFunc
-	stdinWriter     *os.File
-	attributeNumber int
-	attributesCh    <-chan attributeTriple
+	removeTempFiles context.CancelFunc
+	stdinWriter     io.WriteCloser
+	readStdout      func() (map[string]GitAttribute, error)
+	err             *atomic.Value
 }
 
 func (ac AttributeChecker) CheckPath(path string) (map[string]GitAttribute, error) {
-	if err := ac.ctx.Err(); err != nil {
-		return nil, err
-	}
-
 	if _, err := ac.stdinWriter.Write([]byte(path + "\x00")); err != nil {
-		return nil, err
+		// try to return the Run error if available, since it is likely more helpful
+		// than just "broken pipe"
+		if aerr, _ := ac.err.Load().(error); aerr != nil {
+			return nil, aerr
+		}
+		return nil, fmt.Errorf("git check-attr: %w", err)
 	}
 
-	rs := make(map[string]GitAttribute)
-	for i := 0; i < ac.attributeNumber; i++ {
-		select {
-		case attr, ok := <-ac.attributesCh:
-			if !ok {
-				return nil, ac.ctx.Err()
-			}
-			rs[attr.Attribute] = GitAttribute(attr.Value)
-		case <-ac.ctx.Done():
-			return nil, ac.ctx.Err()
-		}
-	}
-	return rs, nil
+	return ac.readStdout()
 }
 
 func (ac AttributeChecker) Close() error {
-	ac.cancel()
+	ac.removeTempFiles()
 	return ac.stdinWriter.Close()
 }
