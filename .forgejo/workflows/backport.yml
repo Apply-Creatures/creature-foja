@@ -33,17 +33,8 @@ jobs:
     if: >
       !startsWith(vars.ROLE, 'forgejo-') && (
         github.event.pull_request.merged
-        && (
-          (
-            github.event.action == 'closed' &&
-            contains(toJSON(github.event.pull_request.labels), 'backport/v')
-          )
-          ||
-          (
-            github.event.action == 'labeled' &&
-            contains(github.event.label.name, 'backport/v')
-          )
-        )
+        &&
+        contains(toJSON(github.event.pull_request.labels), 'backport/v')
       )
     runs-on: docker
     container:
