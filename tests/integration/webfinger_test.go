@@ -67,17 +67,17 @@ func TestWebfinger(t *testing.T) {
 	req = NewRequest(t, "GET", fmt.Sprintf("/.well-known/webfinger?resource=mailto:%s", user.Email))
 	MakeRequest(t, req, http.StatusNotFound)
 
-	req = NewRequest(t, "GET", fmt.Sprintf("/.well-known/webfinger?resource=http://%s/%s/foo", appURL.Host, user.Name))
-	session.MakeRequest(t, req, http.StatusOK)
-
 	req = NewRequest(t, "GET", fmt.Sprintf("/.well-known/webfinger?resource=https://%s/%s/", appURL.Host, user.Name))
 	session.MakeRequest(t, req, http.StatusOK)
 
 	req = NewRequest(t, "GET", fmt.Sprintf("/.well-known/webfinger?resource=https://%s/%s", appURL.Host, user.Name))
 	session.MakeRequest(t, req, http.StatusOK)
 
+	req = NewRequest(t, "GET", fmt.Sprintf("/.well-known/webfinger?resource=http://%s/%s/foo", appURL.Host, user.Name))
+	session.MakeRequest(t, req, http.StatusNotFound)
+
 	req = NewRequest(t, "GET", fmt.Sprintf("/.well-known/webfinger?resource=http://%s", appURL.Host))
-	MakeRequest(t, req, http.StatusBadRequest)
+	MakeRequest(t, req, http.StatusNotFound)
 
 	req = NewRequest(t, "GET", fmt.Sprintf("/.well-known/webfinger?resource=http://%s/%s/foo", "example.com", user.Name))
 	MakeRequest(t, req, http.StatusBadRequest)
