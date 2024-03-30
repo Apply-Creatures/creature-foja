@@ -4,6 +4,7 @@ window.config = {
   csrfToken: 'test-csrf-token-123456',
   pageData: {},
   i18n: {},
+  customEmojis: {},
   appSubUrl: '',
   mentionValues: [
     {key: 'user1 User 1', value: 'user1', name: 'user1', fullname: 'User 1', avatar: 'https://avatar1.com'},

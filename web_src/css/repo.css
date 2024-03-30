@@ -3010,3 +3010,7 @@ tbody.commit-list {
   margin-top: -1px;
   border-top: 1px solid var(--color-secondary);
 }
+#issue-info-popup .emoji {
+  font-size: inherit;
+  line-height: inherit;
+}
