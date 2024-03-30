@@ -216,8 +216,8 @@ func PlainText(code []byte) []template.HTML {
 }
 
 func formatLexerName(name string) string {
-	if name == "fallback" {
-		return "Plaintext"
+	if name == "fallback" || name == "plaintext" {
+		return "Text"
 	}
 
 	return util.ToTitleCaseNoLower(name)

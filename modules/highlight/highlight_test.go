@@ -58,7 +58,7 @@ func TestFile(t *testing.T) {
 			name:      "tags.txt",
 			code:      "<>",
 			want:      lines("&lt;&gt;"),
-			lexerName: "Plaintext",
+			lexerName: "Text",
 		},
 		{
 			name:      "tags.py",
