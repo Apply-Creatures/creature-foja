@@ -1,7 +1,7 @@
 {{template "base/head" .}}
 <div role="main" aria-label="{{.Title}}" class="page-content organization profile">
 	{{if .Flash}}
-		<div class="ui container gt-mb-5">
+		<div class="ui container tw-mb-8">
 			{{template "base/alert" .}}
 		</div>
 	{{end}}
@@ -21,7 +21,7 @@
 			{{if .ShowMemberAndTeamTab}}
 			<div class="ui five wide column">
 				{{if .CanCreateOrgRepo}}
-					<div class="center aligned">
+					<div class="center aligned tw-mb-4">
 						<a class="ui primary button" href="{{AppSubUrl}}/repo/create?org={{.Org.ID}}">{{ctx.Locale.Tr "new_repo"}}</a>
 						{{if not .DisableNewPullMirrors}}
 							<a class="ui primary button" href="{{AppSubUrl}}/repo/migrate?org={{.Org.ID}}&mirror=1">{{ctx.Locale.Tr "new_migrate"}}</a>

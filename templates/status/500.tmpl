@@ -28,23 +28,23 @@
 				</div>
 			</div>
 		</nav>
-		<div class="divider gt-my-0"></div>
+		<div class="divider tw-my-0"></div>
 		<div role="main" class="page-content status-page-500">
 			<div class="ui container" >
 				<style> .ui.message.flash-message { text-align: left; } </style>
 				{{template "base/alert" .}}
 			</div>
 			<div class="ui container center">
-				<h1 class="gt-mt-5 error-code">500</h1>
+				<h1 class="tw-mt-8 error-code">500</h1>
 				<p>{{ctx.Locale.Tr "error.server_internal"}}</p>
 			</div>
 			<div class="divider"></div>
-			<div class="ui container gt-my-5">
+			<div class="ui container tw-my-8">
 				{{if .ErrorMsg}}
 					<p>{{ctx.Locale.Tr "error.occurred"}}:</p>
 					<pre class="tw-whitespace-pre-wrap tw-break-all">{{.ErrorMsg}}</pre>
 				{{end}}
-				<div class="center gt-mt-5">
+				<div class="center tw-mt-8">
 					{{if or .SignedUser.IsAdmin .ShowFooterVersion}}<p>{{ctx.Locale.Tr "admin.config.app_ver"}}: {{AppVer}}</p>{{end}}
 					{{if .SignedUser.IsAdmin}}<p>{{ctx.Locale.Tr "error.report_message"}}</p>{{end}}
 				</div>

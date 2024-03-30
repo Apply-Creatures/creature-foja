@@ -41,6 +41,8 @@ export default {
     // classes that don't work without CSS variables from "@tailwind base" which we don't use
     'transform', 'shadow', 'ring', 'blur', 'grayscale', 'invert', '!invert', 'filter', '!filter',
     'backdrop-filter',
+    // we use double-class tw-hidden defined in web_src/css/helpers.css for increased specificity
+    'hidden',
     // unneeded classes
     '[-a-zA-Z:0-9_.]',
   ],
@@ -65,6 +67,10 @@ export default {
       '2xl': '16px',
       '3xl': '24px',
       'full': 'var(--border-radius-circle)', // 50%
+    },
+    fontFamily: {
+      sans: 'var(--fonts-regular)',
+      mono: 'var(--fonts-monospace)',
     },
     fontWeight: {
       light: 'var(--font-weight-light)',
