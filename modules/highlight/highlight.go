@@ -216,7 +216,7 @@ func PlainText(code []byte) []template.HTML {
 }
 
 func formatLexerName(name string) string {
-	if name == "fallback" {
+	if name == "fallback" || name == "plaintext" {
 		return "Text"
 	}
 
