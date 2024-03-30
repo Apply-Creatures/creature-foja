@@ -16,7 +16,6 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	giteautil "code.gitea.io/gitea/modules/util"
 
-	"github.com/microcosm-cc/bluemonday/css"
 	"github.com/yuin/goldmark/ast"
 	east "github.com/yuin/goldmark/extension/ast"
 	"github.com/yuin/goldmark/parser"
@@ -199,7 +198,7 @@ func (g *ASTTransformer) Transform(node *ast.Document, reader text.Reader, pc pa
 			}
 		case *ast.CodeSpan:
 			colorContent := n.Text(reader.Source())
-			if css.ColorHandler(strings.ToLower(string(colorContent))) {
+			if matchColor(strings.ToLower(string(colorContent))) {
 				v.AppendChild(v, NewColorPreview(colorContent))
 			}
 		}
