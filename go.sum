@@ -62,8 +62,6 @@ gitea.com/go-chi/captcha v0.0.0-20240315150714-fb487f629098 h1:p2ki+WK0cIeNQuqjR
 gitea.com/go-chi/captcha v0.0.0-20240315150714-fb487f629098/go.mod h1:LjzIOHlRemuUyO7WR12fmm18VZIlCAaOt9L3yKw40pk=
 gitea.com/go-chi/session v0.0.0-20240316035857-16768d98ec96 h1:IFDiMBObsP6CZIRaDLd54SR6zPYAffPXiXck5Xslu0Q=
 gitea.com/go-chi/session v0.0.0-20240316035857-16768d98ec96/go.mod h1:0iEpFKnwO5dG0aF98O4eq6FMsAiXkNBaDIlUOlq4BtM=
-gitea.com/lunny/dingtalk_webhook v0.0.0-20171025031554-e3534c89ef96 h1:+wWBi6Qfruqu7xJgjOIrKVQGiLUZdpKYCZewJ4clqhw=
-gitea.com/lunny/dingtalk_webhook v0.0.0-20171025031554-e3534c89ef96/go.mod h1:VyMQP6ue6MKHM8UsOXfNfuMKD0oSAWZdXVcpHIN2yaY=
 gitea.com/lunny/levelqueue v0.4.2-0.20230414023320-3c0159fe0fe4 h1:IFT+hup2xejHqdhS7keYWioqfmxdnfblFDTGoOwcZ+o=
 gitea.com/lunny/levelqueue v0.4.2-0.20230414023320-3c0159fe0fe4/go.mod h1:HBqmLbz56JWpfEGG0prskAV97ATNRoj5LDmPicD22hU=
 gitea.com/xorm/sqlfiddle v0.0.0-20180821085327-62ce714f951a h1:lSA0F4e9A2NcQSqGqTOXqu2aRi/XEQxDCBwM8yJtE6s=

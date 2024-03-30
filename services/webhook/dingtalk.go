@@ -16,8 +16,6 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 	"code.gitea.io/gitea/services/forms"
-
-	dingtalk "gitea.com/lunny/dingtalk_webhook"
 )
 
 type dingtalkHandler struct{}
@@ -42,8 +40,22 @@ func (dingtalkHandler) FormFields(bind func(any)) FormFields {
 }
 
 type (
-	// DingtalkPayload represents
-	DingtalkPayload dingtalk.Payload
+	// DingtalkPayload represents an dingtalk payload.
+	DingtalkPayload struct {
+		MsgType string `json:"msgtype"`
+		Text    struct {
+			Content string `json:"content"`
+		} `json:"text"`
+		ActionCard DingtalkActionCard `json:"actionCard"`
+	}
+
+	DingtalkActionCard struct {
+		Text        string `json:"text"`
+		Title       string `json:"title"`
+		HideAvatar  string `json:"hideAvatar"`
+		SingleTitle string `json:"singleTitle"`
+		SingleURL   string `json:"singleURL"`
+	}
 )
 
 // Create implements PayloadConvertor Create method
@@ -195,7 +207,7 @@ func (dc dingtalkConvertor) Package(p *api.PackagePayload) (DingtalkPayload, err
 func createDingtalkPayload(title, text, singleTitle, singleURL string) DingtalkPayload {
 	return DingtalkPayload{
 		MsgType: "actionCard",
-		ActionCard: dingtalk.ActionCard{
+		ActionCard: DingtalkActionCard{
 			Text:        strings.TrimSpace(text),
 			Title:       strings.TrimSpace(title),
 			HideAvatar:  "0",
