@@ -40,6 +40,11 @@ jobs:
     container:
       image: 'docker.io/node:20-bookworm'
     steps:
+      - name: event info
+        run: |
+          cat <<'EOF'
+          ${{ toJSON(github) }}
+          EOF
       - name: Fetch labels
         id: fetch-labels
         shell: bash
