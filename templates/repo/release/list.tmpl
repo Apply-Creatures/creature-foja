@@ -67,13 +67,21 @@
 								{{ctx.Locale.Tr "repo.release.downloads"}}
 							</summary>
 							<ul class="list">
+								{{$hasReleaseAttachment := gt (len $release.Attachments) 0}}
 								{{if and (not $.DisableDownloadSourceArchives) (not $release.IsDraft) ($.Permission.CanRead $.UnitTypeCode)}}
 									<li>
 										<a class="archive-link" href="{{$.RepoLink}}/archive/{{$release.TagName | PathEscapeSegments}}.zip" rel="nofollow"><strong>{{svg "octicon-file-zip" 16 "tw-mr-1"}}{{ctx.Locale.Tr "repo.release.source_code"}} (ZIP)</strong></a>
+										<span data-tooltip-content="{{ctx.Locale.Tr "repo.release.system_generated"}}">
+											{{svg "octicon-info"}}
+										</span>
 									</li>
-									<li>
+									<li class="{{if $hasReleaseAttachment}}start-gap{{end}}">
 										<a class="archive-link" href="{{$.RepoLink}}/archive/{{$release.TagName | PathEscapeSegments}}.tar.gz" rel="nofollow"><strong>{{svg "octicon-file-zip" 16 "tw-mr-1"}}{{ctx.Locale.Tr "repo.release.source_code"}} (TAR.GZ)</strong></a>
+										<span data-tooltip-content="{{ctx.Locale.Tr "repo.release.system_generated"}}">
+											{{svg "octicon-info"}}
+										</span>
 									</li>
+									{{if $hasReleaseAttachment}}<hr>{{end}}
 								{{end}}
 								{{range $release.Attachments}}
 									<li>
@@ -81,10 +89,7 @@
 											<strong>{{svg "octicon-package" 16 "tw-mr-1"}}{{.Name}}</strong>
 										</a>
 										<div>
-											<span class="text grey">{{.Size | ctx.Locale.TrSize}}</span>
-											<span data-tooltip-content="{{ctx.Locale.Tr "repo.release.download_count" (ctx.Locale.PrettyNumber .DownloadCount)}}">
-												{{svg "octicon-info"}}
-											</span>
+											<span class="text grey">{{ctx.Locale.Tr "repo.release.download_count" (ctx.Locale.PrettyNumber .DownloadCount)}} · {{.Size | ctx.Locale.TrSize}}</span>
 										</div>
 									</li>
 								{{end}}
