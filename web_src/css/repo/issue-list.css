@@ -16,6 +16,14 @@
   flex-wrap: wrap;
 }
 
+.issue-list-new.button {
+  margin-right: 0;
+}
+
+.list-header-issues {
+  min-height: var(--repo-header-issue-min-height);
+}
+
 @media (max-width: 767.98px) {
   .issue-list-navbar {
     order: 0;
