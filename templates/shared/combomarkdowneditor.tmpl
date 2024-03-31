@@ -10,6 +10,7 @@ Template Attributes:
 * TextareaAriaLabel: aria-label attribute for the textarea
 * DropzoneParentContainer: container for file upload (leave it empty if no upload)
 * DisableAutosize: whether to disable automatic height resizing
+* EasyMDE: whether to display button for switching to legacy editor
 */}}
 <div {{if .ContainerId}}id="{{.ContainerId}}"{{end}} class="combo-markdown-editor {{.ContainerClasses}}" data-dropzone-parent-container="{{.DropzoneParentContainer}}">
 	{{if .MarkdownPreviewUrl}}
@@ -41,7 +42,9 @@ Template Attributes:
 			</div>
 			<div class="markdown-toolbar-group">
 				<button class="markdown-toolbar-button markdown-switch-monospace" role="switch" data-enable-text="{{ctx.Locale.Tr "editor.buttons.enable_monospace_font"}}" data-disable-text="{{ctx.Locale.Tr "editor.buttons.disable_monospace_font"}}">{{svg "octicon-typography"}}</button>
-				<button class="markdown-toolbar-button markdown-switch-easymde" data-tooltip-content="{{ctx.Locale.Tr "editor.buttons.switch_to_legacy.tooltip"}}">{{svg "octicon-arrow-switch"}}</button>
+				{{if .EasyMDE}}
+					<button class="markdown-toolbar-button markdown-switch-easymde" data-tooltip-content="{{ctx.Locale.Tr "editor.buttons.switch_to_legacy.tooltip"}}">{{svg "octicon-arrow-switch"}}</button>
+				{{end}}
 			</div>
 		</markdown-toolbar>
 		<text-expander keys=": @" suffix="">
