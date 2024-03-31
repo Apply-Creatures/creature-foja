@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"html/template"
 	"net/http"
 	"strings"
 
@@ -35,6 +36,7 @@ type Handler interface {
 	// If form implements the [binding.Validator] interface, the Validate method will be called
 	FormFields(bind func(form any)) FormFields
 	NewRequest(context.Context, *webhook_model.Webhook, *webhook_model.HookTask) (req *http.Request, body []byte, err error)
+	Icon(size int) template.HTML
 }
 
 type FormFields struct {

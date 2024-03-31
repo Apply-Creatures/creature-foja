@@ -10,6 +10,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"html/template"
 	"io"
 	"net/http"
 	"net/url"
@@ -17,6 +18,7 @@ import (
 
 	webhook_model "code.gitea.io/gitea/models/webhook"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/svg"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 	"code.gitea.io/gitea/services/forms"
 )
@@ -32,6 +34,14 @@ func (dh defaultHandler) Type() webhook_module.HookType {
 		return webhook_module.FORGEJO
 	}
 	return webhook_module.GITEA
+}
+
+func (dh defaultHandler) Icon(size int) template.HTML {
+	if dh.forgejo {
+		// forgejo.svg is not in web_src/svg/, so svg.RenderHTML does not work
+		return imgIcon("forgejo.svg", size)
+	}
+	return svg.RenderHTML("gitea-gitea", size, "img")
 }
 
 func (defaultHandler) Metadata(*webhook_model.Webhook) any { return nil }

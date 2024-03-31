@@ -6,6 +6,7 @@ package webhook
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"net/http"
 	"net/url"
 
@@ -19,6 +20,7 @@ import (
 type packagistHandler struct{}
 
 func (packagistHandler) Type() webhook_module.HookType { return webhook_module.PACKAGIST }
+func (packagistHandler) Icon(size int) template.HTML   { return imgIcon("packagist.png", size) }
 
 func (packagistHandler) FormFields(bind func(any)) FormFields {
 	var form struct {

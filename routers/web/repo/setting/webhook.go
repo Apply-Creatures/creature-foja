@@ -45,6 +45,7 @@ func WebhookList(ctx *context.Context) {
 	ctx.Data["PageIsSettingsHooks"] = true
 	ctx.Data["BaseLink"] = ctx.Repo.RepoLink + "/settings/hooks"
 	ctx.Data["BaseLinkNew"] = ctx.Repo.RepoLink + "/settings/hooks"
+	ctx.Data["WebhookList"] = webhook_service.List()
 	ctx.Data["Description"] = ctx.Tr("repo.settings.hooks_desc", "https://forgejo.org/docs/latest/user/webhooks/")
 
 	ws, err := db.Find[webhook.Webhook](ctx, webhook.ListWebhookOptions{RepoID: ctx.Repo.Repository.ID})
@@ -132,13 +133,16 @@ func WebhookNew(ctx *context.Context) {
 	}
 
 	hookType := ctx.Params(":type")
-	if webhook_service.GetWebhookHandler(hookType) == nil {
+	handler := webhook_service.GetWebhookHandler(hookType)
+	if handler == nil {
 		ctx.NotFound("GetWebhookHandler", nil)
 		return
 	}
 	ctx.Data["HookType"] = hookType
+	ctx.Data["WebhookHandler"] = handler
 	ctx.Data["BaseLink"] = orCtx.LinkNew
 	ctx.Data["BaseLinkNew"] = orCtx.LinkNew
+	ctx.Data["WebhookList"] = webhook_service.List()
 
 	ctx.HTML(http.StatusOK, orCtx.NewTemplate)
 }
@@ -194,6 +198,7 @@ func WebhookCreate(ctx *context.Context) {
 	ctx.Data["PageIsSettingsHooksNew"] = true
 	ctx.Data["Webhook"] = webhook.Webhook{HookEvent: &webhook_module.HookEvent{}}
 	ctx.Data["HookType"] = hookType
+	ctx.Data["WebhookHandler"] = handler
 
 	orCtx, err := getOwnerRepoCtx(ctx)
 	if err != nil {
@@ -202,6 +207,7 @@ func WebhookCreate(ctx *context.Context) {
 	}
 	ctx.Data["BaseLink"] = orCtx.LinkNew
 	ctx.Data["BaseLinkNew"] = orCtx.LinkNew
+	ctx.Data["WebhookList"] = webhook_service.List()
 
 	if ctx.HasError() {
 		// pre-fill the form with the submitted data
@@ -336,6 +342,7 @@ func checkWebhook(ctx *context.Context) (*ownerRepoCtx, *webhook.Webhook) {
 	}
 	ctx.Data["BaseLink"] = orCtx.Link
 	ctx.Data["BaseLinkNew"] = orCtx.LinkNew
+	ctx.Data["WebhookList"] = webhook_service.List()
 
 	var w *webhook.Webhook
 	if orCtx.RepoID > 0 {
@@ -358,6 +365,7 @@ func checkWebhook(ctx *context.Context) (*ownerRepoCtx, *webhook.Webhook) {
 
 	if handler := webhook_service.GetWebhookHandler(w.Type); handler != nil {
 		ctx.Data["HookMetadata"] = handler.Metadata(w)
+		ctx.Data["WebhookHandler"] = handler
 	}
 
 	ctx.Data["History"], err = w.History(ctx, 1)

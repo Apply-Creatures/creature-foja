@@ -6,6 +6,7 @@ package webhook
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"net/http"
 	"net/url"
 	"strings"
@@ -22,6 +23,7 @@ type msteamsHandler struct{}
 
 func (msteamsHandler) Type() webhook_module.HookType       { return webhook_module.MSTEAMS }
 func (msteamsHandler) Metadata(*webhook_model.Webhook) any { return nil }
+func (msteamsHandler) Icon(size int) template.HTML         { return imgIcon("msteams.png", size) }
 
 func (msteamsHandler) FormFields(bind func(any)) FormFields {
 	var form struct {

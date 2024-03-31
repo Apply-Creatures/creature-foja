@@ -6,7 +6,9 @@ package webhook
 import (
 	"fmt"
 	"html"
+	"html/template"
 	"net/url"
+	"strconv"
 	"strings"
 
 	webhook_model "code.gitea.io/gitea/models/webhook"
@@ -351,4 +353,10 @@ func ToHook(repoLink string, w *webhook_model.Webhook) (*api.Hook, error) {
 		Updated:             w.UpdatedUnix.AsTime(),
 		Created:             w.CreatedUnix.AsTime(),
 	}, nil
+}
+
+func imgIcon(name string, size int) template.HTML {
+	s := strconv.Itoa(size)
+	src := html.EscapeString(setting.StaticURLPrefix + "/assets/img/" + name)
+	return template.HTML(`<img width="` + s + `" height="` + s + `" src="` + src + `">`)
 }

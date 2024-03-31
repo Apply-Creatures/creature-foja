@@ -9,6 +9,7 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
+	"html/template"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -20,6 +21,7 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
+	"code.gitea.io/gitea/modules/svg"
 	"code.gitea.io/gitea/modules/util"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 	"code.gitea.io/gitea/services/forms"
@@ -28,6 +30,10 @@ import (
 type matrixHandler struct{}
 
 func (matrixHandler) Type() webhook_module.HookType { return webhook_module.MATRIX }
+
+func (matrixHandler) Icon(size int) template.HTML {
+	return svg.RenderHTML("gitea-matrix", size, "img")
+}
 
 func (matrixHandler) FormFields(bind func(any)) FormFields {
 	var form struct {

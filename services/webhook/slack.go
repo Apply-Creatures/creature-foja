@@ -6,6 +6,7 @@ package webhook
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"net/http"
 	"regexp"
 	"strings"
@@ -26,6 +27,7 @@ import (
 type slackHandler struct{}
 
 func (slackHandler) Type() webhook_module.HookType { return webhook_module.SLACK }
+func (slackHandler) Icon(size int) template.HTML   { return imgIcon("slack.png", size) }
 
 type slackForm struct {
 	forms.WebhookForm

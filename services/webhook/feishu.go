@@ -6,6 +6,7 @@ package webhook
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"net/http"
 	"strings"
 
@@ -19,6 +20,7 @@ import (
 type feishuHandler struct{}
 
 func (feishuHandler) Type() webhook_module.HookType { return webhook_module.FEISHU }
+func (feishuHandler) Icon(size int) template.HTML   { return imgIcon("feishu.png", size) }
 
 func (feishuHandler) FormFields(bind func(any)) FormFields {
 	var form struct {

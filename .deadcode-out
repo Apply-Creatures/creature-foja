@@ -341,5 +341,4 @@ package "code.gitea.io/gitea/services/repository/files"
 
 package "code.gitea.io/gitea/services/webhook"
 	func NewNotifier
-	func List
 

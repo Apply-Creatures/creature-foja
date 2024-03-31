@@ -6,6 +6,7 @@ package webhook
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"net/http"
 	"strings"
 
@@ -20,6 +21,10 @@ type wechatworkHandler struct{}
 
 func (wechatworkHandler) Type() webhook_module.HookType       { return webhook_module.WECHATWORK }
 func (wechatworkHandler) Metadata(*webhook_model.Webhook) any { return nil }
+
+func (wechatworkHandler) Icon(size int) template.HTML {
+	return imgIcon("wechatwork.png", size)
+}
 
 func (wechatworkHandler) FormFields(bind func(any)) FormFields {
 	var form struct {

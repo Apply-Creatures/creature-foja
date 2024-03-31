@@ -6,6 +6,7 @@ package webhook
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"net/http"
 	"net/url"
 	"strings"
@@ -22,6 +23,7 @@ import (
 type telegramHandler struct{}
 
 func (telegramHandler) Type() webhook_module.HookType { return webhook_module.TELEGRAM }
+func (telegramHandler) Icon(size int) template.HTML   { return imgIcon("telegram.png", size) }
 
 func (telegramHandler) FormFields(bind func(any)) FormFields {
 	var form struct {
