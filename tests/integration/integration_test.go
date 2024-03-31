@@ -17,6 +17,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -24,6 +25,7 @@ import (
 	"testing"
 	"time"
 
+	"code.gitea.io/gitea/cmd"
 	"code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/models/db"
 	repo_model "code.gitea.io/gitea/models/repo"
@@ -93,7 +95,43 @@ func NewNilResponseHashSumRecorder() *NilResponseHashSumRecorder {
 	}
 }
 
+// runMainApp runs the subcommand and returns its standard output. Any returned error will usually be of type *ExitError. If c.Stderr was nil, Output populates ExitError.Stderr.
+func runMainApp(subcommand string, args ...string) (string, error) {
+	return runMainAppWithStdin(nil, subcommand, args...)
+}
+
+// runMainAppWithStdin runs the subcommand and returns its standard output. Any returned error will usually be of type *ExitError. If c.Stderr was nil, Output populates ExitError.Stderr.
+func runMainAppWithStdin(stdin io.Reader, subcommand string, args ...string) (string, error) {
+	// running the main app directly will very likely mess with the testing setup (logger & co.)
+	// hence we run it as a subprocess and capture its output
+	args = append([]string{subcommand}, args...)
+	cmd := exec.Command(os.Args[0], args...)
+	cmd.Env = append(os.Environ(),
+		"GITEA_TEST_CLI=true",
+		"GITEA_CONF="+setting.CustomConf,
+		"GITEA_WORK_DIR="+setting.AppWorkPath)
+	cmd.Stdin = stdin
+	out, err := cmd.Output()
+	return string(out), err
+}
+
 func TestMain(m *testing.M) {
+	// GITEA_TEST_CLI is set by runMainAppWithStdin
+	// inspired by https://abhinavg.net/2022/05/15/hijack-testmain/
+	if testCLI := os.Getenv("GITEA_TEST_CLI"); testCLI == "true" {
+		app := cmd.NewMainApp("test-version", "integration-test")
+		args := append([]string{
+			"executable-name", // unused, but expected at position 1
+			"--config", os.Getenv("GITEA_CONF"),
+		},
+			os.Args[1:]..., // skip the executable name
+		)
+		if err := cmd.RunMainApp(app, args...); err != nil {
+			panic(err) // should never happen since RunMainApp exits on error
+		}
+		return
+	}
+
 	defer log.GetManager().Close()
 
 	managerCtx, cancel := context.WithCancel(context.Background())
