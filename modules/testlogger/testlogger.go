@@ -54,9 +54,12 @@ func (w *testLoggerWriterCloser) Log(level log.Level, msg string) {
 // list of error message which will not fail the test
 // ideally this list should be empty, however ensuring that it does not grow
 // is already a good first step.
-var ignoredErrorMessageSuffixes = []string{
+var ignoredErrorMessage = []string{
 	// only seen on mysql tests https://codeberg.org/forgejo/forgejo/pulls/2657#issuecomment-1693055
 	`table columns using inconsistent collation, they should use "utf8mb4_0900_ai_ci". Please go to admin panel Self Check page`,
+
+	// TestPullWIPConvertSidebar
+	`:PullRequestPushCommits() [E] comment.LoadIssue: issue does not exist [id:`,
 
 	// TestAPIDeleteReleaseByTagName
 	// action notification were a commit cannot be computed (because the commit got deleted)
@@ -73,6 +76,14 @@ var ignoredErrorMessageSuffixes = []string{
 
 	// TestAPIGenerateRepo
 	`Notify() [E] an error occurred while executing the CreateRepository actions method: gitRepo.GetCommit: object does not exist [id: , rel_path: ]`,
+
+	// TestAPIPullUpdateByRebase
+	`:testPR() [E] Unable to GetPullRequestByID[`,
+	`:PullRequestSynchronized() [E] LoadAttributes: getRepositoryByID `,
+	`:PullRequestSynchronized() [E] pr.Issue.LoadRepo: getRepositoryByID [`,
+	`:handler() [E] Was unable to create issue notification: issue does not exist [`,
+	`:func1() [E] PullRequestList.LoadAttributes: issues and prs may be not in sync: cannot find issue`,
+	`:func1() [E] checkForInvalidation: GetRepositoryByIDCtx: repository does not exist `,
 
 	// TestAPIPullReview
 	`PullRequestReview() [E] Unsupported review webhook type`,
@@ -111,37 +122,37 @@ var ignoredErrorMessageSuffixes = []string{
 	`RebuildCargoIndex() [E] RebuildIndex failed: GetRepositoryByOwnerAndName: repository does not exist [id: 0, uid: 0, owner_name: user2, name: _cargo-index]`,
 
 	// TestCommitMail/Delete/Not_activated
-	`/context_response.go:87:HTML() [E] Render failed: failed to render template: repo/editor/edit, error: template error: builtin(static):repo/editor/edit:13:13 : executing "repo/editor/edit" at <len .TreeNames>: error calling len: reflect: call of reflect.Value.Type on zero Value
+	`:HTML() [E] Render failed: failed to render template: repo/editor/edit, error: template error: builtin(static):repo/editor/edit:13:13 : executing "repo/editor/edit" at <len .TreeNames>: error calling len: reflect: call of reflect.Value.Type on zero Value
 ----------------------------------------------------------------------
 					{{$n := len .TreeNames}}
 					        ^
 ----------------------------------------------------------------------`,
 	// TestCommitMail/Delete/Not_belong_to_user
-	`/context_response.go:87:HTML() [E] Render failed: failed to render template: repo/editor/edit, error: template error: builtin(static):repo/editor/edit:13:13 : executing "repo/editor/edit" at <len .TreeNames>: error calling len: reflect: call of reflect.Value.Type on zero Value
+	`:HTML() [E] Render failed: failed to render template: repo/editor/edit, error: template error: builtin(static):repo/editor/edit:13:13 : executing "repo/editor/edit" at <len .TreeNames>: error calling len: reflect: call of reflect.Value.Type on zero Value
 ----------------------------------------------------------------------
 					{{$n := len .TreeNames}}
 					        ^
 ----------------------------------------------------------------------`,
 	// TestCommitMail/Apply_patch/Not_activated
-	`/context_response.go:87:HTML() [E] Render failed: failed to render template: repo/editor/edit, error: template error: builtin(static):repo/editor/edit:13:13 : executing "repo/editor/edit" at <len .TreeNames>: error calling len: reflect: call of reflect.Value.Type on zero Value
+	`:HTML() [E] Render failed: failed to render template: repo/editor/edit, error: template error: builtin(static):repo/editor/edit:13:13 : executing "repo/editor/edit" at <len .TreeNames>: error calling len: reflect: call of reflect.Value.Type on zero Value
 ----------------------------------------------------------------------
 					{{$n := len .TreeNames}}
 					        ^
 ----------------------------------------------------------------------`,
 	// TestCommitMail/Apply_patch/Not_belong_to_user
-	`/context_response.go:87:HTML() [E] Render failed: failed to render template: repo/editor/edit, error: template error: builtin(static):repo/editor/edit:13:13 : executing "repo/editor/edit" at <len .TreeNames>: error calling len: reflect: call of reflect.Value.Type on zero Value
+	`:HTML() [E] Render failed: failed to render template: repo/editor/edit, error: template error: builtin(static):repo/editor/edit:13:13 : executing "repo/editor/edit" at <len .TreeNames>: error calling len: reflect: call of reflect.Value.Type on zero Value
 ----------------------------------------------------------------------
 					{{$n := len .TreeNames}}
 					        ^
 ----------------------------------------------------------------------`,
 	// TestCommitMail/Cherry_pick/Not_activated
-	`/context_response.go:87:HTML() [E] Render failed: failed to render template: repo/editor/edit, error: template error: builtin(static):repo/editor/edit:13:13 : executing "repo/editor/edit" at <len .TreeNames>: error calling len: reflect: call of reflect.Value.Type on zero Value
+	`:HTML() [E] Render failed: failed to render template: repo/editor/edit, error: template error: builtin(static):repo/editor/edit:13:13 : executing "repo/editor/edit" at <len .TreeNames>: error calling len: reflect: call of reflect.Value.Type on zero Value
 ----------------------------------------------------------------------
 					{{$n := len .TreeNames}}
 					        ^
 ----------------------------------------------------------------------`,
 	// TestCommitMail/Cherry_pick/Not_belong_to_user
-	`/context_response.go:87:HTML() [E] Render failed: failed to render template: repo/editor/edit, error: template error: builtin(static):repo/editor/edit:13:13 : executing "repo/editor/edit" at <len .TreeNames>: error calling len: reflect: call of reflect.Value.Type on zero Value
+	`:HTML() [E] Render failed: failed to render template: repo/editor/edit, error: template error: builtin(static):repo/editor/edit:13:13 : executing "repo/editor/edit" at <len .TreeNames>: error calling len: reflect: call of reflect.Value.Type on zero Value
 ----------------------------------------------------------------------
 					{{$n := len .TreeNames}}
 					        ^
@@ -149,166 +160,166 @@ var ignoredErrorMessageSuffixes = []string{
 	// TestDangerZoneConfirmation/Convert_fork/Fail
 	`/gitea-repositories/user20/big_test_public_fork_7.git Error: no such file or directory`,
 	// TestGitSmartHTTP
-	`/web/repo/githttp.go:384:sendFile() [E] request file path contains invalid path: objects/info/..\..\..\..\custom\conf\app.ini`,
+	`:sendFile() [E] request file path contains invalid path: objects/info/..\..\..\..\custom\conf\app.ini`,
 	// TestGit/HTTP/BranchProtectMerge
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Not allowed to push to protected branch protected. HookPreReceive(last) failed: internal API error response, status=403`,
+	`:SSHLog() [E] ssh: Not allowed to push to protected branch protected. HookPreReceive(last) failed: internal API error response, status=403`,
 	// TestGit/HTTP/BranchProtectMerge
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Not allowed to push to protected branch protected. HookPreReceive(last) failed: internal API error response, status=403`,
+	`:SSHLog() [E] ssh: Not allowed to push to protected branch protected. HookPreReceive(last) failed: internal API error response, status=403`,
 	// TestGit/HTTP/BranchProtectMerge
-	`/gitea-repositories/user2/repo-tmp-17.git'`,
-	// TestGit/HTTP/BranchProtectMerge
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: branch protected is protected from force push. HookPreReceive(last) failed: internal API error response, status=403`,
+	`:SSHLog() [E] ssh: branch protected is protected from force push. HookPreReceive(last) failed: internal API error response, status=403`,
 	// TestGit/HTTP/MergeFork/CreatePRAndMerge
-	`s/web/repo/branch.go:108:DeleteBranchPost() [E] DeleteBranch: GetBranch: branch does not exist [repo_id: 1099 name: user2:master]`,  // sqlite
+	`:DeleteBranchPost() [E] DeleteBranch: GetBranch: branch does not exist [repo_id: 1099 name: user2:master]`,                          // sqlite
 	"s/web/repo/branch.go:108:DeleteBranchPost() [E] DeleteBranch: GetBranch: branch does not exist [repo_id: 10000 name: user2:master]", // mysql
 	"s/web/repo/branch.go:108:DeleteBranchPost() [E] DeleteBranch: GetBranch: branch does not exist [repo_id: 1060 name: user2:master]",  // pgsql
+	// TestGit/HTTP/BranchProtectMerge
+	`:func1() [E] PushToBaseRepo: PushRejected Error: exit status 1 - remote: error: cannot lock ref`,
+	// TestGit/SSH/BranchProtectMerge
+	`:func1() [E] PushToBaseRepo: PushRejected Error: exit status 1 - remote: error: cannot lock ref`,
 	// TestGit/SSH/LFS/PushCommit/Little
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/LFS/PushCommit/Little
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/LFS/PushCommit/Big
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/LFS/PushCommit/Big
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/LFS/Locks
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/LFS/Locks
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/LFS/Locks
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/LFS/Locks
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/LFS/Locks
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/CreateAgitFlowPull/PushParams/NoParams
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/CreateAgitFlowPull/PushParams/NoParams
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/CreateAgitFlowPull/PushParams/TitleOverride
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/CreateAgitFlowPull/PushParams/TitleOverride
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/CreateAgitFlowPull/PushParams/DescriptionOverride
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/CreateAgitFlowPull/PushParams/DescriptionOverride
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/CreateAgitFlowPull/Force_push/Fails
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/CreateAgitFlowPull/Force_push/Fails
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/CreateAgitFlowPull/Force_push/Succeeds
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/CreateAgitFlowPull/Force_push/Succeeds
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/CreateAgitFlowPull/Force_push
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/CreateAgitFlowPull/Force_push
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/CreateAgitFlowPull/Branch_already_contains_commit
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/CreateAgitFlowPull/Branch_already_contains_commit
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/CreateAgitFlowPull
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/CreateAgitFlowPull
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/CreateAgitFlowPull
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/CreateAgitFlowPull
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/CreateAgitFlowPull
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/CreateAgitFlowPull
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/CreateAgitFlowPull
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/CreateAgitFlowPull
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/BranchProtectMerge
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/BranchProtectMerge
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/BranchProtectMerge
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/BranchProtectMerge
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/BranchProtectMerge
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Not allowed to push to protected branch protected. HookPreReceive(last) failed: internal API error response, status=403`,
+	`:SSHLog() [E] ssh: Not allowed to push to protected branch protected. HookPreReceive(last) failed: internal API error response, status=403`,
 	// TestGit/SSH/BranchProtectMerge
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/BranchProtectMerge
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/BranchProtectMerge
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/BranchProtectMerge
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/BranchProtectMerge
-	`/gitea-repositories/user2/repo-tmp-18.git'`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/BranchProtectMerge
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/BranchProtectMerge
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/BranchProtectMerge
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/BranchProtectMerge
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: branch protected is protected from force push. HookPreReceive(last) failed: internal API error response, status=403`,
 	// TestGit/SSH/BranchProtectMerge
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: branch protected is protected from force push. HookPreReceive(last) failed: internal API error response, status=403`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/BranchProtectMerge
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
-	// TestGit/SSH/BranchProtectMerge
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
+	`:SSHLog() [E] ssh: Unknown git command. Unknown git command git-lfs-transfer`,
 	// TestGit/SSH/MergeFork/CreatePRAndMerge
-	`s/web/repo/branch.go:108:DeleteBranchPost() [E] DeleteBranch: GetBranch: branch does not exist [repo_id: 1102 name: user2:master]`,  // sqlite
+	`:DeleteBranchPost() [E] DeleteBranch: GetBranch: branch does not exist [repo_id: 1102 name: user2:master]`,                          // sqlite
 	"s/web/repo/branch.go:108:DeleteBranchPost() [E] DeleteBranch: GetBranch: branch does not exist [repo_id: 10003 name: user2:master]", // mysql
 	"s/web/repo/branch.go:108:DeleteBranchPost() [E] DeleteBranch: GetBranch: branch does not exist [repo_id: 1063 name: user2:master]",  // pgsql
 	// TestGit/SSH/PushCreate
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Push to create is not enabled for users. ServCommand failed: internal API error response, status=403`,
+	`:SSHLog() [E] ssh: Push to create is not enabled for users. ServCommand failed: internal API error response, status=403`,
 	// TestGit/SSH/PushCreate
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Cannot find repository: user2/repo-tmp-push-create-ssh. ServCommand failed: internal API error response, status=404`,
+	`:SSHLog() [E] ssh: Cannot find repository: user2/repo-tmp-push-create-ssh. ServCommand failed: internal API error response, status=404`,
 	// TestGit/SSH/PushCreate
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Invalid repo name. Invalid repo name: invalid/repo-tmp-push-create-ssh`,
+	`:SSHLog() [E] ssh: Invalid repo name. Invalid repo name: invalid/repo-tmp-push-create-ssh`,
 	// TestIssueReaction
-	`rs/web/repo/issue.go:3282:ChangeIssueReaction() [E] ChangeIssueReaction: '8ball' is not an allowed reaction`,
+	`:ChangeIssueReaction() [E] ChangeIssueReaction: '8ball' is not an allowed reaction`,
 	// TestIssuePinMove
-	`eb/repo/issue_pin.go:95:IssuePinMove() [E] Issue does not belong to this repository`,
+	`:IssuePinMove() [E] Issue does not belong to this repository`,
 	// TestLinksLogin
-	`ervices/pull/pull.go:880:GetIssuesAllCommitStatus() [E] getAllCommitStatus: cant get commit statuses of pull [6]: object does not exist [id: refs/pull/2/head, rel_path: ]`,
+	`:GetIssuesAllCommitStatus() [E] getAllCommitStatus: cant get commit statuses of pull [6]: object does not exist [id: refs/pull/2/head, rel_path: ]`,
 	// TestLinksLogin
-	`ervices/pull/pull.go:880:GetIssuesAllCommitStatus() [E] getAllCommitStatus: cant get commit statuses of pull [6]: object does not exist [id: refs/pull/2/head, rel_path: ]`,
+	`:GetIssuesAllCommitStatus() [E] getAllCommitStatus: cant get commit statuses of pull [6]: object does not exist [id: refs/pull/2/head, rel_path: ]`,
 	// TestLinksLogin
-	`ervices/pull/pull.go:880:GetIssuesAllCommitStatus() [E] getAllCommitStatus: cant get commit statuses of pull [6]: object does not exist [id: refs/pull/2/head, rel_path: ]`,
+	`:GetIssuesAllCommitStatus() [E] getAllCommitStatus: cant get commit statuses of pull [6]: object does not exist [id: refs/pull/2/head, rel_path: ]`,
 	// TestLinksLogin
-	`ervices/pull/pull.go:872:GetIssuesAllCommitStatus() [E] Cannot open git repository <Repository 23:org17/big_test_public_4> for issue #1[20]. Error: no such file or directory`,
+	`:GetIssuesAllCommitStatus() [E] Cannot open git repository <Repository 23:org17/big_test_public_4> for issue #1[20]. Error: no such file or directory`,
 	// TestMigrate
 	`] for OwnerID[2] failed: error while listing issues: token does not have at least one of required scope(s): [read:issue]`,
 	// TestMigrate
-	`ervices/task/task.go:53:handler() [E] Run task failed: error while listing issues: token does not have at least one of required scope(s): [read:issue]`,
+	`:handler() [E] Run task failed: error while listing issues: token does not have at least one of required scope(s): [read:issue]`,
 	// TestMigrate
 	`] for OwnerID[2] failed: error while listing issues: token does not have at least one of required scope(s): [read:issue]`,
 	// TestMigrate
-	`ervices/task/task.go:53:handler() [E] Run task failed: error while listing issues: token does not have at least one of required scope(s): [read:issue]`,
+	`:handler() [E] Run task failed: error while listing issues: token does not have at least one of required scope(s): [read:issue]`,
 	// TestMirrorPush
-	`/web/repo/githttp.go:533:GetInfoRefs() [E] fork/exec /usr/bin/git: no such file or directory -`,
+	`:GetInfoRefs() [E] fork/exec /usr/bin/git: no such file or directory -`,
 
 	// TestOrgMembers
-	`nization/org_user.go:122:loadOrganizationOwners() [E] Organization does not have owner team: 25`,
+	`:loadOrganizationOwners() [E] Organization does not have owner team: 25`,
 	// TestOrgMembers
-	`nization/org_user.go:122:loadOrganizationOwners() [E] Organization does not have owner team: 25`,
+	`:loadOrganizationOwners() [E] Organization does not have owner team: 25`,
 	// TestOrgMembers
-	`nization/org_user.go:122:loadOrganizationOwners() [E] Organization does not have owner team: 25`,
+	`:loadOrganizationOwners() [E] Organization does not have owner team: 25`,
 	// TestRecentlyPushed/unrelated_branches_are_not_shown
-	`repository/branch.go:30:SyncRepoBranches() [E] OpenRepository[user30/repo50]: %!w(*errors.errorString=&{no such file or directory})`,
+	`:SyncRepoBranches() [E] OpenRepository[user30/repo50]: %!w(*errors.errorString=&{no such file or directory})`,
 	// TestRecentlyPushed/unrelated_branches_are_not_shown
-	`repository/branch.go:488:handlerBranchSync() [E] syncRepoBranches [50] failed: no such file or directory`,
+	`:handlerBranchSync() [E] syncRepoBranches [50] failed: no such file or directory`,
 	// TestRecentlyPushed/unrelated_branches_are_not_shown
-	`repository/branch.go:30:SyncRepoBranches() [E] OpenRepository[user30/repo51]: %!w(*errors.errorString=&{no such file or directory})`,
+	`:SyncRepoBranches() [E] OpenRepository[user30/repo51]: %!w(*errors.errorString=&{no such file or directory})`,
 	// TestRecentlyPushed/unrelated_branches_are_not_shown
-	`repository/branch.go:488:handlerBranchSync() [E] syncRepoBranches [51] failed: no such file or directory`,
+	`:handlerBranchSync() [E] syncRepoBranches [51] failed: no such file or directory`,
 	// TestRecentlyPushed/unrelated_branches_are_not_shown
-	`repository/branch.go:30:SyncRepoBranches() [E] OpenRepository[user2/scoped_label]: %!w(*errors.errorString=&{no such file or directory})`,
+	`:SyncRepoBranches() [E] OpenRepository[user2/scoped_label]: %!w(*errors.errorString=&{no such file or directory})`,
 	// TestRecentlyPushed/unrelated_branches_are_not_shown
-	`repository/branch.go:488:handlerBranchSync() [E] syncRepoBranches [55] failed: no such file or directory`,
+	`:handlerBranchSync() [E] syncRepoBranches [55] failed: no such file or directory`,
 	// TestCantMergeConflict
 	"]user1/repo1#1[base...conflict]> Unable to merge tracking into base: Merge Conflict Error: exit status 1: \nAuto-merging README.md\nCONFLICT (content): Merge conflict in README.md\nAutomatic merge failed; fix conflicts and then commit the result.",
 
@@ -321,45 +332,45 @@ var ignoredErrorMessageSuffixes = []string{
 	// TestPullrequestReopen/Head_branch_deleted
 	`]user2/reopen-base#1[base-branch...org26/reopen-head:head-branch]>]: branch does not exist [repo_id: 0 name: head-branch]`,
 	// TestDatabaseMissingABranch
-	`repository/branch.go:30:SyncRepoBranches() [E] OpenRepository[user30/repo50]: %!w(*errors.errorString=&{no such file or directory})`,
+	`:SyncRepoBranches() [E] OpenRepository[user30/repo50]: %!w(*errors.errorString=&{no such file or directory})`,
 	// TestDatabaseMissingABranch
-	`repository/branch.go:488:handlerBranchSync() [E] syncRepoBranches [50] failed: no such file or directory`,
+	`:handlerBranchSync() [E] syncRepoBranches [50] failed: no such file or directory`,
 	// TestDatabaseMissingABranch
-	`repository/branch.go:30:SyncRepoBranches() [E] OpenRepository[user30/repo51]: %!w(*errors.errorString=&{no such file or directory})`,
+	`:SyncRepoBranches() [E] OpenRepository[user30/repo51]: %!w(*errors.errorString=&{no such file or directory})`,
 	// TestDatabaseMissingABranch
-	`repository/branch.go:488:handlerBranchSync() [E] syncRepoBranches [51] failed: no such file or directory`,
+	`:handlerBranchSync() [E] syncRepoBranches [51] failed: no such file or directory`,
 	// TestDatabaseMissingABranch
-	`repository/branch.go:30:SyncRepoBranches() [E] OpenRepository[user2/scoped_label]: %!w(*errors.errorString=&{no such file or directory})`,
+	`:SyncRepoBranches() [E] OpenRepository[user2/scoped_label]: %!w(*errors.errorString=&{no such file or directory})`,
 	// TestDatabaseMissingABranch
-	`repository/branch.go:488:handlerBranchSync() [E] syncRepoBranches [55] failed: no such file or directory`,
+	`:handlerBranchSync() [E] syncRepoBranches [55] failed: no such file or directory`,
 	// TestDatabaseMissingABranch
-	`repository/branch.go:100:LoadBranches() [E] loadOneBranch() on repo #1, branch 'will-be-missing' failed: CountDivergingCommits: exit status 128 - fatal: bad revision 'master...refs/heads/will-be-missing'
+	`:LoadBranches() [E] loadOneBranch() on repo #1, branch 'will-be-missing' failed: CountDivergingCommits: exit status 128 - fatal: bad revision 'master...refs/heads/will-be-missing'
 		- fatal: bad revision 'master...refs/heads/will-be-missing'`,
 	// TestDatabaseMissingABranch
-	`repository/branch.go:30:SyncRepoBranches() [E] OpenRepository[user30/repo50]: %!w(*errors.errorString=&{no such file or directory})`,
+	`:SyncRepoBranches() [E] OpenRepository[user30/repo50]: %!w(*errors.errorString=&{no such file or directory})`,
 	// TestDatabaseMissingABranch
-	`repository/branch.go:488:handlerBranchSync() [E] syncRepoBranches [50] failed: no such file or directory`,
+	`:handlerBranchSync() [E] syncRepoBranches [50] failed: no such file or directory`,
 	// TestDatabaseMissingABranch
-	`repository/branch.go:30:SyncRepoBranches() [E] OpenRepository[user30/repo51]: %!w(*errors.errorString=&{no such file or directory})`,
+	`:SyncRepoBranches() [E] OpenRepository[user30/repo51]: %!w(*errors.errorString=&{no such file or directory})`,
 	// TestDatabaseMissingABranch
-	`repository/branch.go:488:handlerBranchSync() [E] syncRepoBranches [51] failed: no such file or directory`,
+	`:handlerBranchSync() [E] syncRepoBranches [51] failed: no such file or directory`,
 	// TestDatabaseMissingABranch
-	`repository/branch.go:30:SyncRepoBranches() [E] OpenRepository[user2/scoped_label]: %!w(*errors.errorString=&{no such file or directory})`,
+	`:SyncRepoBranches() [E] OpenRepository[user2/scoped_label]: %!w(*errors.errorString=&{no such file or directory})`,
 	// TestDatabaseMissingABranch
-	`repository/branch.go:488:handlerBranchSync() [E] syncRepoBranches [55] failed: no such file or directory`,
+	`:handlerBranchSync() [E] syncRepoBranches [55] failed: no such file or directory`,
 	// TestDatabaseMissingABranch
 	"LoadBranches() [E] loadOneBranch() on repo #1, branch 'will-be-missing' failed: CountDivergingCommits: exit status 128 - fatal: bad revision 'master...refs/heads/will-be-missing'\n - fatal: bad revision 'master...refs/heads/will-be-missing'",
 
 	// TestCreateNewTagProtected/Git
-	`s/private/ssh_log.go:26:SSHLog() [E] ssh: Tag v-2 is protected. HookPreReceive(last) failed: internal API error response, status=403`,
+	`:SSHLog() [E] ssh: Tag v-2 is protected. HookPreReceive(last) failed: internal API error response, status=403`,
 	// TestMarkDownReadmeImage
-	`ers/web/repo/view.go:1167:checkOutdatedBranch() [E] GetBranch: branch does not exist [repo_id: 1 name: home-md-img-check]`,
+	`:checkOutdatedBranch() [E] GetBranch: branch does not exist [repo_id: 1 name: home-md-img-check]`,
 	// TestMarkDownReadmeImage
-	`ers/web/repo/view.go:1167:checkOutdatedBranch() [E] GetBranch: branch does not exist [repo_id: 1 name: home-md-img-check]`,
+	`:checkOutdatedBranch() [E] GetBranch: branch does not exist [repo_id: 1 name: home-md-img-check]`,
 	// TestMarkDownReadmeImageSubfolder
-	`ers/web/repo/view.go:1167:checkOutdatedBranch() [E] GetBranch: branch does not exist [repo_id: 1 name: sub-home-md-img-check]`,
+	`:checkOutdatedBranch() [E] GetBranch: branch does not exist [repo_id: 1 name: sub-home-md-img-check]`,
 	// TestMarkDownReadmeImageSubfolder
-	`ers/web/repo/view.go:1167:checkOutdatedBranch() [E] GetBranch: branch does not exist [repo_id: 1 name: sub-home-md-img-check]`,
+	`:checkOutdatedBranch() [E] GetBranch: branch does not exist [repo_id: 1 name: sub-home-md-img-check]`,
 
 	// TestKeyOnlyOneType
 	`:ssh-key-test-repo-push is not authorized to write to user2/ssh-key-test-repo. ServCommand failed: internal API error response, status=401`,
@@ -385,8 +396,8 @@ var ignoredErrorMessageSuffixes = []string{
 }
 
 func (w *testLoggerWriterCloser) recordError(msg string) {
-	for _, s := range ignoredErrorMessageSuffixes {
-		if strings.HasSuffix(msg, s) {
+	for _, s := range ignoredErrorMessage {
+		if strings.Contains(msg, s) {
 			return
 		}
 	}
