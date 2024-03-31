@@ -14,7 +14,7 @@
 				</a>
 			{{end}}
 			<span class="item not-mobile" {{if not (eq .Repository.Size 0)}}data-tooltip-content="{{.Repository.SizeDetailsString ctx.Locale}}"{{end}}>
-				{{$fileSizeFields :=  ctx.Locale.TrSize .Repository.Size }}
+				{{$fileSizeFields :=  ctx.Locale.TrSize .Repository.Size}}
 				{{svg "octicon-database"}} <b>{{$fileSizeFields.PrettyNumber}}</b> {{$fileSizeFields.TranslatedUnit}}
 			</span>
 		{{end}}

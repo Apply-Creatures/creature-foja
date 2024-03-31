@@ -31,8 +31,8 @@ func (l MockLocale) TrN(cnt any, key1, keyN string, args ...any) template.HTML {
 	return template.HTML(key1)
 }
 
-func (l MockLocale) TrSize(s int64) ByteSize {
-	return ByteSize{fmt.Sprint(s), ""}
+func (l MockLocale) TrSize(s int64) ReadableSize {
+	return ReadableSize{fmt.Sprint(s), ""}
 }
 
 func (l MockLocale) PrettyNumber(v any) string {
