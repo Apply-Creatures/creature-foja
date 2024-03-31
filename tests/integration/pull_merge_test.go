@@ -26,11 +26,14 @@ import (
 	"code.gitea.io/gitea/models/webhook"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/gitrepo"
+	"code.gitea.io/gitea/modules/hostmatcher"
+	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/test"
 	"code.gitea.io/gitea/modules/translation"
 	"code.gitea.io/gitea/services/pull"
 	files_service "code.gitea.io/gitea/services/repository/files"
+	webhook_service "code.gitea.io/gitea/services/webhook"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -83,7 +86,19 @@ func testPullCleanUp(t *testing.T, session *TestSession, user, repo, pullnum str
 func retrieveHookTasks(t *testing.T, hookID int64, activateWebhook bool) []*webhook.HookTask {
 	t.Helper()
 	if activateWebhook {
-		updated, err := db.GetEngine(db.DefaultContext).ID(hookID).Cols("is_active").Update(webhook.Webhook{IsActive: true})
+		s := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusNoContent)
+		}))
+		t.Cleanup(s.Close)
+		updated, err := db.GetEngine(db.DefaultContext).ID(hookID).Cols("is_active", "url").Update(webhook.Webhook{
+			IsActive: true,
+			URL:      s.URL,
+		})
+
+		// allow webhook deliveries on localhost
+		t.Cleanup(test.MockVariableValue(&setting.Webhook.AllowedHostList, hostmatcher.MatchBuiltinLoopback))
+		webhook_service.Init()
+
 		assert.Equal(t, int64(1), updated)
 		assert.NoError(t, err)
 	}
