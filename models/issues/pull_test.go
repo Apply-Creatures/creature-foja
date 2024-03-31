@@ -4,7 +4,9 @@
 package issues_test
 
 import (
+	"fmt"
 	"testing"
+	"time"
 
 	"code.gitea.io/gitea/models/db"
 	issues_model "code.gitea.io/gitea/models/issues"
@@ -12,6 +14,7 @@ import (
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -153,6 +156,100 @@ func TestGetUnmergedPullRequestsByHeadInfo(t *testing.T) {
 	for _, pr := range prs {
 		assert.Equal(t, int64(1), pr.HeadRepoID)
 		assert.Equal(t, "branch2", pr.HeadBranch)
+	}
+}
+
+func TestGetUnmergedPullRequestsByHeadInfoMax(t *testing.T) {
+	defer tests.AddFixtures("models/fixtures/TestGetUnmergedPullRequestsByHeadInfoMax/")()
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	repoID := int64(1)
+	olderThan := int64(0)
+
+	// for NULL created field the olderThan condition is ignored
+	prs, err := issues_model.GetUnmergedPullRequestsByHeadInfoMax(db.DefaultContext, repoID, olderThan, "branch2")
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1), prs[0].HeadRepoID)
+
+	// test for when the created field is set
+	branch := "branchmax"
+	prs, err = issues_model.GetUnmergedPullRequestsByHeadInfoMax(db.DefaultContext, repoID, olderThan, branch)
+	assert.NoError(t, err)
+	assert.Len(t, prs, 0)
+	olderThan = time.Now().UnixNano()
+	assert.NoError(t, err)
+	prs, err = issues_model.GetUnmergedPullRequestsByHeadInfoMax(db.DefaultContext, repoID, olderThan, branch)
+	assert.NoError(t, err)
+	assert.Len(t, prs, 1)
+	for _, pr := range prs {
+		assert.Equal(t, int64(1), pr.HeadRepoID)
+		assert.Equal(t, branch, pr.HeadBranch)
+	}
+	pr := prs[0]
+
+	for _, testCase := range []struct {
+		table   string
+		field   string
+		id      int64
+		match   any
+		nomatch any
+	}{
+		{
+			table:   "issue",
+			field:   "is_closed",
+			id:      pr.IssueID,
+			match:   false,
+			nomatch: true,
+		},
+		{
+			table:   "pull_request",
+			field:   "flow",
+			id:      pr.ID,
+			match:   issues_model.PullRequestFlowGithub,
+			nomatch: issues_model.PullRequestFlowAGit,
+		},
+		{
+			table:   "pull_request",
+			field:   "head_repo_id",
+			id:      pr.ID,
+			match:   pr.HeadRepoID,
+			nomatch: 0,
+		},
+		{
+			table:   "pull_request",
+			field:   "head_branch",
+			id:      pr.ID,
+			match:   pr.HeadBranch,
+			nomatch: "something else",
+		},
+		{
+			table:   "pull_request",
+			field:   "has_merged",
+			id:      pr.ID,
+			match:   false,
+			nomatch: true,
+		},
+	} {
+		t.Run(testCase.field, func(t *testing.T) {
+			update := fmt.Sprintf("UPDATE `%s` SET `%s` = ? WHERE `id` = ?", testCase.table, testCase.field)
+
+			// expect no match
+			_, err = db.GetEngine(db.DefaultContext).Exec(update, testCase.nomatch, testCase.id)
+			assert.NoError(t, err)
+			prs, err = issues_model.GetUnmergedPullRequestsByHeadInfoMax(db.DefaultContext, repoID, olderThan, branch)
+			assert.NoError(t, err)
+			assert.Len(t, prs, 0)
+
+			// expect one match
+			_, err = db.GetEngine(db.DefaultContext).Exec(update, testCase.match, testCase.id)
+			assert.NoError(t, err)
+			prs, err = issues_model.GetUnmergedPullRequestsByHeadInfoMax(db.DefaultContext, repoID, olderThan, branch)
+			assert.NoError(t, err)
+			assert.Len(t, prs, 1)
+
+			// identical to the known PR
+			assert.Equal(t, pr.ID, prs[0].ID)
+		})
 	}
 }
 

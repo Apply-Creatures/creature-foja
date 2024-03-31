@@ -296,117 +296,130 @@ func checkForInvalidation(ctx context.Context, requests issues_model.PullRequest
 
 // AddTestPullRequestTask adds new test tasks by given head/base repository and head/base branch,
 // and generate new patch for testing as needed.
-func AddTestPullRequestTask(doer *user_model.User, repoID int64, branch string, isSync bool, oldCommitID, newCommitID string) {
-	description := fmt.Sprintf("AddTestPullRequestTask [head_repo_id: %d, head_branch: %s]: finding pull requests", repoID, branch)
+func AddTestPullRequestTask(ctx context.Context, doer *user_model.User, repoID int64, branch string, isSync bool, oldCommitID, newCommitID string, timeNano int64) {
+	description := fmt.Sprintf("AddTestPullRequestTask [head_repo_id: %d, head_branch: %s]: only pull requests created before nano time %d will be considered", repoID, branch, timeNano)
 	log.Trace(description)
-	graceful.GetManager().RunWithShutdownContext(func(shutdownCtx context.Context) {
+	go graceful.GetManager().RunWithShutdownContext(func(shutdownCtx context.Context) {
 		// make it a process to allow for cancellation (especially during integration tests where no global shutdown happens)
 		ctx, _, finished := process.GetManager().AddContext(shutdownCtx, description)
 		defer finished()
 		// There is no sensible way to shut this down ":-("
 		// If you don't let it run all the way then you will lose data
-		// TODO: graceful: AddTestPullRequestTask needs to become a queue!
+		// TODO: graceful: TestPullRequest needs to become a queue!
 
-		// GetUnmergedPullRequestsByHeadInfo() only return open and unmerged PR.
-		prs, err := issues_model.GetUnmergedPullRequestsByHeadInfo(ctx, repoID, branch)
-		if err != nil {
-			log.Error("Find pull requests [head_repo_id: %d, head_branch: %s]: %v", repoID, branch, err)
-			return
-		}
+		TestPullRequest(ctx, doer, repoID, timeNano, branch, isSync, oldCommitID, newCommitID)
+	})
+}
 
-		for _, pr := range prs {
-			log.Trace("Updating PR[%d]: composing new test task", pr.ID)
-			if pr.Flow == issues_model.PullRequestFlowGithub {
-				if err := PushToBaseRepo(ctx, pr); err != nil {
-					log.Error("PushToBaseRepo: %v", err)
-					continue
-				}
-			} else {
+func TestPullRequest(ctx context.Context, doer *user_model.User, repoID, olderThan int64, branch string, isSync bool, oldCommitID, newCommitID string) {
+	// Only consider PR that are older than olderThan, which is the time at
+	// which the newCommitID was added to repoID.
+	//
+	// * commit C is pushed
+	// * the git hook queues AddTestPullRequestTask for processing and returns with success
+	// * TestPullRequest is not called yet
+	// * a pull request P with commit C as the head is created
+	// * TestPullRequest runs and ignores P because it was created after the commit was received
+	//
+	// In other words, a PR must not be updated based on events that happened before it existed
+	prs, err := issues_model.GetUnmergedPullRequestsByHeadInfoMax(ctx, repoID, olderThan, branch)
+	if err != nil {
+		log.Error("Find pull requests [head_repo_id: %d, head_branch: %s]: %v", repoID, branch, err)
+		return
+	}
+
+	for _, pr := range prs {
+		log.Trace("Updating PR[id=%d,index=%d]: composing new test task", pr.ID, pr.Index)
+		if pr.Flow == issues_model.PullRequestFlowGithub {
+			if err := PushToBaseRepo(ctx, pr); err != nil {
+				log.Error("PushToBaseRepo: %v", err)
 				continue
 			}
-
-			AddToTaskQueue(ctx, pr)
-			comment, err := CreatePushPullComment(ctx, doer, pr, oldCommitID, newCommitID)
-			if err == nil && comment != nil {
-				notify_service.PullRequestPushCommits(ctx, doer, pr, comment)
-			}
+		} else {
+			continue
 		}
 
-		if isSync {
-			requests := issues_model.PullRequestList(prs)
-			if err = requests.LoadAttributes(ctx); err != nil {
-				log.Error("PullRequestList.LoadAttributes: %v", err)
-			}
-			if invalidationErr := checkForInvalidation(ctx, requests, repoID, doer, branch); invalidationErr != nil {
-				log.Error("checkForInvalidation: %v", invalidationErr)
-			}
-			if err == nil {
-				for _, pr := range prs {
-					objectFormat := git.ObjectFormatFromName(pr.BaseRepo.ObjectFormatName)
-					if newCommitID != "" && newCommitID != objectFormat.EmptyObjectID().String() {
-						changed, err := checkIfPRContentChanged(ctx, pr, oldCommitID, newCommitID)
-						if err != nil {
-							log.Error("checkIfPRContentChanged: %v", err)
-						}
-						if changed {
-							// Mark old reviews as stale if diff to mergebase has changed
-							if err := issues_model.MarkReviewsAsStale(ctx, pr.IssueID); err != nil {
-								log.Error("MarkReviewsAsStale: %v", err)
-							}
+		AddToTaskQueue(ctx, pr)
+		comment, err := CreatePushPullComment(ctx, doer, pr, oldCommitID, newCommitID)
+		if err == nil && comment != nil {
+			notify_service.PullRequestPushCommits(ctx, doer, pr, comment)
+		}
+	}
 
-							// dismiss all approval reviews if protected branch rule item enabled.
-							pb, err := git_model.GetFirstMatchProtectedBranchRule(ctx, pr.BaseRepoID, pr.BaseBranch)
-							if err != nil {
-								log.Error("GetFirstMatchProtectedBranchRule: %v", err)
-							}
-							if pb != nil && pb.DismissStaleApprovals {
-								if err := DismissApprovalReviews(ctx, doer, pr); err != nil {
-									log.Error("DismissApprovalReviews: %v", err)
-								}
-							}
+	if isSync {
+		requests := issues_model.PullRequestList(prs)
+		if err = requests.LoadAttributes(ctx); err != nil {
+			log.Error("PullRequestList.LoadAttributes: %v", err)
+		}
+		if invalidationErr := checkForInvalidation(ctx, requests, repoID, doer, branch); invalidationErr != nil {
+			log.Error("checkForInvalidation: %v", invalidationErr)
+		}
+		if err == nil {
+			for _, pr := range prs {
+				objectFormat := git.ObjectFormatFromName(pr.BaseRepo.ObjectFormatName)
+				if newCommitID != "" && newCommitID != objectFormat.EmptyObjectID().String() {
+					changed, err := checkIfPRContentChanged(ctx, pr, oldCommitID, newCommitID)
+					if err != nil {
+						log.Error("checkIfPRContentChanged: %v", err)
+					}
+					if changed {
+						// Mark old reviews as stale if diff to mergebase has changed
+						if err := issues_model.MarkReviewsAsStale(ctx, pr.IssueID); err != nil {
+							log.Error("MarkReviewsAsStale: %v", err)
 						}
-						if err := issues_model.MarkReviewsAsNotStale(ctx, pr.IssueID, newCommitID); err != nil {
-							log.Error("MarkReviewsAsNotStale: %v", err)
-						}
-						divergence, err := GetDiverging(ctx, pr)
+
+						// dismiss all approval reviews if protected branch rule item enabled.
+						pb, err := git_model.GetFirstMatchProtectedBranchRule(ctx, pr.BaseRepoID, pr.BaseBranch)
 						if err != nil {
-							log.Error("GetDiverging: %v", err)
-						} else {
-							err = pr.UpdateCommitDivergence(ctx, divergence.Ahead, divergence.Behind)
-							if err != nil {
-								log.Error("UpdateCommitDivergence: %v", err)
+							log.Error("GetFirstMatchProtectedBranchRule: %v", err)
+						}
+						if pb != nil && pb.DismissStaleApprovals {
+							if err := DismissApprovalReviews(ctx, doer, pr); err != nil {
+								log.Error("DismissApprovalReviews: %v", err)
 							}
 						}
 					}
-
-					notify_service.PullRequestSynchronized(ctx, doer, pr)
+					if err := issues_model.MarkReviewsAsNotStale(ctx, pr.IssueID, newCommitID); err != nil {
+						log.Error("MarkReviewsAsNotStale: %v", err)
+					}
+					divergence, err := GetDiverging(ctx, pr)
+					if err != nil {
+						log.Error("GetDiverging: %v", err)
+					} else {
+						err = pr.UpdateCommitDivergence(ctx, divergence.Ahead, divergence.Behind)
+						if err != nil {
+							log.Error("UpdateCommitDivergence: %v", err)
+						}
+					}
 				}
+
+				notify_service.PullRequestSynchronized(ctx, doer, pr)
 			}
 		}
+	}
 
-		log.Trace("AddTestPullRequestTask [base_repo_id: %d, base_branch: %s]: finding pull requests", repoID, branch)
-		prs, err = issues_model.GetUnmergedPullRequestsByBaseInfo(ctx, repoID, branch)
+	log.Trace("TestPullRequest [base_repo_id: %d, base_branch: %s]: finding pull requests", repoID, branch)
+	prs, err = issues_model.GetUnmergedPullRequestsByBaseInfo(ctx, repoID, branch)
+	if err != nil {
+		log.Error("Find pull requests [base_repo_id: %d, base_branch: %s]: %v", repoID, branch, err)
+		return
+	}
+	for _, pr := range prs {
+		divergence, err := GetDiverging(ctx, pr)
 		if err != nil {
-			log.Error("Find pull requests [base_repo_id: %d, base_branch: %s]: %v", repoID, branch, err)
-			return
-		}
-		for _, pr := range prs {
-			divergence, err := GetDiverging(ctx, pr)
-			if err != nil {
-				if git_model.IsErrBranchNotExist(err) && !git.IsBranchExist(ctx, pr.HeadRepo.RepoPath(), pr.HeadBranch) {
-					log.Warn("Cannot test PR %s/%d: head_branch %s no longer exists", pr.BaseRepo.Name, pr.IssueID, pr.HeadBranch)
-				} else {
-					log.Error("GetDiverging: %v", err)
-				}
+			if git_model.IsErrBranchNotExist(err) && !git.IsBranchExist(ctx, pr.HeadRepo.RepoPath(), pr.HeadBranch) {
+				log.Warn("Cannot test PR %s/%d: head_branch %s no longer exists", pr.BaseRepo.Name, pr.IssueID, pr.HeadBranch)
 			} else {
-				err = pr.UpdateCommitDivergence(ctx, divergence.Ahead, divergence.Behind)
-				if err != nil {
-					log.Error("UpdateCommitDivergence: %v", err)
-				}
+				log.Error("GetDiverging: %v", err)
 			}
-			AddToTaskQueue(ctx, pr)
+		} else {
+			err = pr.UpdateCommitDivergence(ctx, divergence.Ahead, divergence.Behind)
+			if err != nil {
+				log.Error("UpdateCommitDivergence: %v", err)
+			}
 		}
-	})
+		AddToTaskQueue(ctx, pr)
+	}
 }
 
 // checkIfPRContentChanged checks if diff to target branch has changed by push
