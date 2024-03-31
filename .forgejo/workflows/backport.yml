@@ -73,7 +73,7 @@ jobs:
           echo "target-branch: ${{ fromJSON(steps.extract-targets.outputs.targets)[0] }}"
           echo "pull-request: ${{ github.event.pull_request.url }}"
 
-      - uses: https://code.forgejo.org/actions/git-backporting@v4.6.0
+      - uses: https://code.forgejo.org/forgejo/git-backporting@23967a28fa7fed4c139e224e905d99b26fc42e94
         with:
           target-branch: ${{ fromJSON(steps.extract-targets.outputs.targets)[0] }}/forgejo
           strategy: ort
