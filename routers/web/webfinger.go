@@ -70,13 +70,57 @@ func WebfingerQuery(ctx *context.Context) {
 			return
 		}
 
-		parts := strings.Split(resource.Path, "/")
-		if len(parts) < 2 { // fragment[0] is empty space, fragment[1] may be username
-			ctx.Error(http.StatusBadRequest)
+		p, _ := strings.CutPrefix(resource.Path, "/")
+		p, _ = strings.CutSuffix(p, "/")
+		if len(p) == 0 {
+			ctx.Error(http.StatusNotFound)
 			return
 		}
 
-		u, err = user_model.GetUserByName(ctx, parts[1])
+		parts := strings.Split(p, "/")
+
+		switch len(parts) {
+		case 1: // user
+			u, err = user_model.GetUserByName(ctx, parts[0])
+			//		case 2: // repository
+			//			ctx.Error(http.StatusNotFound)
+			//			return
+			//
+			//		case 3:
+			//			switch parts[2] {
+			//			case "issues":
+			//				ctx.Error(http.StatusNotFound)
+			//				return
+			//
+			//			case "pulls":
+			//				ctx.Error(http.StatusNotFound)
+			//				return
+			//
+			//			case "projects":
+			//				ctx.Error(http.StatusNotFound)
+			//				return
+			//
+			//			default:
+			//				ctx.Error(http.StatusNotFound)
+			//				return
+			//
+			//			}
+			//		case 4:
+			//			if parts[3] == "teams" {
+			//				ctx.Error(http.StatusNotFound)
+			//				return
+			//
+			//			} else {
+			//				ctx.Error(http.StatusNotFound)
+			//				return
+			//			}
+
+		default:
+			ctx.Error(http.StatusNotFound)
+			return
+
+		}
+
 	default:
 		ctx.Error(http.StatusBadRequest)
 		return
