@@ -82,38 +82,39 @@ func WebfingerQuery(ctx *context.Context) {
 		switch len(parts) {
 		case 1: // user
 			u, err = user_model.GetUserByName(ctx, parts[0])
-			//		case 2: // repository
-			//			ctx.Error(http.StatusNotFound)
-			//			return
-			//
-			//		case 3:
-			//			switch parts[2] {
-			//			case "issues":
-			//				ctx.Error(http.StatusNotFound)
-			//				return
-			//
-			//			case "pulls":
-			//				ctx.Error(http.StatusNotFound)
-			//				return
-			//
-			//			case "projects":
-			//				ctx.Error(http.StatusNotFound)
-			//				return
-			//
-			//			default:
-			//				ctx.Error(http.StatusNotFound)
-			//				return
-			//
-			//			}
-			//		case 4:
-			//			if parts[3] == "teams" {
-			//				ctx.Error(http.StatusNotFound)
-			//				return
-			//
-			//			} else {
-			//				ctx.Error(http.StatusNotFound)
-			//				return
-			//			}
+		case 2: // repository
+			ctx.Error(http.StatusNotFound)
+			return
+
+		case 3:
+			switch parts[2] {
+			case "issues":
+				ctx.Error(http.StatusNotFound)
+				return
+
+			case "pulls":
+				ctx.Error(http.StatusNotFound)
+				return
+
+			case "projects":
+				ctx.Error(http.StatusNotFound)
+				return
+
+			default:
+				ctx.Error(http.StatusNotFound)
+				return
+
+			}
+		case 4:
+			//nolint:gocritic
+			if parts[3] == "teams" {
+				ctx.Error(http.StatusNotFound)
+				return
+
+			} else {
+				ctx.Error(http.StatusNotFound)
+				return
+			}
 
 		default:
 			ctx.Error(http.StatusNotFound)
