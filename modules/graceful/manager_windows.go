@@ -29,7 +29,7 @@ const (
 )
 
 func (g *Manager) start() {
-	// Now label this and all goroutines created by this goroutine with the graceful-lifecycle manager
+	// Now label this and all goroutines created by this goroutine with the gracefulLifecycle manager
 	pprof.SetGoroutineLabels(g.managerCtx)
 	defer pprof.SetGoroutineLabels(g.ctx)
 
