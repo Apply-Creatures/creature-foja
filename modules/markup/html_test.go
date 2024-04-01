@@ -17,9 +17,11 @@ import (
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/translation"
 	"code.gitea.io/gitea/modules/util"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var localMetas = map[string]string{
@@ -675,4 +677,69 @@ func TestIssue18471(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, "<a href=\"http://domain/org/repo/compare/783b039...da951ce\" class=\"compare\"><code class=\"nohighlight\">783b039...da951ce</code></a>", res.String())
+}
+
+func TestRender_FilePreview(t *testing.T) {
+	setting.StaticRootPath = "../../"
+	setting.Names = []string{"english"}
+	setting.Langs = []string{"en-US"}
+	translation.InitLocales(context.Background())
+
+	setting.AppURL = markup.TestAppURL
+	markup.Init(&markup.ProcessorHelper{
+		GetRepoFileBlob: func(ctx context.Context, ownerName, repoName, commitSha, filePath string, language *string) (*git.Blob, error) {
+			gitRepo, err := git.OpenRepository(git.DefaultContext, "./tests/repo/repo1_filepreview")
+			require.NoError(t, err)
+			defer gitRepo.Close()
+
+			commit, err := gitRepo.GetCommit("HEAD")
+			require.NoError(t, err)
+
+			blob, err := commit.GetBlobByPath("path/to/file.go")
+			require.NoError(t, err)
+
+			return blob, nil
+		},
+	})
+
+	sha := "190d9492934af498c3f669d6a2431dc5459e5b20"
+	commitFilePreview := util.URLJoin(markup.TestRepoURL, "src", "commit", sha, "path", "to", "file.go") + "#L2-L3"
+
+	test := func(input, expected string) {
+		buffer, err := markup.RenderString(&markup.RenderContext{
+			Ctx:          git.DefaultContext,
+			RelativePath: ".md",
+			Metas:        localMetas,
+		}, input)
+		assert.NoError(t, err)
+		assert.Equal(t, strings.TrimSpace(expected), strings.TrimSpace(buffer))
+	}
+
+	test(
+		commitFilePreview,
+		`<p></p>`+
+			`<div class="file-preview-box">`+
+			`<div class="header">`+
+			`<a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20/path/to/file.go#L2-L3" class="muted" rel="nofollow">path/to/file.go</a>`+
+			`<span class="text small grey">`+
+			`Lines 2 to 3 in <a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20" class="text black" rel="nofollow">190d949</a>`+
+			`</span>`+
+			`</div>`+
+			`<div class="ui table">`+
+			`<table class="file-preview">`+
+			`<tbody>`+
+			`<tr>`+
+			`<td class="lines-num"><span data-line-number="2"></span></td>`+
+			`<td class="lines-code chroma"><code class="code-inner"><span class="nx">B</span>`+"\n"+`</code></td>`+
+			`</tr>`+
+			`<tr>`+
+			`<td class="lines-num"><span data-line-number="3"></span></td>`+
+			`<td class="lines-code chroma"><code class="code-inner"><span class="nx">C</span>`+"\n"+`</code></td>`+
+			`</tr>`+
+			`</tbody>`+
+			`</table>`+
+			`</div>`+
+			`</div>`+
+			`<p></p>`,
+	)
 }

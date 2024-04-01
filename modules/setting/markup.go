@@ -15,6 +15,7 @@ var (
 	ExternalMarkupRenderers    []*MarkupRenderer
 	ExternalSanitizerRules     []MarkupSanitizerRule
 	MermaidMaxSourceCharacters int
+	FilePreviewMaxLines        int
 )
 
 const (
@@ -62,6 +63,7 @@ func loadMarkupFrom(rootCfg ConfigProvider) {
 	mustMapSetting(rootCfg, "markdown", &Markdown)
 
 	MermaidMaxSourceCharacters = rootCfg.Section("markup").Key("MERMAID_MAX_SOURCE_CHARACTERS").MustInt(5000)
+	FilePreviewMaxLines = rootCfg.Section("markup").Key("FILEPREVIEW_MAX_LINES").MustInt(50)
 	ExternalMarkupRenderers = make([]*MarkupRenderer, 0, 10)
 	ExternalSanitizerRules = make([]MarkupSanitizerRule, 0, 10)
 

@@ -113,6 +113,23 @@ func createDefaultPolicy() *bluemonday.Policy {
 	// Allow 'color' and 'background-color' properties for the style attribute on text elements.
 	policy.AllowStyles("color", "background-color").OnElements("span", "p")
 
+	// Allow classes for file preview links...
+	policy.AllowAttrs("class").Matching(regexp.MustCompile("^(lines-num|lines-code chroma)$")).OnElements("td")
+	policy.AllowAttrs("class").Matching(regexp.MustCompile("^code-inner$")).OnElements("code")
+	policy.AllowAttrs("class").Matching(regexp.MustCompile("^file-preview-box$")).OnElements("div")
+	policy.AllowAttrs("class").Matching(regexp.MustCompile("^ui table$")).OnElements("div")
+	policy.AllowAttrs("class").Matching(regexp.MustCompile("^header$")).OnElements("div")
+	policy.AllowAttrs("data-line-number").Matching(regexp.MustCompile("^[0-9]+$")).OnElements("span")
+	policy.AllowAttrs("class").Matching(regexp.MustCompile("^text small grey$")).OnElements("span")
+	policy.AllowAttrs("class").Matching(regexp.MustCompile("^file-preview*")).OnElements("table")
+	policy.AllowAttrs("class").Matching(regexp.MustCompile("^lines-escape$")).OnElements("td")
+	policy.AllowAttrs("class").Matching(regexp.MustCompile("^toggle-escape-button btn interact-bg$")).OnElements("button")
+	policy.AllowAttrs("title").OnElements("button")
+	policy.AllowAttrs("class").Matching(regexp.MustCompile("^ambiguous-code-point$")).OnElements("span")
+	policy.AllowAttrs("data-tooltip-content").OnElements("span")
+	policy.AllowAttrs("class").Matching(regexp.MustCompile("muted|(text black)")).OnElements("a")
+	policy.AllowAttrs("class").Matching(regexp.MustCompile("^ui warning message tw-text-left$")).OnElements("div")
+
 	// Allow generally safe attributes
 	generalSafeAttrs := []string{
 		"abbr", "accept", "accept-charset",

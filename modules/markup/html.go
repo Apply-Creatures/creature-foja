@@ -171,6 +171,7 @@ type processor func(ctx *RenderContext, node *html.Node)
 var defaultProcessors = []processor{
 	fullIssuePatternProcessor,
 	comparePatternProcessor,
+	filePreviewPatternProcessor,
 	fullHashPatternProcessor,
 	shortLinkProcessor,
 	linkProcessor,
@@ -1051,6 +1052,47 @@ func comparePatternProcessor(ctx *RenderContext, node *html.Node) {
 		}
 		replaceContent(node, start, end, createCodeLink(urlFull, text, "compare"))
 		node = node.NextSibling.NextSibling
+	}
+}
+
+func filePreviewPatternProcessor(ctx *RenderContext, node *html.Node) {
+	if ctx.Metas == nil {
+		return
+	}
+	if DefaultProcessorHelper.GetRepoFileBlob == nil {
+		return
+	}
+
+	next := node.NextSibling
+	for node != nil && node != next {
+		locale, ok := ctx.Ctx.Value(translation.ContextKey).(translation.Locale)
+		if !ok {
+			locale = translation.NewLocale("en-US")
+		}
+
+		preview := NewFilePreview(ctx, node, locale)
+		if preview == nil {
+			return
+		}
+
+		previewNode := preview.CreateHTML(locale)
+
+		// Specialized version of replaceContent, so the parent paragraph element is not destroyed from our div
+		before := node.Data[:preview.start]
+		after := node.Data[preview.end:]
+		node.Data = before
+		nextSibling := node.NextSibling
+		node.Parent.InsertBefore(&html.Node{
+			Type: html.RawNode,
+			Data: "</p>",
+		}, nextSibling)
+		node.Parent.InsertBefore(previewNode, nextSibling)
+		node.Parent.InsertBefore(&html.Node{
+			Type: html.RawNode,
+			Data: "<p>" + after,
+		}, nextSibling)
+
+		node = node.NextSibling
 	}
 }
 
