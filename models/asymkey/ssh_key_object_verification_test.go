@@ -22,7 +22,8 @@ func TestParseCommitWithSSHSignature(t *testing.T) {
 	sshKey := unittest.AssertExistsAndLoadBean(t, &PublicKey{ID: 1000, OwnerID: 2})
 
 	t.Run("No commiter", func(t *testing.T) {
-		commitVerification := ParseCommitWithSSHSignature(db.DefaultContext, &git.Commit{}, &user_model.User{})
+		o := commitToGitObject(&git.Commit{})
+		commitVerification := ParseObjectWithSSHSignature(db.DefaultContext, &o, &user_model.User{})
 		assert.False(t, commitVerification.Verified)
 		assert.Equal(t, NoKeyFound, commitVerification.Reason)
 	})
@@ -30,7 +31,8 @@ func TestParseCommitWithSSHSignature(t *testing.T) {
 	t.Run("Commiter without keys", func(t *testing.T) {
 		user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
 
-		commitVerification := ParseCommitWithSSHSignature(db.DefaultContext, &git.Commit{Committer: &git.Signature{Email: user.Email}}, user)
+		o := commitToGitObject(&git.Commit{Committer: &git.Signature{Email: user.Email}})
+		commitVerification := ParseObjectWithSSHSignature(db.DefaultContext, &o, user)
 		assert.False(t, commitVerification.Verified)
 		assert.Equal(t, NoKeyFound, commitVerification.Reason)
 	})
@@ -57,7 +59,8 @@ AAAAQIMufOuSjZeDUujrkVK4sl7ICa0WwEftas8UAYxx0Thdkiw2qWjR1U1PKfTLm16/w8
 `,
 			},
 		}
-		commitVerification := ParseCommitWithSSHSignature(db.DefaultContext, gitCommit, user2)
+		o := commitToGitObject(gitCommit)
+		commitVerification := ParseObjectWithSSHSignature(db.DefaultContext, &o, user2)
 		assert.False(t, commitVerification.Verified)
 		assert.Equal(t, NoKeyFound, commitVerification.Reason)
 	})
@@ -79,7 +82,8 @@ Add content
 			},
 		}
 
-		commitVerification := ParseCommitWithSSHSignature(db.DefaultContext, gitCommit, user2)
+		o := commitToGitObject(gitCommit)
+		commitVerification := ParseObjectWithSSHSignature(db.DefaultContext, &o, user2)
 		assert.False(t, commitVerification.Verified)
 		assert.Equal(t, NoKeyFound, commitVerification.Reason)
 	})
@@ -107,7 +111,8 @@ fs9cMpZVM9BfIKNUSO8QY=
 			},
 		}
 
-		commitVerification := ParseCommitWithSSHSignature(db.DefaultContext, gitCommit, user2)
+		o := commitToGitObject(gitCommit)
+		commitVerification := ParseObjectWithSSHSignature(db.DefaultContext, &o, user2)
 		assert.True(t, commitVerification.Verified)
 		assert.Equal(t, "user2 / SHA256:TKfwbZMR7e9OnlV2l1prfah1TXH8CmqR0PvFEXVCXA4", commitVerification.Reason)
 		assert.Equal(t, sshKey, commitVerification.SigningSSHKey)
@@ -138,7 +143,8 @@ muPLbvEduU+Ze/1Ol1pgk=
 			},
 		}
 
-		commitVerification := ParseCommitWithSSHSignature(db.DefaultContext, gitCommit, user2)
+		o := commitToGitObject(gitCommit)
+		commitVerification := ParseObjectWithSSHSignature(db.DefaultContext, &o, user2)
 		assert.True(t, commitVerification.Verified)
 		assert.Equal(t, "user2 / SHA256:TKfwbZMR7e9OnlV2l1prfah1TXH8CmqR0PvFEXVCXA4", commitVerification.Reason)
 		assert.Equal(t, sshKey, commitVerification.SigningSSHKey)

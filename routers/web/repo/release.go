@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models"
+	"code.gitea.io/gitea/models/asymkey"
 	"code.gitea.io/gitea/models/db"
 	git_model "code.gitea.io/gitea/models/git"
 	repo_model "code.gitea.io/gitea/models/repo"
@@ -18,6 +19,7 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/gitrepo"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
@@ -192,6 +194,7 @@ func Releases(ctx *context.Context) {
 	}
 
 	ctx.Data["Releases"] = releases
+	addVerifyTagToContext(ctx)
 
 	numReleases := ctx.Data["NumReleases"].(int64)
 	pager := context.NewPagination(int(numReleases), listOptions.PageSize, listOptions.Page, 5)
@@ -199,6 +202,44 @@ func Releases(ctx *context.Context) {
 	ctx.Data["Page"] = pager
 
 	ctx.HTML(http.StatusOK, tplReleasesList)
+}
+
+func verifyTagSignature(ctx *context.Context, r *repo_model.Release) (*asymkey.ObjectVerification, error) {
+	if err := r.LoadAttributes(ctx); err != nil {
+		return nil, err
+	}
+	gitRepo, err := gitrepo.OpenRepository(ctx, r.Repo)
+	if err != nil {
+		return nil, err
+	}
+	defer gitRepo.Close()
+
+	tag, err := gitRepo.GetTag(r.TagName)
+	if err != nil {
+		return nil, err
+	}
+	if tag.Signature == nil {
+		return nil, nil
+	}
+
+	verification := asymkey.ParseTagWithSignature(ctx, gitRepo, tag)
+	return verification, nil
+}
+
+func addVerifyTagToContext(ctx *context.Context) {
+	ctx.Data["VerifyTag"] = func(r *repo_model.Release) *asymkey.ObjectVerification {
+		v, err := verifyTagSignature(ctx, r)
+		if err != nil {
+			return nil
+		}
+		return v
+	}
+	ctx.Data["HasSignature"] = func(verification *asymkey.ObjectVerification) bool {
+		if verification == nil {
+			return false
+		}
+		return verification.Reason != "gpg.error.not_signed_commit"
+	}
 }
 
 // TagsList render tags list page
@@ -240,6 +281,7 @@ func TagsList(ctx *context.Context) {
 	}
 
 	ctx.Data["Releases"] = releases
+	addVerifyTagToContext(ctx)
 
 	numTags := ctx.Data["NumTags"].(int64)
 	pager := context.NewPagination(int(numTags), opts.PageSize, opts.Page, 5)
@@ -304,6 +346,7 @@ func SingleRelease(ctx *context.Context) {
 	if release.IsTag && release.Title == "" {
 		release.Title = release.TagName
 	}
+	addVerifyTagToContext(ctx)
 
 	ctx.Data["PageIsSingleTag"] = release.IsTag
 	if release.IsTag {
