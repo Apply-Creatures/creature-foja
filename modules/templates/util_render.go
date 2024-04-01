@@ -105,6 +105,18 @@ func RenderCodeBlock(htmlEscapedTextToRender template.HTML) template.HTML {
 	return template.HTML(htmlWithCodeTags)
 }
 
+const (
+	activeLabelOpacity   = uint8(255)
+	archivedLabelOpacity = uint8(127)
+)
+
+func GetLabelOpacityByte(isArchived bool) uint8 {
+	if isArchived {
+		return archivedLabelOpacity
+	}
+	return activeLabelOpacity
+}
+
 // RenderIssueTitle renders issue/pull title with defined post processors
 func RenderIssueTitle(ctx context.Context, text string, metas map[string]string) template.HTML {
 	renderedText, err := markup.RenderIssueTitle(&markup.RenderContext{
@@ -126,9 +138,10 @@ func RenderLabel(ctx context.Context, locale translation.Locale, label *issues_m
 		textColor        = "#111"
 		labelScope       = label.ExclusiveScope()
 	)
-
 	r, g, b := util.HexToRBGColor(label.Color)
+
 	// Determine if label text should be light or dark to be readable on background color
+	// this doesn't account for saturation or transparency
 	if util.UseLightTextOnBackground(r, g, b) {
 		textColor = "#eee"
 	}
@@ -142,8 +155,10 @@ func RenderLabel(ctx context.Context, locale translation.Locale, label *issues_m
 
 	if labelScope == "" {
 		// Regular label
+
+		labelColor := label.Color + hex.EncodeToString([]byte{GetLabelOpacityByte(label.IsArchived())})
 		s := fmt.Sprintf("<div class='ui label %s' style='color: %s !important; background-color: %s !important;' data-tooltip-content title='%s'>%s</div>",
-			archivedCSSClass, textColor, label.Color, description, RenderEmoji(ctx, label.Name))
+			archivedCSSClass, textColor, labelColor, description, RenderEmoji(ctx, label.Name))
 		return template.HTML(s)
 	}
 
@@ -162,19 +177,22 @@ func RenderLabel(ctx context.Context, locale translation.Locale, label *issues_m
 	darkenFactor := math.Max(luminance-darken, 0.0) / math.Max(luminance, 1.0/255.0)
 	lightenFactor := math.Min(luminance+lighten, 1.0) / math.Max(luminance, 1.0/255.0)
 
+	opacity := GetLabelOpacityByte(label.IsArchived())
 	scopeBytes := []byte{
 		uint8(math.Min(math.Round(r*darkenFactor), 255)),
 		uint8(math.Min(math.Round(g*darkenFactor), 255)),
 		uint8(math.Min(math.Round(b*darkenFactor), 255)),
+		opacity,
 	}
 	itemBytes := []byte{
 		uint8(math.Min(math.Round(r*lightenFactor), 255)),
 		uint8(math.Min(math.Round(g*lightenFactor), 255)),
 		uint8(math.Min(math.Round(b*lightenFactor), 255)),
+		opacity,
 	}
 
-	itemColor := "#" + hex.EncodeToString(itemBytes)
 	scopeColor := "#" + hex.EncodeToString(scopeBytes)
+	itemColor := "#" + hex.EncodeToString(itemBytes)
 
 	s := fmt.Sprintf("<span class='ui label %s scope-parent' data-tooltip-content title='%s'>"+
 		"<div class='ui label scope-left' style='color: %s !important; background-color: %s !important'>%s</div>"+
