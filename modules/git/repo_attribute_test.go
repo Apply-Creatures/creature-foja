@@ -4,7 +4,14 @@
 package git
 
 import (
+	"context"
+	"fmt"
+	"io"
+	"io/fs"
+	"os"
 	"path/filepath"
+	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -14,90 +21,63 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_nulSeparatedAttributeWriter_ReadAttribute(t *testing.T) {
-	wr := &nulSeparatedAttributeWriter{
-		attributes: make(chan attributeTriple, 5),
-	}
+func TestNewCheckAttrStdoutReader(t *testing.T) {
+	t.Run("two_times", func(t *testing.T) {
+		read := newCheckAttrStdoutReader(strings.NewReader(
+			".gitignore\x00linguist-vendored\x00unspecified\x00"+
+				".gitignore\x00linguist-vendored\x00specified",
+		), 1)
 
-	testStr := ".gitignore\"\n\x00linguist-vendored\x00unspecified\x00"
+		// first read
+		attr, err := read()
+		assert.NoError(t, err)
+		assert.Equal(t, map[string]GitAttribute{
+			"linguist-vendored": GitAttribute("unspecified"),
+		}, attr)
 
-	n, err := wr.Write([]byte(testStr))
+		// second read
+		attr, err = read()
+		assert.NoError(t, err)
+		assert.Equal(t, map[string]GitAttribute{
+			"linguist-vendored": GitAttribute("specified"),
+		}, attr)
+	})
+	t.Run("incomplete", func(t *testing.T) {
+		read := newCheckAttrStdoutReader(strings.NewReader(
+			"filename\x00linguist-vendored",
+		), 1)
 
-	assert.Len(t, testStr, n)
-	assert.NoError(t, err)
-	select {
-	case attr := <-wr.attributes:
-		assert.Equal(t, ".gitignore\"\n", attr.Filename)
-		assert.Equal(t, "linguist-vendored", attr.Attribute)
-		assert.Equal(t, "unspecified", attr.Value)
-	case <-time.After(100 * time.Millisecond):
-		assert.FailNow(t, "took too long to read an attribute from the list")
-	}
-	// Write a second attribute again
-	n, err = wr.Write([]byte(testStr))
+		_, err := read()
+		assert.Equal(t, io.ErrUnexpectedEOF, err)
+	})
+	t.Run("three_times", func(t *testing.T) {
+		read := newCheckAttrStdoutReader(strings.NewReader(
+			"shouldbe.vendor\x00linguist-vendored\x00set\x00"+
+				"shouldbe.vendor\x00linguist-generated\x00unspecified\x00"+
+				"shouldbe.vendor\x00linguist-language\x00unspecified\x00",
+		), 1)
 
-	assert.Len(t, testStr, n)
-	assert.NoError(t, err)
+		// first read
+		attr, err := read()
+		assert.NoError(t, err)
+		assert.Equal(t, map[string]GitAttribute{
+			"linguist-vendored": GitAttribute("set"),
+		}, attr)
 
-	select {
-	case attr := <-wr.attributes:
-		assert.Equal(t, ".gitignore\"\n", attr.Filename)
-		assert.Equal(t, "linguist-vendored", attr.Attribute)
-		assert.Equal(t, "unspecified", attr.Value)
-	case <-time.After(100 * time.Millisecond):
-		assert.FailNow(t, "took too long to read an attribute from the list")
-	}
+		// second read
+		attr, err = read()
+		assert.NoError(t, err)
+		assert.Equal(t, map[string]GitAttribute{
+			"linguist-generated": GitAttribute("unspecified"),
+		}, attr)
 
-	// Write a partial attribute
-	_, err = wr.Write([]byte("incomplete-file"))
-	assert.NoError(t, err)
-	_, err = wr.Write([]byte("name\x00"))
-	assert.NoError(t, err)
-
-	select {
-	case <-wr.attributes:
-		assert.FailNow(t, "There should not be an attribute ready to read")
-	case <-time.After(100 * time.Millisecond):
-	}
-	_, err = wr.Write([]byte("attribute\x00"))
-	assert.NoError(t, err)
-	select {
-	case <-wr.attributes:
-		assert.FailNow(t, "There should not be an attribute ready to read")
-	case <-time.After(100 * time.Millisecond):
-	}
-
-	_, err = wr.Write([]byte("value\x00"))
-	assert.NoError(t, err)
-
-	attr := <-wr.attributes
-	assert.Equal(t, "incomplete-filename", attr.Filename)
-	assert.Equal(t, "attribute", attr.Attribute)
-	assert.Equal(t, "value", attr.Value)
-
-	_, err = wr.Write([]byte("shouldbe.vendor\x00linguist-vendored\x00set\x00shouldbe.vendor\x00linguist-generated\x00unspecified\x00shouldbe.vendor\x00linguist-language\x00unspecified\x00"))
-	assert.NoError(t, err)
-	attr = <-wr.attributes
-	assert.NoError(t, err)
-	assert.EqualValues(t, attributeTriple{
-		Filename:  "shouldbe.vendor",
-		Attribute: "linguist-vendored",
-		Value:     "set",
-	}, attr)
-	attr = <-wr.attributes
-	assert.NoError(t, err)
-	assert.EqualValues(t, attributeTriple{
-		Filename:  "shouldbe.vendor",
-		Attribute: "linguist-generated",
-		Value:     "unspecified",
-	}, attr)
-	attr = <-wr.attributes
-	assert.NoError(t, err)
-	assert.EqualValues(t, attributeTriple{
-		Filename:  "shouldbe.vendor",
-		Attribute: "linguist-language",
-		Value:     "unspecified",
-	}, attr)
+		// third read
+		attr, err = read()
+		assert.NoError(t, err)
+		assert.Equal(t, map[string]GitAttribute{
+			"linguist-language": GitAttribute("unspecified"),
+		}, attr)
+	})
 }
 
 func TestGitAttributeBareNonBare(t *testing.T) {
@@ -114,33 +94,35 @@ func TestGitAttributeBareNonBare(t *testing.T) {
 		"8fee858da5796dfb37704761701bb8e800ad9ef3",
 		"341fca5b5ea3de596dc483e54c2db28633cd2f97",
 	} {
-		t.Run("GitAttributeChecker/"+commitID, func(t *testing.T) {
+		bareStats, err := gitRepo.GitAttributes(commitID, "i-am-a-python.p", LinguistAttributes...)
+		assert.NoError(t, err)
+
+		defer test.MockVariableValue(&SupportCheckAttrOnBare, false)()
+		cloneStats, err := gitRepo.GitAttributes(commitID, "i-am-a-python.p", LinguistAttributes...)
+		assert.NoError(t, err)
+
+		assert.EqualValues(t, cloneStats, bareStats)
+		refStats := cloneStats
+
+		t.Run("GitAttributeChecker/"+commitID+"/SupportBare", func(t *testing.T) {
 			bareChecker, err := gitRepo.GitAttributeChecker(commitID, LinguistAttributes...)
 			assert.NoError(t, err)
-			t.Cleanup(func() { bareChecker.Close() })
+			defer bareChecker.Close()
 
 			bareStats, err := bareChecker.CheckPath("i-am-a-python.p")
 			assert.NoError(t, err)
-
+			assert.EqualValues(t, refStats, bareStats)
+		})
+		t.Run("GitAttributeChecker/"+commitID+"/NoBareSupport", func(t *testing.T) {
 			defer test.MockVariableValue(&SupportCheckAttrOnBare, false)()
 			cloneChecker, err := gitRepo.GitAttributeChecker(commitID, LinguistAttributes...)
 			assert.NoError(t, err)
-			t.Cleanup(func() { cloneChecker.Close() })
+			defer cloneChecker.Close()
+
 			cloneStats, err := cloneChecker.CheckPath("i-am-a-python.p")
 			assert.NoError(t, err)
 
-			assert.EqualValues(t, cloneStats, bareStats)
-		})
-
-		t.Run("GitAttributes/"+commitID, func(t *testing.T) {
-			bareStats, err := gitRepo.GitAttributes(commitID, "i-am-a-python.p", LinguistAttributes...)
-			assert.NoError(t, err)
-
-			defer test.MockVariableValue(&SupportCheckAttrOnBare, false)()
-			cloneStats, err := gitRepo.GitAttributes(commitID, "i-am-a-python.p", LinguistAttributes...)
-			assert.NoError(t, err)
-
-			assert.EqualValues(t, cloneStats, bareStats)
+			assert.EqualValues(t, refStats, cloneStats)
 		})
 	}
 }
@@ -207,4 +189,158 @@ func TestGitAttributeStruct(t *testing.T) {
 
 	assert.Equal(t, "text?token=Error", GitAttribute("text?token=Error").String())
 	assert.Equal(t, "text", GitAttribute("text?token=Error").Prefix())
+}
+
+func TestGitAttributeCheckerError(t *testing.T) {
+	prepareRepo := func(t *testing.T) *Repository {
+		t.Helper()
+		path := t.TempDir()
+
+		// we can't use unittest.CopyDir because of an import cycle (git.Init in unittest)
+		require.NoError(t, CopyFS(path, os.DirFS(filepath.Join(testReposDir, "language_stats_repo"))))
+
+		gitRepo, err := openRepositoryWithDefaultContext(path)
+		require.NoError(t, err)
+		return gitRepo
+	}
+
+	t.Run("RemoveAll/BeforeRun", func(t *testing.T) {
+		gitRepo := prepareRepo(t)
+		defer gitRepo.Close()
+
+		assert.NoError(t, os.RemoveAll(gitRepo.Path))
+
+		ac, err := gitRepo.GitAttributeChecker("", "linguist-language")
+		require.NoError(t, err)
+
+		_, err = ac.CheckPath("i-am-a-python.p")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), `git check-attr (stderr: ""):`)
+	})
+
+	t.Run("RemoveAll/DuringRun", func(t *testing.T) {
+		gitRepo := prepareRepo(t)
+		defer gitRepo.Close()
+
+		ac, err := gitRepo.GitAttributeChecker("", "linguist-language")
+		require.NoError(t, err)
+
+		// calling CheckPath before would allow git to cache part of it and succesfully return later
+		assert.NoError(t, os.RemoveAll(gitRepo.Path))
+
+		_, err = ac.CheckPath("i-am-a-python.p")
+		assert.Error(t, err)
+		// Depending on the order of execution, the returned error can be:
+		// - a launch error "fork/exec /usr/bin/git: no such file or directory" (when the removal happens before the Run)
+		// - a git error (stderr: "fatal: Unable to read current working directory: No such file or directory"): exit status 128 (when the removal happens after the Run)
+		// (pipe error "write |1: broken pipe" should be replaced by one of the Run errors above)
+		assert.Contains(t, err.Error(), `git check-attr`)
+	})
+
+	t.Run("Cancelled/BeforeRun", func(t *testing.T) {
+		gitRepo := prepareRepo(t)
+		defer gitRepo.Close()
+
+		var cancel context.CancelFunc
+		gitRepo.Ctx, cancel = context.WithCancel(gitRepo.Ctx)
+		cancel()
+
+		ac, err := gitRepo.GitAttributeChecker("8fee858da5796dfb37704761701bb8e800ad9ef3", "linguist-language")
+		require.NoError(t, err)
+
+		_, err = ac.CheckPath("i-am-a-python.p")
+		assert.ErrorIs(t, err, context.Canceled)
+	})
+
+	t.Run("Cancelled/DuringRun", func(t *testing.T) {
+		gitRepo := prepareRepo(t)
+		defer gitRepo.Close()
+
+		var cancel context.CancelFunc
+		gitRepo.Ctx, cancel = context.WithCancel(gitRepo.Ctx)
+
+		ac, err := gitRepo.GitAttributeChecker("8fee858da5796dfb37704761701bb8e800ad9ef3", "linguist-language")
+		require.NoError(t, err)
+
+		attr, err := ac.CheckPath("i-am-a-python.p")
+		assert.NoError(t, err)
+		assert.Equal(t, "Python", attr["linguist-language"].String())
+
+		errCh := make(chan error)
+		go func() {
+			cancel()
+
+			for err == nil {
+				_, err = ac.CheckPath("i-am-a-python.p")
+				runtime.Gosched() // the cancellation must have time to propagate
+			}
+			errCh <- err
+		}()
+
+		select {
+		case <-time.After(time.Second):
+			t.Error("CheckPath did not complete within 1s")
+		case err = <-errCh:
+			assert.ErrorIs(t, err, context.Canceled)
+		}
+	})
+
+	t.Run("Closed/BeforeRun", func(t *testing.T) {
+		gitRepo := prepareRepo(t)
+		defer gitRepo.Close()
+
+		ac, err := gitRepo.GitAttributeChecker("8fee858da5796dfb37704761701bb8e800ad9ef3", "linguist-language")
+		require.NoError(t, err)
+
+		assert.NoError(t, ac.Close())
+
+		_, err = ac.CheckPath("i-am-a-python.p")
+		assert.ErrorIs(t, err, fs.ErrClosed)
+	})
+
+	t.Run("Closed/DuringRun", func(t *testing.T) {
+		gitRepo := prepareRepo(t)
+		defer gitRepo.Close()
+
+		ac, err := gitRepo.GitAttributeChecker("8fee858da5796dfb37704761701bb8e800ad9ef3", "linguist-language")
+		require.NoError(t, err)
+
+		attr, err := ac.CheckPath("i-am-a-python.p")
+		assert.NoError(t, err)
+		assert.Equal(t, "Python", attr["linguist-language"].String())
+
+		assert.NoError(t, ac.Close())
+
+		_, err = ac.CheckPath("i-am-a-python.p")
+		assert.ErrorIs(t, err, fs.ErrClosed)
+	})
+}
+
+// CopyFS is adapted from https://github.com/golang/go/issues/62484
+// which should be available with go1.23
+func CopyFS(dir string, fsys fs.FS) error {
+	return fs.WalkDir(fsys, ".", func(path string, d fs.DirEntry, _ error) error {
+		targ := filepath.Join(dir, filepath.FromSlash(path))
+		if d.IsDir() {
+			return os.MkdirAll(targ, 0o777)
+		}
+		r, err := fsys.Open(path)
+		if err != nil {
+			return err
+		}
+		defer r.Close()
+		info, err := r.Stat()
+		if err != nil {
+			return err
+		}
+		w, err := os.OpenFile(targ, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o666|info.Mode()&0o777)
+		if err != nil {
+			return err
+		}
+		if _, err := io.Copy(w, r); err != nil {
+			w.Close()
+			return fmt.Errorf("copying %s: %v", path, err)
+		}
+		return w.Close()
+	})
 }
