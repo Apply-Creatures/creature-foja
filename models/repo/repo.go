@@ -16,7 +16,6 @@ import (
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/unit"
 	user_model "code.gitea.io/gitea/models/user"
-	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/markup"
@@ -24,6 +23,7 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/timeutil"
+	"code.gitea.io/gitea/modules/translation"
 	"code.gitea.io/gitea/modules/util"
 
 	"xorm.io/builder"
@@ -249,13 +249,17 @@ func (repo *Repository) SizeDetails() []SizeDetail {
 }
 
 // SizeDetailsString returns a concatenation of all repository size details as a string
-func (repo *Repository) SizeDetailsString() string {
+func (repo *Repository) SizeDetailsString(locale translation.Locale) string {
 	var str strings.Builder
 	sizeDetails := repo.SizeDetails()
-	for _, detail := range sizeDetails {
-		str.WriteString(fmt.Sprintf("%s: %s, ", detail.Name, base.FileSize(detail.Size)))
+	for i, detail := range sizeDetails {
+		if i > 0 {
+			// TODO: use semicolon if decimal point of user localization is a comma
+			str.WriteString(", ")
+		}
+		str.WriteString(fmt.Sprintf("%s: %s", detail.Name, locale.TrSize(detail.Size)))
 	}
-	return strings.TrimSuffix(str.String(), ", ")
+	return str.String()
 }
 
 func (repo *Repository) LogString() string {

@@ -63,7 +63,7 @@ func NewFuncMap() template.FuncMap {
 
 		// -----------------------------------------------------------------
 		// time / number / format
-		"FileSize":      base.FileSize,
+		"FileSize":      FileSizePanic,
 		"CountFmt":      base.FormatNumberSI,
 		"TimeSince":     timeutil.TimeSince,
 		"TimeSinceUnix": timeutil.TimeSinceUnix,
@@ -248,4 +248,8 @@ func DotEscape(raw string) string {
 func Eval(tokens ...any) (any, error) {
 	n, err := eval.Expr(tokens...)
 	return n.Value, err
+}
+
+func FileSizePanic(s int64) string {
+	panic("Usage of FileSize in templates is deprecated in Forgejo. Locale.TrSize should be used instead.")
 }

@@ -218,6 +218,16 @@ func (s *TestSession) GetCookie(name string) *http.Cookie {
 	return nil
 }
 
+func (s *TestSession) SetCookie(cookie *http.Cookie) *http.Cookie {
+	baseURL, err := url.Parse(setting.AppURL)
+	if err != nil {
+		return nil
+	}
+
+	s.jar.SetCookies(baseURL, []*http.Cookie{cookie})
+	return nil
+}
+
 func (s *TestSession) MakeRequest(t testing.TB, rw *RequestWrapper, expectedStatus int) *httptest.ResponseRecorder {
 	t.Helper()
 	req := rw.Request

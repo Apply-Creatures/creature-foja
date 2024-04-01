@@ -16,7 +16,7 @@
 								{{ShortSha .Oid}}
 							</a>
 						</td>
-						<td>{{FileSize .Size}}</td>
+						<td>{{ctx.Locale.TrSize .Size}}</td>
 						<td>{{TimeSince .CreatedUnix.AsTime ctx.Locale}}</td>
 						<td class="right aligned">
 							<a class="ui primary button" href="{{$.Link}}/find?oid={{.Oid}}&size={{.Size}}">{{ctx.Locale.Tr "repo.settings.lfs_findcommits"}}</a>
