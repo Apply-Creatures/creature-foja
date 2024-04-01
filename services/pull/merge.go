@@ -424,63 +424,64 @@ func IsUserAllowedToMerge(ctx context.Context, pr *issues_model.PullRequest, p a
 	return false, nil
 }
 
-// CheckPullBranchProtections checks whether the PR is ready to be merged (reviews and status checks)
-func CheckPullBranchProtections(ctx context.Context, pr *issues_model.PullRequest, skipProtectedFilesCheck bool) (err error) {
+// CheckPullBranchProtections checks whether the PR is ready to be merged (reviews and status checks).
+// Returns the protected branch rule when `ErrDisallowedToMerge` is returned as error.
+func CheckPullBranchProtections(ctx context.Context, pr *issues_model.PullRequest, skipProtectedFilesCheck bool) (protectedBranchRule *git_model.ProtectedBranch, err error) {
 	if err = pr.LoadBaseRepo(ctx); err != nil {
-		return fmt.Errorf("LoadBaseRepo: %w", err)
+		return nil, fmt.Errorf("LoadBaseRepo: %w", err)
 	}
 
 	pb, err := git_model.GetFirstMatchProtectedBranchRule(ctx, pr.BaseRepoID, pr.BaseBranch)
 	if err != nil {
-		return fmt.Errorf("LoadProtectedBranch: %v", err)
+		return nil, fmt.Errorf("LoadProtectedBranch: %v", err)
 	}
 	if pb == nil {
-		return nil
+		return nil, nil
 	}
 
 	isPass, err := IsPullCommitStatusPass(ctx, pr)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if !isPass {
-		return models.ErrDisallowedToMerge{
+		return pb, models.ErrDisallowedToMerge{
 			Reason: "Not all required status checks successful",
 		}
 	}
 
 	if !issues_model.HasEnoughApprovals(ctx, pb, pr) {
-		return models.ErrDisallowedToMerge{
+		return pb, models.ErrDisallowedToMerge{
 			Reason: "Does not have enough approvals",
 		}
 	}
 	if issues_model.MergeBlockedByRejectedReview(ctx, pb, pr) {
-		return models.ErrDisallowedToMerge{
+		return pb, models.ErrDisallowedToMerge{
 			Reason: "There are requested changes",
 		}
 	}
 	if issues_model.MergeBlockedByOfficialReviewRequests(ctx, pb, pr) {
-		return models.ErrDisallowedToMerge{
+		return pb, models.ErrDisallowedToMerge{
 			Reason: "There are official review requests",
 		}
 	}
 
 	if issues_model.MergeBlockedByOutdatedBranch(pb, pr) {
-		return models.ErrDisallowedToMerge{
+		return pb, models.ErrDisallowedToMerge{
 			Reason: "The head branch is behind the base branch",
 		}
 	}
 
 	if skipProtectedFilesCheck {
-		return nil
+		return nil, nil
 	}
 
 	if pb.MergeBlockedByProtectedFiles(pr.ChangedProtectedFiles) {
-		return models.ErrDisallowedToMerge{
+		return pb, models.ErrDisallowedToMerge{
 			Reason: "Changed protected files",
 		}
 	}
 
-	return nil
+	return nil, nil
 }
 
 // MergedManually mark pr as merged manually

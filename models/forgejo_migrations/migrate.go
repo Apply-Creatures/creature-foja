@@ -54,6 +54,8 @@ var migrations = []*Migration{
 	NewMigration("Add the `enable_repo_unit_hints` column to the `user` table", forgejo_v1_22.AddUserRepoUnitHintsSetting),
 	// v7 -> v8
 	NewMigration("Modify the `release`.`note` content to remove SSH signatures", forgejo_v1_22.RemoveSSHSignaturesFromReleaseNotes),
+	// v8 -> v9
+	NewMigration("Add the `apply_to_admins` column to the `protected_branch` table", forgejo_v1_22.AddApplyToAdminsSetting),
 }
 
 // GetCurrentDBVersion returns the current Forgejo database version.

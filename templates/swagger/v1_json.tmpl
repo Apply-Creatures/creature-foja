@@ -17759,6 +17759,10 @@
       "description": "BranchProtection represents a branch protection for a repository",
       "type": "object",
       "properties": {
+        "apply_to_admins": {
+          "type": "boolean",
+          "x-go-name": "ApplyToAdmins"
+        },
         "approvals_whitelist_teams": {
           "type": "array",
           "items": {
@@ -18409,6 +18413,10 @@
       "description": "CreateBranchProtectionOption options for creating a branch protection",
       "type": "object",
       "properties": {
+        "apply_to_admins": {
+          "type": "boolean",
+          "x-go-name": "ApplyToAdmins"
+        },
         "approvals_whitelist_teams": {
           "type": "array",
           "items": {
@@ -19580,6 +19588,10 @@
       "description": "EditBranchProtectionOption options for editing a branch protection",
       "type": "object",
       "properties": {
+        "apply_to_admins": {
+          "type": "boolean",
+          "x-go-name": "ApplyToAdmins"
+        },
         "approvals_whitelist_teams": {
           "type": "array",
           "items": {

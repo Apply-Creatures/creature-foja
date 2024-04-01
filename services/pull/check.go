@@ -104,7 +104,7 @@ func CheckPullMergable(stdCtx context.Context, doer *user_model.User, perm *acce
 			return ErrIsChecking
 		}
 
-		if err := CheckPullBranchProtections(ctx, pr, false); err != nil {
+		if pb, err := CheckPullBranchProtections(ctx, pr, false); err != nil {
 			if !models.IsErrDisallowedToMerge(err) {
 				log.Error("Error whilst checking pull branch protection for %-v: %v", pr, err)
 				return err
@@ -117,8 +117,9 @@ func CheckPullMergable(stdCtx context.Context, doer *user_model.User, perm *acce
 				err = nil
 			}
 
-			// * if the doer is admin, they could skip the branch protection check
-			if adminSkipProtectionCheck {
+			// * if the doer is admin, they could skip the branch protection check,
+			// if that's allowed by the protected branch rule.
+			if adminSkipProtectionCheck && !pb.ApplyToAdmins {
 				if isRepoAdmin, errCheckAdmin := access_model.IsUserRepoAdmin(ctx, pr.BaseRepo, doer); errCheckAdmin != nil {
 					log.Error("Unable to check if %-v is a repo admin in %-v: %v", doer, pr.BaseRepo, errCheckAdmin)
 					return errCheckAdmin
