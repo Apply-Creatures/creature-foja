@@ -118,4 +118,5 @@ func WebfingerQuery(ctx *context.Context) {
 		Aliases: aliases,
 		Links:   links,
 	})
+	ctx.Resp.Header().Set("Content-Type", "application/jrd+json")
 }
