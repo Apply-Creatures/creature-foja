@@ -950,7 +950,7 @@ func getGitIdentity(ctx *context.Context, commitMailID int64, tpl base.TplName, 
 
 		if email == nil || !email.IsActivated {
 			ctx.Data["Err_CommitMailID"] = true
-			ctx.RenderWithErr(ctx.Tr("repo.editor.invalid_commit_mail"), tplEditFile, form)
+			ctx.RenderWithErr(ctx.Tr("repo.editor.invalid_commit_mail"), tpl, form)
 			return nil
 		}
 

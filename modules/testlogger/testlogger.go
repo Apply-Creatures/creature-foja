@@ -121,42 +121,6 @@ var ignoredErrorMessage = []string{
 	// TestRebuildCargo
 	`RebuildCargoIndex() [E] RebuildIndex failed: GetRepositoryByOwnerAndName: repository does not exist [id: 0, uid: 0, owner_name: user2, name: _cargo-index]`,
 
-	// TestCommitMail/Delete/Not_activated
-	`:HTML() [E] Render failed: failed to render template: repo/editor/edit, error: template error: builtin(static):repo/editor/edit:13:13 : executing "repo/editor/edit" at <len .TreeNames>: error calling len: reflect: call of reflect.Value.Type on zero Value
-----------------------------------------------------------------------
-					{{$n := len .TreeNames}}
-					        ^
-----------------------------------------------------------------------`,
-	// TestCommitMail/Delete/Not_belong_to_user
-	`:HTML() [E] Render failed: failed to render template: repo/editor/edit, error: template error: builtin(static):repo/editor/edit:13:13 : executing "repo/editor/edit" at <len .TreeNames>: error calling len: reflect: call of reflect.Value.Type on zero Value
-----------------------------------------------------------------------
-					{{$n := len .TreeNames}}
-					        ^
-----------------------------------------------------------------------`,
-	// TestCommitMail/Apply_patch/Not_activated
-	`:HTML() [E] Render failed: failed to render template: repo/editor/edit, error: template error: builtin(static):repo/editor/edit:13:13 : executing "repo/editor/edit" at <len .TreeNames>: error calling len: reflect: call of reflect.Value.Type on zero Value
-----------------------------------------------------------------------
-					{{$n := len .TreeNames}}
-					        ^
-----------------------------------------------------------------------`,
-	// TestCommitMail/Apply_patch/Not_belong_to_user
-	`:HTML() [E] Render failed: failed to render template: repo/editor/edit, error: template error: builtin(static):repo/editor/edit:13:13 : executing "repo/editor/edit" at <len .TreeNames>: error calling len: reflect: call of reflect.Value.Type on zero Value
-----------------------------------------------------------------------
-					{{$n := len .TreeNames}}
-					        ^
-----------------------------------------------------------------------`,
-	// TestCommitMail/Cherry_pick/Not_activated
-	`:HTML() [E] Render failed: failed to render template: repo/editor/edit, error: template error: builtin(static):repo/editor/edit:13:13 : executing "repo/editor/edit" at <len .TreeNames>: error calling len: reflect: call of reflect.Value.Type on zero Value
-----------------------------------------------------------------------
-					{{$n := len .TreeNames}}
-					        ^
-----------------------------------------------------------------------`,
-	// TestCommitMail/Cherry_pick/Not_belong_to_user
-	`:HTML() [E] Render failed: failed to render template: repo/editor/edit, error: template error: builtin(static):repo/editor/edit:13:13 : executing "repo/editor/edit" at <len .TreeNames>: error calling len: reflect: call of reflect.Value.Type on zero Value
-----------------------------------------------------------------------
-					{{$n := len .TreeNames}}
-					        ^
-----------------------------------------------------------------------`,
 	// TestDangerZoneConfirmation/Convert_fork/Fail
 	`/gitea-repositories/user20/big_test_public_fork_7.git Error: no such file or directory`,
 	// TestGitSmartHTTP
