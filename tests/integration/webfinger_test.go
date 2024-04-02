@@ -48,6 +48,7 @@ func TestWebfinger(t *testing.T) {
 
 	req := NewRequest(t, "GET", fmt.Sprintf("/.well-known/webfinger?resource=acct:%s@%s", user.LowerName, appURL.Host))
 	resp := MakeRequest(t, req, http.StatusOK)
+	assert.Equal(t, resp.Header().Get("Content-Type"), "application/jrd+json")
 
 	var jrd webfingerJRD
 	DecodeJSON(t, resp, &jrd)
