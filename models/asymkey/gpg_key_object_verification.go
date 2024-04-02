@@ -123,13 +123,7 @@ func ParseObjectWithSignature(ctx context.Context, c *GitObject) *ObjectVerifica
 		}
 	}
 
-	keyID := ""
-	if sig.IssuerKeyId != nil && (*sig.IssuerKeyId) != 0 {
-		keyID = fmt.Sprintf("%X", *sig.IssuerKeyId)
-	}
-	if keyID == "" && sig.IssuerFingerprint != nil && len(sig.IssuerFingerprint) > 0 {
-		keyID = fmt.Sprintf("%X", sig.IssuerFingerprint[12:20])
-	}
+	keyID := tryGetKeyIDFromSignature(sig)
 	defaultReason := NoKeyFound
 
 	// First check if the sig has a keyID and if so just look at that
