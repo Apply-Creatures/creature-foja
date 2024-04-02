@@ -357,6 +357,9 @@ var ignoredErrorMessage = []string{
 
 	// TestRenameInvalidUsername
 	`TrString() [E] Missing translation "form.Name"`,
+
+	// TestDatabaseCollation
+	`[E] [Error SQL Query] INSERT INTO test_collation_tbl (txt) VALUES ('main') []`,
 }
 
 func (w *testLoggerWriterCloser) recordError(msg string) {

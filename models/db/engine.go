@@ -155,8 +155,14 @@ func InitEngine(ctx context.Context) error {
 			Logger:   log.GetLogger("xorm"),
 		})
 	}
+
+	errorLogger := log.GetLogger("xorm")
+	if setting.IsInTesting {
+		errorLogger = log.GetLogger(log.DEFAULT)
+	}
+
 	xormEngine.AddHook(&ErrorQueryHook{
-		Logger: log.GetLogger("xorm"),
+		Logger: errorLogger,
 	})
 
 	SetDefaultEngine(ctx, xormEngine)
