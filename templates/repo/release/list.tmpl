@@ -57,10 +57,10 @@
 								| <span class="ahead"><a href="{{$.RepoLink}}/compare/{{$release.TagName | PathEscapeSegments}}...{{$release.TargetBehind | PathEscapeSegments}}">{{ctx.Locale.Tr "repo.release.ahead.commits" $release.NumCommitsBehind}}</a> {{ctx.Locale.Tr "repo.release.ahead.target" $release.TargetBehind}}</span>
 							{{end}}
 						</p>
+						{{template "repo/tag/verification_line" (dict "ctxData" $ "release" $release)}}
 						<div class="markup desc">
 							{{$release.RenderedNote}}
 						</div>
-						{{template "repo/tag/verification_line" (dict "ctxData" $ "release" $release)}}
 						<div class="divider"></div>
 						<details class="download" {{if eq $idx 0}}open{{end}}>
 							<summary class="tw-my-4">
