@@ -2143,6 +2143,10 @@
   padding-bottom: 0 !important;
 }
 
+.ui.attached.message.tag-signature-row {
+  border-radius: var(--border-radius);
+}
+
 .tag-signature-row div {
   margin-top: auto !important;
   margin-bottom: auto !important;
