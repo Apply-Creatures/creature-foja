@@ -234,6 +234,7 @@ type SizeDetail struct {
 }
 
 // SizeDetails forms a struct with various size details about repository
+// Note: SizeDetailsString below expects it to have 2 entries
 func (repo *Repository) SizeDetails() []SizeDetail {
 	sizeDetails := []SizeDetail{
 		{
@@ -250,16 +251,8 @@ func (repo *Repository) SizeDetails() []SizeDetail {
 
 // SizeDetailsString returns a concatenation of all repository size details as a string
 func (repo *Repository) SizeDetailsString(locale translation.Locale) string {
-	var str strings.Builder
 	sizeDetails := repo.SizeDetails()
-	for i, detail := range sizeDetails {
-		if i > 0 {
-			// TODO: use semicolon if decimal point of user localization is a comma
-			str.WriteString(", ")
-		}
-		str.WriteString(fmt.Sprintf("%s: %s", detail.Name, locale.TrSize(detail.Size)))
-	}
-	return str.String()
+	return locale.TrString("repo.size_format", sizeDetails[0].Name, locale.TrSize(sizeDetails[0].Size), sizeDetails[1].Name, locale.TrSize(sizeDetails[1].Size))
 }
 
 func (repo *Repository) LogString() string {

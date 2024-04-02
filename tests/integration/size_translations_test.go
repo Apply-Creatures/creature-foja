@@ -87,7 +87,7 @@ func TestDataSizeTranslation(t *testing.T) {
 		fullSize, exists := repo.Attr("data-tooltip-content")
 		assert.True(t, exists)
 		fullSize = noDigits.ReplaceAllString(fullSize, "")
-		assert.Equal(t, "git:  КиБ, lfs:  Б", fullSize)
+		assert.Equal(t, "git:  КиБ; lfs:  Б", fullSize)
 
 		// Check if file sizes are correclty translated
 		testFileSizeTranslated(t, session, path.Join(testUser, testRepoName, "src/branch/main/137byteFile.txt"), "137 Б")
