@@ -229,7 +229,12 @@ func TestGitAttributeCheckerError(t *testing.T) {
 		assert.NoError(t, os.RemoveAll(gitRepo.Path))
 
 		_, err = ac.CheckPath("i-am-a-python.p")
-		assert.Error(t, err)
+		if err == nil {
+			t.Skip(
+				"git check-attr started too fast and CheckPath was succesful (and likely cached)",
+				"https://codeberg.org/forgejo/forgejo/issues/2948",
+			)
+		}
 		// Depending on the order of execution, the returned error can be:
 		// - a launch error "fork/exec /usr/bin/git: no such file or directory" (when the removal happens before the Run)
 		// - a git error (stderr: "fatal: Unable to read current working directory: No such file or directory"): exit status 128 (when the removal happens after the Run)
