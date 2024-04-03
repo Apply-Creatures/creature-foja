@@ -51,8 +51,15 @@ func (g *GitHubLegacyCalloutTransformer) Transform(node *ast.Document, reader te
 			// color the blockquote
 			v.SetAttributeString("class", []byte("attention-header attention-"+calloutType))
 
-			// Prepend callout icon before the callout node itself
-			firstParagraph.InsertBefore(firstParagraph, calloutNode, NewAttention(calloutType))
+			// Create new parargaph.
+			attentionParagraph := ast.NewParagraph()
+			attentionParagraph.SetAttributeString("class", []byte("attention-title"))
+
+			// Move the callout node to the paragraph and insert the paragraph.
+			attentionParagraph.AppendChild(attentionParagraph, NewAttention(calloutType))
+			attentionParagraph.AppendChild(attentionParagraph, calloutNode)
+			firstParagraph.Parent().InsertBefore(firstParagraph.Parent(), firstParagraph, attentionParagraph)
+			firstParagraph.RemoveChild(firstParagraph, calloutNode)
 		}
 
 		return ast.WalkContinue, nil
