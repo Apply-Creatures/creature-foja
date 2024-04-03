@@ -347,11 +347,10 @@ Forgejo or set your environment appropriately.`, "")
 	}
 
 	var out io.Writer
-	var dWriter *delayWriter
 	out = &nilWriter{}
 	if setting.Git.VerbosePush {
 		if setting.Git.VerbosePushDelay > 0 {
-			dWriter = newDelayWriter(os.Stdout, setting.Git.VerbosePushDelay)
+			dWriter := newDelayWriter(os.Stdout, setting.Git.VerbosePushDelay)
 			defer dWriter.Close()
 			out = dWriter
 		} else {
@@ -414,7 +413,6 @@ Forgejo or set your environment appropriately.`, "")
 			hookOptions.RefFullNames = refFullNames
 			resp, extra := private.HookPostReceive(ctx, repoUser, repoName, hookOptions)
 			if extra.HasError() {
-				_ = dWriter.Close()
 				hookPrintResults(results)
 				return fail(ctx, extra.UserMsg, "HookPostReceive failed: %v", extra.Error)
 			}
@@ -434,7 +432,6 @@ Forgejo or set your environment appropriately.`, "")
 		}
 		fmt.Fprintf(out, "Processed %d references in total\n", total)
 
-		_ = dWriter.Close()
 		hookPrintResults(results)
 		return nil
 	}
@@ -447,7 +444,6 @@ Forgejo or set your environment appropriately.`, "")
 
 	resp, extra := private.HookPostReceive(ctx, repoUser, repoName, hookOptions)
 	if resp == nil {
-		_ = dWriter.Close()
 		hookPrintResults(results)
 		return fail(ctx, extra.UserMsg, "HookPostReceive failed: %v", extra.Error)
 	}
@@ -463,9 +459,8 @@ Forgejo or set your environment appropriately.`, "")
 			return fail(ctx, extra.UserMsg, "SetDefaultBranch failed: %v", extra.Error)
 		}
 	}
-	_ = dWriter.Close()
-	hookPrintResults(results)
 
+	hookPrintResults(results)
 	return nil
 }
 
