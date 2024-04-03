@@ -139,11 +139,10 @@ func (d *delayWriter) WriteString(s string) (n int, err error) {
 }
 
 func (d *delayWriter) Close() error {
-	if d == nil {
-		return nil
+	if d.timer.Stop() {
+		d.buf = nil
 	}
-	stopped := d.timer.Stop()
-	if stopped || d.buf == nil {
+	if d.buf == nil {
 		return nil
 	}
 	_, err := d.internal.Write(d.buf.Bytes())
