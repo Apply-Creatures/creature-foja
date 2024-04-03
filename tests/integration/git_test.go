@@ -1025,7 +1025,7 @@ func doCreateAgitFlowPull(dstPath string, ctx *APITestContext, baseBranch, headB
 			t.Run("Succeeds", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
 
-				_, _, gitErr := git.NewCommand(git.DefaultContext, "push", "origin", "-o", "force-push=true").AddDynamicArguments("HEAD:refs/for/master/" + headBranch + "-force-push").RunStdString(&git.RunOpts{Dir: dstPath})
+				_, _, gitErr := git.NewCommand(git.DefaultContext, "push", "origin", "-o", "force-push").AddDynamicArguments("HEAD:refs/for/master/" + headBranch + "-force-push").RunStdString(&git.RunOpts{Dir: dstPath})
 				assert.NoError(t, gitErr)
 
 				currentHeadCommitID, err := upstreamGitRepo.GetRefCommitID(pr.GetGitRefName())

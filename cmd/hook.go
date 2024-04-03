@@ -487,10 +487,11 @@ func pushOptions() map[string]string {
 	if pushCount, err := strconv.Atoi(os.Getenv(private.GitPushOptionCount)); err == nil {
 		for idx := 0; idx < pushCount; idx++ {
 			opt := os.Getenv(fmt.Sprintf("GIT_PUSH_OPTION_%d", idx))
-			kv := strings.SplitN(opt, "=", 2)
-			if len(kv) == 2 {
-				opts[kv[0]] = kv[1]
+			key, value, found := strings.Cut(opt, "=")
+			if !found {
+				value = "true"
 			}
+			opts[key] = value
 		}
 	}
 	return opts
@@ -630,10 +631,11 @@ Forgejo or set your environment appropriately.`, "")
 				break
 			}
 
-			kv := strings.SplitN(string(rs.Data), "=", 2)
-			if len(kv) == 2 {
-				hookOptions.GitPushOptions[kv[0]] = kv[1]
+			key, value, found := strings.Cut(string(rs.Data), "=")
+			if !found {
+				value = "true"
 			}
+			hookOptions.GitPushOptions[key] = value
 		}
 	}
 
