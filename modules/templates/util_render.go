@@ -20,6 +20,7 @@ import (
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/translation"
 	"code.gitea.io/gitea/modules/util"
 )
 
@@ -104,6 +105,18 @@ func RenderCodeBlock(htmlEscapedTextToRender template.HTML) template.HTML {
 	return template.HTML(htmlWithCodeTags)
 }
 
+const (
+	activeLabelOpacity   = uint8(255)
+	archivedLabelOpacity = uint8(127)
+)
+
+func GetLabelOpacityByte(isArchived bool) uint8 {
+	if isArchived {
+		return archivedLabelOpacity
+	}
+	return activeLabelOpacity
+}
+
 // RenderIssueTitle renders issue/pull title with defined post processors
 func RenderIssueTitle(ctx context.Context, text string, metas map[string]string) template.HTML {
 	renderedText, err := markup.RenderIssueTitle(&markup.RenderContext{
@@ -118,22 +131,34 @@ func RenderIssueTitle(ctx context.Context, text string, metas map[string]string)
 }
 
 // RenderLabel renders a label
-func RenderLabel(ctx context.Context, label *issues_model.Label) template.HTML {
-	labelScope := label.ExclusiveScope()
-
-	textColor := "#111"
+// locale is needed due to an import cycle with our context providing the `Tr` function
+func RenderLabel(ctx context.Context, locale translation.Locale, label *issues_model.Label) template.HTML {
+	var (
+		archivedCSSClass string
+		textColor        = "#111"
+		labelScope       = label.ExclusiveScope()
+	)
 	r, g, b := util.HexToRBGColor(label.Color)
+
 	// Determine if label text should be light or dark to be readable on background color
+	// this doesn't account for saturation or transparency
 	if util.UseLightTextOnBackground(r, g, b) {
 		textColor = "#eee"
 	}
 
 	description := emoji.ReplaceAliases(template.HTMLEscapeString(label.Description))
 
+	if label.IsArchived() {
+		archivedCSSClass = "archived-label"
+		description = locale.TrString("repo.issues.archived_label_description", description)
+	}
+
 	if labelScope == "" {
 		// Regular label
-		s := fmt.Sprintf("<div class='ui label' style='color: %s !important; background-color: %s !important' data-tooltip-content title='%s'>%s</div>",
-			textColor, label.Color, description, RenderEmoji(ctx, label.Name))
+
+		labelColor := label.Color + hex.EncodeToString([]byte{GetLabelOpacityByte(label.IsArchived())})
+		s := fmt.Sprintf("<div class='ui label %s' style='color: %s !important; background-color: %s !important;' data-tooltip-content title='%s'>%s</div>",
+			archivedCSSClass, textColor, labelColor, description, RenderEmoji(ctx, label.Name))
 		return template.HTML(s)
 	}
 
@@ -152,25 +177,28 @@ func RenderLabel(ctx context.Context, label *issues_model.Label) template.HTML {
 	darkenFactor := math.Max(luminance-darken, 0.0) / math.Max(luminance, 1.0/255.0)
 	lightenFactor := math.Min(luminance+lighten, 1.0) / math.Max(luminance, 1.0/255.0)
 
+	opacity := GetLabelOpacityByte(label.IsArchived())
 	scopeBytes := []byte{
 		uint8(math.Min(math.Round(r*darkenFactor), 255)),
 		uint8(math.Min(math.Round(g*darkenFactor), 255)),
 		uint8(math.Min(math.Round(b*darkenFactor), 255)),
+		opacity,
 	}
 	itemBytes := []byte{
 		uint8(math.Min(math.Round(r*lightenFactor), 255)),
 		uint8(math.Min(math.Round(g*lightenFactor), 255)),
 		uint8(math.Min(math.Round(b*lightenFactor), 255)),
+		opacity,
 	}
 
-	itemColor := "#" + hex.EncodeToString(itemBytes)
 	scopeColor := "#" + hex.EncodeToString(scopeBytes)
+	itemColor := "#" + hex.EncodeToString(itemBytes)
 
-	s := fmt.Sprintf("<span class='ui label scope-parent' data-tooltip-content title='%s'>"+
+	s := fmt.Sprintf("<span class='ui label %s scope-parent' data-tooltip-content title='%s'>"+
 		"<div class='ui label scope-left' style='color: %s !important; background-color: %s !important'>%s</div>"+
 		"<div class='ui label scope-right' style='color: %s !important; background-color: %s !important'>%s</div>"+
 		"</span>",
-		description,
+		archivedCSSClass, description,
 		textColor, scopeColor, scopeText,
 		textColor, itemColor, itemText)
 	return template.HTML(s)
@@ -211,7 +239,7 @@ func RenderMarkdownToHtml(ctx context.Context, input string) template.HTML { //n
 	return output
 }
 
-func RenderLabels(ctx context.Context, labels []*issues_model.Label, repoLink string) template.HTML {
+func RenderLabels(ctx context.Context, locale translation.Locale, labels []*issues_model.Label, repoLink string) template.HTML {
 	htmlCode := `<span class="labels-list">`
 	for _, label := range labels {
 		// Protect against nil value in labels - shouldn't happen but would cause a panic if so
@@ -219,7 +247,7 @@ func RenderLabels(ctx context.Context, labels []*issues_model.Label, repoLink st
 			continue
 		}
 		htmlCode += fmt.Sprintf("<a href='%s/issues?labels=%d'>%s</a> ",
-			repoLink, label.ID, RenderLabel(ctx, label))
+			repoLink, label.ID, RenderLabel(ctx, locale, label))
 	}
 	htmlCode += "</span>"
 	return template.HTML(htmlCode)

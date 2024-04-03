@@ -2435,6 +2435,10 @@
   margin-left: 0;
 }
 
+.archived-label {
+  filter: grayscale(0.25) saturate(0.75);
+}
+
 .repo-button-row {
   margin: 10px 0;
   display: flex;
