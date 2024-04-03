@@ -22,28 +22,29 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 	"code.gitea.io/gitea/services/forms"
+	"code.gitea.io/gitea/services/webhook/shared"
 )
 
 type discordHandler struct{}
 
 func (discordHandler) Type() webhook_module.HookType { return webhook_module.DISCORD }
-func (discordHandler) Icon(size int) template.HTML   { return imgIcon("discord.png", size) }
+func (discordHandler) Icon(size int) template.HTML   { return shared.ImgIcon("discord.png", size) }
 
-func (discordHandler) FormFields(bind func(any)) FormFields {
+func (discordHandler) UnmarshalForm(bind func(any)) forms.WebhookForm {
 	var form struct {
-		forms.WebhookForm
+		forms.WebhookCoreForm
 		PayloadURL string `binding:"Required;ValidUrl"`
 		Username   string
 		IconURL    string
 	}
 	bind(&form)
 
-	return FormFields{
-		WebhookForm: form.WebhookForm,
-		URL:         form.PayloadURL,
-		ContentType: webhook_model.ContentTypeJSON,
-		Secret:      "",
-		HTTPMethod:  http.MethodPost,
+	return forms.WebhookForm{
+		WebhookCoreForm: form.WebhookCoreForm,
+		URL:             form.PayloadURL,
+		ContentType:     webhook_model.ContentTypeJSON,
+		Secret:          "",
+		HTTPMethod:      http.MethodPost,
 		Metadata: &DiscordMeta{
 			Username: form.Username,
 			IconURL:  form.IconURL,
@@ -287,7 +288,7 @@ type discordConvertor struct {
 	AvatarURL string
 }
 
-var _ payloadConvertor[DiscordPayload] = discordConvertor{}
+var _ shared.PayloadConvertor[DiscordPayload] = discordConvertor{}
 
 func (discordHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
 	meta := &DiscordMeta{}
@@ -298,7 +299,7 @@ func (discordHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, 
 		Username:  meta.Username,
 		AvatarURL: meta.IconURL,
 	}
-	return newJSONRequest(sc, w, t, true)
+	return shared.NewJSONRequest(sc, w, t, true)
 }
 
 func parseHookPullRequestEventType(event webhook_module.HookEventType) (string, error) {

@@ -12,6 +12,7 @@ import (
 	"code.gitea.io/gitea/models"
 	issues_model "code.gitea.io/gitea/models/issues"
 	project_model "code.gitea.io/gitea/models/project"
+	webhook_model "code.gitea.io/gitea/models/webhook"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/web/middleware"
@@ -235,8 +236,8 @@ func (f *ProtectBranchForm) Validate(req *http.Request, errs binding.Errors) bin
 //   \__/\  /  \___  >___  /___|  /\____/ \____/|__|_ \
 //        \/       \/    \/     \/                   \/
 
-// WebhookForm form for changing web hook
-type WebhookForm struct {
+// WebhookCoreForm form for changing web hook (common to all webhook types)
+type WebhookCoreForm struct {
 	Events                   string
 	Create                   bool
 	Delete                   bool
@@ -265,18 +266,28 @@ type WebhookForm struct {
 }
 
 // PushOnly if the hook will be triggered when push
-func (f WebhookForm) PushOnly() bool {
+func (f WebhookCoreForm) PushOnly() bool {
 	return f.Events == "push_only"
 }
 
 // SendEverything if the hook will be triggered any event
-func (f WebhookForm) SendEverything() bool {
+func (f WebhookCoreForm) SendEverything() bool {
 	return f.Events == "send_everything"
 }
 
 // ChooseEvents if the hook will be triggered choose events
-func (f WebhookForm) ChooseEvents() bool {
+func (f WebhookCoreForm) ChooseEvents() bool {
 	return f.Events == "choose_events"
+}
+
+// WebhookForm form for changing web hook (specific handling depending on the webhook type)
+type WebhookForm struct {
+	WebhookCoreForm
+	URL         string
+	ContentType webhook_model.HookContentType
+	Secret      string
+	HTTPMethod  string
+	Metadata    any
 }
 
 // .___

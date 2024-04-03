@@ -20,6 +20,7 @@ import (
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 	gitea_context "code.gitea.io/gitea/services/context"
 	"code.gitea.io/gitea/services/forms"
+	"code.gitea.io/gitea/services/webhook/shared"
 
 	"gitea.com/go-chi/binding"
 )
@@ -27,10 +28,10 @@ import (
 type slackHandler struct{}
 
 func (slackHandler) Type() webhook_module.HookType { return webhook_module.SLACK }
-func (slackHandler) Icon(size int) template.HTML   { return imgIcon("slack.png", size) }
+func (slackHandler) Icon(size int) template.HTML   { return shared.ImgIcon("slack.png", size) }
 
 type slackForm struct {
-	forms.WebhookForm
+	forms.WebhookCoreForm
 	PayloadURL string `binding:"Required;ValidUrl"`
 	Channel    string `binding:"Required"`
 	Username   string
@@ -53,16 +54,16 @@ func (s *slackForm) Validate(req *http.Request, errs binding.Errors) binding.Err
 	return errs
 }
 
-func (slackHandler) FormFields(bind func(any)) FormFields {
+func (slackHandler) UnmarshalForm(bind func(any)) forms.WebhookForm {
 	var form slackForm
 	bind(&form)
 
-	return FormFields{
-		WebhookForm: form.WebhookForm,
-		URL:         form.PayloadURL,
-		ContentType: webhook_model.ContentTypeJSON,
-		Secret:      "",
-		HTTPMethod:  http.MethodPost,
+	return forms.WebhookForm{
+		WebhookCoreForm: form.WebhookCoreForm,
+		URL:             form.PayloadURL,
+		ContentType:     webhook_model.ContentTypeJSON,
+		Secret:          "",
+		HTTPMethod:      http.MethodPost,
 		Metadata: &SlackMeta{
 			Channel:  strings.TrimSpace(form.Channel),
 			Username: form.Username,
@@ -334,7 +335,7 @@ type slackConvertor struct {
 	Color    string
 }
 
-var _ payloadConvertor[SlackPayload] = slackConvertor{}
+var _ shared.PayloadConvertor[SlackPayload] = slackConvertor{}
 
 func (slackHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
 	meta := &SlackMeta{}
@@ -347,7 +348,7 @@ func (slackHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t 
 		IconURL:  meta.IconURL,
 		Color:    meta.Color,
 	}
-	return newJSONRequest(sc, w, t, true)
+	return shared.NewJSONRequest(sc, w, t, true)
 }
 
 var slackChannel = regexp.MustCompile(`^#?[a-z0-9_-]{1,80}$`)

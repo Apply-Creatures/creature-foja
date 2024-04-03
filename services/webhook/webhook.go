@@ -32,20 +32,11 @@ import (
 type Handler interface {
 	Type() webhook_module.HookType
 	Metadata(*webhook_model.Webhook) any
-	// FormFields provides a function to bind the request to the form.
+	// UnmarshalForm provides a function to bind the request to the form.
 	// If form implements the [binding.Validator] interface, the Validate method will be called
-	FormFields(bind func(form any)) FormFields
+	UnmarshalForm(bind func(form any)) forms.WebhookForm
 	NewRequest(context.Context, *webhook_model.Webhook, *webhook_model.HookTask) (req *http.Request, body []byte, err error)
 	Icon(size int) template.HTML
-}
-
-type FormFields struct {
-	forms.WebhookForm
-	URL         string
-	ContentType webhook_model.HookContentType
-	Secret      string
-	HTTPMethod  string
-	Metadata    any
 }
 
 var webhookHandlers = []Handler{

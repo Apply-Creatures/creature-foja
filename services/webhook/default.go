@@ -5,13 +5,8 @@ package webhook
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/sha1"
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 	"html/template"
-	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -21,6 +16,7 @@ import (
 	"code.gitea.io/gitea/modules/svg"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 	"code.gitea.io/gitea/services/forms"
+	"code.gitea.io/gitea/services/webhook/shared"
 )
 
 var _ Handler = defaultHandler{}
@@ -39,16 +35,16 @@ func (dh defaultHandler) Type() webhook_module.HookType {
 func (dh defaultHandler) Icon(size int) template.HTML {
 	if dh.forgejo {
 		// forgejo.svg is not in web_src/svg/, so svg.RenderHTML does not work
-		return imgIcon("forgejo.svg", size)
+		return shared.ImgIcon("forgejo.svg", size)
 	}
 	return svg.RenderHTML("gitea-gitea", size, "img")
 }
 
 func (defaultHandler) Metadata(*webhook_model.Webhook) any { return nil }
 
-func (defaultHandler) FormFields(bind func(any)) FormFields {
+func (defaultHandler) UnmarshalForm(bind func(any)) forms.WebhookForm {
 	var form struct {
-		forms.WebhookForm
+		forms.WebhookCoreForm
 		PayloadURL  string `binding:"Required;ValidUrl"`
 		HTTPMethod  string `binding:"Required;In(POST,GET)"`
 		ContentType int    `binding:"Required"`
@@ -60,13 +56,13 @@ func (defaultHandler) FormFields(bind func(any)) FormFields {
 	if webhook_model.HookContentType(form.ContentType) == webhook_model.ContentTypeForm {
 		contentType = webhook_model.ContentTypeForm
 	}
-	return FormFields{
-		WebhookForm: form.WebhookForm,
-		URL:         form.PayloadURL,
-		ContentType: contentType,
-		Secret:      form.Secret,
-		HTTPMethod:  form.HTTPMethod,
-		Metadata:    nil,
+	return forms.WebhookForm{
+		WebhookCoreForm: form.WebhookCoreForm,
+		URL:             form.PayloadURL,
+		ContentType:     contentType,
+		Secret:          form.Secret,
+		HTTPMethod:      form.HTTPMethod,
+		Metadata:        nil,
 	}
 }
 
@@ -130,42 +126,5 @@ func (defaultHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, 
 	}
 
 	body = []byte(t.PayloadContent)
-	return req, body, addDefaultHeaders(req, []byte(w.Secret), t, body)
-}
-
-func addDefaultHeaders(req *http.Request, secret []byte, t *webhook_model.HookTask, payloadContent []byte) error {
-	var signatureSHA1 string
-	var signatureSHA256 string
-	if len(secret) > 0 {
-		sig1 := hmac.New(sha1.New, secret)
-		sig256 := hmac.New(sha256.New, secret)
-		_, err := io.MultiWriter(sig1, sig256).Write(payloadContent)
-		if err != nil {
-			// this error should never happen, since the hashes are writing to []byte and always return a nil error.
-			return fmt.Errorf("prepareWebhooks.sigWrite: %w", err)
-		}
-		signatureSHA1 = hex.EncodeToString(sig1.Sum(nil))
-		signatureSHA256 = hex.EncodeToString(sig256.Sum(nil))
-	}
-
-	event := t.EventType.Event()
-	eventType := string(t.EventType)
-	req.Header.Add("X-Forgejo-Delivery", t.UUID)
-	req.Header.Add("X-Forgejo-Event", event)
-	req.Header.Add("X-Forgejo-Event-Type", eventType)
-	req.Header.Add("X-Forgejo-Signature", signatureSHA256)
-	req.Header.Add("X-Gitea-Delivery", t.UUID)
-	req.Header.Add("X-Gitea-Event", event)
-	req.Header.Add("X-Gitea-Event-Type", eventType)
-	req.Header.Add("X-Gitea-Signature", signatureSHA256)
-	req.Header.Add("X-Gogs-Delivery", t.UUID)
-	req.Header.Add("X-Gogs-Event", event)
-	req.Header.Add("X-Gogs-Event-Type", eventType)
-	req.Header.Add("X-Gogs-Signature", signatureSHA256)
-	req.Header.Add("X-Hub-Signature", "sha1="+signatureSHA1)
-	req.Header.Add("X-Hub-Signature-256", "sha256="+signatureSHA256)
-	req.Header["X-GitHub-Delivery"] = []string{t.UUID}
-	req.Header["X-GitHub-Event"] = []string{event}
-	req.Header["X-GitHub-Event-Type"] = []string{eventType}
-	return nil
+	return req, body, shared.AddDefaultHeaders(req, []byte(w.Secret), t, body)
 }

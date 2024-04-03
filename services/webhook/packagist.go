@@ -15,28 +15,29 @@ import (
 	"code.gitea.io/gitea/modules/log"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 	"code.gitea.io/gitea/services/forms"
+	"code.gitea.io/gitea/services/webhook/shared"
 )
 
 type packagistHandler struct{}
 
 func (packagistHandler) Type() webhook_module.HookType { return webhook_module.PACKAGIST }
-func (packagistHandler) Icon(size int) template.HTML   { return imgIcon("packagist.png", size) }
+func (packagistHandler) Icon(size int) template.HTML   { return shared.ImgIcon("packagist.png", size) }
 
-func (packagistHandler) FormFields(bind func(any)) FormFields {
+func (packagistHandler) UnmarshalForm(bind func(any)) forms.WebhookForm {
 	var form struct {
-		forms.WebhookForm
+		forms.WebhookCoreForm
 		Username   string `binding:"Required"`
 		APIToken   string `binding:"Required"`
 		PackageURL string `binding:"Required;ValidUrl"`
 	}
 	bind(&form)
 
-	return FormFields{
-		WebhookForm: form.WebhookForm,
-		URL:         fmt.Sprintf("https://packagist.org/api/update-package?username=%s&apiToken=%s", url.QueryEscape(form.Username), url.QueryEscape(form.APIToken)),
-		ContentType: webhook_model.ContentTypeJSON,
-		Secret:      "",
-		HTTPMethod:  http.MethodPost,
+	return forms.WebhookForm{
+		WebhookCoreForm: form.WebhookCoreForm,
+		URL:             fmt.Sprintf("https://packagist.org/api/update-package?username=%s&apiToken=%s", url.QueryEscape(form.Username), url.QueryEscape(form.APIToken)),
+		ContentType:     webhook_model.ContentTypeJSON,
+		Secret:          "",
+		HTTPMethod:      http.MethodPost,
 		Metadata: &PackagistMeta{
 			Username:   form.Username,
 			APIToken:   form.APIToken,
@@ -85,5 +86,5 @@ func (packagistHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook
 			URL: meta.PackageURL,
 		},
 	}
-	return newJSONRequestWithPayload(payload, w, t, false)
+	return shared.NewJSONRequestWithPayload(payload, w, t, false)
 }

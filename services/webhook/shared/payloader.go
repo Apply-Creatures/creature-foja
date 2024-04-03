@@ -1,11 +1,16 @@
 // Copyright 2020 The Gitea Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-package webhook
+package shared
 
 import (
 	"bytes"
+	"crypto/hmac"
+	"crypto/sha1"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"net/http"
 
 	webhook_model "code.gitea.io/gitea/models/webhook"
@@ -14,8 +19,8 @@ import (
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 )
 
-// payloadConvertor defines the interface to convert system payload to webhook payload
-type payloadConvertor[T any] interface {
+// PayloadConvertor defines the interface to convert system payload to webhook payload
+type PayloadConvertor[T any] interface {
 	Create(*api.CreatePayload) (T, error)
 	Delete(*api.DeletePayload) (T, error)
 	Fork(*api.ForkPayload) (T, error)
@@ -39,7 +44,7 @@ func convertUnmarshalledJSON[T, P any](convert func(P) (T, error), data []byte) 
 	return convert(p)
 }
 
-func newPayload[T any](rc payloadConvertor[T], data []byte, event webhook_module.HookEventType) (T, error) {
+func NewPayload[T any](rc PayloadConvertor[T], data []byte, event webhook_module.HookEventType) (T, error) {
 	switch event {
 	case webhook_module.HookEventCreate:
 		return convertUnmarshalledJSON(rc.Create, data)
@@ -83,15 +88,15 @@ func newPayload[T any](rc payloadConvertor[T], data []byte, event webhook_module
 	return t, fmt.Errorf("newPayload unsupported event: %s", event)
 }
 
-func newJSONRequest[T any](pc payloadConvertor[T], w *webhook_model.Webhook, t *webhook_model.HookTask, withDefaultHeaders bool) (*http.Request, []byte, error) {
-	payload, err := newPayload(pc, []byte(t.PayloadContent), t.EventType)
+func NewJSONRequest[T any](pc PayloadConvertor[T], w *webhook_model.Webhook, t *webhook_model.HookTask, withDefaultHeaders bool) (*http.Request, []byte, error) {
+	payload, err := NewPayload(pc, []byte(t.PayloadContent), t.EventType)
 	if err != nil {
 		return nil, nil, err
 	}
-	return newJSONRequestWithPayload(payload, w, t, withDefaultHeaders)
+	return NewJSONRequestWithPayload(payload, w, t, withDefaultHeaders)
 }
 
-func newJSONRequestWithPayload(payload any, w *webhook_model.Webhook, t *webhook_model.HookTask, withDefaultHeaders bool) (*http.Request, []byte, error) {
+func NewJSONRequestWithPayload(payload any, w *webhook_model.Webhook, t *webhook_model.HookTask, withDefaultHeaders bool) (*http.Request, []byte, error) {
 	body, err := json.MarshalIndent(payload, "", "  ")
 	if err != nil {
 		return nil, nil, err
@@ -109,7 +114,45 @@ func newJSONRequestWithPayload(payload any, w *webhook_model.Webhook, t *webhook
 	req.Header.Set("Content-Type", "application/json")
 
 	if withDefaultHeaders {
-		return req, body, addDefaultHeaders(req, []byte(w.Secret), t, body)
+		return req, body, AddDefaultHeaders(req, []byte(w.Secret), t, body)
 	}
 	return req, body, nil
+}
+
+// AddDefaultHeaders adds the X-Forgejo, X-Gitea, X-Gogs, X-Hub, X-GitHub headers to the given request
+func AddDefaultHeaders(req *http.Request, secret []byte, t *webhook_model.HookTask, payloadContent []byte) error {
+	var signatureSHA1 string
+	var signatureSHA256 string
+	if len(secret) > 0 {
+		sig1 := hmac.New(sha1.New, secret)
+		sig256 := hmac.New(sha256.New, secret)
+		_, err := io.MultiWriter(sig1, sig256).Write(payloadContent)
+		if err != nil {
+			// this error should never happen, since the hashes are writing to []byte and always return a nil error.
+			return fmt.Errorf("prepareWebhooks.sigWrite: %w", err)
+		}
+		signatureSHA1 = hex.EncodeToString(sig1.Sum(nil))
+		signatureSHA256 = hex.EncodeToString(sig256.Sum(nil))
+	}
+
+	event := t.EventType.Event()
+	eventType := string(t.EventType)
+	req.Header.Add("X-Forgejo-Delivery", t.UUID)
+	req.Header.Add("X-Forgejo-Event", event)
+	req.Header.Add("X-Forgejo-Event-Type", eventType)
+	req.Header.Add("X-Forgejo-Signature", signatureSHA256)
+	req.Header.Add("X-Gitea-Delivery", t.UUID)
+	req.Header.Add("X-Gitea-Event", event)
+	req.Header.Add("X-Gitea-Event-Type", eventType)
+	req.Header.Add("X-Gitea-Signature", signatureSHA256)
+	req.Header.Add("X-Gogs-Delivery", t.UUID)
+	req.Header.Add("X-Gogs-Event", event)
+	req.Header.Add("X-Gogs-Event-Type", eventType)
+	req.Header.Add("X-Gogs-Signature", signatureSHA256)
+	req.Header.Add("X-Hub-Signature", "sha1="+signatureSHA1)
+	req.Header.Add("X-Hub-Signature-256", "sha256="+signatureSHA256)
+	req.Header["X-GitHub-Delivery"] = []string{t.UUID}
+	req.Header["X-GitHub-Event"] = []string{event}
+	req.Header["X-GitHub-Event-Type"] = []string{eventType}
+	return nil
 }

@@ -148,7 +148,7 @@ func WebhookNew(ctx *context.Context) {
 }
 
 // ParseHookEvent convert web form content to webhook.HookEvent
-func ParseHookEvent(form forms.WebhookForm) *webhook_module.HookEvent {
+func ParseHookEvent(form forms.WebhookCoreForm) *webhook_module.HookEvent {
 	return &webhook_module.HookEvent{
 		PushOnly:       form.PushOnly(),
 		SendEverything: form.SendEverything(),
@@ -188,7 +188,7 @@ func WebhookCreate(ctx *context.Context) {
 		return
 	}
 
-	fields := handler.FormFields(func(form any) {
+	fields := handler.UnmarshalForm(func(form any) {
 		errs := binding.Bind(ctx.Req, form)
 		middleware.Validate(errs, ctx.Data, form, ctx.Locale) // error checked below in ctx.HasError
 	})
@@ -215,10 +215,10 @@ func WebhookCreate(ctx *context.Context) {
 		w.URL = fields.URL
 		w.ContentType = fields.ContentType
 		w.Secret = fields.Secret
-		w.HookEvent = ParseHookEvent(fields.WebhookForm)
-		w.IsActive = fields.WebhookForm.Active
+		w.HookEvent = ParseHookEvent(fields.WebhookCoreForm)
+		w.IsActive = fields.Active
 		w.HTTPMethod = fields.HTTPMethod
-		err := w.SetHeaderAuthorization(fields.WebhookForm.AuthorizationHeader)
+		err := w.SetHeaderAuthorization(fields.AuthorizationHeader)
 		if err != nil {
 			ctx.ServerError("SetHeaderAuthorization", err)
 			return
@@ -245,14 +245,14 @@ func WebhookCreate(ctx *context.Context) {
 		HTTPMethod:      fields.HTTPMethod,
 		ContentType:     fields.ContentType,
 		Secret:          fields.Secret,
-		HookEvent:       ParseHookEvent(fields.WebhookForm),
-		IsActive:        fields.WebhookForm.Active,
+		HookEvent:       ParseHookEvent(fields.WebhookCoreForm),
+		IsActive:        fields.Active,
 		Type:            hookType,
 		Meta:            string(meta),
 		OwnerID:         orCtx.OwnerID,
 		IsSystemWebhook: orCtx.IsSystemWebhook,
 	}
-	err = w.SetHeaderAuthorization(fields.WebhookForm.AuthorizationHeader)
+	err = w.SetHeaderAuthorization(fields.AuthorizationHeader)
 	if err != nil {
 		ctx.ServerError("SetHeaderAuthorization", err)
 		return
@@ -286,7 +286,7 @@ func WebhookUpdate(ctx *context.Context) {
 		return
 	}
 
-	fields := handler.FormFields(func(form any) {
+	fields := handler.UnmarshalForm(func(form any) {
 		errs := binding.Bind(ctx.Req, form)
 		middleware.Validate(errs, ctx.Data, form, ctx.Locale) // error checked below in ctx.HasError
 	})
@@ -295,11 +295,11 @@ func WebhookUpdate(ctx *context.Context) {
 	w.URL = fields.URL
 	w.ContentType = fields.ContentType
 	w.Secret = fields.Secret
-	w.HookEvent = ParseHookEvent(fields.WebhookForm)
-	w.IsActive = fields.WebhookForm.Active
+	w.HookEvent = ParseHookEvent(fields.WebhookCoreForm)
+	w.IsActive = fields.Active
 	w.HTTPMethod = fields.HTTPMethod
 
-	err := w.SetHeaderAuthorization(fields.WebhookForm.AuthorizationHeader)
+	err := w.SetHeaderAuthorization(fields.AuthorizationHeader)
 	if err != nil {
 		ctx.ServerError("SetHeaderAuthorization", err)
 		return
