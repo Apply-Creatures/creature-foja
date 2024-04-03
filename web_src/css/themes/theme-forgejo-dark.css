@@ -225,9 +225,10 @@
   --color-nav-bg: var(--steel-900);
   --color-nav-hover-bg: var(--steel-600);
   --color-label-text: #fff;
-  --color-label-bg: #cacaca5b;
-  --color-label-hover-bg: #cacacaa0;
-  --color-label-active-bg: #cacacaff;
+  --color-label-bg: var(--steel-600);
+  --color-label-hover-bg: var(--steel-550);
+  --color-label-active-bg: var(--steel-500);
+  --color-label-bg-alt: var(--steel-550);
   --color-accent: var(--color-primary-light-1);
   --color-small-accent: var(--color-primary-light-5);
   --color-highlight-fg: var(--color-primary-light-4);

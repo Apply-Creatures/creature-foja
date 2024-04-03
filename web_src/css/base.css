@@ -1222,6 +1222,10 @@ overflow-menu .ui.label {
   color: var(--color-label-text);
 }
 
+.ui.menu .active.item > .label {
+  background: var(--color-label-bg-alt, var(--color-label-bg));
+}
+
 .lines-blame-btn {
   padding: 0 0 0 5px;
   display: flex;
