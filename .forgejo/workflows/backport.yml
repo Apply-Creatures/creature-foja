@@ -73,11 +73,11 @@ jobs:
           echo "target-branch: ${{ fromJSON(steps.extract-targets.outputs.targets)[0] }}"
           echo "pull-request: ${{ github.event.pull_request.url }}"
 
-      - uses: https://code.forgejo.org/forgejo/git-backporting@9770e517502d6560993bea13bbea316ffcf71f49
+      - uses: https://code.forgejo.org/forgejo/git-backporting@b2554a678d5ea2814f0df3abad2ac4fcdee2d81f
         with:
           target-branch: ${{ fromJSON(steps.extract-targets.outputs.targets)[0] }}/forgejo
           strategy: ort
           strategy-option: find-renames
-          no-squash: true
+          cherry-pick-options: -x
           auth: ${{ secrets.BACKPORT_TOKEN }}
           pull-request: ${{ github.event.pull_request.url }}
