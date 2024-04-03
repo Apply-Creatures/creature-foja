@@ -4,6 +4,7 @@
 package integration
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -126,6 +127,61 @@ func TestAmbiguousCharacterDetection(t *testing.T) {
 			defer test.MockVariableValue(&setting.UI.AmbiguousUnicodeDetection, false)()
 
 			assertCase(t, false, false, false)
+		})
+	})
+}
+
+func TestInHistoryButton(t *testing.T) {
+	onGiteaRun(t, func(t *testing.T, u *url.URL) {
+		user2 := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+		session := loginUser(t, user2.Name)
+		repo, commitID, f := CreateDeclarativeRepo(t, user2, "",
+			[]unit_model.Type{unit_model.TypeCode, unit_model.TypeWiki}, nil,
+			[]*files_service.ChangeRepoFile{
+				{
+					Operation:     "create",
+					TreePath:      "test.sh",
+					ContentReader: strings.NewReader("Hello there!"),
+				},
+			},
+		)
+		defer f()
+
+		req := NewRequestWithValues(t, "POST", repo.Link()+"/wiki?action=new", map[string]string{
+			"_csrf":   GetCSRF(t, session, repo.Link()+"/wiki?action=new"),
+			"title":   "Normal",
+			"content": "Hello world!",
+		})
+		session.MakeRequest(t, req, http.StatusSeeOther)
+
+		t.Run("Wiki revision", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequest(t, "GET", repo.Link()+"/wiki/Normal?action=_revision")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+
+			htmlDoc.AssertElement(t, fmt.Sprintf(".commit-list a[href^='/%s/src/commit/']", repo.FullName()), false)
+		})
+
+		t.Run("Commit list", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequest(t, "GET", repo.Link()+"/commits/branch/main")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+
+			htmlDoc.AssertElement(t, fmt.Sprintf(".commit-list a[href='/%s/src/commit/%s']", repo.FullName(), commitID), true)
+		})
+
+		t.Run("File history", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequest(t, "GET", repo.Link()+"/commits/branch/main/test.sh")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+
+			htmlDoc.AssertElement(t, fmt.Sprintf(".commit-list a[href='/%s/src/commit/%s/test.sh']", repo.FullName(), commitID), true)
 		})
 	})
 }
