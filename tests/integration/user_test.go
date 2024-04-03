@@ -608,6 +608,6 @@ func TestUserPronouns(t *testing.T) {
 		htmlDoc := NewHTMLParser(t, resp.Body)
 
 		userName := strings.TrimSpace(htmlDoc.Find(".profile-avatar-name .username").Text())
-		assert.Contains(t, userName, "user2")
+		assert.EqualValues(t, userName, "user2")
 	})
 }
