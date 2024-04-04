@@ -64,6 +64,7 @@ func createDefaultPolicy() *bluemonday.Policy {
 	policy.AllowAttrs("class").Matching(regexp.MustCompile(`^color-preview$`)).OnElements("span")
 
 	// For attention
+	policy.AllowAttrs("class").Matching(regexp.MustCompile(`^attention-title$`)).OnElements("p")
 	policy.AllowAttrs("class").Matching(regexp.MustCompile(`^attention-header attention-\w+$`)).OnElements("blockquote")
 	policy.AllowAttrs("class").Matching(regexp.MustCompile(`^attention-\w+$`)).OnElements("strong")
 	policy.AllowAttrs("class").Matching(regexp.MustCompile(`^attention-icon attention-\w+ svg octicon-[\w-]+$`)).OnElements("svg")

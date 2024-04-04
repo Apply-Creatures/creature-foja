@@ -1127,6 +1127,11 @@ input:-webkit-autofill:active,
   margin: auto 0.5em auto 0;
 }
 
+.attention-title {
+  align-items: center;
+  display: flex;
+}
+
 blockquote.attention-note {
   border-left-color: var(--color-blue-dark-1);
 }

@@ -72,6 +72,7 @@ func (g *GitHubCalloutTransformer) Transform(node *ast.Document, reader text.Rea
 
 			// create an emphasis to make it bold
 			attentionParagraph := ast.NewParagraph()
+			attentionParagraph.SetAttributeString("class", []byte("attention-title"))
 			emphasis := ast.NewEmphasis(2)
 			emphasis.SetAttributeString("class", []byte("attention-"+attentionType))
 			firstParagraph.InsertBefore(firstParagraph, firstTextNode, emphasis)
