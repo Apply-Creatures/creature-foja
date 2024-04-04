@@ -59,16 +59,6 @@ docker run -e "POSTGRES_DB=test" -p 5432:5432 --rm --name pgsql postgres:14 #(ju
 TEST_PGSQL_HOST=localhost:5432 TEST_PGSQL_DBNAME=test TEST_PGSQL_USERNAME=postgres TEST_PGSQL_PASSWORD=postgres make test-pgsql
 ```
 
-## Run mssql integration tests
-同上，首先在 docker 容器里部署一个 mssql 数据库
-```
-docker run -e "ACCEPT_EULA=Y" -e "MSSQL_PID=Standard" -e "SA_PASSWORD=MwantsaSecurePassword1" -p 1433:1433 --rm --name mssql microsoft/mssql-server-linux:latest #(just ctrl-c to stop db and clean the container) 
-```
-之后便可以基于这个数据库进行集成测试
-```
-TEST_MSSQL_HOST=localhost:1433 TEST_MSSQL_DBNAME=gitea_test TEST_MSSQL_USERNAME=sa TEST_MSSQL_PASSWORD=MwantsaSecurePassword1 make test-mssql
-```
-
 ## 如何进行自定义的集成测试
 
 下面的示例展示了怎样在集成测试中只进行 GPG 测试：
@@ -79,9 +69,9 @@ sqlite 数据库:
 make test-sqlite#GPG
 ```
 
-其它数据库(把 MSSQL 替换为 MYSQL, PGSQL):
+其它数据库 (用 PGSQL 取代 MYSQL）:
 
 ```
-TEST_MSSQL_HOST=localhost:1433 TEST_MSSQL_DBNAME=test TEST_MSSQL_USERNAME=sa TEST_MSSQL_PASSWORD=MwantsaSecurePassword1 make test-mssql#GPG
+TEST_MYSQL_HOST=localhost:1433 TEST_MYSQL_DBNAME=test TEST_MYSQL_USERNAME=sa TEST_MYSQL_PASSWORD=MwantsaSecurePassword1 make test-mysql#GPG
 ```
 

@@ -60,8 +60,6 @@ func InitFixtures(opts FixturesOptions, engine ...*xorm.Engine) (err error) {
 		dialect = "postgres"
 	case schemas.MYSQL:
 		dialect = "mysql"
-	case schemas.MSSQL:
-		dialect = "mssql"
 	case schemas.SQLITE:
 		dialect = "sqlite3"
 	default:

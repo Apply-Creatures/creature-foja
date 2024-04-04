@@ -128,7 +128,7 @@ It can be used for backup and capture Forgejo server image to send to maintainer
 		&cli.StringFlag{
 			Name:    "database",
 			Aliases: []string{"d"},
-			Usage:   "Specify the database SQL syntax: sqlite3, mysql, mssql, postgres",
+			Usage:   "Specify the database SQL syntax: sqlite3, mysql, postgres",
 		},
 		&cli.BoolFlag{
 			Name:    "skip-repository",

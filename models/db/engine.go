@@ -22,9 +22,8 @@ import (
 	"xorm.io/xorm/names"
 	"xorm.io/xorm/schemas"
 
-	_ "github.com/denisenkom/go-mssqldb" // Needed for the MSSQL driver
-	_ "github.com/go-sql-driver/mysql"   // Needed for the MySQL driver
-	_ "github.com/lib/pq"                // Needed for the Postgresql driver
+	_ "github.com/go-sql-driver/mysql" // Needed for the MySQL driver
+	_ "github.com/lib/pq"              // Needed for the Postgresql driver
 )
 
 var (
@@ -114,10 +113,8 @@ func newXORMEngine() (*xorm.Engine, error) {
 	if err != nil {
 		return nil, err
 	}
-	if setting.Database.Type == "mysql" {
+	if setting.Database.Type.IsMySQL() {
 		engine.Dialect().SetParams(map[string]string{"rowFormat": "DYNAMIC"})
-	} else if setting.Database.Type == "mssql" {
-		engine.Dialect().SetParams(map[string]string{"DEFAULT_VARCHAR": "nvarchar"})
 	}
 	engine.SetSchema(setting.Database.Schema)
 	return engine, nil
