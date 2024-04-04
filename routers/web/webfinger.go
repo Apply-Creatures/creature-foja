@@ -70,8 +70,7 @@ func WebfingerQuery(ctx *context.Context) {
 			return
 		}
 
-		p, _ := strings.CutPrefix(resource.Path, "/")
-		p, _ = strings.CutSuffix(p, "/")
+		p := strings.Trim(resource.Path, "/")
 		if len(p) == 0 {
 			ctx.Error(http.StatusNotFound)
 			return
