@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	org_model "code.gitea.io/gitea/models/organization"
 	access_model "code.gitea.io/gitea/models/perm/access"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
@@ -141,6 +142,19 @@ func LoadUser(t *testing.T, ctx gocontext.Context, userID int64) {
 		ctx.Doer = doer
 	case *context.APIContext:
 		ctx.Doer = doer
+	default:
+		assert.FailNow(t, "context is not *context.Context or *context.APIContext")
+	}
+}
+
+// LoadOrganization load an org into a test context
+func LoadOrganization(t *testing.T, ctx gocontext.Context, orgID int64) {
+	org := unittest.AssertExistsAndLoadBean(t, &org_model.Organization{ID: orgID})
+	switch ctx := ctx.(type) {
+	case *context.Context:
+		ctx.Org.Organization = org
+	case *context.APIContext:
+		ctx.Org.Organization = org
 	default:
 		assert.FailNow(t, "context is not *context.Context or *context.APIContext")
 	}

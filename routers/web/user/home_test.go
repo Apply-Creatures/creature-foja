@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"code.gitea.io/gitea/models/db"
+	issues_model "code.gitea.io/gitea/models/issues"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
 	"code.gitea.io/gitea/modules/setting"
@@ -129,4 +130,37 @@ func TestDashboardPagination(t *testing.T) {
 	out, err = ctx.RenderToHTML("base/paginate", map[string]any{"Link": setting.AppSubURL, "Page": page})
 	assert.NoError(t, err)
 	assert.Contains(t, out, `<a class=" item navigation" href="/?page=2">`)
+}
+
+func TestOrgLabels(t *testing.T) {
+	assert.NoError(t, unittest.LoadFixtures())
+
+	ctx, _ := contexttest.MockContext(t, "org/org3/issues")
+	contexttest.LoadUser(t, ctx, 2)
+	contexttest.LoadOrganization(t, ctx, 3)
+	Issues(ctx)
+	assert.EqualValues(t, http.StatusOK, ctx.Resp.Status())
+
+	assert.True(t, ctx.Data["PageIsOrgIssues"].(bool))
+
+	orgLabels := []struct {
+		ID    int64
+		OrgID int64
+		Name  string
+	}{
+		{3, 3, "orglabel3"},
+		{4, 3, "orglabel4"},
+	}
+
+	labels, ok := ctx.Data["Labels"].([]*issues_model.Label)
+
+	assert.True(t, ok)
+
+	if assert.Len(t, labels, len(orgLabels)) {
+		for i, label := range labels {
+			assert.EqualValues(t, orgLabels[i].OrgID, label.OrgID)
+			assert.EqualValues(t, orgLabels[i].ID, label.ID)
+			assert.EqualValues(t, orgLabels[i].Name, label.Name)
+		}
+	}
 }

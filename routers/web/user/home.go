@@ -538,6 +538,36 @@ func buildIssueOverview(ctx *context.Context, unitType unit.Type) {
 		}
 	}
 
+	if org != nil {
+		// Get Org Labels
+		labels, err := issues_model.GetLabelsByOrgID(ctx, ctx.Org.Organization.ID, ctx.FormString("sort"), db.ListOptions{})
+		if err != nil {
+			ctx.ServerError("GetLabelsByOrgID", err)
+			return
+		}
+
+		// Get the exclusive scope for every label ID
+		labelExclusiveScopes := make([]string, 0, len(opts.LabelIDs))
+		for _, labelID := range opts.LabelIDs {
+			foundExclusiveScope := false
+			for _, label := range labels {
+				if label.ID == labelID || label.ID == -labelID {
+					labelExclusiveScopes = append(labelExclusiveScopes, label.ExclusiveScope())
+					foundExclusiveScope = true
+					break
+				}
+			}
+			if !foundExclusiveScope {
+				labelExclusiveScopes = append(labelExclusiveScopes, "")
+			}
+		}
+
+		for _, l := range labels {
+			l.LoadSelectedLabelsAfterClick(opts.LabelIDs, labelExclusiveScopes)
+		}
+		ctx.Data["Labels"] = labels
+	}
+
 	// ------------------------------
 	// Get issues as defined by opts.
 	// ------------------------------
@@ -621,6 +651,7 @@ func buildIssueOverview(ctx *context.Context, unitType unit.Type) {
 	ctx.Data["SortType"] = sortType
 	ctx.Data["IsShowClosed"] = isShowClosed
 	ctx.Data["SelectLabels"] = selectedLabels
+	ctx.Data["PageIsOrgIssues"] = org != nil
 
 	if isShowClosed {
 		ctx.Data["State"] = "closed"

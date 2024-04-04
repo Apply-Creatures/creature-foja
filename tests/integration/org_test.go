@@ -222,3 +222,28 @@ func TestTeamSearch(t *testing.T) {
 	req.Header.Add("X-Csrf-Token", csrf)
 	session.MakeRequest(t, req, http.StatusNotFound)
 }
+
+func TestOrgDashboardLabels(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 4})
+	org := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 3, Type: user_model.UserTypeOrganization})
+	session := loginUser(t, user.Name)
+
+	req := NewRequestf(t, "GET", "/org/%s/issues?labels=3,4", org.Name)
+	resp := session.MakeRequest(t, req, http.StatusOK)
+	htmlDoc := NewHTMLParser(t, resp.Body)
+
+	labelFilterHref, ok := htmlDoc.Find(".list-header-sort a").Attr("href")
+	assert.True(t, ok)
+	assert.Contains(t, labelFilterHref, "labels=3%2c4")
+
+	// Exclude label
+	req = NewRequestf(t, "GET", "/org/%s/issues?labels=3,-4", org.Name)
+	resp = session.MakeRequest(t, req, http.StatusOK)
+	htmlDoc = NewHTMLParser(t, resp.Body)
+
+	labelFilterHref, ok = htmlDoc.Find(".list-header-sort a").Attr("href")
+	assert.True(t, ok)
+	assert.Contains(t, labelFilterHref, "labels=3%2c-4")
+}
