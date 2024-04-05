@@ -17,28 +17,29 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 	"code.gitea.io/gitea/services/forms"
+	"code.gitea.io/gitea/services/webhook/shared"
 )
 
 type msteamsHandler struct{}
 
 func (msteamsHandler) Type() webhook_module.HookType       { return webhook_module.MSTEAMS }
 func (msteamsHandler) Metadata(*webhook_model.Webhook) any { return nil }
-func (msteamsHandler) Icon(size int) template.HTML         { return imgIcon("msteams.png", size) }
+func (msteamsHandler) Icon(size int) template.HTML         { return shared.ImgIcon("msteams.png", size) }
 
-func (msteamsHandler) FormFields(bind func(any)) FormFields {
+func (msteamsHandler) UnmarshalForm(bind func(any)) forms.WebhookForm {
 	var form struct {
-		forms.WebhookForm
+		forms.WebhookCoreForm
 		PayloadURL string `binding:"Required;ValidUrl"`
 	}
 	bind(&form)
 
-	return FormFields{
-		WebhookForm: form.WebhookForm,
-		URL:         form.PayloadURL,
-		ContentType: webhook_model.ContentTypeJSON,
-		Secret:      "",
-		HTTPMethod:  http.MethodPost,
-		Metadata:    nil,
+	return forms.WebhookForm{
+		WebhookCoreForm: form.WebhookCoreForm,
+		URL:             form.PayloadURL,
+		ContentType:     webhook_model.ContentTypeJSON,
+		Secret:          "",
+		HTTPMethod:      http.MethodPost,
+		Metadata:        nil,
 	}
 }
 
@@ -370,8 +371,8 @@ func createMSTeamsPayload(r *api.Repository, s *api.User, title, text, actionTar
 
 type msteamsConvertor struct{}
 
-var _ payloadConvertor[MSTeamsPayload] = msteamsConvertor{}
+var _ shared.PayloadConvertor[MSTeamsPayload] = msteamsConvertor{}
 
 func (msteamsHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
-	return newJSONRequest(msteamsConvertor{}, w, t, true)
+	return shared.NewJSONRequest(msteamsConvertor{}, w, t, true)
 }

@@ -115,6 +115,16 @@ type Repository struct {
 	RepoTransfer  *RepoTransfer `json:"repo_transfer"`
 }
 
+// GetName implements the gitrepo.Repository interface
+func (r Repository) GetName() string {
+	return r.Name
+}
+
+// GetOwnerName implements the gitrepo.Repository interface
+func (r Repository) GetOwnerName() string {
+	return r.Owner.UserName
+}
+
 // CreateRepoOption options when creating repository
 // swagger:model
 type CreateRepoOption struct {

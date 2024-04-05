@@ -17,28 +17,29 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 	"code.gitea.io/gitea/services/forms"
+	"code.gitea.io/gitea/services/webhook/shared"
 )
 
 type dingtalkHandler struct{}
 
 func (dingtalkHandler) Type() webhook_module.HookType       { return webhook_module.DINGTALK }
 func (dingtalkHandler) Metadata(*webhook_model.Webhook) any { return nil }
-func (dingtalkHandler) Icon(size int) template.HTML         { return imgIcon("dingtalk.ico", size) }
+func (dingtalkHandler) Icon(size int) template.HTML         { return shared.ImgIcon("dingtalk.ico", size) }
 
-func (dingtalkHandler) FormFields(bind func(any)) FormFields {
+func (dingtalkHandler) UnmarshalForm(bind func(any)) forms.WebhookForm {
 	var form struct {
-		forms.WebhookForm
+		forms.WebhookCoreForm
 		PayloadURL string `binding:"Required;ValidUrl"`
 	}
 	bind(&form)
 
-	return FormFields{
-		WebhookForm: form.WebhookForm,
-		URL:         form.PayloadURL,
-		ContentType: webhook_model.ContentTypeJSON,
-		Secret:      "",
-		HTTPMethod:  http.MethodPost,
-		Metadata:    nil,
+	return forms.WebhookForm{
+		WebhookCoreForm: form.WebhookCoreForm,
+		URL:             form.PayloadURL,
+		ContentType:     webhook_model.ContentTypeJSON,
+		Secret:          "",
+		HTTPMethod:      http.MethodPost,
+		Metadata:        nil,
 	}
 }
 
@@ -225,8 +226,8 @@ func createDingtalkPayload(title, text, singleTitle, singleURL string) DingtalkP
 
 type dingtalkConvertor struct{}
 
-var _ payloadConvertor[DingtalkPayload] = dingtalkConvertor{}
+var _ shared.PayloadConvertor[DingtalkPayload] = dingtalkConvertor{}
 
 func (dingtalkHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
-	return newJSONRequest(dingtalkConvertor{}, w, t, true)
+	return shared.NewJSONRequest(dingtalkConvertor{}, w, t, true)
 }

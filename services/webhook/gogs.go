@@ -10,16 +10,17 @@ import (
 	webhook_model "code.gitea.io/gitea/models/webhook"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 	"code.gitea.io/gitea/services/forms"
+	"code.gitea.io/gitea/services/webhook/shared"
 )
 
 type gogsHandler struct{ defaultHandler }
 
 func (gogsHandler) Type() webhook_module.HookType { return webhook_module.GOGS }
-func (gogsHandler) Icon(size int) template.HTML   { return imgIcon("gogs.ico", size) }
+func (gogsHandler) Icon(size int) template.HTML   { return shared.ImgIcon("gogs.ico", size) }
 
-func (gogsHandler) FormFields(bind func(any)) FormFields {
+func (gogsHandler) UnmarshalForm(bind func(any)) forms.WebhookForm {
 	var form struct {
-		forms.WebhookForm
+		forms.WebhookCoreForm
 		PayloadURL  string `binding:"Required;ValidUrl"`
 		ContentType int    `binding:"Required"`
 		Secret      string
@@ -30,12 +31,12 @@ func (gogsHandler) FormFields(bind func(any)) FormFields {
 	if webhook_model.HookContentType(form.ContentType) == webhook_model.ContentTypeForm {
 		contentType = webhook_model.ContentTypeForm
 	}
-	return FormFields{
-		WebhookForm: form.WebhookForm,
-		URL:         form.PayloadURL,
-		ContentType: contentType,
-		Secret:      form.Secret,
-		HTTPMethod:  http.MethodPost,
-		Metadata:    nil,
+	return forms.WebhookForm{
+		WebhookCoreForm: form.WebhookCoreForm,
+		URL:             form.PayloadURL,
+		ContentType:     contentType,
+		Secret:          form.Secret,
+		HTTPMethod:      http.MethodPost,
+		Metadata:        nil,
 	}
 }

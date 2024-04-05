@@ -25,6 +25,7 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 	"code.gitea.io/gitea/services/forms"
+	"code.gitea.io/gitea/services/webhook/shared"
 )
 
 type matrixHandler struct{}
@@ -35,25 +36,25 @@ func (matrixHandler) Icon(size int) template.HTML {
 	return svg.RenderHTML("gitea-matrix", size, "img")
 }
 
-func (matrixHandler) FormFields(bind func(any)) FormFields {
+func (matrixHandler) UnmarshalForm(bind func(any)) forms.WebhookForm {
 	var form struct {
-		forms.WebhookForm
+		forms.WebhookCoreForm
 		HomeserverURL string `binding:"Required;ValidUrl"`
 		RoomID        string `binding:"Required"`
 		MessageType   int
 
 		// enforce requirement of authorization_header
-		// (value will still be set in the embedded WebhookForm)
+		// (value will still be set in the embedded WebhookCoreForm)
 		AuthorizationHeader string `binding:"Required"`
 	}
 	bind(&form)
 
-	return FormFields{
-		WebhookForm: form.WebhookForm,
-		URL:         fmt.Sprintf("%s/_matrix/client/r0/rooms/%s/send/m.room.message", form.HomeserverURL, url.PathEscape(form.RoomID)),
-		ContentType: webhook_model.ContentTypeJSON,
-		Secret:      "",
-		HTTPMethod:  http.MethodPut,
+	return forms.WebhookForm{
+		WebhookCoreForm: form.WebhookCoreForm,
+		URL:             fmt.Sprintf("%s/_matrix/client/r0/rooms/%s/send/m.room.message", form.HomeserverURL, url.PathEscape(form.RoomID)),
+		ContentType:     webhook_model.ContentTypeJSON,
+		Secret:          "",
+		HTTPMethod:      http.MethodPut,
 		Metadata: &MatrixMeta{
 			HomeserverURL: form.HomeserverURL,
 			Room:          form.RoomID,
@@ -70,7 +71,7 @@ func (matrixHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t
 	mc := matrixConvertor{
 		MsgType: messageTypeText[meta.MessageType],
 	}
-	payload, err := newPayload(mc, []byte(t.PayloadContent), t.EventType)
+	payload, err := shared.NewPayload(mc, []byte(t.PayloadContent), t.EventType)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -90,7 +91,7 @@ func (matrixHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	return req, body, addDefaultHeaders(req, []byte(w.Secret), t, body) // likely useless, but has always been sent historially
+	return req, body, shared.AddDefaultHeaders(req, []byte(w.Secret), t, body) // likely useless, but has always been sent historially
 }
 
 const matrixPayloadSizeLimit = 1024 * 64
@@ -125,7 +126,7 @@ type MatrixPayload struct {
 	Commits       []*api.PayloadCommit `json:"io.gitea.commits,omitempty"`
 }
 
-var _ payloadConvertor[MatrixPayload] = matrixConvertor{}
+var _ shared.PayloadConvertor[MatrixPayload] = matrixConvertor{}
 
 type matrixConvertor struct {
 	MsgType string

@@ -15,27 +15,28 @@ import (
 	api "code.gitea.io/gitea/modules/structs"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 	"code.gitea.io/gitea/services/forms"
+	"code.gitea.io/gitea/services/webhook/shared"
 )
 
 type feishuHandler struct{}
 
 func (feishuHandler) Type() webhook_module.HookType { return webhook_module.FEISHU }
-func (feishuHandler) Icon(size int) template.HTML   { return imgIcon("feishu.png", size) }
+func (feishuHandler) Icon(size int) template.HTML   { return shared.ImgIcon("feishu.png", size) }
 
-func (feishuHandler) FormFields(bind func(any)) FormFields {
+func (feishuHandler) UnmarshalForm(bind func(any)) forms.WebhookForm {
 	var form struct {
-		forms.WebhookForm
+		forms.WebhookCoreForm
 		PayloadURL string `binding:"Required;ValidUrl"`
 	}
 	bind(&form)
 
-	return FormFields{
-		WebhookForm: form.WebhookForm,
-		URL:         form.PayloadURL,
-		ContentType: webhook_model.ContentTypeJSON,
-		Secret:      "",
-		HTTPMethod:  http.MethodPost,
-		Metadata:    nil,
+	return forms.WebhookForm{
+		WebhookCoreForm: form.WebhookCoreForm,
+		URL:             form.PayloadURL,
+		ContentType:     webhook_model.ContentTypeJSON,
+		Secret:          "",
+		HTTPMethod:      http.MethodPost,
+		Metadata:        nil,
 	}
 }
 
@@ -192,8 +193,8 @@ func (fc feishuConvertor) Package(p *api.PackagePayload) (FeishuPayload, error) 
 
 type feishuConvertor struct{}
 
-var _ payloadConvertor[FeishuPayload] = feishuConvertor{}
+var _ shared.PayloadConvertor[FeishuPayload] = feishuConvertor{}
 
 func (feishuHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
-	return newJSONRequest(feishuConvertor{}, w, t, true)
+	return shared.NewJSONRequest(feishuConvertor{}, w, t, true)
 }

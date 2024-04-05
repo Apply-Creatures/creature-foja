@@ -15,6 +15,7 @@ import (
 	api "code.gitea.io/gitea/modules/structs"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 	"code.gitea.io/gitea/services/forms"
+	"code.gitea.io/gitea/services/webhook/shared"
 )
 
 type wechatworkHandler struct{}
@@ -23,23 +24,23 @@ func (wechatworkHandler) Type() webhook_module.HookType       { return webhook_m
 func (wechatworkHandler) Metadata(*webhook_model.Webhook) any { return nil }
 
 func (wechatworkHandler) Icon(size int) template.HTML {
-	return imgIcon("wechatwork.png", size)
+	return shared.ImgIcon("wechatwork.png", size)
 }
 
-func (wechatworkHandler) FormFields(bind func(any)) FormFields {
+func (wechatworkHandler) UnmarshalForm(bind func(any)) forms.WebhookForm {
 	var form struct {
-		forms.WebhookForm
+		forms.WebhookCoreForm
 		PayloadURL string `binding:"Required;ValidUrl"`
 	}
 	bind(&form)
 
-	return FormFields{
-		WebhookForm: form.WebhookForm,
-		URL:         form.PayloadURL,
-		ContentType: webhook_model.ContentTypeJSON,
-		Secret:      "",
-		HTTPMethod:  http.MethodPost,
-		Metadata:    nil,
+	return forms.WebhookForm{
+		WebhookCoreForm: form.WebhookCoreForm,
+		URL:             form.PayloadURL,
+		ContentType:     webhook_model.ContentTypeJSON,
+		Secret:          "",
+		HTTPMethod:      http.MethodPost,
+		Metadata:        nil,
 	}
 }
 
@@ -203,8 +204,8 @@ func (wc wechatworkConvertor) Package(p *api.PackagePayload) (WechatworkPayload,
 
 type wechatworkConvertor struct{}
 
-var _ payloadConvertor[WechatworkPayload] = wechatworkConvertor{}
+var _ shared.PayloadConvertor[WechatworkPayload] = wechatworkConvertor{}
 
 func (wechatworkHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
-	return newJSONRequest(wechatworkConvertor{}, w, t, true)
+	return shared.NewJSONRequest(wechatworkConvertor{}, w, t, true)
 }

@@ -18,28 +18,29 @@ import (
 	api "code.gitea.io/gitea/modules/structs"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 	"code.gitea.io/gitea/services/forms"
+	"code.gitea.io/gitea/services/webhook/shared"
 )
 
 type telegramHandler struct{}
 
 func (telegramHandler) Type() webhook_module.HookType { return webhook_module.TELEGRAM }
-func (telegramHandler) Icon(size int) template.HTML   { return imgIcon("telegram.png", size) }
+func (telegramHandler) Icon(size int) template.HTML   { return shared.ImgIcon("telegram.png", size) }
 
-func (telegramHandler) FormFields(bind func(any)) FormFields {
+func (telegramHandler) UnmarshalForm(bind func(any)) forms.WebhookForm {
 	var form struct {
-		forms.WebhookForm
+		forms.WebhookCoreForm
 		BotToken string `binding:"Required"`
 		ChatID   string `binding:"Required"`
 		ThreadID string
 	}
 	bind(&form)
 
-	return FormFields{
-		WebhookForm: form.WebhookForm,
-		URL:         fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage?chat_id=%s&message_thread_id=%s", url.PathEscape(form.BotToken), url.QueryEscape(form.ChatID), url.QueryEscape(form.ThreadID)),
-		ContentType: webhook_model.ContentTypeJSON,
-		Secret:      "",
-		HTTPMethod:  http.MethodPost,
+	return forms.WebhookForm{
+		WebhookCoreForm: form.WebhookCoreForm,
+		URL:             fmt.Sprintf("https://api.telegram.org/bot%s/sendMessage?chat_id=%s&message_thread_id=%s", url.PathEscape(form.BotToken), url.QueryEscape(form.ChatID), url.QueryEscape(form.ThreadID)),
+		ContentType:     webhook_model.ContentTypeJSON,
+		Secret:          "",
+		HTTPMethod:      http.MethodPost,
 		Metadata: &TelegramMeta{
 			BotToken: form.BotToken,
 			ChatID:   form.ChatID,
@@ -220,8 +221,8 @@ func createTelegramPayload(message string) TelegramPayload {
 
 type telegramConvertor struct{}
 
-var _ payloadConvertor[TelegramPayload] = telegramConvertor{}
+var _ shared.PayloadConvertor[TelegramPayload] = telegramConvertor{}
 
 func (telegramHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (*http.Request, []byte, error) {
-	return newJSONRequest(telegramConvertor{}, w, t, true)
+	return shared.NewJSONRequest(telegramConvertor{}, w, t, true)
 }

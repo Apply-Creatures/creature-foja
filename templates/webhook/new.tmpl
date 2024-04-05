@@ -36,6 +36,8 @@
 			{{template "webhook/new/wechatwork" .}}
 		{{else if eq .HookType "packagist"}}
 			{{template "webhook/new/packagist" .}}
+		{{else if eq .HookType "sourcehut_builds"}}
+			{{template "webhook/new/sourcehut_builds" .}}
 		{{end}}
 	{{end}}
 </div>
