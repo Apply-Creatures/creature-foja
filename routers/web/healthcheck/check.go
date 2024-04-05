@@ -85,6 +85,7 @@ func Check(w http.ResponseWriter, r *http.Request) {
 
 	data, _ := json.MarshalIndent(rsp, "", "  ")
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Cache-Control", "no-store, no-cache, max-age=0, must-revalidate, proxy-revalidate")
 	w.WriteHeader(rsp.Status.ToHTTPStatus())
 	_, _ = w.Write(data)
 }
