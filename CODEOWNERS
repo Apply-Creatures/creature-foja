@@ -30,3 +30,9 @@ models/.* @dachary @earl-warren @gusted
 # of how Forgejo comes together. It's tedious to write good integration testing
 # for code that lives in here.
 routers/.* @dachary @earl-warren @gusted
+
+# Let new strings be checked by the translation team.
+options/locale/locale_en-US.ini @0ko
+
+# Personal interest
+.*/webhook.* @oliverpool
