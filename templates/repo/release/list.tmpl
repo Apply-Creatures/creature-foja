@@ -70,17 +70,20 @@
 								{{$hasReleaseAttachment := gt (len $release.Attachments) 0}}
 								{{if and (not $.DisableDownloadSourceArchives) (not $release.IsDraft) ($.Permission.CanRead $.UnitTypeCode)}}
 									<li>
-										<a class="archive-link" href="{{$.RepoLink}}/archive/{{$release.TagName | PathEscapeSegments}}.zip" rel="nofollow"><strong>{{svg "octicon-file-zip" 16 "tw-mr-1"}}{{ctx.Locale.Tr "repo.release.source_code"}} (ZIP)</strong></a>
-										<span class="ui middle aligned right" data-tooltip-content="{{ctx.Locale.Tr "repo.release.download_count" (ctx.Locale.PrettyNumber .Release.ArchiveDownloadCount.Zip)}}">
-											{{svg "octicon-info"}}
-										</span>
+										<a class="archive-link tw-flex-1" href="{{$.RepoLink}}/archive/{{$release.TagName | PathEscapeSegments}}.zip" rel="nofollow"><strong>{{svg "octicon-file-zip" 16 "tw-mr-1"}}{{ctx.Locale.Tr "repo.release.source_code"}} (ZIP)</strong></a>
+										<div class="tw-mr-1">
+											<span class="text grey">{{ctx.Locale.TrN .Release.ArchiveDownloadCount.Zip "repo.release.download_count_one" "repo.release.download_count_few" (ctx.Locale.PrettyNumber .Release.ArchiveDownloadCount.Zip)}}</span>
+										</div>
 										<span data-tooltip-content="{{ctx.Locale.Tr "repo.release.system_generated"}}">
 											{{svg "octicon-info"}}
 										</span>
 									</li>
 									<li class="{{if $hasReleaseAttachment}}start-gap{{end}}">
-										<a class="archive-link" href="{{$.RepoLink}}/archive/{{$release.TagName | PathEscapeSegments}}.tar.gz" rel="nofollow"><strong>{{svg "octicon-file-zip" 16 "tw-mr-1"}}{{ctx.Locale.Tr "repo.release.source_code"}} (TAR.GZ)</strong></a>
-										<span class="ui middle aligned right" data-tooltip-content="{{ctx.Locale.Tr "repo.release.download_count" (ctx.Locale.PrettyNumber .Release.ArchiveDownloadCount.TarGz)}}">
+										<a class="archive-link tw-flex-1" href="{{$.RepoLink}}/archive/{{$release.TagName | PathEscapeSegments}}.tar.gz" rel="nofollow"><strong>{{svg "octicon-file-zip" 16 "tw-mr-1"}}{{ctx.Locale.Tr "repo.release.source_code"}} (TAR.GZ)</strong></a>
+										<div class="tw-mr-1">
+											<span class="text grey">{{ctx.Locale.TrN .Release.ArchiveDownloadCount.TarGz "repo.release.download_count_one" "repo.release.download_count_few" (ctx.Locale.PrettyNumber .Release.ArchiveDownloadCount.TarGz)}}</span>
+										</div>
+										<span data-tooltip-content="{{ctx.Locale.Tr "repo.release.system_generated"}}">
 											{{svg "octicon-info"}}
 										</span>
 									</li>
