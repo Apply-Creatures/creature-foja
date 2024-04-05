@@ -83,6 +83,7 @@ func testPullCleanUp(t *testing.T, session *TestSession, user, repo, pullnum str
 	return resp
 }
 
+// returns the hook tasks, order by ID desc.
 func retrieveHookTasks(t *testing.T, hookID int64, activateWebhook bool) []*webhook.HookTask {
 	t.Helper()
 	if activateWebhook {
