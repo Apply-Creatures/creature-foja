@@ -1,0 +1,25 @@
+-
+  id: 1000
+  uid: 0
+  name: "Git Credential Manager"
+  client_id: "e90ee53c-94e2-48ac-9358-a874fb9e0662"
+  redirect_uris: '["http://127.0.0.1", "https://127.0.0.1"]'
+  created_unix: 1712358091
+  updated_unix: 1712358091
+-
+  id: 1001
+  uid: 0
+  name: "git-credential-oauth"
+  client_id: "a4792ccc-144e-407e-86c9-5e7d8d9c3269"
+  redirect_uris: '["http://127.0.0.1", "https://127.0.0.1"]'
+  created_unix: 1712358091
+  updated_unix: 1712358091
+
+-
+  id: 1002
+  uid: 1234567890
+  name: "Should be removed"
+  client_id: "deadc0de-badd-dd11-fee1-deaddecafbad"
+  redirect_uris: '["http://127.0.0.1", "https://127.0.0.1"]'
+  created_unix: 1712358091
+  updated_unix: 1712358091

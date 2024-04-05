@@ -4,11 +4,13 @@
 package auth_test
 
 import (
+	"path/filepath"
 	"testing"
 
 	auth_model "code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/unittest"
+	"code.gitea.io/gitea/modules/setting"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -264,4 +266,32 @@ func TestOAuth2AuthorizationCode_Invalidate(t *testing.T) {
 
 func TestOAuth2AuthorizationCode_TableName(t *testing.T) {
 	assert.Equal(t, "oauth2_authorization_code", new(auth_model.OAuth2AuthorizationCode).TableName())
+}
+
+func TestBuiltinApplicationsClientIDs(t *testing.T) {
+	assert.EqualValues(t, []string{"a4792ccc-144e-407e-86c9-5e7d8d9c3269", "e90ee53c-94e2-48ac-9358-a874fb9e0662", "d57cb8c4-630c-4168-8324-ec79935e18d4"}, auth_model.BuiltinApplicationsClientIDs())
+}
+
+func TestOrphanedOAuth2Applications(t *testing.T) {
+	defer unittest.OverrideFixtures(
+		unittest.FixturesOptions{
+			Dir:  filepath.Join(setting.AppWorkPath, "models/fixtures/"),
+			Base: setting.AppWorkPath,
+			Dirs: []string{"models/auth/TestOrphanedOAuth2Applications/"},
+		},
+	)()
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	count, err := auth_model.CountOrphanedOAuth2Applications(db.DefaultContext)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 1, count)
+	unittest.AssertExistsIf(t, true, &auth_model.OAuth2Application{ID: 1002})
+
+	_, err = auth_model.DeleteOrphanedOAuth2Applications(db.DefaultContext)
+	assert.NoError(t, err)
+
+	count, err = auth_model.CountOrphanedOAuth2Applications(db.DefaultContext)
+	assert.NoError(t, err)
+	assert.EqualValues(t, 0, count)
+	unittest.AssertExistsIf(t, false, &auth_model.OAuth2Application{ID: 1002})
 }

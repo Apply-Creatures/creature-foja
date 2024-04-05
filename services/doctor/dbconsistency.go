@@ -8,6 +8,7 @@ import (
 
 	actions_model "code.gitea.io/gitea/models/actions"
 	activities_model "code.gitea.io/gitea/models/activities"
+	auth_model "code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/models/db"
 	issues_model "code.gitea.io/gitea/models/issues"
 	"code.gitea.io/gitea/models/migrations"
@@ -164,6 +165,12 @@ func checkDBConsistency(ctx context.Context, logger log.Logger, autofix bool) er
 			Fixer:        repo_model.DeleteOrphanedTopics,
 			FixedMessage: "Removed",
 		},
+		{
+			Name:         "Orphaned OAuth2Application without existing User",
+			Counter:      auth_model.CountOrphanedOAuth2Applications,
+			Fixer:        auth_model.DeleteOrphanedOAuth2Applications,
+			FixedMessage: "Removed",
+		},
 	}
 
 	// TODO: function to recalc all counters
@@ -208,9 +215,6 @@ func checkDBConsistency(ctx context.Context, logger log.Logger, autofix bool) er
 		// find OAuth2Grant without existing user
 		genericOrphanCheck("Orphaned OAuth2Grant without existing User",
 			"oauth2_grant", "user", "oauth2_grant.user_id=`user`.id"),
-		// find OAuth2Application without existing user
-		genericOrphanCheck("Orphaned OAuth2Application without existing User",
-			"oauth2_application", "user", "oauth2_application.uid=`user`.id"),
 		// find OAuth2AuthorizationCode without existing OAuth2Grant
 		genericOrphanCheck("Orphaned OAuth2AuthorizationCode without existing OAuth2Grant",
 			"oauth2_authorization_code", "oauth2_grant", "oauth2_authorization_code.grant_id=oauth2_grant.id"),
