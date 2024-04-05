@@ -44,6 +44,7 @@ func garbageCollectLFSCheck(ctx context.Context, logger log.Logger, autofix bool
 		OlderThan: time.Now().Add(-24 * time.Hour * 7),
 		// We don't set the UpdatedLessRecentlyThan because we want to do a full GC
 	}); err != nil {
+		logger.Error("Couldn't garabage collect LFS objects: %v", err)
 		return err
 	}
 

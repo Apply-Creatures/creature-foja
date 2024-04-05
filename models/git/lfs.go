@@ -337,58 +337,47 @@ func GetRepoLFSSize(ctx context.Context, repoID int64) (int64, error) {
 func IterateRepositoryIDsWithLFSMetaObjects(ctx context.Context, f func(ctx context.Context, repoID, count int64) error) error {
 	batchSize := setting.Database.IterateBufferSize
 	sess := db.GetEngine(ctx)
-	id := int64(0)
+	var start int
 	type RepositoryCount struct {
 		RepositoryID int64
 		Count        int64
 	}
 	for {
 		counts := make([]*RepositoryCount, 0, batchSize)
-		sess.Select("repository_id, COUNT(id) AS count").
+		if err := sess.Select("repository_id, COUNT(id) AS count").
 			Table("lfs_meta_object").
-			Where("repository_id > ?", id).
 			GroupBy("repository_id").
-			OrderBy("repository_id ASC")
-
-		if err := sess.Limit(batchSize, 0).Find(&counts); err != nil {
+			OrderBy("repository_id ASC").Limit(batchSize, start).Find(&counts); err != nil {
 			return err
 		}
 		if len(counts) == 0 {
 			return nil
 		}
+		start += len(counts)
 
 		for _, count := range counts {
 			if err := f(ctx, count.RepositoryID, count.Count); err != nil {
 				return err
 			}
 		}
-		id = counts[len(counts)-1].RepositoryID
 	}
 }
 
 // IterateLFSMetaObjectsForRepoOptions provides options for IterateLFSMetaObjectsForRepo
 type IterateLFSMetaObjectsForRepoOptions struct {
-	OlderThan                 timeutil.TimeStamp
-	UpdatedLessRecentlyThan   timeutil.TimeStamp
-	OrderByUpdated            bool
-	LoopFunctionAlwaysUpdates bool
+	OlderThan               timeutil.TimeStamp
+	UpdatedLessRecentlyThan timeutil.TimeStamp
 }
 
 // IterateLFSMetaObjectsForRepo provides a iterator for LFSMetaObjects per Repo
-func IterateLFSMetaObjectsForRepo(ctx context.Context, repoID int64, f func(context.Context, *LFSMetaObject, int64) error, opts *IterateLFSMetaObjectsForRepoOptions) error {
-	var start int
+func IterateLFSMetaObjectsForRepo(ctx context.Context, repoID int64, f func(context.Context, *LFSMetaObject) error, opts *IterateLFSMetaObjectsForRepoOptions) error {
 	batchSize := setting.Database.IterateBufferSize
 	engine := db.GetEngine(ctx)
-	type CountLFSMetaObject struct {
-		Count         int64
-		LFSMetaObject `xorm:"extends"`
-	}
-
 	id := int64(0)
 
 	for {
-		beans := make([]*CountLFSMetaObject, 0, batchSize)
-		sess := engine.Table("lfs_meta_object").Select("`lfs_meta_object`.*, COUNT(`l1`.oid) AS `count`").
+		beans := make([]*LFSMetaObject, 0, batchSize)
+		sess := engine.Table("lfs_meta_object").Select("`lfs_meta_object`.*").
 			Join("INNER", "`lfs_meta_object` AS l1", "`lfs_meta_object`.oid = `l1`.oid").
 			Where("`lfs_meta_object`.repository_id = ?", repoID)
 		if !opts.OlderThan.IsZero() {
@@ -397,25 +386,19 @@ func IterateLFSMetaObjectsForRepo(ctx context.Context, repoID int64, f func(cont
 		if !opts.UpdatedLessRecentlyThan.IsZero() {
 			sess.And("`lfs_meta_object`.updated_unix < ?", opts.UpdatedLessRecentlyThan)
 		}
-		sess.GroupBy("`lfs_meta_object`.id")
-		if opts.OrderByUpdated {
-			sess.OrderBy("`lfs_meta_object`.updated_unix ASC")
-		} else {
-			sess.And("`lfs_meta_object`.id > ?", id)
-			sess.OrderBy("`lfs_meta_object`.id ASC")
-		}
-		if err := sess.Limit(batchSize, start).Find(&beans); err != nil {
+		sess.GroupBy("`lfs_meta_object`.id").
+			And("`lfs_meta_object`.id > ?", id).
+			OrderBy("`lfs_meta_object`.id ASC")
+
+		if err := sess.Limit(batchSize, 0).Find(&beans); err != nil {
 			return err
 		}
 		if len(beans) == 0 {
 			return nil
 		}
-		if !opts.LoopFunctionAlwaysUpdates {
-			start += len(beans)
-		}
 
 		for _, bean := range beans {
-			if err := f(ctx, &bean.LFSMetaObject, bean.Count); err != nil {
+			if err := f(ctx, bean); err != nil {
 				return err
 			}
 		}

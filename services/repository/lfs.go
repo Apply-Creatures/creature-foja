@@ -5,7 +5,6 @@ package repository
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -21,12 +20,10 @@ import (
 
 // GarbageCollectLFSMetaObjectsOptions provides options for GarbageCollectLFSMetaObjects function
 type GarbageCollectLFSMetaObjectsOptions struct {
-	LogDetail                func(format string, v ...any)
-	AutoFix                  bool
-	OlderThan                time.Time
-	UpdatedLessRecentlyThan  time.Time
-	NumberToCheckPerRepo     int64
-	ProportionToCheckPerRepo float64
+	LogDetail               func(format string, v ...any)
+	AutoFix                 bool
+	OlderThan               time.Time
+	UpdatedLessRecentlyThan time.Time
 }
 
 // GarbageCollectLFSMetaObjects garbage collects LFS objects for all repositories
@@ -49,9 +46,6 @@ func GarbageCollectLFSMetaObjects(ctx context.Context, opts GarbageCollectLFSMet
 			return err
 		}
 
-		if newMinimum := int64(float64(count) * opts.ProportionToCheckPerRepo); newMinimum > opts.NumberToCheckPerRepo && opts.NumberToCheckPerRepo != 0 {
-			opts.NumberToCheckPerRepo = newMinimum
-		}
 		return GarbageCollectLFSMetaObjectsForRepo(ctx, repo, opts)
 	})
 }
@@ -78,13 +72,9 @@ func GarbageCollectLFSMetaObjectsForRepo(ctx context.Context, repo *repo_model.R
 	defer gitRepo.Close()
 
 	store := lfs.NewContentStore()
-	errStop := errors.New("STOPERR")
 	objectFormat := git.ObjectFormatFromName(repo.ObjectFormatName)
 
-	err = git_model.IterateLFSMetaObjectsForRepo(ctx, repo.ID, func(ctx context.Context, metaObject *git_model.LFSMetaObject, count int64) error {
-		if opts.NumberToCheckPerRepo > 0 && total > opts.NumberToCheckPerRepo {
-			return errStop
-		}
+	err = git_model.IterateLFSMetaObjectsForRepo(ctx, repo.ID, func(ctx context.Context, metaObject *git_model.LFSMetaObject) error {
 		total++
 		pointerSha := git.ComputeBlobHash(objectFormat, []byte(metaObject.Pointer.StringContent()))
 
@@ -123,16 +113,10 @@ func GarbageCollectLFSMetaObjectsForRepo(ctx context.Context, repo *repo_model.R
 		//
 		// It is likely that a week is potentially excessive but it should definitely be enough that any
 		// unassociated LFS object is genuinely unassociated.
-		OlderThan:                 timeutil.TimeStamp(opts.OlderThan.Unix()),
-		UpdatedLessRecentlyThan:   timeutil.TimeStamp(opts.UpdatedLessRecentlyThan.Unix()),
-		OrderByUpdated:            true,
-		LoopFunctionAlwaysUpdates: true,
+		OlderThan:               timeutil.TimeStamp(opts.OlderThan.Unix()),
+		UpdatedLessRecentlyThan: timeutil.TimeStamp(opts.UpdatedLessRecentlyThan.Unix()),
 	})
-
-	if err == errStop {
-		opts.LogDetail("Processing stopped at %d total LFSMetaObjects in %-v", total, repo)
-		return nil
-	} else if err != nil {
+	if err != nil {
 		return err
 	}
 	return nil
