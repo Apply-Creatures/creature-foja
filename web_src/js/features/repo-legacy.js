@@ -477,8 +477,8 @@ async function onEditContent(event) {
       e.preventDefault();
       saveAndRefresh(dz);
     });
-    editContentZone.on('ce-quick-submit', () => {
-      editContentZone.find('.save.button').trigger('click');
+    editContentZone.addEventListener('ce-quick-submit', () => {
+      editContentZone.querySelector('.save.button').dispatchEvent(new Event('click'));
     });
   } else {
     comboMarkdownEditor = getComboMarkdownEditor(editContentZone.querySelector('.combo-markdown-editor'));
