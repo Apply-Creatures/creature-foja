@@ -157,10 +157,10 @@
   --color-error-text: #fef2f2;
   --color-success-border: #1f6e3c;
   --color-success-bg: #1d462c;
-  --color-success-text: #f0fdf4;
+  --color-success-text: #aef0c2;
   --color-warning-border: #a67a1d;
   --color-warning-bg: #644821;
-  --color-warning-text: #fefce8;
+  --color-warning-text: #fff388;
   --color-info-border: #2e50b0;
   --color-info-bg: #2a396b;
   --color-info-text: var(--steel-100);
@@ -307,4 +307,13 @@ i.grey.icon.icon.icon.icon {
 ::selection {
   background: var(--steel-100) !important;
   color: var(--color-white) !important;
+}
+strong.attention-important, svg.attention-important {
+  color: var(--color-violet-light);
+}
+strong.attention-note, svg.attention-note {
+  color: var(--color-blue-light);
+}
+strong.attention-caution, svg.attention-caution {
+  color: var(--color-red-light);
 }
