@@ -46,7 +46,7 @@ jobs:
       image: 'docker.io/node:20-bookworm'
     services:
       minio:
-        image: bitnami/minio:2024.2.26
+        image: bitnami/minio:2024.3.30
         options: >-
           --hostname gitea.minio
         env:
@@ -136,7 +136,7 @@ jobs:
       image: 'docker.io/node:20-bookworm'
     services:
       minio:
-        image: bitnami/minio:2024.2.26
+        image: bitnami/minio:2024.3.30
         env:
           MINIO_ROOT_USER: 123456
           MINIO_ROOT_PASSWORD: 12345678
