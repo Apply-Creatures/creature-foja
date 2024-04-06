@@ -224,6 +224,7 @@
   --color-card: var(--zinc-50);
   --color-markup-table-row: #ffffff06;
   --color-markup-code-block: var(--zinc-150);
+  --color-markup-code-inline: var(--zinc-200);
   --color-button: var(--zinc-150);
   --color-code-bg: var(--zinc-50);
   --color-shadow: #00000060;
