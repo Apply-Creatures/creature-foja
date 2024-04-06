@@ -74,6 +74,13 @@ func BuiltinApplications() map[string]*BuiltinOAuth2Application {
 	return m
 }
 
+func BuiltinApplicationsClientIDs() (clientIDs []string) {
+	for clientID := range BuiltinApplications() {
+		clientIDs = append(clientIDs, clientID)
+	}
+	return clientIDs
+}
+
 func Init(ctx context.Context) error {
 	builtinApps := BuiltinApplications()
 	var builtinAllClientIDs []string
@@ -636,4 +643,28 @@ func DeleteOAuth2RelictsByUserID(ctx context.Context, userID int64) error {
 	}
 
 	return nil
+}
+
+// CountOrphanedOAuth2Applications returns the amount of orphaned OAuth2 applications.
+func CountOrphanedOAuth2Applications(ctx context.Context) (int64, error) {
+	return db.GetEngine(ctx).
+		Table("`oauth2_application`").
+		Join("LEFT", "`user`", "`oauth2_application`.`uid` = `user`.`id`").
+		Where(builder.IsNull{"`user`.id"}).
+		Where(builder.NotIn("`oauth2_application`.`client_id`", BuiltinApplicationsClientIDs())).
+		Select("COUNT(`oauth2_application`.`id`)").
+		Count()
+}
+
+// DeleteOrphanedOAuth2Applications deletes orphaned OAuth2 applications.
+func DeleteOrphanedOAuth2Applications(ctx context.Context) (int64, error) {
+	subQuery := builder.Select("`oauth2_application`.id").
+		From("`oauth2_application`").
+		Join("LEFT", "`user`", "`oauth2_application`.`uid` = `user`.`id`").
+		Where(builder.IsNull{"`user`.id"}).
+		Where(builder.NotIn("`oauth2_application`.`client_id`", BuiltinApplicationsClientIDs()))
+
+	b := builder.Delete(builder.In("id", subQuery)).From("`oauth2_application`")
+	_, err := db.GetEngine(ctx).Exec(b)
+	return -1, err
 }
