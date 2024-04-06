@@ -358,6 +358,7 @@ func Action(ctx *context.Context) {
 		redirectViaJSON = true
 	case "unblock":
 		err = user_model.UnblockUser(ctx, ctx.Doer.ID, ctx.ContextUser.ID)
+		redirectViaJSON = true
 	}
 
 	if err != nil {
