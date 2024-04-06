@@ -106,7 +106,7 @@ func (t *HookTask) simpleMarshalJSON(v any) string {
 	return string(p)
 }
 
-// HookTasks returns a list of hook tasks by given conditions.
+// HookTasks returns a list of hook tasks by given conditions, order by ID desc.
 func HookTasks(ctx context.Context, hookID int64, page int) ([]*HookTask, error) {
 	tasks := make([]*HookTask, 0, setting.Webhook.PagingNum)
 	return tasks, db.GetEngine(ctx).
