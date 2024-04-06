@@ -14,6 +14,8 @@ import (
 	"code.gitea.io/gitea/models/db"
 	repo_model "code.gitea.io/gitea/models/repo"
 	unit_model "code.gitea.io/gitea/models/unit"
+	"code.gitea.io/gitea/models/unittest"
+	"code.gitea.io/gitea/modules/gitrepo"
 	repo_service "code.gitea.io/gitea/services/repository"
 	"code.gitea.io/gitea/tests"
 
@@ -179,6 +181,35 @@ func TestCompareWithPRsDisabled(t *testing.T) {
 
 			req := NewRequest(t, "GET", "/user1/repo1/compare/master...recent-push")
 			session.MakeRequest(t, req, http.StatusNotFound)
+		})
+	})
+}
+
+func TestCompareCrossRepo(t *testing.T) {
+	onGiteaRun(t, func(t *testing.T, u *url.URL) {
+		session := loginUser(t, "user1")
+		testRepoFork(t, session, "user2", "repo1", "user1", "repo1-copy")
+		testCreateBranch(t, session, "user1", "repo1-copy", "branch/master", "recent-push", http.StatusSeeOther)
+		testEditFile(t, session, "user1", "repo1-copy", "recent-push", "README.md", "Hello recently!\n")
+
+		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{OwnerName: "user1", Name: "repo1-copy"})
+
+		gitRepo, err := gitrepo.OpenRepository(db.DefaultContext, repo)
+		assert.NoError(t, err)
+		defer gitRepo.Close()
+
+		lastCommit, err := gitRepo.GetBranchCommitID("recent-push")
+		assert.NoError(t, err)
+		assert.NotEmpty(t, lastCommit)
+
+		t.Run("view file button links to correct file in fork", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequest(t, "GET", "/user2/repo1/compare/master...user1/repo1-copy:recent-push")
+			resp := session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+			htmlDoc.AssertElement(t, "a[href='/user1/repo1-copy/src/commit/"+lastCommit+"/README.md']", true)
+			htmlDoc.AssertElement(t, "a[href='/user1/repo1/src/commit/"+lastCommit+"/README.md']", false)
 		})
 	})
 }
