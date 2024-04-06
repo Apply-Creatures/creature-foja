@@ -95,6 +95,7 @@ type User struct {
 	Type        UserType
 	Location    string
 	Website     string
+	Pronouns    string
 	Rands       string `xorm:"VARCHAR(32)"`
 	Salt        string `xorm:"VARCHAR(32)"`
 	Language    string `xorm:"VARCHAR(5)"`

@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"code.gitea.io/gitea/models/avatars"
@@ -40,12 +41,16 @@ const (
 	tplSettingsRepositories base.TplName = "user/settings/repos"
 )
 
+// must be kept in sync with `web_src/js/features/user-settings.js`
+var recognisedPronouns = []string{"", "he/him", "she/her", "they/them", "it/its", "any pronouns"}
+
 // Profile render user's profile page
 func Profile(ctx *context.Context) {
 	ctx.Data["Title"] = ctx.Tr("settings.profile")
 	ctx.Data["PageIsSettingsProfile"] = true
 	ctx.Data["AllowedUserVisibilityModes"] = setting.Service.AllowedUserVisibilityModesSlice.ToVisibleTypeSlice()
 	ctx.Data["DisableGravatar"] = setting.Config().Picture.DisableGravatar.Value(ctx)
+	ctx.Data["PronounsAreCustom"] = !slices.Contains(recognisedPronouns, ctx.Doer.Pronouns)
 
 	ctx.HTML(http.StatusOK, tplSettingsProfile)
 }
@@ -56,6 +61,7 @@ func ProfilePost(ctx *context.Context) {
 	ctx.Data["PageIsSettingsProfile"] = true
 	ctx.Data["AllowedUserVisibilityModes"] = setting.Service.AllowedUserVisibilityModesSlice.ToVisibleTypeSlice()
 	ctx.Data["DisableGravatar"] = setting.Config().Picture.DisableGravatar.Value(ctx)
+	ctx.Data["PronounsAreCustom"] = !slices.Contains(recognisedPronouns, ctx.Doer.Pronouns)
 
 	if ctx.HasError() {
 		ctx.HTML(http.StatusOK, tplSettingsProfile)
@@ -90,6 +96,7 @@ func ProfilePost(ctx *context.Context) {
 		FullName:            optional.Some(form.FullName),
 		KeepEmailPrivate:    optional.Some(form.KeepEmailPrivate),
 		Description:         optional.Some(form.Description),
+		Pronouns:            optional.Some(form.Pronouns),
 		Website:             optional.Some(form.Website),
 		Location:            optional.Some(form.Location),
 		Visibility:          optional.Some(form.Visibility),

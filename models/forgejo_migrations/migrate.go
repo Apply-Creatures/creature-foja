@@ -56,6 +56,8 @@ var migrations = []*Migration{
 	NewMigration("Modify the `release`.`note` content to remove SSH signatures", forgejo_v1_22.RemoveSSHSignaturesFromReleaseNotes),
 	// v8 -> v9
 	NewMigration("Add the `apply_to_admins` column to the `protected_branch` table", forgejo_v1_22.AddApplyToAdminsSetting),
+	// v9 -> v10
+	NewMigration("Add pronouns to user", forgejo_v1_22.AddPronounsToUser),
 }
 
 // GetCurrentDBVersion returns the current Forgejo database version.
