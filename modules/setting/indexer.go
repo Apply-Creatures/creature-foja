@@ -30,8 +30,8 @@ var Indexer = struct {
 	RepoConnStr          string
 	RepoIndexerName      string
 	MaxIndexerFileSize   int64
-	IncludePatterns      []glob.Glob
-	ExcludePatterns      []glob.Glob
+	IncludePatterns      []Glob
+	ExcludePatterns      []Glob
 	ExcludeVendored      bool
 }{
 	IssueType:        "bleve",
@@ -48,6 +48,19 @@ var Indexer = struct {
 	RepoIndexerName:      "gitea_codes",
 	MaxIndexerFileSize:   1024 * 1024,
 	ExcludeVendored:      true,
+}
+
+type Glob struct {
+	glob    glob.Glob
+	pattern string
+}
+
+func (g *Glob) Match(s string) bool {
+	return g.glob.Match(s)
+}
+
+func (g *Glob) Pattern() string {
+	return g.pattern
 }
 
 func loadIndexerFrom(rootCfg ConfigProvider) {
@@ -90,15 +103,15 @@ func loadIndexerFrom(rootCfg ConfigProvider) {
 }
 
 // IndexerGlobFromString parses a comma separated list of patterns and returns a glob.Glob slice suited for repo indexing
-func IndexerGlobFromString(globstr string) []glob.Glob {
-	extarr := make([]glob.Glob, 0, 10)
+func IndexerGlobFromString(globstr string) []Glob {
+	extarr := make([]Glob, 0, 10)
 	for _, expr := range strings.Split(strings.ToLower(globstr), ",") {
 		expr = strings.TrimSpace(expr)
 		if expr != "" {
 			if g, err := glob.Compile(expr, '.', '/'); err != nil {
 				log.Info("Invalid glob expression '%s' (skipped): %v", expr, err)
 			} else {
-				extarr = append(extarr, g)
+				extarr = append(extarr, Glob{glob: g, pattern: expr})
 			}
 		}
 	}

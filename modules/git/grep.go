@@ -13,6 +13,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	"code.gitea.io/gitea/modules/setting"
 )
 
 type GrepResult struct {
@@ -58,7 +60,15 @@ func GrepSearch(ctx context.Context, repo *Repository, search string, opts GrepO
 	} else {
 		cmd.AddOptionValues("-e", strings.TrimLeft(search, "-"))
 	}
-	cmd.AddDynamicArguments(cmp.Or(opts.RefName, "HEAD"))
+	// pathspec
+	files := make([]string, 0, len(setting.Indexer.IncludePatterns)+len(setting.Indexer.ExcludePatterns))
+	for _, expr := range setting.Indexer.IncludePatterns {
+		files = append(files, expr.Pattern())
+	}
+	for _, expr := range setting.Indexer.ExcludePatterns {
+		files = append(files, ":^"+expr.Pattern())
+	}
+	cmd.AddDynamicArguments(cmp.Or(opts.RefName, "HEAD")).AddDashesAndList(files...)
 	opts.MaxResultLimit = cmp.Or(opts.MaxResultLimit, 50)
 	stderr := bytes.Buffer{}
 	err = cmd.Run(&RunOpts{
