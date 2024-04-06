@@ -24,6 +24,24 @@ import (
 	"github.com/urfave/cli/v2"
 )
 
+// Capture what's being written into a standard file descriptor.
+func captureOutput(t *testing.T, stdFD *os.File) (finish func() (output string)) {
+	t.Helper()
+
+	r, w, err := os.Pipe()
+	require.NoError(t, err)
+	resetStdout := test.MockVariableValue(stdFD, *w)
+
+	return func() (output string) {
+		w.Close()
+		resetStdout()
+
+		out, err := io.ReadAll(r)
+		require.NoError(t, err)
+		return string(out)
+	}
+}
+
 func TestPktLine(t *testing.T) {
 	ctx := context.Background()
 
@@ -121,27 +139,9 @@ func TestDelayWriter(t *testing.T) {
 	app := cli.NewApp()
 	app.Commands = []*cli.Command{subcmdHookPreReceive}
 
-	// Capture what's being written into stdout
-	captureStdout := func(t *testing.T) (finish func() (output string)) {
-		t.Helper()
-
-		r, w, err := os.Pipe()
-		require.NoError(t, err)
-		resetStdout := test.MockVariableValue(os.Stdout, *w)
-
-		return func() (output string) {
-			w.Close()
-			resetStdout()
-
-			out, err := io.ReadAll(r)
-			require.NoError(t, err)
-			return string(out)
-		}
-	}
-
 	t.Run("Should delay", func(t *testing.T) {
 		defer test.MockVariableValue(&setting.Git.VerbosePushDelay, time.Millisecond*500)()
-		finish := captureStdout(t)
+		finish := captureOutput(t, os.Stdout)
 
 		err = app.Run([]string{"./forgejo", "pre-receive"})
 		require.NoError(t, err)
@@ -153,7 +153,7 @@ func TestDelayWriter(t *testing.T) {
 
 	t.Run("Shouldn't delay", func(t *testing.T) {
 		defer test.MockVariableValue(&setting.Git.VerbosePushDelay, time.Second*5)()
-		finish := captureStdout(t)
+		finish := captureOutput(t, os.Stdout)
 
 		err = app.Run([]string{"./forgejo", "pre-receive"})
 		require.NoError(t, err)
@@ -176,4 +176,36 @@ func TestPushOptions(t *testing.T) {
 		"option":        "value",
 		"option-double": "another=value",
 	}, pushOptions())
+}
+
+func TestRunHookUpdate(t *testing.T) {
+	app := cli.NewApp()
+	app.Commands = []*cli.Command{subcmdHookUpdate}
+
+	t.Run("Removal of internal reference", func(t *testing.T) {
+		defer test.MockVariableValue(&cli.OsExiter, func(code int) {})()
+		defer test.MockVariableValue(&setting.IsProd, false)()
+		finish := captureOutput(t, os.Stderr)
+
+		err := app.Run([]string{"./forgejo", "update", "refs/pull/1/head", "0a51ae26bc73c47e2f754560c40904cf14ed51a9", "0000000000000000000000000000000000000000"})
+		out := finish()
+		assert.Error(t, err)
+
+		assert.Contains(t, out, "The deletion of refs/pull/1/head is skipped as it's an internal reference.")
+	})
+
+	t.Run("Update of internal reference", func(t *testing.T) {
+		err := app.Run([]string{"./forgejo", "update", "refs/pull/1/head", "0a51ae26bc73c47e2f754560c40904cf14ed51a9", "0000000000000000000000000000000000000001"})
+		assert.NoError(t, err)
+	})
+
+	t.Run("Removal of branch", func(t *testing.T) {
+		err := app.Run([]string{"./forgejo", "update", "refs/head/main", "0a51ae26bc73c47e2f754560c40904cf14ed51a9", "0000000000000000000000000000000000000000"})
+		assert.NoError(t, err)
+	})
+
+	t.Run("Not enough arguments", func(t *testing.T) {
+		err := app.Run([]string{"./forgejo", "update"})
+		assert.NoError(t, err)
+	})
 }

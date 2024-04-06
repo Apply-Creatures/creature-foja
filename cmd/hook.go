@@ -302,8 +302,12 @@ func runHookUpdate(c *cli.Context) error {
 	ctx, cancel := installSignals()
 	defer cancel()
 
-	// The last three arguments given to the hook are in order: reference name, old commit ID and new commit ID.
-	args := os.Args[len(os.Args)-3:]
+	if c.NArg() != 3 {
+		return nil
+	}
+	args := c.Args().Slice()
+
+	// The arguments given to the hook are in order: reference name, old commit ID and new commit ID.
 	refFullName := git.RefName(args[0])
 	newCommitID := args[2]
 
