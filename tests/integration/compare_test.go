@@ -14,6 +14,7 @@ import (
 	"code.gitea.io/gitea/models/db"
 	repo_model "code.gitea.io/gitea/models/repo"
 	unit_model "code.gitea.io/gitea/models/unit"
+	"code.gitea.io/gitea/models/unittest"
 	"code.gitea.io/gitea/modules/gitrepo"
 	repo_service "code.gitea.io/gitea/services/repository"
 	"code.gitea.io/gitea/tests"
@@ -191,11 +192,11 @@ func TestCompareCrossRepo(t *testing.T) {
 		testCreateBranch(t, session, "user1", "repo1-copy", "branch/master", "recent-push", http.StatusSeeOther)
 		testEditFile(t, session, "user1", "repo1-copy", "recent-push", "README.md", "Hello recently!\n")
 
-		repo, err := repo_model.GetRepositoryByOwnerAndName(db.DefaultContext, "user1", "repo1-copy")
-		assert.NoError(t, err)
+		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{OwnerName: "user1", Name: "repo1-copy"})
 
 		gitRepo, err := gitrepo.OpenRepository(db.DefaultContext, repo)
 		assert.NoError(t, err)
+		defer gitRepo.Close()
 
 		lastCommit, err := gitRepo.GetBranchCommitID("recent-push")
 		assert.NoError(t, err)
