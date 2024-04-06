@@ -95,7 +95,7 @@ func ProfilePost(ctx *context.Context) {
 	opts := &user_service.UpdateOptions{
 		FullName:            optional.Some(form.FullName),
 		KeepEmailPrivate:    optional.Some(form.KeepEmailPrivate),
-		Description:         optional.Some(form.Description),
+		Description:         optional.Some(form.Biography),
 		Pronouns:            optional.Some(form.Pronouns),
 		Website:             optional.Some(form.Website),
 		Location:            optional.Some(form.Location),
