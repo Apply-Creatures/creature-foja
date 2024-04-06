@@ -1,0 +1,101 @@
+// Copyright 2024 The Forgejo Authors. All rights reserved.
+// SPDX-License-Identifier: MIT
+
+package git
+
+import (
+	"context"
+	"path/filepath"
+	"testing"
+
+	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/unittest"
+	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/test"
+
+	"github.com/stretchr/testify/assert"
+)
+
+func TestIterateRepositoryIDsWithLFSMetaObjects(t *testing.T) {
+	defer unittest.OverrideFixtures(
+		unittest.FixturesOptions{
+			Dir:  filepath.Join(setting.AppWorkPath, "models/fixtures/"),
+			Base: setting.AppWorkPath,
+			Dirs: []string{"models/git/TestIterateRepositoryIDsWithLFSMetaObjects/"},
+		},
+	)()
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	type repocount struct {
+		repoid int64
+		count  int64
+	}
+	expected := []repocount{{1, 1}, {54, 4}}
+
+	t.Run("Normal batch size", func(t *testing.T) {
+		defer test.MockVariableValue(&setting.Database.IterateBufferSize, 20)()
+		cases := []repocount{}
+
+		err := IterateRepositoryIDsWithLFSMetaObjects(db.DefaultContext, func(ctx context.Context, repoID, count int64) error {
+			cases = append(cases, repocount{repoID, count})
+			return nil
+		})
+		assert.NoError(t, err)
+		assert.EqualValues(t, expected, cases)
+	})
+
+	t.Run("Low batch size", func(t *testing.T) {
+		defer test.MockVariableValue(&setting.Database.IterateBufferSize, 1)()
+		cases := []repocount{}
+
+		err := IterateRepositoryIDsWithLFSMetaObjects(db.DefaultContext, func(ctx context.Context, repoID, count int64) error {
+			cases = append(cases, repocount{repoID, count})
+			return nil
+		})
+		assert.NoError(t, err)
+		assert.EqualValues(t, expected, cases)
+	})
+}
+
+func TestIterateLFSMetaObjectsForRepo(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	expectedIDs := []int64{1, 2, 3, 4}
+
+	t.Run("Normal batch size", func(t *testing.T) {
+		defer test.MockVariableValue(&setting.Database.IterateBufferSize, 20)()
+		actualIDs := []int64{}
+
+		err := IterateLFSMetaObjectsForRepo(db.DefaultContext, 54, func(ctx context.Context, lo *LFSMetaObject) error {
+			actualIDs = append(actualIDs, lo.ID)
+			return nil
+		}, &IterateLFSMetaObjectsForRepoOptions{})
+		assert.NoError(t, err)
+		assert.EqualValues(t, expectedIDs, actualIDs)
+	})
+
+	t.Run("Low batch size", func(t *testing.T) {
+		defer test.MockVariableValue(&setting.Database.IterateBufferSize, 1)()
+		actualIDs := []int64{}
+
+		err := IterateLFSMetaObjectsForRepo(db.DefaultContext, 54, func(ctx context.Context, lo *LFSMetaObject) error {
+			actualIDs = append(actualIDs, lo.ID)
+			return nil
+		}, &IterateLFSMetaObjectsForRepoOptions{})
+		assert.NoError(t, err)
+		assert.EqualValues(t, expectedIDs, actualIDs)
+
+		t.Run("Batch handles updates", func(t *testing.T) {
+			actualIDs := []int64{}
+
+			err := IterateLFSMetaObjectsForRepo(db.DefaultContext, 54, func(ctx context.Context, lo *LFSMetaObject) error {
+				actualIDs = append(actualIDs, lo.ID)
+				_, err := db.DeleteByID[LFSMetaObject](ctx, lo.ID)
+				assert.NoError(t, err)
+				return nil
+			}, &IterateLFSMetaObjectsForRepoOptions{})
+			assert.NoError(t, err)
+			assert.EqualValues(t, expectedIDs, actualIDs)
+		})
+	})
+}
