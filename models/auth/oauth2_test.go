@@ -5,6 +5,7 @@ package auth_test
 
 import (
 	"path/filepath"
+	"slices"
 	"testing"
 
 	auth_model "code.gitea.io/gitea/models/auth"
@@ -269,7 +270,9 @@ func TestOAuth2AuthorizationCode_TableName(t *testing.T) {
 }
 
 func TestBuiltinApplicationsClientIDs(t *testing.T) {
-	assert.EqualValues(t, []string{"a4792ccc-144e-407e-86c9-5e7d8d9c3269", "e90ee53c-94e2-48ac-9358-a874fb9e0662", "d57cb8c4-630c-4168-8324-ec79935e18d4"}, auth_model.BuiltinApplicationsClientIDs())
+	clientIDs := auth_model.BuiltinApplicationsClientIDs()
+	slices.Sort(clientIDs)
+	assert.EqualValues(t, []string{"a4792ccc-144e-407e-86c9-5e7d8d9c3269", "d57cb8c4-630c-4168-8324-ec79935e18d4", "e90ee53c-94e2-48ac-9358-a874fb9e0662"}, clientIDs)
 }
 
 func TestOrphanedOAuth2Applications(t *testing.T) {
