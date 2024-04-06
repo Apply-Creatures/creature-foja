@@ -395,49 +395,28 @@ func DownloadPackageFile(ctx *context.Context) {
 	packageVersion := ctx.Params("version")
 	filename := ctx.Params("filename")
 
-	if filename == fmt.Sprintf("%s.nuspec", packageName) {
-		pv, err := packages_model.GetVersionByNameAndVersion(ctx, ctx.Package.Owner.ID, packages_model.TypeNuGet, packageName, packageVersion)
-		if err != nil {
+	s, u, pf, err := packages_service.GetFileStreamByPackageNameAndVersion(
+		ctx,
+		&packages_service.PackageInfo{
+			Owner:       ctx.Package.Owner,
+			PackageType: packages_model.TypeNuGet,
+			Name:        packageName,
+			Version:     packageVersion,
+		},
+		&packages_service.PackageFileInfo{
+			Filename: filename,
+		},
+	)
+	if err != nil {
+		if err == packages_model.ErrPackageNotExist || err == packages_model.ErrPackageFileNotExist {
 			apiError(ctx, http.StatusNotFound, err)
 			return
 		}
-
-		pd, err := packages_model.GetPackageDescriptor(ctx, pv)
-		if err != nil {
-			apiError(ctx, http.StatusInternalServerError, err)
-			return
-		}
-		pkg := &nuget_module.Package{
-			ID:       pd.Package.Name,
-			Version:  packageVersion,
-			Metadata: pd.Metadata.(*nuget_module.Metadata),
-		}
-
-		xmlResponse(ctx, http.StatusOK, nuget_module.GenerateNuspec(pkg))
-	} else {
-		s, u, pf, err := packages_service.GetFileStreamByPackageNameAndVersion(
-			ctx,
-			&packages_service.PackageInfo{
-				Owner:       ctx.Package.Owner,
-				PackageType: packages_model.TypeNuGet,
-				Name:        packageName,
-				Version:     packageVersion,
-			},
-			&packages_service.PackageFileInfo{
-				Filename: filename,
-			},
-		)
-		if err != nil {
-			if err == packages_model.ErrPackageNotExist || err == packages_model.ErrPackageFileNotExist {
-				apiError(ctx, http.StatusNotFound, err)
-				return
-			}
-			apiError(ctx, http.StatusInternalServerError, err)
-			return
-		}
-
-		helper.ServePackageFile(ctx, s, u, pf)
+		apiError(ctx, http.StatusInternalServerError, err)
+		return
 	}
+
+	helper.ServePackageFile(ctx, s, u, pf)
 }
 
 // UploadPackage creates a new package with the metadata contained in the uploaded nupgk file
@@ -453,7 +432,7 @@ func UploadPackage(ctx *context.Context) {
 		return
 	}
 
-	_, _, err := packages_service.CreatePackageAndAddFile(
+	pv, _, err := packages_service.CreatePackageAndAddFile(
 		ctx,
 		&packages_service.PackageCreationInfo{
 			PackageInfo: packages_service.PackageInfo{
@@ -479,6 +458,33 @@ func UploadPackage(ctx *context.Context) {
 		switch err {
 		case packages_model.ErrDuplicatePackageVersion:
 			apiError(ctx, http.StatusConflict, err)
+		case packages_service.ErrQuotaTotalCount, packages_service.ErrQuotaTypeSize, packages_service.ErrQuotaTotalSize:
+			apiError(ctx, http.StatusForbidden, err)
+		default:
+			apiError(ctx, http.StatusInternalServerError, err)
+		}
+		return
+	}
+
+	nuspecBuf, err := packages_module.CreateHashedBufferFromReaderWithSize(np.NuspecContent, np.NuspecContent.Len())
+	if err != nil {
+		apiError(ctx, http.StatusInternalServerError, err)
+		return
+	}
+	defer nuspecBuf.Close()
+
+	_, err = packages_service.AddFileToPackageVersionInternal(
+		ctx,
+		pv,
+		&packages_service.PackageFileCreationInfo{
+			PackageFileInfo: packages_service.PackageFileInfo{
+				Filename: strings.ToLower(fmt.Sprintf("%s.nuspec", np.ID)),
+			},
+			Data: nuspecBuf,
+		},
+	)
+	if err != nil {
+		switch err {
 		case packages_service.ErrQuotaTotalCount, packages_service.ErrQuotaTypeSize, packages_service.ErrQuotaTotalSize:
 			apiError(ctx, http.StatusForbidden, err)
 		default:
