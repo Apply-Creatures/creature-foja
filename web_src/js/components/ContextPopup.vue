@@ -1,7 +1,6 @@
 <script>
 import {SvgIcon} from '../svg.js';
-import {useLightTextOnBackground} from '../utils/color.js';
-import tinycolor from 'tinycolor2';
+import {contrastColor} from '../utils/color.js';
 import {GET} from '../modules/fetch.js';
 import {emojiHTML} from '../features/emoji.js';
 import {htmlEscape} from 'escape-goat';
@@ -61,20 +60,13 @@ export default {
     },
 
     labels() {
-      return this.issue.labels.map((label) => {
-        let textColor;
-        const {r, g, b} = tinycolor(label.color).toRgb();
-        if (useLightTextOnBackground(r, g, b)) {
-          textColor = '#eeeeee';
-        } else {
-          textColor = '#111111';
-        }
-        label.name = htmlEscape(label.name);
-        label.name = label.name.replaceAll(/:[-+\w]+:/g, (emoji) => {
+      return this.issue.labels.map((label) => ({
+        name: htmlEscape(label.name).replaceAll(/:[-+\w]+:/g, (emoji) => {
           return emojiHTML(emoji.substring(1, emoji.length - 1));
-        });
-        return {name: label.name, color: `#${label.color}`, textColor};
-      });
+        }),
+        color: `#${label.color}`,
+        textColor: contrastColor(`#${label.color}`),
+      }));
     },
   },
   mounted() {
@@ -114,7 +106,7 @@ export default {
       <p><small>{{ issue.repository.full_name }} on {{ createdAt }}</small></p>
       <p><svg-icon :name="icon" :class="['text', color]"/> <strong>{{ issue.title }}</strong> #{{ issue.number }}</p>
       <p>{{ body }}</p>
-      <div>
+      <div class="labels-list">
         <!-- eslint-disable-next-line vue/no-v-html -->
         <div v-for="label in labels" :key="label.name" class="ui label" :style="{ color: label.textColor, backgroundColor: label.color }" v-html="label.name"/>
       </div>
