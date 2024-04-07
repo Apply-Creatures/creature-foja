@@ -205,7 +205,8 @@
   --color-menu: var(--steel-700);
   --color-card: var(--steel-700);
   --color-markup-table-row: #ffffff06;
-  --color-markup-code-block: var(--steel-850);
+  --color-markup-code-block: var(--steel-800);
+  --color-markup-code-inline: var(--steel-850);
   --color-button: var(--steel-600);
   --color-code-bg: var(--steel-750);
   --color-shadow: #00000060;
