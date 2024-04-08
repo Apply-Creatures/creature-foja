@@ -377,9 +377,7 @@ func (comments CommentList) loadDependentIssues(ctx context.Context) error {
 func (comments CommentList) getAttachmentCommentIDs() []int64 {
 	ids := make(container.Set[int64], len(comments))
 	for _, comment := range comments {
-		if comment.Type == CommentTypeComment ||
-			comment.Type == CommentTypeReview ||
-			comment.Type == CommentTypeCode {
+		if comment.Type.HasAttachmentSupport() {
 			ids.Add(comment.ID)
 		}
 	}
