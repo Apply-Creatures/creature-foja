@@ -2,12 +2,12 @@
 <form class="ui form" action="{{.BaseLink}}/{{or .Webhook.ID "sourcehut_builds/new"}}" method="post">
 	{{.CsrfTokenHtml}}
 	<div class="required field {{if .Err_PayloadURL}}error{{end}}">
-		<label for="payload_url">{{ctx.Locale.Tr "repo.settings.sourcehut_builds.graphql_url"}}</label>
-		<input id="payload_url" name="payload_url" type="url" value="{{.Webhook.URL}}" autofocus required>
+		<label for="payload_url">{{ctx.Locale.Tr "repo.settings.graphql_url"}}</label>
+		<input id="payload_url" name="payload_url" type="url" value="{{or .Webhook.URL "https://builds.sr.ht/query"}}" autofocus required>
 	</div>
 	<div class="required field {{if .Err_ManifestPath}}error{{end}}">
 		<label for="manifest_path">{{ctx.Locale.Tr "repo.settings.sourcehut_builds.manifest_path"}}</label>
-		<input id="manifest_path" name="manifest_path" type="text" value="{{.HookMetadata.ManifestPath}}" required>
+		<input id="manifest_path" name="manifest_path" type="text" value="{{or .HookMetadata.ManifestPath ".build.yml"}}" required>
 	</div>
 	<div class="field">
 		<label>{{ctx.Locale.Tr "repo.settings.sourcehut_builds.visibility"}}</label>
