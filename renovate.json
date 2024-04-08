@@ -25,6 +25,11 @@
       "dependencyDashboardApproval": true
     },
     {
+      "description": "Require dashboard approval for some deps",
+      "matchDepNames": ["github.com/go-ap/activitypub"],
+      "dependencyDashboardApproval": true
+    },
+    {
       "description": "Group golang packages",
       "matchDepNames": ["go", "golang", "docker.io/golang", "docker.io/library/golang"],
       "groupName": "golang packages"
