@@ -4,7 +4,9 @@
     "config:best-practices",
     ":approveMajorUpdates",
     "group:postcss",
-    "group:linters"
+    "group:linters",
+    "schedule:daily",
+    "schedule:automergeDaily"
   ],
   "ignorePresets": [
     ":semanticPrefixFixDepsChoreOthers",
@@ -13,7 +15,6 @@
   ],
   "semanticCommits": "disabled",
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths", "npmDedupe"],
-  "platformAutomerge": false,
   "prConcurrentLimit": 5,
   "packageRules": [
     {
@@ -40,10 +41,9 @@
       "automerge": true
     },
     {
-      "description": "Update renovate only daily with higher prio to come through rate limit",
+      "description": "Update renovate with higher prio to come through rate limit",
       "matchDatasources": ["docker"],
       "matchDepNames": ["ghcr.io/visualon/renovate"],
-      "extends": ["schedule:daily"],
       "prPriority": 10
     },
     {
