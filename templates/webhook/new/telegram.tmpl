@@ -13,5 +13,5 @@
 		<label for="thread_id">{{ctx.Locale.Tr "repo.settings.thread_id"}}</label>
 		<input id="thread_id" name="thread_id" type="text" value="{{.HookMetadata.ThreadID}}">
 	</div>
-	{{template "repo/settings/webhook/settings" .}}
+	{{template "webhook/shared-settings" .}}
 </form>
