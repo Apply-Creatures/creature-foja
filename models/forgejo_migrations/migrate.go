@@ -58,6 +58,8 @@ var migrations = []*Migration{
 	NewMigration("Add the `apply_to_admins` column to the `protected_branch` table", forgejo_v1_22.AddApplyToAdminsSetting),
 	// v9 -> v10
 	NewMigration("Add pronouns to user", forgejo_v1_22.AddPronounsToUser),
+	// v11 -> v12
+	NewMigration("Add repo_archive_download_count table", forgejo_v1_22.AddRepoArchiveDownloadCount),
 }
 
 // GetCurrentDBVersion returns the current Forgejo database version.

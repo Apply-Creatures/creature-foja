@@ -60,6 +60,12 @@ func ListTags(ctx *context.APIContext) {
 
 	apiTags := make([]*api.Tag, len(tags))
 	for i := range tags {
+		tags[i].ArchiveDownloadCount, err = repo_model.GetArchiveDownloadCountForTagName(ctx, ctx.Repo.Repository.ID, tags[i].Name)
+		if err != nil {
+			ctx.Error(http.StatusInternalServerError, "GetTagArchiveDownloadCountForName", err)
+			return
+		}
+
 		apiTags[i] = convert.ToTag(ctx.Repo.Repository, tags[i])
 	}
 
@@ -111,6 +117,13 @@ func GetAnnotatedTag(ctx *context.APIContext) {
 		if err != nil {
 			ctx.Error(http.StatusBadRequest, "GetAnnotatedTag", err)
 		}
+
+		tag.ArchiveDownloadCount, err = repo_model.GetArchiveDownloadCountForTagName(ctx, ctx.Repo.Repository.ID, tag.Name)
+		if err != nil {
+			ctx.Error(http.StatusInternalServerError, "GetTagArchiveDownloadCountForName", err)
+			return
+		}
+
 		ctx.JSON(http.StatusOK, convert.ToAnnotatedTag(ctx, ctx.Repo.Repository, tag, commit))
 	}
 }
@@ -150,6 +163,13 @@ func GetTag(ctx *context.APIContext) {
 		ctx.NotFound(tagName)
 		return
 	}
+
+	tag.ArchiveDownloadCount, err = repo_model.GetArchiveDownloadCountForTagName(ctx, ctx.Repo.Repository.ID, tag.Name)
+	if err != nil {
+		ctx.Error(http.StatusInternalServerError, "GetTagArchiveDownloadCountForName", err)
+		return
+	}
+
 	ctx.JSON(http.StatusOK, convert.ToTag(ctx.Repo.Repository, tag))
 }
 
@@ -218,6 +238,13 @@ func CreateTag(ctx *context.APIContext) {
 		ctx.InternalServerError(err)
 		return
 	}
+
+	tag.ArchiveDownloadCount, err = repo_model.GetArchiveDownloadCountForTagName(ctx, ctx.Repo.Repository.ID, tag.Name)
+	if err != nil {
+		ctx.Error(http.StatusInternalServerError, "GetTagArchiveDownloadCountForName", err)
+		return
+	}
+
 	ctx.JSON(http.StatusCreated, convert.ToTag(ctx.Repo.Repository, tag))
 }
 
