@@ -328,14 +328,14 @@ func issues(ctx *context.Context, milestoneID, projectID int64, isPullOption opt
 		return
 	}
 
-	// Get posters.
-	for i := range issues {
-		// Check read status
-		if !ctx.IsSigned {
-			issues[i].IsRead = true
-		} else if err = issues[i].GetIsRead(ctx, ctx.Doer.ID); err != nil {
-			ctx.ServerError("GetIsRead", err)
+	if ctx.IsSigned {
+		if err := issues.LoadIsRead(ctx, ctx.Doer.ID); err != nil {
+			ctx.ServerError("LoadIsRead", err)
 			return
+		}
+	} else {
+		for i := range issues {
+			issues[i].IsRead = true
 		}
 	}
 
@@ -1602,20 +1602,20 @@ func ViewIssue(ctx *context.Context) {
 
 	// Render comments and fetch participants.
 	participants[0] = issue.Poster
+
+	if err := issue.Comments.LoadAttachmentsByIssue(ctx); err != nil {
+		ctx.ServerError("LoadAttachmentsByIssue", err)
+		return
+	}
+	if err := issue.Comments.LoadPosters(ctx); err != nil {
+		ctx.ServerError("LoadPosters", err)
+		return
+	}
+
 	for _, comment = range issue.Comments {
 		comment.Issue = issue
 
-		if err := comment.LoadPoster(ctx); err != nil {
-			ctx.ServerError("LoadPoster", err)
-			return
-		}
-
 		if comment.Type == issues_model.CommentTypeComment || comment.Type == issues_model.CommentTypeReview {
-			if err := comment.LoadAttachments(ctx); err != nil {
-				ctx.ServerError("LoadAttachments", err)
-				return
-			}
-
 			comment.RenderedContent, err = markdown.RenderString(&markup.RenderContext{
 				Links: markup.Links{
 					Base: ctx.Repo.RepoLink,
@@ -1663,7 +1663,6 @@ func ViewIssue(ctx *context.Context) {
 				comment.Milestone = ghostMilestone
 			}
 		} else if comment.Type == issues_model.CommentTypeProject {
-
 			if err = comment.LoadProject(ctx); err != nil {
 				ctx.ServerError("LoadProject", err)
 				return
@@ -1729,10 +1728,6 @@ func ViewIssue(ctx *context.Context) {
 			for _, codeComments := range comment.Review.CodeComments {
 				for _, lineComments := range codeComments {
 					for _, c := range lineComments {
-						if err := c.LoadAttachments(ctx); err != nil {
-							ctx.ServerError("LoadAttachments", err)
-							return
-						}
 						// Check tag.
 						role, ok = marked[c.PosterID]
 						if ok {
