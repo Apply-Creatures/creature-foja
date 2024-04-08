@@ -72,4 +72,9 @@ func TestIssueList_LoadAttributes(t *testing.T) {
 			assert.Nil(t, issue.Project)
 		}
 	}
+
+	assert.NoError(t, issueList.LoadIsRead(db.DefaultContext, 1))
+	for _, issue := range issueList {
+		assert.Equal(t, issue.ID == 1, issue.IsRead, "unexpected is_read value for issue[%d]", issue.ID)
+	}
 }
