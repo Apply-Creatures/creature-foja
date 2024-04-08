@@ -3,6 +3,7 @@
   "extends": [
     "config:best-practices",
     ":approveMajorUpdates",
+    ":maintainLockFilesWeekly",
     "group:postcss",
     "group:linters",
     "schedule:daily",
