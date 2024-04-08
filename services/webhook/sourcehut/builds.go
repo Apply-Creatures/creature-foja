@@ -49,6 +49,7 @@ type buildsForm struct {
 	ManifestPath string `binding:"Required"`
 	Visibility   string `binding:"Required;In(PUBLIC,UNLISTED,PRIVATE)"`
 	Secrets      bool
+	AccessToken  string `binding:"Required"`
 }
 
 var _ binding.Validator = &buildsForm{}
@@ -63,13 +64,7 @@ func (f *buildsForm) Validate(req *http.Request, errs binding.Errors) binding.Er
 			Message:        ctx.Locale.TrString("repo.settings.add_webhook.invalid_path"),
 		})
 	}
-	if !strings.HasPrefix(f.AuthorizationHeader, "Bearer ") {
-		errs = append(errs, binding.Error{
-			FieldNames:     []string{"AuthorizationHeader"},
-			Classification: "",
-			Message:        ctx.Locale.TrString("form.required_prefix", "Bearer "),
-		})
-	}
+	f.AuthorizationHeader = "Bearer " + strings.TrimSpace(f.AccessToken)
 	return errs
 }
 

@@ -361,6 +361,15 @@ func (w Webhook) HeaderAuthorization() (string, error) {
 	return secret.DecryptSecret(setting.SecretKey, w.HeaderAuthorizationEncrypted)
 }
 
+// HeaderAuthorizationTrimPrefix returns the decrypted Authorization with a specified prefix trimmed.
+func (w Webhook) HeaderAuthorizationTrimPrefix(prefix string) (string, error) {
+	s, err := w.HeaderAuthorization()
+	if err != nil {
+		return "", err
+	}
+	return strings.TrimPrefix(s, prefix), nil
+}
+
 // SetHeaderAuthorization encrypts and sets the Authorization header.
 func (w *Webhook) SetHeaderAuthorization(cleartext string) error {
 	if cleartext == "" {

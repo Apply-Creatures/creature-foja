@@ -29,5 +29,11 @@
 			<span class="help">{{ctx.Locale.Tr "repo.settings.sourcehut_builds.secrets_helper"}}</span>
 		</div>
 	</div>
+	<!-- Access Token -->
+	<div class="field required {{if .Err_AccessToken}}error{{end}}">
+		<label for="access_token">{{ctx.Locale.Tr "form.AccessToken"}}</label>
+		<input id="access_token" name="access_token" type="password" value="{{.Webhook.HeaderAuthorizationTrimPrefix "Bearer "}}" required>
+		<span class="help">{{ctx.Locale.Tr "repo.settings.sourcehut_builds.access_token_helper" "https://meta.sr.ht/oauth2/personal-token?grants=builds.sr.ht/JOBS:RW" "https://meta.sr.ht/oauth2/personal-token?grants=builds.sr.ht/JOBS:RW+builds.sr.ht/SECRETS:RO"}}</span>
+	</div>
 	{{template "webhook/shared-settings" .}}
 </form>
