@@ -245,7 +245,7 @@ help:
 	@echo " - show-version-major               show major release number only"
 	@echo " - test-frontend                    test frontend files"
 	@echo " - test-backend                     test backend files"
-	@echo " - test-e2e[\#TestSpecificName]     test end to end using playwright"
+	@echo " - test-e2e-sqlite[\#name.test.e2e] test end to end using playwright and sqlite"
 	@echo " - update                           update js and py dependencies"
 	@echo " - update-js                        update js dependencies"
 	@echo " - update-py                        update py dependencies"
@@ -627,6 +627,10 @@ test-e2e-sqlite: playwright e2e.sqlite.test generate-ini-sqlite
 .PHONY: test-e2e-sqlite\#%
 test-e2e-sqlite\#%: playwright e2e.sqlite.test generate-ini-sqlite
 	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/sqlite.ini ./e2e.sqlite.test -test.run TestE2e/$*
+
+.PHONY: test-e2e-sqlite-firefox\#%
+test-e2e-sqlite-firefox\#%: playwright e2e.sqlite.test generate-ini-sqlite
+	GITEA_ROOT="$(CURDIR)" GITEA_CONF=tests/sqlite.ini PLAYWRIGHT_PROJECT=firefox ./e2e.sqlite.test -test.run TestE2e/$*
 
 .PHONY: test-e2e-mysql
 test-e2e-mysql: playwright e2e.mysql.test generate-ini-mysql
