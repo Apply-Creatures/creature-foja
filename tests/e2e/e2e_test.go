@@ -92,6 +92,9 @@ func TestE2e(t *testing.T) {
 	if _, set := os.LookupEnv("ACCEPT_VISUAL"); set {
 		runArgs = append(runArgs, "--update-snapshots")
 	}
+	if project := os.Getenv("PLAYWRIGHT_PROJECT"); project != "" {
+		runArgs = append(runArgs, "--project="+project)
+	}
 
 	// Create new test for each input file
 	for _, path := range paths {
