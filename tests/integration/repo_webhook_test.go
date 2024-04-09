@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"strings"
 	"testing"
 
 	gitea_context "code.gitea.io/gitea/services/context"
@@ -37,24 +36,52 @@ func TestNewWebHookLink(t *testing.T) {
 	for _, url := range tests {
 		resp := session.MakeRequest(t, NewRequest(t, "GET", url), http.StatusOK)
 		htmlDoc := NewHTMLParser(t, resp.Body)
-		menus := htmlDoc.doc.Find(".ui.top.attached.header .ui.dropdown .menu a")
-		menus.Each(func(i int, menu *goquery.Selection) {
-			url, exist := menu.Attr("href")
-			assert.True(t, exist)
-			assert.True(t, strings.HasPrefix(url, baseurl))
-		})
-		assert.Equal(t, webhooksLen, htmlDoc.Find(`a[href^="`+baseurl+`/"][href$="/new"]`).Length(), "not all webhooks are listed in the 'new' dropdown")
+		assert.Equal(t,
+			webhooksLen,
+			htmlDoc.Find(`a[href^="`+baseurl+`/"][href$="/new"]`).Length(),
+			"not all webhooks are listed in the 'new' dropdown")
+
 		csrfToken = htmlDoc.GetCSRF()
 	}
 
 	// ensure that the "failure" pages has the full dropdown as well
 	resp := session.MakeRequest(t, NewRequestWithValues(t, "POST", baseurl+"/gitea/new", map[string]string{"_csrf": csrfToken}), http.StatusUnprocessableEntity)
 	htmlDoc := NewHTMLParser(t, resp.Body)
-	assert.Equal(t, webhooksLen, htmlDoc.Find(`a[href^="`+baseurl+`/"][href$="/new"]`).Length(), "not all webhooks are listed in the 'new' dropdown on failure")
+	assert.Equal(t,
+		webhooksLen,
+		htmlDoc.Find(`a[href^="`+baseurl+`/"][href$="/new"]`).Length(),
+		"not all webhooks are listed in the 'new' dropdown on failure")
 
 	resp = session.MakeRequest(t, NewRequestWithValues(t, "POST", baseurl+"/1", map[string]string{"_csrf": csrfToken}), http.StatusUnprocessableEntity)
 	htmlDoc = NewHTMLParser(t, resp.Body)
-	assert.Equal(t, webhooksLen, htmlDoc.Find(`a[href^="`+baseurl+`/"][href$="/new"]`).Length(), "not all webhooks are listed in the 'new' dropdown on failure")
+	assert.Equal(t,
+		webhooksLen,
+		htmlDoc.Find(`a[href^="`+baseurl+`/"][href$="/new"]`).Length(),
+		"not all webhooks are listed in the 'new' dropdown on failure")
+
+	adminSession := loginUser(t, "user1")
+	t.Run("org3", func(t *testing.T) {
+		baseurl := "/org/org3/settings/hooks"
+		resp := adminSession.MakeRequest(t, NewRequest(t, "GET", baseurl), http.StatusOK)
+		htmlDoc := NewHTMLParser(t, resp.Body)
+		assert.Equal(t,
+			webhooksLen,
+			htmlDoc.Find(`a[href^="`+baseurl+`/"][href$="/new"]`).Length(),
+			"not all webhooks are listed in the 'new' dropdown")
+	})
+	t.Run("admin", func(t *testing.T) {
+		baseurl := "/admin/hooks"
+		resp := adminSession.MakeRequest(t, NewRequest(t, "GET", baseurl), http.StatusOK)
+		htmlDoc := NewHTMLParser(t, resp.Body)
+		assert.Equal(t,
+			webhooksLen,
+			htmlDoc.Find(`a[href^="/admin/default-hooks/"][href$="/new"]`).Length(),
+			"not all webhooks are listed in the 'new' dropdown for default-hooks")
+		assert.Equal(t,
+			webhooksLen,
+			htmlDoc.Find(`a[href^="/admin/system-hooks/"][href$="/new"]`).Length(),
+			"not all webhooks are listed in the 'new' dropdown for system-hooks")
+	})
 }
 
 func TestWebhookForms(t *testing.T) {
