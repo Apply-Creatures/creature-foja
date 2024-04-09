@@ -11,6 +11,7 @@ import (
 	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/services/context"
+	webhook_service "code.gitea.io/gitea/services/webhook"
 )
 
 const (
@@ -38,6 +39,7 @@ func DefaultOrSystemWebhooks(ctx *context.Context) {
 	sys["Webhooks"], err = webhook.GetSystemWebhooks(ctx, optional.None[bool]())
 	sys["BaseLink"] = setting.AppSubURL + "/admin/hooks"
 	sys["BaseLinkNew"] = setting.AppSubURL + "/admin/system-hooks"
+	sys["WebhookList"] = webhook_service.List()
 	if err != nil {
 		ctx.ServerError("GetWebhooksAdmin", err)
 		return
@@ -48,6 +50,7 @@ func DefaultOrSystemWebhooks(ctx *context.Context) {
 	def["Webhooks"], err = webhook.GetDefaultWebhooks(ctx)
 	def["BaseLink"] = setting.AppSubURL + "/admin/hooks"
 	def["BaseLinkNew"] = setting.AppSubURL + "/admin/default-hooks"
+	def["WebhookList"] = webhook_service.List()
 	if err != nil {
 		ctx.ServerError("GetWebhooksAdmin", err)
 		return
