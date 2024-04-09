@@ -87,7 +87,7 @@ func TestNewWebHookLink(t *testing.T) {
 func TestWebhookForms(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 
-	session := loginUser(t, "user2")
+	session := loginUser(t, "user1")
 
 	t.Run("forgejo/required", testWebhookForms("forgejo", session, map[string]string{
 		"payload_url":  "https://forgejo.example.com",
@@ -299,7 +299,9 @@ func assertInput(t testing.TB, form *goquery.Selection, name string) string {
 	t.Helper()
 	input := form.Find(`input[name="` + name + `"]`)
 	if input.Length() != 1 {
-		t.Log(form.Html())
+		form.Find("input").Each(func(i int, s *goquery.Selection) {
+			t.Logf("found <input name=%q />", s.AttrOr("name", ""))
+		})
 		t.Errorf("field <input name=%q /> found %d times, expected once", name, input.Length())
 	}
 	switch input.AttrOr("type", "") {
@@ -320,6 +322,12 @@ func testWebhookForms(name string, session *TestSession, validFields map[string]
 		})
 		t.Run("org3", func(t *testing.T) {
 			testWebhookFormsShared(t, "/org/org3/settings/hooks", name, session, validFields, invalidPatches...)
+		})
+		t.Run("system", func(t *testing.T) {
+			testWebhookFormsShared(t, "/admin/system-hooks", name, session, validFields, invalidPatches...)
+		})
+		t.Run("default", func(t *testing.T) {
+			testWebhookFormsShared(t, "/admin/default-hooks", name, session, validFields, invalidPatches...)
 		})
 	}
 }
@@ -345,17 +353,29 @@ func testWebhookFormsShared(t *testing.T, endpoint, name string, session *TestSe
 	// create the webhook (this redirects back to the hook list)
 	resp = session.MakeRequest(t, NewRequestWithValues(t, "POST", endpoint+"/"+name+"/new", payload), http.StatusSeeOther)
 	assertHasFlashMessages(t, resp, "success")
+	listEndpoint := resp.Header().Get("Location")
+	updateEndpoint := endpoint + "/"
+	if endpoint == "/admin/system-hooks" || endpoint == "/admin/default-hooks" {
+		updateEndpoint = "/admin/hooks/"
+	}
 
 	// find last created hook in the hook list
 	// (a bit hacky, but the list should be sorted)
-	resp = session.MakeRequest(t, NewRequest(t, "GET", endpoint), http.StatusOK)
+	resp = session.MakeRequest(t, NewRequest(t, "GET", listEndpoint), http.StatusOK)
 	htmlDoc := NewHTMLParser(t, resp.Body)
-	editFormURL := htmlDoc.Find(`a[href^="`+endpoint+`/"]`).Last().AttrOr("href", "")
+	selector := `a[href^="` + updateEndpoint + `"]`
+	if endpoint == "/admin/system-hooks" {
+		// system-hooks and default-hooks are listed on the same page
+		// add a specifier to select the latest system-hooks
+		// (the default-hooks are at the end, so no further specifier needed)
+		selector = `.admin-setting-content > div:first-of-type ` + selector
+	}
+	editFormURL := htmlDoc.Find(selector).Last().AttrOr("href", "")
 	assert.NotEmpty(t, editFormURL)
 
 	// edit webhook form
 	resp = session.MakeRequest(t, NewRequest(t, "GET", editFormURL), http.StatusOK)
-	htmlForm = NewHTMLParser(t, resp.Body).Find(`form[action^="` + endpoint + `/"]`)
+	htmlForm = NewHTMLParser(t, resp.Body).Find(`form[action^="` + updateEndpoint + `"]`)
 	editPostURL := htmlForm.AttrOr("action", "")
 	assert.NotEmpty(t, editPostURL)
 
@@ -375,7 +395,7 @@ func testWebhookFormsShared(t *testing.T, endpoint, name string, session *TestSe
 
 	// check the updated webhook
 	resp = session.MakeRequest(t, NewRequest(t, "GET", editFormURL), http.StatusOK)
-	htmlForm = NewHTMLParser(t, resp.Body).Find(`form[action^="` + endpoint + `/"]`)
+	htmlForm = NewHTMLParser(t, resp.Body).Find(`form[action^="` + updateEndpoint + `"]`)
 	for k, v := range validFields {
 		assert.Equal(t, v, assertInput(t, htmlForm, k), "input %q did not contain value %q", k, v)
 	}

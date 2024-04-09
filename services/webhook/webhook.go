@@ -243,7 +243,7 @@ func PrepareWebhooks(ctx context.Context, source EventSource, event webhook_modu
 	}
 
 	// Add any admin-defined system webhooks
-	systemHooks, err := webhook_model.GetSystemWebhooks(ctx, optional.Some(true))
+	systemHooks, err := webhook_model.GetSystemWebhooks(ctx, true)
 	if err != nil {
 		return fmt.Errorf("GetSystemWebhooks: %w", err)
 	}
