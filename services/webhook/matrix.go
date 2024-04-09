@@ -42,12 +42,10 @@ func (matrixHandler) UnmarshalForm(bind func(any)) forms.WebhookForm {
 		HomeserverURL string `binding:"Required;ValidUrl"`
 		RoomID        string `binding:"Required"`
 		MessageType   int
-
-		// enforce requirement of authorization_header
-		// (value will still be set in the embedded WebhookCoreForm)
-		AuthorizationHeader string `binding:"Required"`
+		AccessToken   string `binding:"Required"`
 	}
 	bind(&form)
+	form.AuthorizationHeader = "Bearer " + strings.TrimSpace(form.AccessToken)
 
 	return forms.WebhookForm{
 		WebhookCoreForm: form.WebhookCoreForm,
