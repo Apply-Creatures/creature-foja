@@ -11,7 +11,9 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"testing"
+	"time"
 
 	"code.gitea.io/gitea/models/db"
 	packages_model "code.gitea.io/gitea/models/packages"
@@ -20,6 +22,7 @@ import (
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/graceful"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/process"
 	repo_module "code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/storage"
@@ -181,6 +184,36 @@ func PrepareAttachmentsStorage(t testing.TB) {
 	}))
 }
 
+// cancelProcesses cancels all processes of the [process.Manager].
+// Returns immediately if delay is 0, otherwise wait until all processes are done
+// and fails the test if it takes longer that the given delay.
+func cancelProcesses(t testing.TB, delay time.Duration) {
+	processManager := process.GetManager()
+	processes, _ := processManager.Processes(true, true)
+	for _, p := range processes {
+		processManager.Cancel(p.PID)
+		t.Logf("PrepareTestEnv:Process %q cancelled", p.Description)
+	}
+	if delay == 0 || len(processes) == 0 {
+		return
+	}
+
+	start := time.Now()
+	processes, _ = processManager.Processes(true, true)
+	for len(processes) > 0 {
+		if time.Since(start) > delay {
+			t.Errorf("ERROR PrepareTestEnv: could not cancel all processes within %s", delay)
+			for _, p := range processes {
+				t.Logf("PrepareTestEnv:Remaining Process: %q", p.Description)
+			}
+			return
+		}
+		runtime.Gosched() // let the context cancellation propagate
+		processes, _ = processManager.Processes(true, true)
+	}
+	t.Logf("PrepareTestEnv: all processes cancelled within %s", time.Since(start))
+}
+
 func PrepareTestEnv(t testing.TB, skip ...int) func() {
 	t.Helper()
 	ourSkip := 1
@@ -188,6 +221,11 @@ func PrepareTestEnv(t testing.TB, skip ...int) func() {
 		ourSkip += skip[0]
 	}
 	deferFn := PrintCurrentTest(t, ourSkip)
+
+	// kill all background processes to prevent them from interfering with the fixture loading
+	// see https://codeberg.org/forgejo/forgejo/issues/2962
+	cancelProcesses(t, time.Second)
+	t.Cleanup(func() { cancelProcesses(t, 0) }) // cancel remaining processes in a non-blocking way
 
 	// load database fixtures
 	assert.NoError(t, unittest.LoadFixtures())
