@@ -4,7 +4,7 @@
 		<a class="{{if .PageIsAdminDashboard}}active {{end}}item" href="{{AppSubUrl}}/admin">
 			{{ctx.Locale.Tr "admin.dashboard"}}
 		</a>
-		{{if or .DatabaseType.IsMySQL .DatabaseType.IsMSSQL}}
+		{{if .DatabaseType.IsMySQL}}
 		<a class="{{if .PageIsAdminSelfCheck}}active {{end}}item" href="{{AppSubUrl}}/admin/self_check">
 			{{ctx.Locale.Tr "admin.self_check"}}
 		</a>
