@@ -8,15 +8,11 @@ import (
 	"fmt"
 
 	"code.gitea.io/gitea/models/db"
-	"code.gitea.io/gitea/modules/optional"
 )
 
 // GetDefaultWebhooks returns all admin-default webhooks.
 func GetDefaultWebhooks(ctx context.Context) ([]*Webhook, error) {
-	webhooks := make([]*Webhook, 0, 5)
-	return webhooks, db.GetEngine(ctx).
-		Where("repo_id=? AND owner_id=? AND is_system_webhook=?", 0, 0, false).
-		Find(&webhooks)
+	return getAdminWebhooks(ctx, false)
 }
 
 // GetSystemOrDefaultWebhook returns admin system or default webhook by given ID.
@@ -34,15 +30,21 @@ func GetSystemOrDefaultWebhook(ctx context.Context, id int64) (*Webhook, error) 
 }
 
 // GetSystemWebhooks returns all admin system webhooks.
-func GetSystemWebhooks(ctx context.Context, isActive optional.Option[bool]) ([]*Webhook, error) {
+func GetSystemWebhooks(ctx context.Context, onlyActive bool) ([]*Webhook, error) {
+	return getAdminWebhooks(ctx, true, onlyActive)
+}
+
+func getAdminWebhooks(ctx context.Context, systemWebhooks bool, onlyActive ...bool) ([]*Webhook, error) {
 	webhooks := make([]*Webhook, 0, 5)
-	if !isActive.Has() {
+	if len(onlyActive) > 0 && onlyActive[0] {
 		return webhooks, db.GetEngine(ctx).
-			Where("repo_id=? AND owner_id=? AND is_system_webhook=?", 0, 0, true).
+			Where("repo_id=? AND owner_id=? AND is_system_webhook=? AND is_active = ?", 0, 0, systemWebhooks, true).
+			OrderBy("id").
 			Find(&webhooks)
 	}
 	return webhooks, db.GetEngine(ctx).
-		Where("repo_id=? AND owner_id=? AND is_system_webhook=? AND is_active = ?", 0, 0, true, isActive.Value()).
+		Where("repo_id=? AND owner_id=? AND is_system_webhook=?", 0, 0, systemWebhooks).
+		OrderBy("id").
 		Find(&webhooks)
 }
 
