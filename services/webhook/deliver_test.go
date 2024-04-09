@@ -132,7 +132,7 @@ func TestWebhookDeliverAuthorizationHeader(t *testing.T) {
 	}
 
 	assert.True(t, hookTask.IsSucceed)
-	assert.Equal(t, "******", hookTask.RequestInfo.Headers["Authorization"])
+	assert.Equal(t, "Bearer ******", hookTask.RequestInfo.Headers["Authorization"])
 }
 
 func TestWebhookDeliverHookTask(t *testing.T) {
