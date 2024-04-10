@@ -159,6 +159,7 @@ func Install(ctx *context.Context) {
 	form.DefaultAllowCreateOrganization = setting.Service.DefaultAllowCreateOrganization
 	form.DefaultEnableTimetracking = setting.Service.DefaultEnableTimetracking
 	form.NoReplyAddress = setting.Service.NoReplyAddress
+	form.EnableUpdateChecker = true
 	form.PasswordAlgorithm = hash.ConfigHashAlgorithm(setting.PasswordHashAlgo)
 
 	middleware.AssignForm(form, ctx.Data)
