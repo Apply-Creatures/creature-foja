@@ -26,6 +26,7 @@ import (
 	"code.gitea.io/gitea/modules/graceful"
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/process"
 	repo_module "code.gitea.io/gitea/modules/repository"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/sync"
@@ -296,8 +297,12 @@ func checkForInvalidation(ctx context.Context, requests issues_model.PullRequest
 // AddTestPullRequestTask adds new test tasks by given head/base repository and head/base branch,
 // and generate new patch for testing as needed.
 func AddTestPullRequestTask(doer *user_model.User, repoID int64, branch string, isSync bool, oldCommitID, newCommitID string) {
-	log.Trace("AddTestPullRequestTask [head_repo_id: %d, head_branch: %s]: finding pull requests", repoID, branch)
-	graceful.GetManager().RunWithShutdownContext(func(ctx context.Context) {
+	description := fmt.Sprintf("AddTestPullRequestTask [head_repo_id: %d, head_branch: %s]: finding pull requests", repoID, branch)
+	log.Trace(description)
+	graceful.GetManager().RunWithShutdownContext(func(shutdownCtx context.Context) {
+		// make it a process to allow for cancellation (especially during integration tests where no global shutdown happens)
+		ctx, _, finished := process.GetManager().AddContext(shutdownCtx, description)
+		defer finished()
 		// There is no sensible way to shut this down ":-("
 		// If you don't let it run all the way then you will lose data
 		// TODO: graceful: AddTestPullRequestTask needs to become a queue!

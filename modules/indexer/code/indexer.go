@@ -120,9 +120,12 @@ func Init() {
 	case "bleve", "elasticsearch":
 		handler := func(items ...*internal.IndexerData) (unhandled []*internal.IndexerData) {
 			indexer := *globalIndexer.Load()
+			// make it a process to allow for cancellation (especially during integration tests where no global shutdown happens)
+			batchCtx, _, finished := process.GetManager().AddContext(ctx, "CodeIndexer batch")
+			defer finished()
 			for _, indexerData := range items {
 				log.Trace("IndexerData Process Repo: %d", indexerData.RepoID)
-				if err := index(ctx, indexer, indexerData.RepoID); err != nil {
+				if err := index(batchCtx, indexer, indexerData.RepoID); err != nil {
 					unhandled = append(unhandled, indexerData)
 					if !setting.IsInTesting {
 						log.Error("Codes indexer handler: index error for repo %v: %v", indexerData.RepoID, err)
