@@ -55,7 +55,7 @@
     "vanilla-colorful": "0.7.2",
     "vue": "3.4.21",
     "vue-bar-graph": "2.0.0",
-    "vue-chartjs": "5.3.0",
+    "vue-chartjs": "5.3.1",
     "vue-loader": "17.4.2",
     "vue3-calendar-heatmap": "2.0.5",
     "webpack": "5.91.0",
