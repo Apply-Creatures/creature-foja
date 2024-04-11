@@ -20,6 +20,7 @@ import (
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/gitrepo"
 	"code.gitea.io/gitea/modules/graceful"
+	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	api "code.gitea.io/gitea/modules/structs"
 
@@ -108,8 +109,9 @@ func GetContributorStats(ctx context.Context, cache cache.Cache, repo *repo_mode
 	switch v := cache.Get(cacheKey).(type) {
 	case error:
 		return nil, v
-	case map[string]*ContributorData:
-		return v, nil
+	case string:
+		var cachedStats map[string]*ContributorData
+		return cachedStats, json.Unmarshal([]byte(v), &cachedStats)
 	default:
 		return nil, fmt.Errorf("unexpected type in cache detected")
 	}
@@ -309,7 +311,16 @@ func generateContributorStats(genDone chan struct{}, cache cache.Cache, cacheKey
 		total.TotalCommits++
 	}
 
-	_ = cache.Put(cacheKey, contributorsCommitStats, contributorStatsCacheTimeout)
+	data, err := json.Marshal(contributorsCommitStats)
+	if err != nil {
+		err := fmt.Errorf("couldn't marshal the data: %w", err)
+		_ = cache.Put(cacheKey, err, contributorStatsCacheTimeout)
+		return
+	}
+
+	// Store the data as an string, to make it uniform what data type is returned
+	// from caches.
+	_ = cache.Put(cacheKey, string(data), contributorStatsCacheTimeout)
 	generateLock.Delete(cacheKey)
 	if genDone != nil {
 		genDone <- struct{}{}
