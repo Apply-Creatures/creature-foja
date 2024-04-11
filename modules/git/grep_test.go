@@ -4,7 +4,10 @@
 package git
 
 import (
+	"bytes"
 	"context"
+	"os"
+	"path"
 	"path/filepath"
 	"testing"
 
@@ -48,4 +51,28 @@ func TestGrepSearch(t *testing.T) {
 	res, err = GrepSearch(context.Background(), &Repository{Path: "no-such-git-repo"}, "no-such-content", GrepOptions{})
 	assert.Error(t, err)
 	assert.Len(t, res, 0)
+}
+
+func TestGrepLongFiles(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	err := InitRepository(DefaultContext, tmpDir, false, Sha1ObjectFormat.Name())
+	assert.NoError(t, err)
+
+	gitRepo, err := openRepositoryWithDefaultContext(tmpDir)
+	assert.NoError(t, err)
+	defer gitRepo.Close()
+
+	assert.NoError(t, os.WriteFile(path.Join(tmpDir, "README.md"), bytes.Repeat([]byte{'a'}, 65*1024), 0o666))
+
+	err = AddChanges(tmpDir, true)
+	assert.NoError(t, err)
+
+	err = CommitChanges(tmpDir, CommitChangesOptions{Message: "Long file"})
+	assert.NoError(t, err)
+
+	res, err := GrepSearch(context.Background(), gitRepo, "a", GrepOptions{})
+	assert.NoError(t, err)
+	assert.Len(t, res, 1)
+	assert.Len(t, res[0].LineCodes[0], 65*1024)
 }

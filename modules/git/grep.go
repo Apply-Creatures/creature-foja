@@ -10,6 +10,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -80,10 +81,21 @@ func GrepSearch(ctx context.Context, repo *Repository, search string, opts GrepO
 			defer stdoutReader.Close()
 
 			isInBlock := false
-			scanner := bufio.NewScanner(stdoutReader)
+			scanner := bufio.NewReader(stdoutReader)
 			var res *GrepResult
-			for scanner.Scan() {
-				line := scanner.Text()
+			for {
+				line, err := scanner.ReadString('\n')
+				if err != nil {
+					if err == io.EOF {
+						return nil
+					}
+					return err
+				}
+				// Remove delimiter.
+				if len(line) > 0 {
+					line = line[:len(line)-1]
+				}
+
 				if !isInBlock {
 					if _ /* ref */, filename, ok := strings.Cut(line, ":"); ok {
 						isInBlock = true
@@ -109,7 +121,7 @@ func GrepSearch(ctx context.Context, repo *Repository, search string, opts GrepO
 					res.LineCodes = append(res.LineCodes, lineCode)
 				}
 			}
-			return scanner.Err()
+			return nil
 		},
 	})
 	// git grep exits by cancel (killed), usually it is caused by the limit of results
