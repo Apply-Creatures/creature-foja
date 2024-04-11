@@ -11,6 +11,7 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
 	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/json"
 
 	"gitea.com/go-chi/cache"
 	"github.com/stretchr/testify/assert"
@@ -32,8 +33,14 @@ func TestRepository_ContributorsGraph(t *testing.T) {
 	assert.ErrorAs(t, err, &git.ErrNotExist{})
 
 	generateContributorStats(nil, mockCache, "key2", repo, "master")
-	data, isData := mockCache.Get("key2").(map[string]*ContributorData)
+	dataString, isData := mockCache.Get("key2").(string)
 	assert.True(t, isData)
+	// Verify that JSON is actually stored in the cache.
+	assert.EqualValues(t, `{"ethantkoenig@gmail.com":{"name":"Ethan Koenig","login":"","avatar_link":"https://secure.gravatar.com/avatar/b42fb195faa8c61b8d88abfefe30e9e3?d=identicon","home_link":"","total_commits":1,"weeks":{"1511654400000":{"week":1511654400000,"additions":3,"deletions":0,"commits":1}}},"jimmy.praet@telenet.be":{"name":"Jimmy Praet","login":"","avatar_link":"https://secure.gravatar.com/avatar/93c49b7c89eb156971d11161c9b52795?d=identicon","home_link":"","total_commits":1,"weeks":{"1624752000000":{"week":1624752000000,"additions":2,"deletions":0,"commits":1}}},"jon@allspice.io":{"name":"Jon","login":"","avatar_link":"https://secure.gravatar.com/avatar/00388ce725e6886f3e07c3733007289b?d=identicon","home_link":"","total_commits":1,"weeks":{"1607817600000":{"week":1607817600000,"additions":10,"deletions":0,"commits":1}}},"total":{"name":"Total","login":"","avatar_link":"","home_link":"","total_commits":3,"weeks":{"1511654400000":{"week":1511654400000,"additions":3,"deletions":0,"commits":1},"1607817600000":{"week":1607817600000,"additions":10,"deletions":0,"commits":1},"1624752000000":{"week":1624752000000,"additions":2,"deletions":0,"commits":1}}}}`, dataString)
+
+	var data map[string]*ContributorData
+	assert.NoError(t, json.Unmarshal([]byte(dataString), &data))
+
 	var keys []string
 	for k := range data {
 		keys = append(keys, k)
