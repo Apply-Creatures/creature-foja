@@ -59,6 +59,8 @@ var migrations = []*Migration{
 	// v9 -> v10
 	NewMigration("Add pronouns to user", forgejo_v1_22.AddPronounsToUser),
 	// v11 -> v12
+	// NewMigration()
+	// v12 -> v13
 	NewMigration("Add repo_archive_download_count table", forgejo_v1_22.AddRepoArchiveDownloadCount),
 }
 
