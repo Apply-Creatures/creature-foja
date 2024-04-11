@@ -1,15 +1,20 @@
 {{template "base/head" .}}
 <div role="main" aria-label="{{.Title}}" class="page-content user notification">
 	<div class="ui container">
-		<div class="ui top attached tabular menu">
-			<a href="{{AppSubUrl}}/notifications/subscriptions" class="{{if eq .Status 1}}active {{end}}item">
-				{{ctx.Locale.Tr "notification.subscriptions"}}
-			</a>
-			<a href="{{AppSubUrl}}/notifications/watching" class="{{if eq .Status 2}}active {{end}}item">
-				{{ctx.Locale.Tr "notification.watching"}}
+		<div class="tw-flex tw-items-center tw-justify-between tw-mb-4">
+			<div class="ui secondary partial menu">
+				<a href="{{AppSubUrl}}/notifications/subscriptions" class="{{if eq .Status 1}}active {{end}}item">
+					{{ctx.Locale.Tr "notification.subscriptions"}}
+				</a>
+				<a href="{{AppSubUrl}}/notifications/watching" class="{{if eq .Status 2}}active {{end}}item">
+					{{ctx.Locale.Tr "notification.watching"}}
+				</a>
+			</div>
+			<a class="ui tiny button" href="{{AppSubUrl}}/notifications">
+				{{ctx.Locale.Tr "notifications"}}
 			</a>
 		</div>
-		<div class="ui bottom attached active tab segment">
+		<div class="ui bottom active tab segment">
 			{{if eq .Status 1}}
 				<div class="tw-flex tw-justify-between">
 					<div class="tw-flex">

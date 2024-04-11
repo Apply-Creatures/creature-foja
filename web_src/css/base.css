@@ -246,6 +246,18 @@ h1.error-code {
   user-select: none;
 }
 
+.top-right-buttons {
+  gap: 0.5rem;
+}
+
+.top-right-buttons .ui.button {
+  margin-right: 0;
+}
+
+.ui.partial.secondary.menu {
+  margin-bottom: 0;
+}
+
 a {
   color: var(--color-primary);
   cursor: pointer;
