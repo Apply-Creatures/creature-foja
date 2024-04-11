@@ -95,6 +95,7 @@ func deleteUser(ctx context.Context, u *user_model.User, purge bool) (err error)
 		&actions_model.ActionRunner{OwnerID: u.ID},
 		&user_model.BlockedUser{BlockID: u.ID},
 		&user_model.BlockedUser{UserID: u.ID},
+		&actions_model.ActionRunnerToken{OwnerID: u.ID},
 	); err != nil {
 		return fmt.Errorf("deleteBeans: %w", err)
 	}
