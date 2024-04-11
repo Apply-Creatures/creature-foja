@@ -89,7 +89,7 @@ func TestDataSizeTranslation(t *testing.T) {
 		fullSize = noDigits.ReplaceAllString(fullSize, "")
 		assert.Equal(t, "git:  КиБ; lfs:  Б", fullSize)
 
-		// Check if file sizes are correclty translated
+		// Check if file sizes are correctly translated
 		testFileSizeTranslated(t, session, path.Join(testUser, testRepoName, "src/branch/main/137byteFile.txt"), "137 Б")
 		testFileSizeTranslated(t, session, path.Join(testUser, testRepoName, "src/branch/main/1.5kibFile.txt"), "1,5 КиБ")
 		testFileSizeTranslated(t, session, path.Join(testUser, testRepoName, "src/branch/main/1.25mibFile.txt"), "1,3 МиБ")
