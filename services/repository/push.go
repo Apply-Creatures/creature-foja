@@ -166,7 +166,7 @@ func pushUpdates(optsList []*repo_module.PushUpdateOptions) error {
 			branch := opts.RefFullName.BranchName()
 			if !opts.IsDelRef() {
 				log.Trace("TriggerTask '%s/%s' by %s", repo.Name, branch, pusher.Name)
-				go pull_service.AddTestPullRequestTask(pusher, repo.ID, branch, true, opts.OldCommitID, opts.NewCommitID)
+				pull_service.AddTestPullRequestTask(ctx, pusher, repo.ID, branch, true, opts.OldCommitID, opts.NewCommitID, opts.TimeNano)
 
 				newCommit, err := gitRepo.GetCommit(opts.NewCommitID)
 				if err != nil {

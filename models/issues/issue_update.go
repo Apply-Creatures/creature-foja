@@ -325,6 +325,8 @@ func NewIssueWithIndex(ctx context.Context, doer *user_model.User, opts NewIssue
 		return fmt.Errorf("issue exist")
 	}
 
+	opts.Issue.Created = timeutil.TimeStampNanoNow()
+
 	if _, err := e.Insert(opts.Issue); err != nil {
 		return err
 	}

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	git_model "code.gitea.io/gitea/models/git"
 	issues_model "code.gitea.io/gitea/models/issues"
@@ -71,6 +72,7 @@ func HookPostReceive(ctx *gitea_context.PrivateContext) {
 				PusherName:   opts.UserName,
 				RepoUserName: ownerName,
 				RepoName:     repoName,
+				TimeNano:     time.Now().UnixNano(),
 			}
 			updates = append(updates, option)
 			if repo.IsEmpty && (refFullName.BranchName() == "master" || refFullName.BranchName() == "main") {

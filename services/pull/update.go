@@ -36,7 +36,7 @@ func Update(ctx context.Context, pr *issues_model.PullRequest, doer *user_model.
 
 	if rebase {
 		defer func() {
-			go AddTestPullRequestTask(doer, pr.BaseRepo.ID, pr.BaseBranch, false, "", "")
+			AddTestPullRequestTask(ctx, doer, pr.BaseRepo.ID, pr.BaseBranch, false, "", "", 0)
 		}()
 
 		return updateHeadByRebaseOnToBase(ctx, pr, doer, message)
@@ -75,7 +75,7 @@ func Update(ctx context.Context, pr *issues_model.PullRequest, doer *user_model.
 	_, err = doMergeAndPush(ctx, reversePR, doer, repo_model.MergeStyleMerge, "", message)
 
 	defer func() {
-		go AddTestPullRequestTask(doer, reversePR.HeadRepo.ID, reversePR.HeadBranch, false, "", "")
+		AddTestPullRequestTask(ctx, doer, reversePR.HeadRepo.ID, reversePR.HeadBranch, false, "", "", 0)
 	}()
 
 	return err
