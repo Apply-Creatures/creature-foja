@@ -782,7 +782,7 @@ func writeFlushPktLine(ctx context.Context, out io.Writer) error {
 	return nil
 }
 
-// Write an Pkt-Line based on `data` to `out` according to the specifcation.
+// Write an Pkt-Line based on `data` to `out` according to the specification.
 // https://git-scm.com/docs/protocol-common
 func writeDataPktLine(ctx context.Context, out io.Writer, data []byte) error {
 	// Implementations SHOULD NOT send an empty pkt-line ("0004").

@@ -225,13 +225,13 @@ func TestGitAttributeCheckerError(t *testing.T) {
 		ac, err := gitRepo.GitAttributeChecker("", "linguist-language")
 		require.NoError(t, err)
 
-		// calling CheckPath before would allow git to cache part of it and succesfully return later
+		// calling CheckPath before would allow git to cache part of it and successfully return later
 		assert.NoError(t, os.RemoveAll(gitRepo.Path))
 
 		_, err = ac.CheckPath("i-am-a-python.p")
 		if err == nil {
 			t.Skip(
-				"git check-attr started too fast and CheckPath was succesful (and likely cached)",
+				"git check-attr started too fast and CheckPath was successful (and likely cached)",
 				"https://codeberg.org/forgejo/forgejo/issues/2948",
 			)
 		}
