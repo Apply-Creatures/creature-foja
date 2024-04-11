@@ -9,7 +9,7 @@
 		</div>
 	{{else}}
 		{{if .CodeIndexerDisabled}}
-			<div class="ui message">
+			<div class="ui message" data-test-tag="grep">
 				<p>{{ctx.Locale.Tr "search.code_search_by_git_grep"}}</p>
 			</div>
 		{{end}}

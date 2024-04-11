@@ -19,7 +19,7 @@ import (
 )
 
 func resultFilenames(t testing.TB, doc *HTMLDoc) []string {
-	filenameSelections := doc.doc.Find(".repository.search").Find(".repo-search-result").Find(".header").Find("span.file")
+	filenameSelections := doc.Find(".repository.search").Find(".repo-search-result").Find(".header").Find("span.file")
 	result := make([]string, filenameSelections.Length())
 	filenameSelections.Each(func(i int, selection *goquery.Selection) {
 		result[i] = selection.Text()
@@ -46,7 +46,7 @@ func testSearchRepo(t *testing.T, indexer bool) {
 		code_indexer.UpdateRepoIndexer(repo)
 	}
 
-	testSearch(t, "/user2/repo1/search?q=Description&page=1", []string{"README.md"})
+	testSearch(t, "/user2/repo1/search?q=Description&page=1", []string{"README.md"}, indexer)
 
 	defer test.MockVariableValue(&setting.Indexer.IncludePatterns, setting.IndexerGlobFromString("**.txt"))()
 	defer test.MockVariableValue(&setting.Indexer.ExcludePatterns, setting.IndexerGlobFromString("**/y/**"))()
@@ -58,32 +58,36 @@ func testSearchRepo(t *testing.T, indexer bool) {
 		code_indexer.UpdateRepoIndexer(repo)
 	}
 
-	testSearch(t, "/user2/glob/search?q=loren&page=1", []string{"a.txt"})
-	testSearch(t, "/user2/glob/search?q=loren&page=1&fuzzy=false", []string{"a.txt"})
+	testSearch(t, "/user2/glob/search?q=loren&page=1", []string{"a.txt"}, indexer)
+	testSearch(t, "/user2/glob/search?q=loren&page=1&fuzzy=false", []string{"a.txt"}, indexer)
 
 	if indexer {
 		// fuzzy search: matches both file3 (x/b.txt) and file1 (a.txt)
 		// when indexer is enabled
-		testSearch(t, "/user2/glob/search?q=file3&page=1", []string{"x/b.txt", "a.txt"})
-		testSearch(t, "/user2/glob/search?q=file4&page=1", []string{"x/b.txt", "a.txt"})
-		testSearch(t, "/user2/glob/search?q=file5&page=1", []string{"x/b.txt", "a.txt"})
+		testSearch(t, "/user2/glob/search?q=file3&page=1", []string{"x/b.txt", "a.txt"}, indexer)
+		testSearch(t, "/user2/glob/search?q=file4&page=1", []string{"x/b.txt", "a.txt"}, indexer)
+		testSearch(t, "/user2/glob/search?q=file5&page=1", []string{"x/b.txt", "a.txt"}, indexer)
 	} else {
 		// fuzzy search: OR of all the keywords
 		// when indexer is disabled
-		testSearch(t, "/user2/glob/search?q=file3+file1&page=1", []string{"a.txt", "x/b.txt"})
-		testSearch(t, "/user2/glob/search?q=file4&page=1", []string{})
-		testSearch(t, "/user2/glob/search?q=file5&page=1", []string{})
+		testSearch(t, "/user2/glob/search?q=file3+file1&page=1", []string{"a.txt", "x/b.txt"}, indexer)
+		testSearch(t, "/user2/glob/search?q=file4&page=1", []string{}, indexer)
+		testSearch(t, "/user2/glob/search?q=file5&page=1", []string{}, indexer)
 	}
 
-	testSearch(t, "/user2/glob/search?q=file3&page=1&fuzzy=false", []string{"x/b.txt"})
-	testSearch(t, "/user2/glob/search?q=file4&page=1&fuzzy=false", []string{})
-	testSearch(t, "/user2/glob/search?q=file5&page=1&fuzzy=false", []string{})
+	testSearch(t, "/user2/glob/search?q=file3&page=1&fuzzy=false", []string{"x/b.txt"}, indexer)
+	testSearch(t, "/user2/glob/search?q=file4&page=1&fuzzy=false", []string{}, indexer)
+	testSearch(t, "/user2/glob/search?q=file5&page=1&fuzzy=false", []string{}, indexer)
 }
 
-func testSearch(t *testing.T, url string, expected []string) {
+func testSearch(t *testing.T, url string, expected []string, indexer bool) {
 	req := NewRequest(t, "GET", url)
 	resp := MakeRequest(t, req, http.StatusOK)
 
-	filenames := resultFilenames(t, NewHTMLParser(t, resp.Body))
+	doc := NewHTMLParser(t, resp.Body)
+	msg := doc.Find(".repository").Find(".ui.container").Find(".ui.message[data-test-tag=grep]")
+	assert.EqualValues(t, indexer, len(msg.Nodes) == 0)
+
+	filenames := resultFilenames(t, doc)
 	assert.EqualValues(t, expected, filenames)
 }
