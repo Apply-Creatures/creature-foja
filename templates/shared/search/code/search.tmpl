@@ -1,9 +1,5 @@
 <form class="ui form ignore-dirty">
-	{{if not $.CodeIndexerDisabled}}
-		{{template "shared/search/combo_fuzzy" dict "Value" .Keyword "Disabled" .CodeIndexerUnavailable "IsFuzzy" .IsFuzzy "Placeholder" (ctx.Locale.Tr "search.code_kind")}}
-	{{else}}
-		{{template "shared/search/combo" dict "Value" .Keyword "Placeholder" (ctx.Locale.Tr "search.code_kind")}}
-	{{end}}
+	{{template "shared/search/combo_fuzzy" dict "Value" .Keyword "Disabled" .CodeIndexerUnavailable "IsFuzzy" .IsFuzzy "Placeholder" (ctx.Locale.Tr "search.code_kind")}}
 </form>
 <div class="divider"></div>
 <div class="ui user list">
@@ -12,7 +8,7 @@
 			<p>{{ctx.Locale.Tr "search.code_search_unavailable"}}</p>
 		</div>
 	{{else}}
-		{{if not .CodeIndexerEnabled}}
+		{{if .CodeIndexerDisabled}}
 			<div class="ui message">
 				<p>{{ctx.Locale.Tr "search.code_search_by_git_grep"}}</p>
 			</div>
