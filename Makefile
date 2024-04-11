@@ -26,18 +26,18 @@ DIFF ?= diff --unified
 
 XGO_VERSION := go-1.21.x
 
-AIR_PACKAGE ?= github.com/cosmtrek/air@v1.49.0
-EDITORCONFIG_CHECKER_PACKAGE ?= github.com/editorconfig-checker/editorconfig-checker/cmd/editorconfig-checker@2.7.0
-GOFUMPT_PACKAGE ?= mvdan.cc/gofumpt@v0.6.0
-GOLANGCI_LINT_PACKAGE ?= github.com/golangci/golangci-lint/cmd/golangci-lint@v1.56.1
-GXZ_PACKAGE ?= github.com/ulikunitz/xz/cmd/gxz@v0.5.11
-MISSPELL_PACKAGE ?= github.com/golangci/misspell/cmd/misspell@v0.4.1
-SWAGGER_PACKAGE ?= github.com/go-swagger/go-swagger/cmd/swagger@v0.30.6-0.20240201115257-bcc7c78b7786
-XGO_PACKAGE ?= src.techknowlogick.com/xgo@latest
-GO_LICENSES_PACKAGE ?= github.com/google/go-licenses@v1.6.0
-GOVULNCHECK_PACKAGE ?= golang.org/x/vuln/cmd/govulncheck@v1.0.3
-ACTIONLINT_PACKAGE ?= github.com/rhysd/actionlint/cmd/actionlint@v1.6.26
-DEADCODE_PACKAGE ?= golang.org/x/tools/internal/cmd/deadcode@v0.14.0
+AIR_PACKAGE ?= github.com/cosmtrek/air@v1.49.0 # renovate: datasource=go
+EDITORCONFIG_CHECKER_PACKAGE ?= github.com/editorconfig-checker/editorconfig-checker/cmd/editorconfig-checker@2.7.0 # renovate: datasource=go
+GOFUMPT_PACKAGE ?= mvdan.cc/gofumpt@v0.6.0 # renovate: datasource=go
+GOLANGCI_LINT_PACKAGE ?= github.com/golangci/golangci-lint/cmd/golangci-lint@v1.56.1 # renovate: datasource=go
+GXZ_PACKAGE ?= github.com/ulikunitz/xz/cmd/gxz@v0.5.11 # renovate: datasource=go
+MISSPELL_PACKAGE ?= github.com/golangci/misspell/cmd/misspell@v0.4.1 # renovate: datasource=go
+SWAGGER_PACKAGE ?= github.com/go-swagger/go-swagger/cmd/swagger@v0.30.6-0.20240201115257-bcc7c78b7786 # renovate: datasource=go
+XGO_PACKAGE ?= src.techknowlogick.com/xgo@latest # renovate: datasource=go
+GO_LICENSES_PACKAGE ?= github.com/google/go-licenses@v1.6.0 # renovate: datasource=go
+GOVULNCHECK_PACKAGE ?= golang.org/x/vuln/cmd/govulncheck@v1.0.3 # renovate: datasource=go
+ACTIONLINT_PACKAGE ?= github.com/rhysd/actionlint/cmd/actionlint@v1.6.26 # renovate: datasource=go
+DEADCODE_PACKAGE ?= golang.org/x/tools/internal/cmd/deadcode@v0.14.0 # renovate: datasource=go
 
 DOCKER_IMAGE ?= gitea/gitea
 DOCKER_TAG ?= latest
@@ -335,8 +335,8 @@ ifneq "$(TAGS)" "$(shell cat $(TAGS_EVIDENCE) 2>/dev/null)"
 TAGS_PREREQ := $(TAGS_EVIDENCE)
 endif
 
-OAPI_CODEGEN_PACKAGE ?= github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.12.4
-KIN_OPENAPI_CODEGEN_PACKAGE ?= github.com/getkin/kin-openapi/cmd/validate@v0.114.0
+OAPI_CODEGEN_PACKAGE ?= github.com/deepmap/oapi-codegen/cmd/oapi-codegen@v1.12.4 # renovate: datasource=go
+KIN_OPENAPI_CODEGEN_PACKAGE ?= github.com/getkin/kin-openapi/cmd/validate@v0.114.0 # renovate: datasource=go
 FORGEJO_API_SERVER = routers/api/forgejo/v1/generated.go
 
 .PHONY: generate-forgejo-api
