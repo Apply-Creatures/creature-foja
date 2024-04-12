@@ -14,9 +14,11 @@ import (
 	unit_model "code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/modules/setting"
 	gitea_context "code.gitea.io/gitea/services/context"
 	repo_service "code.gitea.io/gitea/services/repository"
+	user_service "code.gitea.io/gitea/services/user"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
@@ -30,6 +32,97 @@ func TestRepoSettingsUnits(t *testing.T) {
 
 	req := NewRequest(t, "GET", fmt.Sprintf("%s/settings/units", repo.Link()))
 	session.MakeRequest(t, req, http.StatusOK)
+}
+
+func TestRepoAddMoreUnitsHighlighting(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: "user2"})
+	session := loginUser(t, user.Name)
+
+	// Make sure there are no disabled repos in the settings!
+	setting.Repository.DisabledRepoUnits = []string{}
+	unit_model.LoadUnitConfig()
+
+	// Create a known-good repo, with some units disabled.
+	repo, _, f := CreateDeclarativeRepo(t, user, "", []unit_model.Type{
+		unit_model.TypeCode,
+		unit_model.TypePullRequests,
+		unit_model.TypeProjects,
+		unit_model.TypeActions,
+		unit_model.TypeIssues,
+		unit_model.TypeWiki,
+	}, []unit_model.Type{unit_model.TypePackages}, nil)
+	defer f()
+
+	setUserHints := func(t *testing.T, hints bool) func() {
+		saved := user.EnableRepoUnitHints
+
+		assert.NoError(t, user_service.UpdateUser(db.DefaultContext, user, &user_service.UpdateOptions{
+			EnableRepoUnitHints: optional.Some(hints),
+		}))
+
+		return func() {
+			assert.NoError(t, user_service.UpdateUser(db.DefaultContext, user, &user_service.UpdateOptions{
+				EnableRepoUnitHints: optional.Some(saved),
+			}))
+		}
+	}
+
+	assertHighlight := func(t *testing.T, page, uri string, highlighted bool) {
+		t.Helper()
+
+		req := NewRequest(t, "GET", fmt.Sprintf("%s/settings%s", repo.Link(), page))
+		resp := session.MakeRequest(t, req, http.StatusOK)
+		htmlDoc := NewHTMLParser(t, resp.Body)
+
+		htmlDoc.AssertElement(t, fmt.Sprintf(".overflow-menu-items a[href='%s'].active", fmt.Sprintf("%s/settings%s", repo.Link(), uri)), highlighted)
+	}
+
+	t.Run("hints enabled", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		defer setUserHints(t, true)()
+
+		t.Run("settings", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			// Visiting the /settings page, "Settings" is highlighted
+			assertHighlight(t, "", "", true)
+			// ...but "Add more" isn't.
+			assertHighlight(t, "", "/units", false)
+		})
+
+		t.Run("units", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			// Visiting the /settings/units page, "Add more" is highlighted
+			assertHighlight(t, "/units", "/units", true)
+			// ...but "Settings" isn't.
+			assertHighlight(t, "/units", "", false)
+		})
+	})
+
+	t.Run("hints disabled", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		defer setUserHints(t, false)()
+
+		t.Run("settings", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			// Visiting the /settings page, "Settings" is highlighted
+			assertHighlight(t, "", "", true)
+			// ...but "Add more" isn't (it doesn't exist).
+			assertHighlight(t, "", "/units", false)
+		})
+
+		t.Run("units", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			// Visiting the /settings/units page, "Settings" is highlighted
+			assertHighlight(t, "/units", "", true)
+			// ...but "Add more" isn't (it doesn't exist)
+			assertHighlight(t, "/units", "/units", false)
+		})
+	})
 }
 
 func TestRepoAddMoreUnits(t *testing.T) {
