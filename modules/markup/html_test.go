@@ -705,11 +705,11 @@ func TestRender_FilePreview(t *testing.T) {
 	sha := "190d9492934af498c3f669d6a2431dc5459e5b20"
 	commitFilePreview := util.URLJoin(markup.TestRepoURL, "src", "commit", sha, "path", "to", "file.go") + "#L2-L3"
 
-	test := func(input, expected string) {
+	test := func(input, expected string, metas map[string]string) {
 		buffer, err := markup.RenderString(&markup.RenderContext{
 			Ctx:          git.DefaultContext,
 			RelativePath: ".md",
-			Metas:        localMetas,
+			Metas:        metas,
 		}, input)
 		assert.NoError(t, err)
 		assert.Equal(t, strings.TrimSpace(expected), strings.TrimSpace(buffer))
@@ -720,7 +720,9 @@ func TestRender_FilePreview(t *testing.T) {
 		`<p></p>`+
 			`<div class="file-preview-box">`+
 			`<div class="header">`+
+			`<div>`+
 			`<a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20/path/to/file.go#L2-L3" class="muted" rel="nofollow">path/to/file.go</a>`+
+			`</div>`+
 			`<span class="text small grey">`+
 			`Lines 2 to 3 in <a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20" class="text black" rel="nofollow">190d949</a>`+
 			`</span>`+
@@ -741,5 +743,41 @@ func TestRender_FilePreview(t *testing.T) {
 			`</div>`+
 			`</div>`+
 			`<p></p>`,
+		localMetas,
+	)
+
+	test(
+		commitFilePreview,
+		`<p></p>`+
+			`<div class="file-preview-box">`+
+			`<div class="header">`+
+			`<div>`+
+			`<a href="http://localhost:3000/gogits/gogs/" rel="nofollow">gogits/gogs</a> – `+
+			`<a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20/path/to/file.go#L2-L3" class="muted" rel="nofollow">path/to/file.go</a>`+
+			`</div>`+
+			`<span class="text small grey">`+
+			`Lines 2 to 3 in <a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20" class="text black" rel="nofollow">gogits/gogs@190d949</a>`+
+			`</span>`+
+			`</div>`+
+			`<div class="ui table">`+
+			`<table class="file-preview">`+
+			`<tbody>`+
+			`<tr>`+
+			`<td class="lines-num"><span data-line-number="2"></span></td>`+
+			`<td class="lines-code chroma"><code class="code-inner"><span class="nx">B</span>`+"\n"+`</code></td>`+
+			`</tr>`+
+			`<tr>`+
+			`<td class="lines-num"><span data-line-number="3"></span></td>`+
+			`<td class="lines-code chroma"><code class="code-inner"><span class="nx">C</span>`+"\n"+`</code></td>`+
+			`</tr>`+
+			`</tbody>`+
+			`</table>`+
+			`</div>`+
+			`</div>`+
+			`<p></p>`,
+		map[string]string{
+			"user": "gogits",
+			"repo": "gogs2",
+		},
 	)
 }

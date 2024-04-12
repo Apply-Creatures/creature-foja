@@ -27,10 +27,9 @@ var filePreviewPattern = regexp.MustCompile(`https?://((?:\S+/){3})src/commit/([
 
 type FilePreview struct {
 	fileContent []template.HTML
+	title       template.HTML
 	subTitle    template.HTML
 	lineOffset  int
-	urlFull     string
-	filePath    string
 	start       int
 	end         int
 	isTruncated bool
@@ -54,39 +53,65 @@ func NewFilePreview(ctx *RenderContext, node *html.Node, locale translation.Loca
 		return nil
 	}
 
-	preview.urlFull = node.Data[m[0]:m[1]]
+	urlFull := node.Data[m[0]:m[1]]
 
 	// Ensure that we only use links to local repositories
-	if !strings.HasPrefix(preview.urlFull, setting.AppURL+setting.AppSubURL) {
+	if !strings.HasPrefix(urlFull, setting.AppURL+setting.AppSubURL) {
 		return nil
 	}
 
 	projPath := strings.TrimSuffix(node.Data[m[2]:m[3]], "/")
 
 	commitSha := node.Data[m[4]:m[5]]
-	preview.filePath = node.Data[m[6]:m[7]]
+	filePath := node.Data[m[6]:m[7]]
 	hash := node.Data[m[8]:m[9]]
 
 	preview.start = m[0]
 	preview.end = m[1]
 
 	projPathSegments := strings.Split(projPath, "/")
+	ownerName := projPathSegments[len(projPathSegments)-2]
+	repoName := projPathSegments[len(projPathSegments)-1]
+
 	var language string
 	fileBlob, err := DefaultProcessorHelper.GetRepoFileBlob(
 		ctx.Ctx,
-		projPathSegments[len(projPathSegments)-2],
-		projPathSegments[len(projPathSegments)-1],
-		commitSha, preview.filePath,
+		ownerName,
+		repoName,
+		commitSha, filePath,
 		&language,
 	)
 	if err != nil {
 		return nil
 	}
 
+	titleBuffer := new(bytes.Buffer)
+
+	isExternRef := ownerName != ctx.Metas["user"] || repoName != ctx.Metas["repo"]
+	if isExternRef {
+		err = html.Render(titleBuffer, createLink(node.Data[m[0]:m[3]], ownerName+"/"+repoName, ""))
+		if err != nil {
+			log.Error("failed to render repoLink: %v", err)
+		}
+		titleBuffer.WriteString(" &ndash; ")
+	}
+
+	err = html.Render(titleBuffer, createLink(urlFull, filePath, "muted"))
+	if err != nil {
+		log.Error("failed to render filepathLink: %v", err)
+	}
+
+	preview.title = template.HTML(titleBuffer.String())
+
 	lineSpecs := strings.Split(hash, "-")
 
 	commitLinkBuffer := new(bytes.Buffer)
-	err = html.Render(commitLinkBuffer, createLink(node.Data[m[0]:m[5]], commitSha[0:7], "text black"))
+	commitLinkText := commitSha[0:7]
+	if isExternRef {
+		commitLinkText = ownerName + "/" + repoName + "@" + commitLinkText
+	}
+
+	err = html.Render(commitLinkBuffer, createLink(node.Data[m[0]:m[5]], commitLinkText, "text black"))
 	if err != nil {
 		log.Error("failed to render commitLink: %v", err)
 	}
@@ -272,19 +297,16 @@ func (p *FilePreview) CreateHTML(locale translation.Locale) *html.Node {
 		Data: atom.Div.String(),
 		Attr: []html.Attribute{{Key: "class", Val: "header"}},
 	}
-	afilepath := &html.Node{
+
+	ptitle := &html.Node{
 		Type: html.ElementNode,
-		Data: atom.A.String(),
-		Attr: []html.Attribute{
-			{Key: "href", Val: p.urlFull},
-			{Key: "class", Val: "muted"},
-		},
+		Data: atom.Div.String(),
 	}
-	afilepath.AppendChild(&html.Node{
-		Type: html.TextNode,
-		Data: p.filePath,
+	ptitle.AppendChild(&html.Node{
+		Type: html.RawNode,
+		Data: string(p.title),
 	})
-	header.AppendChild(afilepath)
+	header.AppendChild(ptitle)
 
 	psubtitle := &html.Node{
 		Type: html.ElementNode,

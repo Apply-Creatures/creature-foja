@@ -1056,7 +1056,7 @@ func comparePatternProcessor(ctx *RenderContext, node *html.Node) {
 }
 
 func filePreviewPatternProcessor(ctx *RenderContext, node *html.Node) {
-	if ctx.Metas == nil {
+	if ctx.Metas == nil || ctx.Metas["user"] == "" || ctx.Metas["repo"] == "" {
 		return
 	}
 	if DefaultProcessorHelper.GetRepoFileBlob == nil {
