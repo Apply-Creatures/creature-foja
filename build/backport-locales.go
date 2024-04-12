@@ -18,8 +18,8 @@ import (
 
 func main() {
 	if len(os.Args) != 2 {
-		println("usage: backport-locales <to-ref>")
-		println("eg: backport-locales release/v1.19")
+		fmt.Println("usage: backport-locales <to-ref>")
+		fmt.Println("eg: backport-locales release/v1.19")
 		os.Exit(1)
 	}
 

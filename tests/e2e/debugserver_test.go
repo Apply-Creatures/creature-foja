@@ -10,6 +10,7 @@
 package e2e
 
 import (
+	"fmt"
 	"net/url"
 	"os"
 	"os/signal"
@@ -24,7 +25,7 @@ func TestDebugserver(t *testing.T) {
 	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM)
 
 	onGiteaRun(t, func(*testing.T, *url.URL) {
-		println(setting.AppURL)
+		fmt.Println(setting.AppURL)
 		<-done
 	})
 }

@@ -159,22 +159,6 @@ func BenchmarkCutDiffAroundLine(b *testing.B) {
 	}
 }
 
-func ExampleCutDiffAroundLine() {
-	const diff = `diff --git a/README.md b/README.md
---- a/README.md
-+++ b/README.md
-@@ -1,3 +1,6 @@
- # gitea-github-migrator
-+
-+ Build Status
-- Latest Release
- Docker Pulls
-+ cut off
-+ cut off`
-	result, _ := CutDiffAroundLine(strings.NewReader(diff), 4, false, 3)
-	println(result)
-}
-
 func TestParseDiffHunkString(t *testing.T) {
 	leftLine, leftHunk, rightLine, rightHunk := ParseDiffHunkString("@@ -19,3 +19,5 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER")
 	assert.EqualValues(t, 19, leftLine)
