@@ -36,7 +36,7 @@ SWAGGER_PACKAGE ?= github.com/go-swagger/go-swagger/cmd/swagger@v0.30.6-0.202402
 XGO_PACKAGE ?= src.techknowlogick.com/xgo@latest # renovate: datasource=go
 GO_LICENSES_PACKAGE ?= github.com/google/go-licenses@v1.6.0 # renovate: datasource=go
 GOVULNCHECK_PACKAGE ?= golang.org/x/vuln/cmd/govulncheck@v1.0.3 # renovate: datasource=go
-ACTIONLINT_PACKAGE ?= github.com/rhysd/actionlint/cmd/actionlint@v1.6.26 # renovate: datasource=go
+ACTIONLINT_PACKAGE ?= github.com/rhysd/actionlint/cmd/actionlint@v1.6.27 # renovate: datasource=go
 DEADCODE_PACKAGE ?= golang.org/x/tools/internal/cmd/deadcode@v0.14.0 # renovate: datasource=go
 
 DOCKER_IMAGE ?= gitea/gitea
