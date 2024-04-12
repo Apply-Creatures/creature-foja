@@ -47,9 +47,10 @@ func (matrixHandler) UnmarshalForm(bind func(any)) forms.WebhookForm {
 	bind(&form)
 	form.AuthorizationHeader = "Bearer " + strings.TrimSpace(form.AccessToken)
 
+	// https://spec.matrix.org/v1.10/client-server-api/#sending-events-to-a-room
 	return forms.WebhookForm{
 		WebhookCoreForm: form.WebhookCoreForm,
-		URL:             fmt.Sprintf("%s/_matrix/client/r0/rooms/%s/send/m.room.message", form.HomeserverURL, url.PathEscape(form.RoomID)),
+		URL:             fmt.Sprintf("%s/_matrix/client/v3/rooms/%s/send/m.room.message", form.HomeserverURL, url.PathEscape(form.RoomID)),
 		ContentType:     webhook_model.ContentTypeJSON,
 		Secret:          "",
 		HTTPMethod:      http.MethodPut,
@@ -89,7 +90,7 @@ func (matrixHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	return req, body, shared.AddDefaultHeaders(req, []byte(w.Secret), t, body) // likely useless, but has always been sent historially
+	return req, body, nil
 }
 
 const matrixPayloadSizeLimit = 1024 * 64
