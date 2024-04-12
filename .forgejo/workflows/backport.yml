@@ -45,39 +45,12 @@ jobs:
           cat <<'EOF'
           ${{ toJSON(github) }}
           EOF
-      - name: Fetch labels
-        id: fetch-labels
-        shell: bash
-        run: |
-          set -x
-          echo "Labels retrieved below"
-          export DEBIAN_FRONTEND=noninteractive
-          apt-get update -qq
-          apt-get -q install -qq -y jq
-          filtered_labels=$(echo "$LABELS" | jq -c 'map(select(.name | startswith("backport/v")))')
-          echo "FILTERED_LABELS=${filtered_labels}" >> $GITHUB_ENV
-        env:
-          LABELS: ${{ toJSON(github.event.pull_request.labels) }}
-      - name: Extract targets
-        id: extract-targets
-        shell: bash
-        run: |
-          set -x
-          targets="$(echo $FILTERED_LABELS | jq -c '[.[] | .name | sub("backport/"; "")]')"
-          echo "targets=$(echo $targets)" >> $GITHUB_OUTPUT
-
-      - name: Printing info
-        shell: bash
-        run: |
-          echo "targets: ${{ steps.extract-targets.outputs.targets }}"
-          echo "target-branch: ${{ fromJSON(steps.extract-targets.outputs.targets)[0] }}"
-          echo "pull-request: ${{ github.event.pull_request.url }}"
-
-      - uses: https://code.forgejo.org/forgejo/git-backporting@b2554a678d5ea2814f0df3abad2ac4fcdee2d81f
+      - uses: https://code.forgejo.org/actions/git-backporting@v4.8.0
         with:
-          target-branch: ${{ fromJSON(steps.extract-targets.outputs.targets)[0] }}/forgejo
+          target-branch-pattern: "^backport/(?<target>(v.*))$"
           strategy: ort
           strategy-option: find-renames
           cherry-pick-options: -x
           auth: ${{ secrets.BACKPORT_TOKEN }}
           pull-request: ${{ github.event.pull_request.url }}
+          auto-no-squash: true
