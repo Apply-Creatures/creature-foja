@@ -35,7 +35,7 @@ MISSPELL_PACKAGE ?= github.com/golangci/misspell/cmd/misspell@v0.4.1 # renovate:
 SWAGGER_PACKAGE ?= github.com/go-swagger/go-swagger/cmd/swagger@v0.30.6-0.20240201115257-bcc7c78b7786 # renovate: datasource=go
 XGO_PACKAGE ?= src.techknowlogick.com/xgo@latest # renovate: datasource=go
 GO_LICENSES_PACKAGE ?= github.com/google/go-licenses@v1.6.0 # renovate: datasource=go
-GOVULNCHECK_PACKAGE ?= golang.org/x/vuln/cmd/govulncheck@v1.0.4 # renovate: datasource=go
+GOVULNCHECK_PACKAGE ?= golang.org/x/vuln/cmd/govulncheck@v1 # renovate: datasource=go
 ACTIONLINT_PACKAGE ?= github.com/rhysd/actionlint/cmd/actionlint@v1.6.27 # renovate: datasource=go
 DEADCODE_PACKAGE ?= golang.org/x/tools/internal/cmd/deadcode@v0.14.0 # renovate: datasource=go
 
