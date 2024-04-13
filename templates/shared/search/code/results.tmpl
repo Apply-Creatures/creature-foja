@@ -24,10 +24,10 @@
 				{{else}}
 					<span class="file tw-flex-1">{{.Filename}}</span>
 				{{end}}
-				<a role="button" class="ui basic tiny button" rel="nofollow" href="{{$repo.Link}}/src/{{if $.CodeIndexerDisabled}}branch{{else}}commit{{end}}/{{$result.CommitID | PathEscape}}/{{.Filename | PathEscapeSegments}}">{{ctx.Locale.Tr "repo.diff.view_file"}}</a>
+				<a role="button" class="ui basic tiny button" rel="nofollow" href="{{$repo.Link}}/src/commit/{{$result.CommitID | PathEscape}}/{{.Filename | PathEscapeSegments}}">{{ctx.Locale.Tr "repo.diff.view_file"}}</a>
 			</h4>
 			<div class="ui attached table segment">
-				{{template "shared/searchfile" dict "RepoLink" $repo.Link "CodeIndexerDisabled" $.CodeIndexerDisabled "SearchResult" .}}
+				{{template "shared/searchfile" dict "RepoLink" $repo.Link "SearchResult" .}}
 			</div>
 			{{template "shared/searchbottom" dict "root" $ "result" .}}
 		</div>
