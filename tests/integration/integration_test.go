@@ -621,7 +621,7 @@ func VerifyJSONSchema(t testing.TB, resp *httptest.ResponseRecorder, schemaFile 
 	schema, err := jsonschema.Compile(schemaFilePath)
 	assert.NoError(t, err)
 
-	var data interface{}
+	var data any
 	err = json.Unmarshal(resp.Body.Bytes(), &data)
 	assert.NoError(t, err)
 
