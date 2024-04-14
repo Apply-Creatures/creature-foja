@@ -1562,6 +1562,7 @@ table th[data-sortt-desc] .svg {
   align-items: center;
   gap: .25rem;
   vertical-align: middle;
+  min-width: 0;
 }
 
 .ui.ui.button {
@@ -1582,4 +1583,5 @@ table th[data-sortt-desc] .svg {
   display: flex;
   align-items: center;
   gap: .25rem;
+  min-width: 0;
 }
