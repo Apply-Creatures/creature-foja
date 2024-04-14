@@ -520,7 +520,7 @@ func handleSchedules(
 			RepoID:        input.Repo.ID,
 			OwnerID:       input.Repo.OwnerID,
 			WorkflowID:    dwf.EntryName,
-			TriggerUserID: input.Doer.ID,
+			TriggerUserID: user_model.ActionsUserID,
 			Ref:           input.Repo.DefaultBranch,
 			CommitSHA:     commit.ID.String(),
 			Event:         input.Event,
