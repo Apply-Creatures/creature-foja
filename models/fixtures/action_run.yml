@@ -413,3 +413,23 @@
       },
       "total_commits": 0
     }
+-
+  id: 891
+  title: "update actions"
+  repo_id: 1
+  owner_id: 1
+  workflow_id: "artifact.yaml"
+  index: 187
+  trigger_user_id: 1
+  ref: "refs/heads/branch2"
+  commit_sha: "985f0301dba5e7b34be866819cd15ad3d8f508ee"
+  event: "push"
+  is_fork_pull_request: 0
+  status: 1 # success
+  started: 1683636528
+  stopped: 1683636626
+  created: 1683636108
+  updated: 1683636626
+  need_approval: 0
+  approved_by: 0
+  event_payload: '{"head_commit":{"id":"5f22f7d0d95d614d25a5b68592adb345a4b5c7fd"}}'
