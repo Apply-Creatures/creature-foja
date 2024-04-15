@@ -18,6 +18,7 @@ import (
 	"code.gitea.io/gitea/modules/auth/password"
 	"code.gitea.io/gitea/modules/base"
 	"code.gitea.io/gitea/modules/eventsource"
+	"code.gitea.io/gitea/modules/httplib"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/modules/session"
@@ -26,7 +27,6 @@ import (
 	"code.gitea.io/gitea/modules/util"
 	"code.gitea.io/gitea/modules/web"
 	"code.gitea.io/gitea/modules/web/middleware"
-	"code.gitea.io/gitea/routers/utils"
 	auth_service "code.gitea.io/gitea/services/auth"
 	"code.gitea.io/gitea/services/auth/source/oauth2"
 	"code.gitea.io/gitea/services/context"
@@ -372,16 +372,15 @@ func handleSignInFull(ctx *context.Context, u *user_model.User, remember, obeyRe
 		return setting.AppSubURL + "/"
 	}
 
-	if redirectTo := ctx.GetSiteCookie("redirect_to"); len(redirectTo) > 0 && !utils.IsExternalURL(redirectTo) {
+	redirectTo := ctx.GetSiteCookie("redirect_to")
+	if redirectTo != "" {
 		middleware.DeleteRedirectToCookie(ctx.Resp)
-		if obeyRedirect {
-			ctx.RedirectToFirst(redirectTo)
-		}
-		return redirectTo
 	}
-
 	if obeyRedirect {
-		ctx.Redirect(setting.AppSubURL + "/")
+		return ctx.RedirectToFirst(redirectTo)
+	}
+	if !httplib.IsRiskyRedirectURL(redirectTo) {
+		return redirectTo
 	}
 	return setting.AppSubURL + "/"
 }

@@ -44,8 +44,10 @@ func RedirectToUser(ctx *Base, userName string, redirectUserID int64) {
 	ctx.Redirect(path.Join(setting.AppSubURL, redirectPath), http.StatusTemporaryRedirect)
 }
 
-// RedirectToFirst redirects to first not empty URL
-func (ctx *Context) RedirectToFirst(location ...string) {
+// RedirectToFirst redirects to first not empty URL which likely belongs to current site.
+// If no suitable redirection is found, it redirects to the home.
+// It returns the location it redirected to.
+func (ctx *Context) RedirectToFirst(location ...string) string {
 	for _, loc := range location {
 		if len(loc) == 0 {
 			continue
@@ -56,10 +58,11 @@ func (ctx *Context) RedirectToFirst(location ...string) {
 		}
 
 		ctx.Redirect(loc)
-		return
+		return loc
 	}
 
 	ctx.Redirect(setting.AppSubURL + "/")
+	return setting.AppSubURL + "/"
 }
 
 const tplStatus500 base.TplName = "status/500"
