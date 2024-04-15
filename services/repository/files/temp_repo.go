@@ -136,12 +136,19 @@ func (t *TemporaryUploadRepository) LsFiles(filenames ...string) ([]string, erro
 
 // RemoveFilesFromIndex removes the given files from the index
 func (t *TemporaryUploadRepository) RemoveFilesFromIndex(filenames ...string) error {
+	objectFormat, err := t.gitRepo.GetObjectFormat()
+	if err != nil {
+		return err
+	}
+
 	stdOut := new(bytes.Buffer)
 	stdErr := new(bytes.Buffer)
 	stdIn := new(bytes.Buffer)
 	for _, file := range filenames {
 		if file != "" {
-			stdIn.WriteString("0 0000000000000000000000000000000000000000\t")
+			stdIn.WriteString("0 ")
+			stdIn.WriteString(objectFormat.EmptyObjectID().String())
+			stdIn.WriteByte('\t')
 			stdIn.WriteString(file)
 			stdIn.WriteByte('\000')
 		}
