@@ -54,3 +54,4 @@ jobs:
           auth: ${{ secrets.BACKPORT_TOKEN }}
           pull-request: ${{ github.event.pull_request.url }}
           auto-no-squash: true
+          enable-err-notification: true
