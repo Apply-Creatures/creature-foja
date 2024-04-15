@@ -219,7 +219,7 @@ type UpdateProfileForm struct {
 	Website             string `binding:"ValidSiteUrl;MaxSize(255)"`
 	Location            string `binding:"MaxSize(50)"`
 	Pronouns            string `binding:"MaxSize(50)"`
-	Description         string `binding:"MaxSize(255)"`
+	Biography           string `binding:"MaxSize(255)"`
 	Visibility          structs.VisibleType
 	KeepActivityPrivate bool
 }
