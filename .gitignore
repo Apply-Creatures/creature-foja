@@ -101,6 +101,9 @@ cpu.out
 /.go-licenses
 /.cur-deadcode-out
 
+# Files and folders that were previously generated
+/public/assets/img/webpack
+
 # Snapcraft
 /gitea_a*.txt
 snap/.snapcraft/

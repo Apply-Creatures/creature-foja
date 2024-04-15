@@ -27,7 +27,7 @@ func GenerateActionsRunnerToken(ctx *context.PrivateContext) {
 	defer rd.Close()
 
 	if err := json.NewDecoder(rd).Decode(&genRequest); err != nil {
-		log.Error("%v", err)
+		log.Error("JSON Decode failed: %v", err)
 		ctx.JSON(http.StatusInternalServerError, private.Response{
 			Err: err.Error(),
 		})
@@ -36,7 +36,7 @@ func GenerateActionsRunnerToken(ctx *context.PrivateContext) {
 
 	owner, repo, err := parseScope(ctx, genRequest.Scope)
 	if err != nil {
-		log.Error("%v", err)
+		log.Error("parseScope failed: %v", err)
 		ctx.JSON(http.StatusInternalServerError, private.Response{
 			Err: err.Error(),
 		})
@@ -46,18 +46,18 @@ func GenerateActionsRunnerToken(ctx *context.PrivateContext) {
 	if errors.Is(err, util.ErrNotExist) || (token != nil && !token.IsActive) {
 		token, err = actions_model.NewRunnerToken(ctx, owner, repo)
 		if err != nil {
-			err := fmt.Sprintf("error while creating runner token: %v", err)
-			log.Error("%v", err)
+			errMsg := fmt.Sprintf("error while creating runner token: %v", err)
+			log.Error("NewRunnerToken failed: %v", errMsg)
 			ctx.JSON(http.StatusInternalServerError, private.Response{
-				Err: err,
+				Err: errMsg,
 			})
 			return
 		}
 	} else if err != nil {
-		err := fmt.Sprintf("could not get unactivated runner token: %v", err)
-		log.Error("%v", err)
+		errMsg := fmt.Sprintf("could not get unactivated runner token: %v", err)
+		log.Error("GetLatestRunnerToken failed: %v", errMsg)
 		ctx.JSON(http.StatusInternalServerError, private.Response{
-			Err: err,
+			Err: errMsg,
 		})
 		return
 	}

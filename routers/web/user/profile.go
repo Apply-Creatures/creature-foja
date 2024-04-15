@@ -376,7 +376,7 @@ func Action(ctx *context.Context) {
 	}
 
 	if redirectViaJSON {
-		ctx.JSON(http.StatusOK, map[string]interface{}{
+		ctx.JSON(http.StatusOK, map[string]any{
 			"redirect": ctx.ContextUser.HomeLink(),
 		})
 		return

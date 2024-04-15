@@ -213,6 +213,14 @@ func ToPointer[T any](val T) *T {
 	return &val
 }
 
+// Iif is an "inline-if", it returns "trueVal" if "condition" is true, otherwise "falseVal"
+func Iif[T any](condition bool, trueVal, falseVal T) T {
+	if condition {
+		return trueVal
+	}
+	return falseVal
+}
+
 func ReserveLineBreakForTextarea(input string) string {
 	// Since the content is from a form which is a textarea, the line endings are \r\n.
 	// It's a standard behavior of HTML.
