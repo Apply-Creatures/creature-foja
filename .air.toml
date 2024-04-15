@@ -15,8 +15,11 @@ exclude_dir = [
   "modules/avatar/testdata",
   "modules/git/tests",
   "modules/migration/file_format_testdata",
+  "modules/markup/tests/repo/repo1_filepreview",
   "routers/private/tests",
   "services/gitdiff/testdata",
+  "services/migrations/testdata",
+  "services/webhook/sourcehut/testdata",
 ]
 exclude_regex = ["_test.go$", "_gen.go$"]
 stop_on_error = true
