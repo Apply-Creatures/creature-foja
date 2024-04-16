@@ -187,6 +187,19 @@ func TestEditFileToNewBranch(t *testing.T) {
 	})
 }
 
+func TestEditorAddTranslation(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	session := loginUser(t, "user2")
+	req := NewRequest(t, "GET", "/user2/repo1/_new/master")
+	resp := session.MakeRequest(t, req, http.StatusOK)
+	htmlDoc := NewHTMLParser(t, resp.Body)
+
+	placeholder, ok := htmlDoc.Find("input[name='commit_summary']").Attr("placeholder")
+	assert.True(t, ok)
+	assert.EqualValues(t, `Add "<filename>"`, placeholder)
+}
+
 func TestCommitMail(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, _ *url.URL) {
 		user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
