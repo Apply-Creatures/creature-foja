@@ -159,7 +159,7 @@ jobs:
 
       - name: build container & release
         if: ${{ secrets.TOKEN != '' }}
-        uses: https://code.forgejo.org/forgejo/forgejo-build-publish/build@v5
+        uses: https://code.forgejo.org/forgejo/forgejo-build-publish/build@v5.1
         with:
           forgejo: "${{ env.GITHUB_SERVER_URL }}"
           owner: "${{ env.GITHUB_REPOSITORY_OWNER }}"
@@ -173,11 +173,12 @@ jobs:
           binary-name: forgejo
           binary-path: /app/gitea/gitea
           override: "${{ steps.release-info.outputs.override }}"
+          verify-labels: "maintainer=contact@forgejo.org,org.opencontainers.image.version=${{ steps.release-info.outputs.version }}"
           verbose: ${{ vars.VERBOSE || secrets.VERBOSE || 'false' }}
 
       - name: build rootless container
         if: ${{ secrets.TOKEN != '' }}
-        uses: https://code.forgejo.org/forgejo/forgejo-build-publish/build@v5
+        uses: https://code.forgejo.org/forgejo/forgejo-build-publish/build@v5.1
         with:
           forgejo: "${{ env.GITHUB_SERVER_URL }}"
           owner: "${{ env.GITHUB_REPOSITORY_OWNER }}"
@@ -190,6 +191,7 @@ jobs:
           suffix: -rootless
           dockerfile: Dockerfile.rootless
           override: "${{ steps.release-info.outputs.override }}"
+          verify-labels: "maintainer=contact@forgejo.org,org.opencontainers.image.version=${{ steps.release-info.outputs.version }}"
           verbose: ${{ vars.VERBOSE || secrets.VERBOSE || 'false' }}
 
       - name: end-to-end tests
