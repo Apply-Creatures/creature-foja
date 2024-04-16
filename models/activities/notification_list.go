@@ -196,12 +196,10 @@ func (nl NotificationList) LoadAttributes(ctx context.Context) error {
 	return nil
 }
 
+// getPendingRepoIDs returns all the repositoty ids which haven't been loaded
 func (nl NotificationList) getPendingRepoIDs() []int64 {
 	return container.FilterSlice(nl, func(n *Notification) (int64, bool) {
-		if n.Repository != nil {
-			return 0, false
-		}
-		return n.RepoID, true
+		return n.RepoID, n.Repository == nil
 	})
 }
 
