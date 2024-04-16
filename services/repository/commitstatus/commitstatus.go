@@ -187,7 +187,7 @@ func FindReposLastestCommitStatuses(ctx context.Context, repos []*repo_model.Rep
 	for i, repo := range repos {
 		if results[i] == nil {
 			results[i] = git_model.CalcCommitStatus(repoToItsLatestCommitStatuses[repo.ID])
-			if results[i] != nil {
+			if results[i] != nil && results[i].State != "" {
 				if err := updateCommitStatusCache(repo.ID, repo.DefaultBranch, results[i].State, results[i].TargetURL); err != nil {
 					log.Error("updateCommitStatusCache[%d:%s] failed: %v", repo.ID, repo.DefaultBranch, err)
 				}
