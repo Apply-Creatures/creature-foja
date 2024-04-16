@@ -196,15 +196,11 @@ func (nl NotificationList) LoadAttributes(ctx context.Context) error {
 	return nil
 }
 
+// getPendingRepoIDs returns all the repositoty ids which haven't been loaded
 func (nl NotificationList) getPendingRepoIDs() []int64 {
-	ids := make(container.Set[int64], len(nl))
-	for _, notification := range nl {
-		if notification.Repository != nil {
-			continue
-		}
-		ids.Add(notification.RepoID)
-	}
-	return ids.Values()
+	return container.FilterSlice(nl, func(n *Notification) (int64, bool) {
+		return n.RepoID, n.Repository == nil
+	})
 }
 
 // LoadRepos loads repositories from database
