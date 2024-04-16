@@ -21,15 +21,16 @@ type IssueList []*Issue
 
 // get the repo IDs to be loaded later, these IDs are for issue.Repo and issue.PullRequest.HeadRepo
 func (issues IssueList) getRepoIDs() []int64 {
-	return container.FilterSlice(issues, func(issue *Issue) (int64, bool) {
+	repoIDs := make(container.Set[int64], len(issues))
+	for _, issue := range issues {
 		if issue.Repo == nil {
-			return issue.RepoID, true
+			repoIDs.Add(issue.RepoID)
 		}
 		if issue.PullRequest != nil && issue.PullRequest.HeadRepo == nil {
-			return issue.PullRequest.HeadRepoID, true
+			repoIDs.Add(issue.PullRequest.HeadRepoID)
 		}
-		return 0, false
-	})
+	}
+	return repoIDs.Values()
 }
 
 // LoadRepositories loads issues' all repositories
