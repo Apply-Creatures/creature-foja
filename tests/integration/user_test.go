@@ -495,9 +495,7 @@ func TestUserPronouns(t *testing.T) {
 			// Set the pronouns for user2
 			pronouns := "she/her"
 			req := NewRequestWithJSON(t, "PATCH", "/api/v1/admin/users/user2", &api.EditUserOption{
-				LoginName: "user2",
-				SourceID:  0,
-				Pronouns:  &pronouns,
+				Pronouns: &pronouns,
 			}).AddTokenAuth(adminToken)
 			resp := MakeRequest(t, req, http.StatusOK)
 
@@ -596,9 +594,7 @@ func TestUserPronouns(t *testing.T) {
 		// Set the pronouns to Unspecified (an empty string) via the API
 		pronouns := ""
 		req := NewRequestWithJSON(t, "PATCH", "/api/v1/admin/users/user2", &api.EditUserOption{
-			LoginName: "user2",
-			SourceID:  0,
-			Pronouns:  &pronouns,
+			Pronouns: &pronouns,
 		}).AddTokenAuth(adminToken)
 		MakeRequest(t, req, http.StatusOK)
 

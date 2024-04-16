@@ -196,19 +196,13 @@ func TestAPIEditUser(t *testing.T) {
 	urlStr := fmt.Sprintf("/api/v1/admin/users/%s", "user2")
 
 	req := NewRequestWithValues(t, "PATCH", urlStr, map[string]string{
-		// required
-		"login_name": "user2",
-		"source_id":  "0",
-		// to change
 		"full_name": "Full Name User 2",
 	}).AddTokenAuth(token)
 	MakeRequest(t, req, http.StatusOK)
 
 	empty := ""
 	req = NewRequestWithJSON(t, "PATCH", urlStr, api.EditUserOption{
-		LoginName: "user2",
-		SourceID:  0,
-		Email:     &empty,
+		Email: &empty,
 	}).AddTokenAuth(token)
 	resp := MakeRequest(t, req, http.StatusBadRequest)
 
@@ -220,15 +214,50 @@ func TestAPIEditUser(t *testing.T) {
 	assert.False(t, user2.IsRestricted)
 	bTrue := true
 	req = NewRequestWithJSON(t, "PATCH", urlStr, api.EditUserOption{
-		// required
-		LoginName: "user2",
-		SourceID:  0,
-		// to change
 		Restricted: &bTrue,
 	}).AddTokenAuth(token)
 	MakeRequest(t, req, http.StatusOK)
 	user2 = unittest.AssertExistsAndLoadBean(t, &user_model.User{LoginName: "user2"})
 	assert.True(t, user2.IsRestricted)
+}
+
+func TestAPIEditUserWithLoginName(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	adminUsername := "user1"
+	token := getUserToken(t, adminUsername, auth_model.AccessTokenScopeWriteAdmin)
+	urlStr := fmt.Sprintf("/api/v1/admin/users/%s", "user2")
+
+	loginName := "user2"
+	loginSource := int64(0)
+
+	t.Run("login_name only", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequestWithJSON(t, "PATCH", urlStr, api.EditUserOption{
+			LoginName: &loginName,
+		}).AddTokenAuth(token)
+		MakeRequest(t, req, http.StatusUnprocessableEntity)
+	})
+
+	t.Run("source_id only", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequestWithJSON(t, "PATCH", urlStr, api.EditUserOption{
+			SourceID: &loginSource,
+		}).AddTokenAuth(token)
+		MakeRequest(t, req, http.StatusUnprocessableEntity)
+	})
+
+	t.Run("login_name & source_id", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		req := NewRequestWithJSON(t, "PATCH", urlStr, api.EditUserOption{
+			LoginName: &loginName,
+			SourceID:  &loginSource,
+		}).AddTokenAuth(token)
+		MakeRequest(t, req, http.StatusOK)
+	})
 }
 
 func TestAPICreateRepoForUser(t *testing.T) {
@@ -375,18 +404,14 @@ func TestAPIEditUser_NotAllowedEmailDomain(t *testing.T) {
 
 	newEmail := "user2@example1.com"
 	req := NewRequestWithJSON(t, "PATCH", urlStr, api.EditUserOption{
-		LoginName: "user2",
-		SourceID:  0,
-		Email:     &newEmail,
+		Email: &newEmail,
 	}).AddTokenAuth(token)
 	resp := MakeRequest(t, req, http.StatusOK)
 	assert.Equal(t, "the domain of user email user2@example1.com conflicts with EMAIL_DOMAIN_ALLOWLIST or EMAIL_DOMAIN_BLOCKLIST", resp.Header().Get("X-Gitea-Warning"))
 
 	originalEmail := "user2@example.com"
 	req = NewRequestWithJSON(t, "PATCH", urlStr, api.EditUserOption{
-		LoginName: "user2",
-		SourceID:  0,
-		Email:     &originalEmail,
+		Email: &originalEmail,
 	}).AddTokenAuth(token)
 	MakeRequest(t, req, http.StatusOK)
 }

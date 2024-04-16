@@ -192,9 +192,17 @@ func EditUser(ctx *context.APIContext) {
 
 	form := web.GetForm(ctx).(*api.EditUserOption)
 
+	// If either LoginSource or LoginName is given, the other must be present too.
+	if form.SourceID != nil || form.LoginName != nil {
+		if form.SourceID == nil || form.LoginName == nil {
+			ctx.Error(http.StatusUnprocessableEntity, "LoginSourceAndLoginName", fmt.Errorf("source_id and login_name must be specified together"))
+			return
+		}
+	}
+
 	authOpts := &user_service.UpdateAuthOptions{
-		LoginSource:        optional.FromNonDefault(form.SourceID),
-		LoginName:          optional.Some(form.LoginName),
+		LoginSource:        optional.FromPtr(form.SourceID),
+		LoginName:          optional.FromPtr(form.LoginName),
 		Password:           optional.FromNonDefault(form.Password),
 		MustChangePassword: optional.FromPtr(form.MustChangePassword),
 		ProhibitLogin:      optional.FromPtr(form.ProhibitLogin),
