@@ -20835,6 +20835,11 @@
         "external_wiki": {
           "$ref": "#/definitions/ExternalWiki"
         },
+        "globally_editable_wiki": {
+          "description": "set the globally editable state of the wiki",
+          "type": "boolean",
+          "x-go-name": "GloballyEditableWiki"
+        },
         "has_actions": {
           "description": "either `true` to enable actions unit, or `false` to disable them.",
           "type": "boolean",
@@ -23748,6 +23753,10 @@
         "full_name": {
           "type": "string",
           "x-go-name": "FullName"
+        },
+        "globally_editable_wiki": {
+          "type": "boolean",
+          "x-go-name": "GloballyEditableWiki"
         },
         "has_actions": {
           "type": "boolean",

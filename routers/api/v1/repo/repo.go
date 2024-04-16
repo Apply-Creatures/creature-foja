@@ -845,6 +845,15 @@ func updateRepoUnits(ctx *context.APIContext, opts api.EditRepoOption) error {
 		newHasWiki = *opts.HasWiki
 	}
 	if currHasWiki || newHasWiki {
+		wikiPermissions := repo.MustGetUnit(ctx, unit_model.TypeWiki).DefaultPermissions
+		if opts.GloballyEditableWiki != nil {
+			if *opts.GloballyEditableWiki {
+				wikiPermissions = repo_model.UnitAccessModeWrite
+			} else {
+				wikiPermissions = repo_model.UnitAccessModeRead
+			}
+		}
+
 		if newHasWiki && opts.ExternalWiki != nil && !unit_model.TypeExternalWiki.UnitGlobalDisabled() {
 			// Check that values are valid
 			if !validation.IsValidExternalURL(opts.ExternalWiki.ExternalWikiURL) {
@@ -864,9 +873,10 @@ func updateRepoUnits(ctx *context.APIContext, opts api.EditRepoOption) error {
 		} else if newHasWiki && opts.ExternalWiki == nil && !unit_model.TypeWiki.UnitGlobalDisabled() {
 			config := &repo_model.UnitConfig{}
 			units = append(units, repo_model.RepoUnit{
-				RepoID: repo.ID,
-				Type:   unit_model.TypeWiki,
-				Config: config,
+				RepoID:             repo.ID,
+				Type:               unit_model.TypeWiki,
+				Config:             config,
+				DefaultPermissions: wikiPermissions,
 			})
 			deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeExternalWiki)
 		} else if !newHasWiki {
@@ -876,6 +886,14 @@ func updateRepoUnits(ctx *context.APIContext, opts api.EditRepoOption) error {
 			if !unit_model.TypeWiki.UnitGlobalDisabled() {
 				deleteUnitTypes = append(deleteUnitTypes, unit_model.TypeWiki)
 			}
+		} else if *opts.GloballyEditableWiki {
+			config := &repo_model.UnitConfig{}
+			units = append(units, repo_model.RepoUnit{
+				RepoID:             repo.ID,
+				Type:               unit_model.TypeWiki,
+				Config:             config,
+				DefaultPermissions: wikiPermissions,
+			})
 		}
 	}
 

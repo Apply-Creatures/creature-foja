@@ -77,9 +77,13 @@ func innerToRepo(ctx context.Context, repo *repo_model.Repository, permissionInR
 		}
 	}
 	hasWiki := false
+	globallyEditableWiki := false
 	var externalWiki *api.ExternalWiki
-	if _, err := repo.GetUnit(ctx, unit_model.TypeWiki); err == nil {
+	if wikiUnit, err := repo.GetUnit(ctx, unit_model.TypeWiki); err == nil {
 		hasWiki = true
+		if wikiUnit.DefaultPermissions == repo_model.UnitAccessModeWrite {
+			globallyEditableWiki = true
+		}
 	} else if unit, err := repo.GetUnit(ctx, unit_model.TypeExternalWiki); err == nil {
 		hasWiki = true
 		config := unit.ExternalWikiConfig()
@@ -211,6 +215,7 @@ func innerToRepo(ctx context.Context, repo *repo_model.Repository, permissionInR
 		InternalTracker:               internalTracker,
 		HasWiki:                       hasWiki,
 		WikiBranch:                    repo.WikiBranch,
+		GloballyEditableWiki:          globallyEditableWiki,
 		HasProjects:                   hasProjects,
 		HasReleases:                   hasReleases,
 		HasPackages:                   hasPackages,
