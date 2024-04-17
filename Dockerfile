@@ -52,7 +52,16 @@ RUN chmod 755 /tmp/local/usr/bin/entrypoint \
 RUN chmod 644 /go/src/code.gitea.io/gitea/contrib/autocompletion/bash_autocomplete
 
 FROM docker.io/library/alpine:3.19
-LABEL maintainer="contact@forgejo.org"
+LABEL maintainer="contact@forgejo.org" \
+      org.opencontainers.image.authors="Forgejo" \
+      org.opencontainers.image.url="https://forgejo.org" \
+      org.opencontainers.image.documentation="https://forgejo.org/download/#container-image" \
+      org.opencontainers.image.source="https://codeberg.org/forgejo/forgejo" \
+      org.opencontainers.image.version="${RELEASE_VERSION}" \
+      org.opencontainers.image.vendor="Forgejo" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.title="Forgejo. Beyond coding. We forge." \
+      org.opencontainers.image.description="Forgejo is a self-hosted lightweight software forge. Easy to install and low maintenance, it just does the job."
 
 EXPOSE 22 3000
 
