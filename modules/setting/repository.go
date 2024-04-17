@@ -162,7 +162,7 @@ var (
 		PreferredLicenses:                       []string{"Apache-2.0", "MIT"},
 		DisableHTTPGit:                          false,
 		AccessControlAllowOrigin:                "",
-		UseCompatSSHURI:                         false,
+		UseCompatSSHURI:                         true,
 		DefaultCloseIssuesViaCommitsInAnyBranch: false,
 		EnablePushCreateUser:                    false,
 		EnablePushCreateOrg:                     false,
