@@ -13,5 +13,5 @@
 		<label for="icon_url">{{ctx.Locale.Tr "repo.settings.discord_icon_url"}}</label>
 		<input id="icon_url" name="icon_url" value="{{.HookMetadata.IconURL}}" placeholder="https://example.com/assets/img/logo.svg">
 	</div>
-	{{template "repo/settings/webhook/settings" .}}
+	{{template "webhook/shared-settings" .}}
 </form>

@@ -2,12 +2,12 @@
 <form class="ui form" action="{{.BaseLink}}/{{or .Webhook.ID "sourcehut_builds/new"}}" method="post">
 	{{.CsrfTokenHtml}}
 	<div class="required field {{if .Err_PayloadURL}}error{{end}}">
-		<label for="payload_url">{{ctx.Locale.Tr "repo.settings.sourcehut_builds.graphql_url"}}</label>
-		<input id="payload_url" name="payload_url" type="url" value="{{.Webhook.URL}}" autofocus required>
+		<label for="payload_url">{{ctx.Locale.Tr "repo.settings.graphql_url"}}</label>
+		<input id="payload_url" name="payload_url" type="url" value="{{or .Webhook.URL "https://builds.sr.ht/query"}}" autofocus required>
 	</div>
 	<div class="required field {{if .Err_ManifestPath}}error{{end}}">
 		<label for="manifest_path">{{ctx.Locale.Tr "repo.settings.sourcehut_builds.manifest_path"}}</label>
-		<input id="manifest_path" name="manifest_path" type="text" value="{{.HookMetadata.ManifestPath}}" required>
+		<input id="manifest_path" name="manifest_path" type="text" value="{{or .HookMetadata.ManifestPath ".build.yml"}}" required>
 	</div>
 	<div class="field">
 		<label>{{ctx.Locale.Tr "repo.settings.sourcehut_builds.visibility"}}</label>
@@ -29,5 +29,11 @@
 			<span class="help">{{ctx.Locale.Tr "repo.settings.sourcehut_builds.secrets_helper"}}</span>
 		</div>
 	</div>
-	{{template "repo/settings/webhook/settings" .}}
+	<!-- Access Token -->
+	<div class="field required {{if .Err_AccessToken}}error{{end}}">
+		<label for="access_token">{{ctx.Locale.Tr "form.AccessToken"}}</label>
+		<input id="access_token" name="access_token" type="password" value="{{.Webhook.HeaderAuthorizationTrimPrefix "Bearer "}}" required>
+		<span class="help">{{ctx.Locale.Tr "repo.settings.sourcehut_builds.access_token_helper" "https://meta.sr.ht/oauth2/personal-token?grants=builds.sr.ht/JOBS:RW" "https://meta.sr.ht/oauth2/personal-token?grants=builds.sr.ht/JOBS:RW+builds.sr.ht/SECRETS:RO"}}</span>
+	</div>
+	{{template "webhook/shared-settings" .}}
 </form>

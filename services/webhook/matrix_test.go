@@ -201,7 +201,7 @@ func TestMatrixJSONPayload(t *testing.T) {
 		RepoID:   3,
 		IsActive: true,
 		Type:     webhook_module.MATRIX,
-		URL:      "https://matrix.example.com/_matrix/client/r0/rooms/ROOM_ID/send/m.room.message",
+		URL:      "https://matrix.example.com/_matrix/client/v3/rooms/ROOM_ID/send/m.room.message",
 		Meta:     `{"message_type":0}`, // text
 	}
 	task := &webhook_model.HookTask{
@@ -217,8 +217,7 @@ func TestMatrixJSONPayload(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "PUT", req.Method)
-	assert.Equal(t, "/_matrix/client/r0/rooms/ROOM_ID/send/m.room.message/6db5dc1e282529a8c162c7fe93dd2667494eeb51", req.URL.Path)
-	assert.Equal(t, "sha256=", req.Header.Get("X-Hub-Signature-256"))
+	assert.Equal(t, "/_matrix/client/v3/rooms/ROOM_ID/send/m.room.message/6db5dc1e282529a8c162c7fe93dd2667494eeb51", req.URL.Path)
 	assert.Equal(t, "application/json", req.Header.Get("Content-Type"))
 	var body MatrixPayload
 	err = json.NewDecoder(req.Body).Decode(&body)

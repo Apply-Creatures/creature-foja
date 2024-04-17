@@ -22,5 +22,5 @@
 		<label for="color">{{ctx.Locale.Tr "repo.settings.slack_color"}}</label>
 		<input id="color" name="color" value="{{.HookMetadata.Color}}" placeholder="#dd4b39, good, warning, danger">
 	</div>
-	{{template "repo/settings/webhook/settings" .}}
+	{{template "webhook/shared-settings" .}}
 </form>

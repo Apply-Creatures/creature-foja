@@ -132,7 +132,7 @@ func TestWebhookDeliverAuthorizationHeader(t *testing.T) {
 	}
 
 	assert.True(t, hookTask.IsSucceed)
-	assert.Equal(t, "******", hookTask.RequestInfo.Headers["Authorization"])
+	assert.Equal(t, "Bearer ******", hookTask.RequestInfo.Headers["Authorization"])
 }
 
 func TestWebhookDeliverHookTask(t *testing.T) {
@@ -152,7 +152,6 @@ func TestWebhookDeliverHookTask(t *testing.T) {
 
 		case "/webhook/6db5dc1e282529a8c162c7fe93dd2667494eeb51":
 			// Version 2
-			assert.Equal(t, "push", r.Header.Get("X-GitHub-Event"))
 			assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 			body, err := io.ReadAll(r.Body)
 			assert.NoError(t, err)

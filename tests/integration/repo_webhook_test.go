@@ -227,19 +227,19 @@ func TestWebhookForms(t *testing.T) {
 	}))
 
 	t.Run("matrix/required", testWebhookForms("matrix", session, map[string]string{
-		"homeserver_url":       "https://matrix.example.com",
-		"room_id":              "123",
-		"authorization_header": "Bearer 123456",
+		"homeserver_url": "https://matrix.example.com",
+		"access_token":   "123456",
+		"room_id":        "123",
 	}, map[string]string{
-		"authorization_header": "",
+		"access_token": "",
 	}))
 	t.Run("matrix/optional", testWebhookForms("matrix", session, map[string]string{
 		"homeserver_url": "https://matrix.example.com",
+		"access_token":   "123456",
 		"room_id":        "123",
 		"message_type":   "1", // m.text
 
-		"branch_filter":        "matrix/*",
-		"authorization_header": "Bearer 123456",
+		"branch_filter": "matrix/*",
 	}))
 
 	t.Run("wechatwork/required", testWebhookForms("wechatwork", session, map[string]string{
@@ -267,14 +267,12 @@ func TestWebhookForms(t *testing.T) {
 	}))
 
 	t.Run("sourcehut_builds/required", testWebhookForms("sourcehut_builds", session, map[string]string{
-		"payload_url":          "https://sourcehut_builds.example.com",
-		"manifest_path":        ".build.yml",
-		"visibility":           "PRIVATE",
-		"authorization_header": "Bearer 123456",
+		"payload_url":   "https://sourcehut_builds.example.com",
+		"manifest_path": ".build.yml",
+		"visibility":    "PRIVATE",
+		"access_token":  "123456",
 	}, map[string]string{
-		"authorization_header": "",
-	}, map[string]string{
-		"authorization_header": "token ",
+		"access_token": "",
 	}, map[string]string{
 		"manifest_path": "",
 	}, map[string]string{
@@ -289,9 +287,9 @@ func TestWebhookForms(t *testing.T) {
 		"manifest_path": ".build.yml",
 		"visibility":    "PRIVATE",
 		"secrets":       "on",
+		"access_token":  "123456",
 
-		"branch_filter":        "srht/*",
-		"authorization_header": "Bearer 123456",
+		"branch_filter": "srht/*",
 	}))
 }
 

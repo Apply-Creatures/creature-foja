@@ -13,5 +13,5 @@
 		<label for="package_url">{{ctx.Locale.Tr "repo.settings.packagist_package_url"}}</label>
 		<input id="package_url" name="package_url" value="{{.HookMetadata.PackageURL}}" placeholder="https://packagist.org/packages/laravel/framework" required>
 	</div>
-	{{template "repo/settings/webhook/settings" .}}
+	{{template "webhook/shared-settings" .}}
 </form>
