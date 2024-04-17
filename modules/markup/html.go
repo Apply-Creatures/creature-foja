@@ -1063,19 +1063,20 @@ func filePreviewPatternProcessor(ctx *RenderContext, node *html.Node) {
 		return
 	}
 
+	locale := translation.NewLocale("en-US")
+	if ctx.Ctx != nil {
+		ctxLocale, ok := ctx.Ctx.Value(translation.ContextKey).(translation.Locale)
+		if ok {
+			locale = ctxLocale
+		}
+	}
+
 	next := node.NextSibling
 	for node != nil && node != next {
-		locale := translation.NewLocale("en-US")
-		if ctx.Ctx != nil {
-			ctxLocale, ok := ctx.Ctx.Value(translation.ContextKey).(translation.Locale)
-			if ok {
-				locale = ctxLocale
-			}
-		}
-
 		preview := NewFilePreview(ctx, node, locale)
 		if preview == nil {
-			return
+			node = node.NextSibling
+			continue
 		}
 
 		previewNode := preview.CreateHTML(locale)

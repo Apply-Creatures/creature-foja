@@ -56,11 +56,11 @@ func NewFilePreview(ctx *RenderContext, node *html.Node, locale translation.Loca
 	urlFull := node.Data[m[0]:m[1]]
 
 	// Ensure that we only use links to local repositories
-	if !strings.HasPrefix(urlFull, setting.AppURL+setting.AppSubURL) {
+	if !strings.HasPrefix(urlFull, setting.AppURL) {
 		return nil
 	}
 
-	projPath := strings.TrimSuffix(node.Data[m[2]:m[3]], "/")
+	projPath := strings.TrimPrefix(strings.TrimSuffix(node.Data[m[0]:m[3]], "/"), setting.AppURL)
 
 	commitSha := node.Data[m[4]:m[5]]
 	filePath := node.Data[m[6]:m[7]]
@@ -70,6 +70,10 @@ func NewFilePreview(ctx *RenderContext, node *html.Node, locale translation.Loca
 	preview.end = m[1]
 
 	projPathSegments := strings.Split(projPath, "/")
+	if len(projPathSegments) != 2 {
+		return nil
+	}
+
 	ownerName := projPathSegments[len(projPathSegments)-2]
 	repoName := projPathSegments[len(projPathSegments)-1]
 
