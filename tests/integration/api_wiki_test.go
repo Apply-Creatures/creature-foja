@@ -15,6 +15,7 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	unit_model "code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/models/unittest"
+	user_model "code.gitea.io/gitea/models/user"
 	api "code.gitea.io/gitea/modules/structs"
 	repo_service "code.gitea.io/gitea/services/repository"
 	"code.gitea.io/gitea/tests"
@@ -284,6 +285,63 @@ func TestAPIEditOtherWikiPage(t *testing.T) {
 
 	// Creating a new Wiki page on user2's repo works now
 	testCreateWiki(http.StatusCreated)
+}
+
+func TestAPISetWikiGlobalEditability(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: "user2"})
+	session := loginUser(t, user.Name)
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository)
+
+	// Create a new repository for testing purposes
+	repo, _, f := CreateDeclarativeRepo(t, user, "", []unit_model.Type{
+		unit_model.TypeCode,
+		unit_model.TypeWiki,
+	}, nil, nil)
+	defer f()
+	urlStr := fmt.Sprintf("/api/v1/repos/%s", repo.FullName())
+
+	assertGlobalEditability := func(t *testing.T, editability bool) {
+		t.Helper()
+
+		req := NewRequest(t, "GET", urlStr)
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		var opts api.Repository
+		DecodeJSON(t, resp, &opts)
+
+		assert.Equal(t, opts.GloballyEditableWiki, editability)
+	}
+
+	t.Run("api includes GloballyEditableWiki", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		assertGlobalEditability(t, false)
+	})
+
+	t.Run("api can turn on GloballyEditableWiki", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		globallyEditable := true
+		req := NewRequestWithJSON(t, "PATCH", urlStr, &api.EditRepoOption{
+			GloballyEditableWiki: &globallyEditable,
+		}).AddTokenAuth(token)
+		MakeRequest(t, req, http.StatusOK)
+
+		assertGlobalEditability(t, true)
+	})
+
+	t.Run("disabling the wiki disables GloballyEditableWiki", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		hasWiki := false
+		req := NewRequestWithJSON(t, "PATCH", urlStr, &api.EditRepoOption{
+			HasWiki: &hasWiki,
+		}).AddTokenAuth(token)
+		MakeRequest(t, req, http.StatusOK)
+
+		assertGlobalEditability(t, false)
+	})
 }
 
 func TestAPIListPageRevisions(t *testing.T) {
