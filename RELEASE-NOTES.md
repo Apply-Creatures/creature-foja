@@ -4,6 +4,37 @@ A Forgejo release is published shortly after a Gitea release is published and th
 
 The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.21.1-0 or v1.21.2-0) does not require manual actions but others might (e.g. v1.20, v1.21).
 
+## 1.21.11-0
+
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.11-0` releae can be reviewed from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo
+$ git -C forgejo log --oneline --no-merges v1.21.10-0..v1.21.11-0
+```
+
+This stable release contains bug fixes and a **security fix**.
+
+* Recommended Action
+
+  We recommend that all Forgejo installations are [upgraded](https://forgejo.org/docs/v1.21/admin/upgrade/) to the latest version as soon as possible.
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.21/user/semver/)
+
+  The semantic version was updated to `6.0.11+0-gitea-1.21.10`
+
+* Security fix
+
+  [This is a security release](https://codeberg.org/forgejo/security-announcements/issues/9), details about the bug and fix are currently TBA.
+
+* Bug fixes
+
+  * [Use system action user to trigger scheduled action workflows](https://codeberg.org/forgejo/forgejo/commit/387aea4434488555838e55e067242509bc1510a6)
+  * [Close file in upload function](https://codeberg.org/forgejo/forgejo/commit/fd47240545ab1c4f10d07434c2ba00fff044236a)
+  * [Prevent registering runners for deleted repositories](https://codeberg.org/forgejo/forgejo/commit/fd47240545ab1c4f10d07434c2ba00fff044236a). Prevents 500 Internal Server Error in admin interface.
+  * [More reliable pagination support when migrating from gitbucket](https://codeberg.org/forgejo/forgejo/commit/e702e79625980b08ec060a1690b76502455acad9)
+  * [Fix automerge when used with actions](https://codeberg.org/forgejo/forgejo/commit/4889a3a1713d91a5ae95af4edf1bb3352d1871fd)
+
 ## 1.21.10-0
 
 The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.10-0` release can be reviewed from the command line with:
@@ -15,7 +46,7 @@ $ git -C forgejo log --oneline --no-merges v1.21.8-0..v1.21.10-0
 
 This stable release contains bug fixes and a **security fix**.
 
-Note that there is no `Forgejo v1.21.9-0` release. The release numbering of the `Forgejo v1.21` patch series follows the Gitea release numbering. However, the publication of `Gitea v1.21.9` and `Gitea v1.21.10` were a few days appart because of a regression that is not present on Forgejo and there was no need to publish `Forgejo v1.21.9-0`.
+Note that there is no `Forgejo v1.21.9-0` release. The release numbering of the `Forgejo v1.21` patch series follows the Gitea release numbering. However, the publication of `Gitea v1.21.9` and `Gitea v1.21.10` were a few days apart because of a regression that is not present on Forgejo and there was no need to publish `Forgejo v1.21.9-0`.
 
 * Recommended Action
 
