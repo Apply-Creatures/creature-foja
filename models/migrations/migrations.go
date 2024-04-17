@@ -584,6 +584,8 @@ var migrations = []Migration{
 	NewMigration("Add commit status summary table", v1_23.AddCommitStatusSummary),
 	// v296 -> v297
 	NewMigration("Add missing field of commit status summary table", v1_23.AddCommitStatusSummary2),
+	// v297 -> v298
+	NewMigration("Add everyone_access_mode for repo_unit", noopMigration),
 }
 
 // GetCurrentDBVersion returns the current db version
