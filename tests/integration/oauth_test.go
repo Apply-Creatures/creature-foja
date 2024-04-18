@@ -6,9 +6,12 @@ package integration
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"testing"
 
 	auth_model "code.gitea.io/gitea/models/auth"
@@ -468,6 +471,57 @@ func TestSignInOAuthCallbackSignIn(t *testing.T) {
 	assert.Equal(t, test.RedirectURL(resp), "/")
 	userAfterLogin := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: userGitLab.ID})
 	assert.Greater(t, userAfterLogin.LastLoginUnix, userGitLab.LastLoginUnix)
+}
+
+func TestSignInOAuthCallbackPKCE(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	// Setup authentication source
+	gitlabName := "gitlab"
+	gitlab := addAuthSource(t, authSourcePayloadGitLabCustom(gitlabName))
+	// Create a user as if it had been previously been created by the authentication source.
+	userGitLabUserID := "5678"
+	userGitLab := &user_model.User{
+		Name:        "gitlabuser",
+		Email:       "gitlabuser@example.com",
+		Passwd:      "gitlabuserpassword",
+		Type:        user_model.UserTypeIndividual,
+		LoginType:   auth_model.OAuth2,
+		LoginSource: gitlab.ID,
+		LoginName:   userGitLabUserID,
+	}
+	defer createUser(context.Background(), t, userGitLab)()
+
+	// initial redirection (to generate the code_challenge)
+	session := emptyTestSession(t)
+	req := NewRequest(t, "GET", fmt.Sprintf("/user/oauth2/%s", gitlabName))
+	resp := session.MakeRequest(t, req, http.StatusTemporaryRedirect)
+	dest, err := url.Parse(resp.Header().Get("Location"))
+	assert.NoError(t, err)
+	assert.Equal(t, "S256", dest.Query().Get("code_challenge_method"))
+	codeChallenge := dest.Query().Get("code_challenge")
+	assert.NotEmpty(t, codeChallenge)
+
+	// callback (to check the initial code_challenge)
+	defer mockCompleteUserAuth(func(res http.ResponseWriter, req *http.Request) (goth.User, error) {
+		codeVerifier := req.URL.Query().Get("code_verifier")
+		assert.NotEmpty(t, codeVerifier)
+		assert.Greater(t, len(codeVerifier), 40, codeVerifier)
+
+		sha2 := sha256.New()
+		io.WriteString(sha2, codeVerifier)
+		assert.Equal(t, codeChallenge, base64.RawURLEncoding.EncodeToString(sha2.Sum(nil)))
+
+		return goth.User{
+			Provider: gitlabName,
+			UserID:   userGitLabUserID,
+			Email:    userGitLab.Email,
+		}, nil
+	})()
+	req = NewRequest(t, "GET", fmt.Sprintf("/user/oauth2/%s/callback?code=XYZ&state=XYZ", gitlabName))
+	resp = session.MakeRequest(t, req, http.StatusSeeOther)
+	assert.Equal(t, "/", test.RedirectURL(resp))
+	unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: userGitLab.ID})
 }
 
 func TestSignInOAuthCallbackRedirectToEscaping(t *testing.T) {
