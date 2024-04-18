@@ -13,11 +13,11 @@ $ git clone https://codeberg.org/forgejo/forgejo
 $ git -C forgejo log --oneline --no-merges v1.21.10-0..v1.21.11-0
 ```
 
-This stable release contains bug fixes and a **security fix**.
+This stable release contains bug fixes and **security fixes**.
 
 * Recommended Action
 
-  We recommend that all Forgejo installations are [upgraded](https://forgejo.org/docs/v1.21/admin/upgrade/) to the latest version as soon as possible.
+  We strongly recommend that all Forgejo installations are [upgraded](https://forgejo.org/docs/v1.21/admin/upgrade/) to the latest version as soon as possible.
 
 * [Forgejo Semantic Version](https://forgejo.org/docs/v1.21/user/semver/)
 
@@ -25,8 +25,8 @@ This stable release contains bug fixes and a **security fix**.
 
 * Security fix
 
-  * [Fixed a bug that allows user-supplied, non-sandboxed JavaScript to be run from the same domain as the forge](https://codeberg.org/forgejo/forgejo/commit/8dcc7d9e8ce36d94bae1a1becddc4735f51add3c), via `/{owner}/{repo}/render/branch/{branch}/{filename}` URLs.
   * [Fixed a privilege escalation through git push options](https://codeberg.org/forgejo/forgejo/commit/cc80e661531794fff7f8a336eaaefdb7e3bd3956) that allows any user to change the visibility of any repository they can see, regardless of their level of access.
+  * [Fixed a bug that allows user-supplied, non-sandboxed JavaScript to be run from the same domain as the forge](https://codeberg.org/forgejo/forgejo/commit/8dcc7d9e8ce36d94bae1a1becddc4735f51add3c), via `/{owner}/{repo}/render/branch/{branch}/{filename}` URLs.
 
 * Bug fixes
 
