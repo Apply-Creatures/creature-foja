@@ -154,9 +154,9 @@ TAR_EXCLUDES := .git data indexers queues log node_modules $(EXECUTABLE) $(FOMAN
 GO_DIRS := build cmd models modules routers services tests
 WEB_DIRS := web_src/js web_src/css
 
-ESLINT_FILES := web_src/js tools *.config.js tests/e2e
+ESLINT_FILES := web_src/js tools *.js tests/e2e
 STYLELINT_FILES := web_src/css web_src/js/components/*.vue
-SPELLCHECK_FILES := $(GO_DIRS) $(WEB_DIRS) docs/content templates options/locale/locale_en-US.ini .github
+SPELLCHECK_FILES := $(GO_DIRS) $(WEB_DIRS) docs/content templates options/locale/locale_en-US.ini .github $(wildcard *.go *.js *.md *.yml *.yaml *.toml)
 
 GO_SOURCES := $(wildcard *.go)
 GO_SOURCES += $(shell find $(GO_DIRS) -type f -name "*.go" ! -path modules/options/bindata.go ! -path modules/public/bindata.go ! -path modules/templates/bindata.go)
