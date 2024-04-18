@@ -6,7 +6,7 @@ The Forgejo admin should carefully read the required manual actions before upgra
 
 ## 1.21.11-0
 
-The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.11-0` releae can be reviewed from the command line with:
+The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.11-0` release can be reviewed from the command line with:
 
 ```shell
 $ git clone https://codeberg.org/forgejo/forgejo
