@@ -25,7 +25,8 @@ jobs:
       image: ghcr.io/visualon/renovate:37.303.2
 
     steps:
-      - uses: https://code.forgejo.org/actions/cache/restore@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
+      - name: Load renovate repo cache
+        uses: https://code.forgejo.org/actions/cache/restore@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: |
             .tmp/cache/renovate/repository
@@ -33,7 +34,7 @@ jobs:
           restore-keys: |
             repo-cache-
 
-      - run: renovate
+      - run: Run renovate
         env:
           GITHUB_COM_TOKEN: ${{ secrets.RENOVATE_GITHUB_COM_TOKEN }}
           LOG_LEVEL: debug
