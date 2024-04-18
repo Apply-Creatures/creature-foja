@@ -34,7 +34,8 @@ jobs:
           restore-keys: |
             repo-cache-
 
-      - run: Run renovate
+      - name: Run renovate
+        run: renovate
         env:
           GITHUB_COM_TOKEN: ${{ secrets.RENOVATE_GITHUB_COM_TOKEN }}
           LOG_LEVEL: debug
