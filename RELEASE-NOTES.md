@@ -6,7 +6,7 @@ The Forgejo admin should carefully read the required manual actions before upgra
 
 ## 1.21.11-0
 
-The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v1.21/forgejo) included in the `Forgejo v1.21.11-0` release can be reviewed from the command line with:
+[The complete list of new commits included in the Forgejo v1.21.11-0 release can be reviewed here](https://codeberg.org/forgejo/forgejo/compare/v1.21.10-0...v1.21.11-0), or from the comand line with:
 
 ```shell
 $ git clone https://codeberg.org/forgejo/forgejo
@@ -25,7 +25,8 @@ This stable release contains bug fixes and a **security fix**.
 
 * Security fix
 
-  [This is a security release](https://codeberg.org/forgejo/security-announcements/issues/9), details about the bug and fix are currently TBA.
+  * [Fixed a bug that allows user-supplied, non-sandboxed JavaScript to be run from the same domain as the forge](https://codeberg.org/forgejo/forgejo/commit/8dcc7d9e8ce36d94bae1a1becddc4735f51add3c), via `/{owner}/{repo}/render/branch/{branch}/{filename}` URLs.
+  * [Fixed a privilege escalation through git push options](https://codeberg.org/forgejo/forgejo/commit/cc80e661531794fff7f8a336eaaefdb7e3bd3956) that allows any user to change the visibility of any repository they can see, regardless of their level of access.
 
 * Bug fixes
 
