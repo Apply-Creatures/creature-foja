@@ -4,6 +4,22 @@ A Forgejo release is published shortly after a Gitea release is published and th
 
 The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.21.1-0 or v1.21.2-0) does not require manual actions but others might (e.g. v1.20, v1.21).
 
+## 1.21.11-1
+
+This stable release contains a single bug fix for a regression introduced in v1.21.11-0 by which creating a tag via the API would fail with error 500 on a repository a where Forgejo Actions workflow triggered by tags exists.
+
+* Recommended Action
+
+  We recommend that all Forgejo installations are [upgraded](https://forgejo.org/docs/v1.21/admin/upgrade/) to the latest version as soon as possible.
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.21/user/semver/)
+
+  The semantic version was updated to `6.0.12+0-gitea-1.21.10`
+
+* Bug fix
+
+  * [error 500 on tag creation when a workflow exists](https://codeberg.org/forgejo/forgejo/issues/3327)
+
 ## 1.21.11-0
 
 [The complete list of new commits included in the Forgejo v1.21.11-0 release can be reviewed here](https://codeberg.org/forgejo/forgejo/compare/v1.21.10-0...v1.21.11-0), or from the comand line with:
