@@ -1086,7 +1086,8 @@ func filePreviewPatternProcessor(ctx *RenderContext, node *html.Node) {
 			// Specialized version of replaceContent, so the parent paragraph element is not destroyed from our div
 			before := node.Data[:(preview.start - offset)]
 			after := node.Data[(preview.end - offset):]
-			offset += preview.end - 3
+			afterPrefix := "<p>"
+			offset = preview.end - len(afterPrefix)
 			node.Data = before
 			nextSibling := node.NextSibling
 			node.Parent.InsertBefore(&html.Node{
@@ -1096,7 +1097,7 @@ func filePreviewPatternProcessor(ctx *RenderContext, node *html.Node) {
 			node.Parent.InsertBefore(previewNode, nextSibling)
 			afterNode := &html.Node{
 				Type: html.RawNode,
-				Data: "<p>" + after,
+				Data: afterPrefix + after,
 			}
 			node.Parent.InsertBefore(afterNode, nextSibling)
 			node = afterNode
