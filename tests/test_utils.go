@@ -224,7 +224,7 @@ func PrepareTestEnv(t testing.TB, skip ...int) func() {
 
 	// kill all background processes to prevent them from interfering with the fixture loading
 	// see https://codeberg.org/forgejo/forgejo/issues/2962
-	cancelProcesses(t, time.Second)
+	cancelProcesses(t, 30*time.Second)
 	t.Cleanup(func() { cancelProcesses(t, 0) }) // cancel remaining processes in a non-blocking way
 
 	// load database fixtures
