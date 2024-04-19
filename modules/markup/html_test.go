@@ -828,6 +828,37 @@ func TestRender_FilePreview(t *testing.T) {
 				`<p></p>`,
 			localMetas,
 		)
+
+		testRender(
+			"first without sub "+commitFilePreview+" second "+urlWithSub,
+			`<p>first without sub <a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20/path/to/file.go#L2-L3" rel="nofollow"><code>190d949293/path/to/file.go (L2-L3)</code></a> second </p>`+
+				`<div class="file-preview-box">`+
+				`<div class="header">`+
+				`<div>`+
+				`<a href="http://localhost:3000/sub/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20/path/to/file.go#L2-L3" class="muted" rel="nofollow">path/to/file.go</a>`+
+				`</div>`+
+				`<span class="text small grey">`+
+				`Lines 2 to 3 in <a href="http://localhost:3000/sub/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20" class="text black" rel="nofollow">190d949</a>`+
+				`</span>`+
+				`</div>`+
+				`<div class="ui table">`+
+				`<table class="file-preview">`+
+				`<tbody>`+
+				`<tr>`+
+				`<td class="lines-num"><span data-line-number="2"></span></td>`+
+				`<td class="lines-code chroma"><code class="code-inner"><span class="nx">B</span>`+"\n"+`</code></td>`+
+				`</tr>`+
+				`<tr>`+
+				`<td class="lines-num"><span data-line-number="3"></span></td>`+
+				`<td class="lines-code chroma"><code class="code-inner"><span class="nx">C</span>`+"\n"+`</code></td>`+
+				`</tr>`+
+				`</tbody>`+
+				`</table>`+
+				`</div>`+
+				`</div>`+
+				`<p></p>`,
+			localMetas,
+		)
 	})
 
 	t.Run("multiples", func(t *testing.T) {

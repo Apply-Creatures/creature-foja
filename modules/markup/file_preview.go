@@ -35,23 +35,35 @@ type FilePreview struct {
 	isTruncated bool
 }
 
-func NewFilePreview(ctx *RenderContext, node *html.Node, locale translation.Locale) *FilePreview {
+func NewFilePreviews(ctx *RenderContext, node *html.Node, locale translation.Locale) []*FilePreview {
 	if setting.FilePreviewMaxLines == 0 {
 		// Feature is disabled
 		return nil
 	}
 
+	mAll := filePreviewPattern.FindAllStringSubmatchIndex(node.Data, -1)
+	if mAll == nil {
+		return nil
+	}
+
+	result := make([]*FilePreview, 0)
+
+	for _, m := range mAll {
+		if slices.Contains(m, -1) {
+			continue
+		}
+
+		preview := newFilePreview(ctx, node, locale, m)
+		if preview != nil {
+			result = append(result, preview)
+		}
+	}
+
+	return result
+}
+
+func newFilePreview(ctx *RenderContext, node *html.Node, locale translation.Locale, m []int) *FilePreview {
 	preview := &FilePreview{}
-
-	m := filePreviewPattern.FindStringSubmatchIndex(node.Data)
-	if m == nil {
-		return nil
-	}
-
-	// Ensure that every group has a match
-	if slices.Contains(m, -1) {
-		return nil
-	}
 
 	urlFull := node.Data[m[0]:m[1]]
 
