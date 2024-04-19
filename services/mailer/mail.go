@@ -389,6 +389,10 @@ func createReference(issue *issues_model.Issue, comment *issues_model.Comment, a
 	return fmt.Sprintf("<%s/%s/%d%s@%s>", issue.Repo.FullName(), path, issue.Index, extra, setting.Domain)
 }
 
+func createMessageIDForRelease(rel *repo_model.Release) string {
+	return fmt.Sprintf("<%s/releases/%d@%s>", rel.Repo.FullName(), rel.ID, setting.Domain)
+}
+
 func generateAdditionalHeaders(ctx *mailCommentContext, reason string, recipient *user_model.User) map[string]string {
 	repo := ctx.Issue.Repo
 

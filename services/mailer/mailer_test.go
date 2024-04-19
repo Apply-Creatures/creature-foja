@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/setting"
 
 	"github.com/stretchr/testify/assert"
@@ -35,4 +36,18 @@ func TestGenerateMessageID(t *testing.T) {
 	m.SetHeader("Message-ID", "<msg-d@domain.com>")
 	gm = m.ToMessage()
 	assert.Equal(t, "<msg-d@domain.com>", gm.GetHeader("Message-ID")[0])
+}
+
+func TestGenerateMessageIDForRelease(t *testing.T) {
+	setting.Domain = "localhost"
+
+	rel := repo_model.Release{
+		ID: 42,
+		Repo: &repo_model.Repository{
+			OwnerName: "test",
+			Name:      "tag-test",
+		},
+	}
+	m := createMessageIDForRelease(&rel)
+	assert.Equal(t, "<test/tag-test/releases/42@localhost>", m)
 }
