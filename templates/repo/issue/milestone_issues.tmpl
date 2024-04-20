@@ -3,16 +3,16 @@
 	{{template "repo/header" .}}
 	<div class="ui container">
 		{{template "base/alert" .}}
-		<div class="tw-flex">
+		<div class="tw-flex tw-items-center tw-justify-between">
 			<h1 class="tw-mb-2">{{.Milestone.Name}}</h1>
 			{{if not .Repository.IsArchived}}
-				<div class="text right tw-flex-1">
+				<div class="tw-flex top-right-buttons">
 					{{if or .CanWriteIssues .CanWritePulls}}
 						{{if .Milestone.IsClosed}}
-							<a class="ui primary basic button link-action" href data-url="{{$.RepoLink}}/milestones/{{.MilestoneID}}/open">{{ctx.Locale.Tr "repo.milestones.open"}}
+							<a class="ui primary button link-action" href data-url="{{$.RepoLink}}/milestones/{{.MilestoneID}}/open">{{ctx.Locale.Tr "repo.milestones.open"}}
 							</a>
 						{{else}}
-							<a class="ui red basic button link-action" href data-url="{{$.RepoLink}}/milestones/{{.MilestoneID}}/close">{{ctx.Locale.Tr "repo.milestones.close"}}
+							<a class="ui red button link-action" href data-url="{{$.RepoLink}}/milestones/{{.MilestoneID}}/close">{{ctx.Locale.Tr "repo.milestones.close"}}
 							</a>
 						{{end}}
 						<a class="ui button" href="{{.RepoLink}}/milestones/{{.MilestoneID}}/edit">{{ctx.Locale.Tr "repo.milestones.edit"}}</a>
