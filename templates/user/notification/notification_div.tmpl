@@ -1,8 +1,8 @@
 <div role="main" aria-label="{{.Title}}" class="page-content user notification" id="notification_div" data-sequence-number="{{.SequenceNumber}}">
 	<div class="ui container">
 		{{$notificationUnreadCount := call .NotificationUnreadCount}}
-		<div class="tw-flex tw-items-center tw-justify-between tw-mb-[--page-spacing]">
-			<div class="small-menu-items ui compact tiny menu">
+		<div class="tw-flex tw-items-center tw-justify-between tw-mb-4">
+			<div class="ui secondary partial menu">
 				<a class="{{if eq .Status 1}}active {{end}}item" href="{{AppSubUrl}}/notifications?q=unread">
 					{{ctx.Locale.Tr "notification.unread"}}
 					<div class="notifications-unread-count ui label {{if not $notificationUnreadCount}}tw-hidden{{end}}">{{$notificationUnreadCount}}</div>
@@ -11,16 +11,21 @@
 					{{ctx.Locale.Tr "notification.read"}}
 				</a>
 			</div>
-			{{if and (eq .Status 1)}}
-				<form action="{{AppSubUrl}}/notifications/purge" method="post">
-					{{$.CsrfTokenHtml}}
-					<div class="{{if not $notificationUnreadCount}}tw-hidden{{end}}">
-						<button class="ui mini button primary tw-mr-0" title="{{ctx.Locale.Tr "notification.mark_all_as_read"}}">
-							{{svg "octicon-checklist"}}
-						</button>
-					</div>
-				</form>
-			{{end}}
+			<div class="tw-flex top-right-buttons">
+				<a class="ui tiny button" href="{{AppSubUrl}}/notifications/subscriptions">
+					{{ctx.Locale.Tr "notification.subscriptions"}}
+				</a>
+				{{if and (eq .Status 1)}}
+					<form class="{{if not $notificationUnreadCount}}tw-hidden{{end}}" action="{{AppSubUrl}}/notifications/purge" method="post">
+						{{$.CsrfTokenHtml}}
+						<div>
+							<button class="ui mini button primary tw-mr-0" title="{{ctx.Locale.Tr "notification.mark_all_as_read"}}">
+								{{svg "octicon-checklist"}}
+							</button>
+						</div>
+					</form>
+				{{end}}
+			</div>
 		</div>
 		<div class="tw-p-0">
 			<div id="notification_table">

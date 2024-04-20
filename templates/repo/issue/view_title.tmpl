@@ -12,16 +12,16 @@
 				<input value="{{.Issue.Title}}" maxlength="255" autocomplete="off">
 			</div>
 		</h1>
-		<div class="issue-title-buttons">
+		<div class="top-right-buttons">
 			{{if and (or .HasIssuesOrPullsWritePermission .IsIssuePoster) (not .Repository.IsArchived)}}
-				<button id="edit-title" class="ui small basic button edit-button not-in-edit tw-mr-0">{{ctx.Locale.Tr "repo.issues.edit"}}</button>
+				<button id="edit-title" class="ui small basic button edit-button not-in-edit">{{ctx.Locale.Tr "repo.issues.edit"}}</button>
 			{{end}}
 			{{if not .Issue.IsPull}}
-				<a role="button" class="ui small primary button new-issue-button tw-mr-0" href="{{.RepoLink}}/issues/new{{if .NewIssueChooseTemplate}}/choose{{end}}">{{ctx.Locale.Tr "repo.issues.new"}}</a>
+				<a role="button" class="ui small primary button new-issue-button" href="{{.RepoLink}}/issues/new{{if .NewIssueChooseTemplate}}/choose{{end}}">{{ctx.Locale.Tr "repo.issues.new"}}</a>
 			{{end}}
 		</div>
 		{{if and (or .HasIssuesOrPullsWritePermission .IsIssuePoster) (not .Repository.IsArchived)}}
-			<div class="edit-buttons">
+			<div class="top-right-buttons">
 				<button id="cancel-edit-title" class="ui small basic button in-edit tw-hidden">{{ctx.Locale.Tr "repo.issues.cancel"}}</button>
 				<button id="save-edit-title" class="ui small primary button in-edit tw-hidden tw-mr-0" data-update-url="{{$.RepoLink}}/issues/{{.Issue.Index}}/title" {{if .Issue.IsPull}}data-target-update-url="{{$.RepoLink}}/pull/{{.Issue.Index}}/target_branch"{{end}}>{{ctx.Locale.Tr "repo.issues.save"}}</button>
 			</div>

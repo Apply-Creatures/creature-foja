@@ -595,26 +595,18 @@ td .commit-summary {
   align-items: center;
 }
 
-.repository.view.issue .issue-title-buttons,
-.repository.view.issue .edit-buttons {
+.repository.view.issue .top-right-buttons {
   display: flex;
-}
-
-.issue-title-buttons {
-  gap: 0.5rem;
 }
 
 @media (max-width: 767.98px) {
   .repository.view.issue .issue-title {
     flex-direction: column;
   }
-  .repository.view.issue .issue-title-buttons,
-  .repository.view.issue .edit-buttons {
+  .repository.view.issue .top-right-buttons {
     width: 100%;
-    justify-content: space-between;
-  }
-  .repository.view.issue .edit-buttons {
     margin-top: .5rem;
+    justify-content: space-between;
   }
   .comment.form .issue-content-left .avatar {
     display: none;
@@ -627,6 +619,10 @@ td .commit-summary {
   .comment.form .content .form::before,
   .comment.form .content .form::after {
     display: none;
+  }
+
+  .repository.view.issue .issue-title.edit-active h1 {
+    padding-right: 0;
   }
 }
 
@@ -645,7 +641,7 @@ td .commit-summary {
   font-size: 32px;
   line-height: 40px;
   margin: 0;
-  padding-right: 0.25rem;
+  padding-right: 0.5rem;
   min-height: var(--repo-header-issue-min-height);
 }
 
