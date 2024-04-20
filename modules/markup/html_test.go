@@ -17,6 +17,7 @@ import (
 	"code.gitea.io/gitea/modules/markup"
 	"code.gitea.io/gitea/modules/markup/markdown"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/test"
 	"code.gitea.io/gitea/modules/translation"
 	"code.gitea.io/gitea/modules/util"
 
@@ -680,9 +681,9 @@ func TestIssue18471(t *testing.T) {
 }
 
 func TestRender_FilePreview(t *testing.T) {
-	setting.StaticRootPath = "../../"
-	setting.Names = []string{"english"}
-	setting.Langs = []string{"en-US"}
+	defer test.MockVariableValue(&setting.StaticRootPath, "../../")()
+	defer test.MockVariableValue(&setting.Names, []string{"english"})()
+	defer test.MockVariableValue(&setting.Langs, []string{"en-US"})()
 	translation.InitLocales(context.Background())
 
 	setting.AppURL = markup.TestAppURL
@@ -705,7 +706,7 @@ func TestRender_FilePreview(t *testing.T) {
 	sha := "190d9492934af498c3f669d6a2431dc5459e5b20"
 	commitFilePreview := util.URLJoin(markup.TestRepoURL, "src", "commit", sha, "path", "to", "file.go") + "#L2-L3"
 
-	test := func(input, expected string, metas map[string]string) {
+	testRender := func(input, expected string, metas map[string]string) {
 		buffer, err := markup.RenderString(&markup.RenderContext{
 			Ctx:          git.DefaultContext,
 			RelativePath: ".md",
@@ -715,69 +716,287 @@ func TestRender_FilePreview(t *testing.T) {
 		assert.Equal(t, strings.TrimSpace(expected), strings.TrimSpace(buffer))
 	}
 
-	test(
-		commitFilePreview,
-		`<p></p>`+
-			`<div class="file-preview-box">`+
-			`<div class="header">`+
-			`<div>`+
-			`<a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20/path/to/file.go#L2-L3" class="muted" rel="nofollow">path/to/file.go</a>`+
-			`</div>`+
-			`<span class="text small grey">`+
-			`Lines 2 to 3 in <a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20" class="text black" rel="nofollow">190d949</a>`+
-			`</span>`+
-			`</div>`+
-			`<div class="ui table">`+
-			`<table class="file-preview">`+
-			`<tbody>`+
-			`<tr>`+
-			`<td class="lines-num"><span data-line-number="2"></span></td>`+
-			`<td class="lines-code chroma"><code class="code-inner"><span class="nx">B</span>`+"\n"+`</code></td>`+
-			`</tr>`+
-			`<tr>`+
-			`<td class="lines-num"><span data-line-number="3"></span></td>`+
-			`<td class="lines-code chroma"><code class="code-inner"><span class="nx">C</span>`+"\n"+`</code></td>`+
-			`</tr>`+
-			`</tbody>`+
-			`</table>`+
-			`</div>`+
-			`</div>`+
-			`<p></p>`,
-		localMetas,
-	)
+	t.Run("single", func(t *testing.T) {
+		testRender(
+			commitFilePreview,
+			`<p></p>`+
+				`<div class="file-preview-box">`+
+				`<div class="header">`+
+				`<div>`+
+				`<a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20/path/to/file.go#L2-L3" class="muted" rel="nofollow">path/to/file.go</a>`+
+				`</div>`+
+				`<span class="text small grey">`+
+				`Lines 2 to 3 in <a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20" class="text black" rel="nofollow">190d949</a>`+
+				`</span>`+
+				`</div>`+
+				`<div class="ui table">`+
+				`<table class="file-preview">`+
+				`<tbody>`+
+				`<tr>`+
+				`<td class="lines-num"><span data-line-number="2"></span></td>`+
+				`<td class="lines-code chroma"><code class="code-inner"><span class="nx">B</span>`+"\n"+`</code></td>`+
+				`</tr>`+
+				`<tr>`+
+				`<td class="lines-num"><span data-line-number="3"></span></td>`+
+				`<td class="lines-code chroma"><code class="code-inner"><span class="nx">C</span>`+"\n"+`</code></td>`+
+				`</tr>`+
+				`</tbody>`+
+				`</table>`+
+				`</div>`+
+				`</div>`+
+				`<p></p>`,
+			localMetas,
+		)
+	})
 
-	test(
-		commitFilePreview,
-		`<p></p>`+
-			`<div class="file-preview-box">`+
-			`<div class="header">`+
-			`<div>`+
-			`<a href="http://localhost:3000/gogits/gogs/" rel="nofollow">gogits/gogs</a> – `+
-			`<a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20/path/to/file.go#L2-L3" class="muted" rel="nofollow">path/to/file.go</a>`+
-			`</div>`+
-			`<span class="text small grey">`+
-			`Lines 2 to 3 in <a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20" class="text black" rel="nofollow">gogits/gogs@190d949</a>`+
-			`</span>`+
-			`</div>`+
-			`<div class="ui table">`+
-			`<table class="file-preview">`+
-			`<tbody>`+
-			`<tr>`+
-			`<td class="lines-num"><span data-line-number="2"></span></td>`+
-			`<td class="lines-code chroma"><code class="code-inner"><span class="nx">B</span>`+"\n"+`</code></td>`+
-			`</tr>`+
-			`<tr>`+
-			`<td class="lines-num"><span data-line-number="3"></span></td>`+
-			`<td class="lines-code chroma"><code class="code-inner"><span class="nx">C</span>`+"\n"+`</code></td>`+
-			`</tr>`+
-			`</tbody>`+
-			`</table>`+
-			`</div>`+
-			`</div>`+
-			`<p></p>`,
-		map[string]string{
-			"user": "gogits",
-			"repo": "gogs2",
-		},
-	)
+	t.Run("cross-repo", func(t *testing.T) {
+		testRender(
+			commitFilePreview,
+			`<p></p>`+
+				`<div class="file-preview-box">`+
+				`<div class="header">`+
+				`<div>`+
+				`<a href="http://localhost:3000/gogits/gogs/" rel="nofollow">gogits/gogs</a> – `+
+				`<a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20/path/to/file.go#L2-L3" class="muted" rel="nofollow">path/to/file.go</a>`+
+				`</div>`+
+				`<span class="text small grey">`+
+				`Lines 2 to 3 in <a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20" class="text black" rel="nofollow">gogits/gogs@190d949</a>`+
+				`</span>`+
+				`</div>`+
+				`<div class="ui table">`+
+				`<table class="file-preview">`+
+				`<tbody>`+
+				`<tr>`+
+				`<td class="lines-num"><span data-line-number="2"></span></td>`+
+				`<td class="lines-code chroma"><code class="code-inner"><span class="nx">B</span>`+"\n"+`</code></td>`+
+				`</tr>`+
+				`<tr>`+
+				`<td class="lines-num"><span data-line-number="3"></span></td>`+
+				`<td class="lines-code chroma"><code class="code-inner"><span class="nx">C</span>`+"\n"+`</code></td>`+
+				`</tr>`+
+				`</tbody>`+
+				`</table>`+
+				`</div>`+
+				`</div>`+
+				`<p></p>`,
+			map[string]string{
+				"user": "gogits",
+				"repo": "gogs2",
+			},
+		)
+	})
+
+	t.Run("AppSubURL", func(t *testing.T) {
+		urlWithSub := util.URLJoin(markup.TestAppURL, "sub", markup.TestOrgRepo, "src", "commit", sha, "path", "to", "file.go") + "#L2-L3"
+
+		testRender(
+			urlWithSub,
+			`<p><a href="http://localhost:3000/sub/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20/path/to/file.go#L2-L3" rel="nofollow"><code>190d949293/path/to/file.go (L2-L3)</code></a></p>`,
+			localMetas,
+		)
+
+		defer test.MockVariableValue(&setting.AppURL, markup.TestAppURL+"sub/")()
+		defer test.MockVariableValue(&setting.AppSubURL, "/sub")()
+
+		testRender(
+			urlWithSub,
+			`<p></p>`+
+				`<div class="file-preview-box">`+
+				`<div class="header">`+
+				`<div>`+
+				`<a href="http://localhost:3000/sub/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20/path/to/file.go#L2-L3" class="muted" rel="nofollow">path/to/file.go</a>`+
+				`</div>`+
+				`<span class="text small grey">`+
+				`Lines 2 to 3 in <a href="http://localhost:3000/sub/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20" class="text black" rel="nofollow">190d949</a>`+
+				`</span>`+
+				`</div>`+
+				`<div class="ui table">`+
+				`<table class="file-preview">`+
+				`<tbody>`+
+				`<tr>`+
+				`<td class="lines-num"><span data-line-number="2"></span></td>`+
+				`<td class="lines-code chroma"><code class="code-inner"><span class="nx">B</span>`+"\n"+`</code></td>`+
+				`</tr>`+
+				`<tr>`+
+				`<td class="lines-num"><span data-line-number="3"></span></td>`+
+				`<td class="lines-code chroma"><code class="code-inner"><span class="nx">C</span>`+"\n"+`</code></td>`+
+				`</tr>`+
+				`</tbody>`+
+				`</table>`+
+				`</div>`+
+				`</div>`+
+				`<p></p>`,
+			localMetas,
+		)
+
+		testRender(
+			"first without sub "+commitFilePreview+" second "+urlWithSub,
+			`<p>first without sub <a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20/path/to/file.go#L2-L3" rel="nofollow"><code>190d949293/path/to/file.go (L2-L3)</code></a> second </p>`+
+				`<div class="file-preview-box">`+
+				`<div class="header">`+
+				`<div>`+
+				`<a href="http://localhost:3000/sub/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20/path/to/file.go#L2-L3" class="muted" rel="nofollow">path/to/file.go</a>`+
+				`</div>`+
+				`<span class="text small grey">`+
+				`Lines 2 to 3 in <a href="http://localhost:3000/sub/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20" class="text black" rel="nofollow">190d949</a>`+
+				`</span>`+
+				`</div>`+
+				`<div class="ui table">`+
+				`<table class="file-preview">`+
+				`<tbody>`+
+				`<tr>`+
+				`<td class="lines-num"><span data-line-number="2"></span></td>`+
+				`<td class="lines-code chroma"><code class="code-inner"><span class="nx">B</span>`+"\n"+`</code></td>`+
+				`</tr>`+
+				`<tr>`+
+				`<td class="lines-num"><span data-line-number="3"></span></td>`+
+				`<td class="lines-code chroma"><code class="code-inner"><span class="nx">C</span>`+"\n"+`</code></td>`+
+				`</tr>`+
+				`</tbody>`+
+				`</table>`+
+				`</div>`+
+				`</div>`+
+				`<p></p>`,
+			localMetas,
+		)
+	})
+
+	t.Run("multiples", func(t *testing.T) {
+		testRender(
+			"first "+commitFilePreview+" second "+commitFilePreview,
+			`<p>first </p>`+
+				`<div class="file-preview-box">`+
+				`<div class="header">`+
+				`<div>`+
+				`<a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20/path/to/file.go#L2-L3" class="muted" rel="nofollow">path/to/file.go</a>`+
+				`</div>`+
+				`<span class="text small grey">`+
+				`Lines 2 to 3 in <a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20" class="text black" rel="nofollow">190d949</a>`+
+				`</span>`+
+				`</div>`+
+				`<div class="ui table">`+
+				`<table class="file-preview">`+
+				`<tbody>`+
+				`<tr>`+
+				`<td class="lines-num"><span data-line-number="2"></span></td>`+
+				`<td class="lines-code chroma"><code class="code-inner"><span class="nx">B</span>`+"\n"+`</code></td>`+
+				`</tr>`+
+				`<tr>`+
+				`<td class="lines-num"><span data-line-number="3"></span></td>`+
+				`<td class="lines-code chroma"><code class="code-inner"><span class="nx">C</span>`+"\n"+`</code></td>`+
+				`</tr>`+
+				`</tbody>`+
+				`</table>`+
+				`</div>`+
+				`</div>`+
+				`<p> second </p>`+
+				`<div class="file-preview-box">`+
+				`<div class="header">`+
+				`<div>`+
+				`<a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20/path/to/file.go#L2-L3" class="muted" rel="nofollow">path/to/file.go</a>`+
+				`</div>`+
+				`<span class="text small grey">`+
+				`Lines 2 to 3 in <a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20" class="text black" rel="nofollow">190d949</a>`+
+				`</span>`+
+				`</div>`+
+				`<div class="ui table">`+
+				`<table class="file-preview">`+
+				`<tbody>`+
+				`<tr>`+
+				`<td class="lines-num"><span data-line-number="2"></span></td>`+
+				`<td class="lines-code chroma"><code class="code-inner"><span class="nx">B</span>`+"\n"+`</code></td>`+
+				`</tr>`+
+				`<tr>`+
+				`<td class="lines-num"><span data-line-number="3"></span></td>`+
+				`<td class="lines-code chroma"><code class="code-inner"><span class="nx">C</span>`+"\n"+`</code></td>`+
+				`</tr>`+
+				`</tbody>`+
+				`</table>`+
+				`</div>`+
+				`</div>`+
+				`<p></p>`,
+			localMetas,
+		)
+
+		testRender(
+			"first "+commitFilePreview+" second "+commitFilePreview+" third "+commitFilePreview,
+			`<p>first </p>`+
+				`<div class="file-preview-box">`+
+				`<div class="header">`+
+				`<div>`+
+				`<a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20/path/to/file.go#L2-L3" class="muted" rel="nofollow">path/to/file.go</a>`+
+				`</div>`+
+				`<span class="text small grey">`+
+				`Lines 2 to 3 in <a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20" class="text black" rel="nofollow">190d949</a>`+
+				`</span>`+
+				`</div>`+
+				`<div class="ui table">`+
+				`<table class="file-preview">`+
+				`<tbody>`+
+				`<tr>`+
+				`<td class="lines-num"><span data-line-number="2"></span></td>`+
+				`<td class="lines-code chroma"><code class="code-inner"><span class="nx">B</span>`+"\n"+`</code></td>`+
+				`</tr>`+
+				`<tr>`+
+				`<td class="lines-num"><span data-line-number="3"></span></td>`+
+				`<td class="lines-code chroma"><code class="code-inner"><span class="nx">C</span>`+"\n"+`</code></td>`+
+				`</tr>`+
+				`</tbody>`+
+				`</table>`+
+				`</div>`+
+				`</div>`+
+				`<p> second </p>`+
+				`<div class="file-preview-box">`+
+				`<div class="header">`+
+				`<div>`+
+				`<a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20/path/to/file.go#L2-L3" class="muted" rel="nofollow">path/to/file.go</a>`+
+				`</div>`+
+				`<span class="text small grey">`+
+				`Lines 2 to 3 in <a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20" class="text black" rel="nofollow">190d949</a>`+
+				`</span>`+
+				`</div>`+
+				`<div class="ui table">`+
+				`<table class="file-preview">`+
+				`<tbody>`+
+				`<tr>`+
+				`<td class="lines-num"><span data-line-number="2"></span></td>`+
+				`<td class="lines-code chroma"><code class="code-inner"><span class="nx">B</span>`+"\n"+`</code></td>`+
+				`</tr>`+
+				`<tr>`+
+				`<td class="lines-num"><span data-line-number="3"></span></td>`+
+				`<td class="lines-code chroma"><code class="code-inner"><span class="nx">C</span>`+"\n"+`</code></td>`+
+				`</tr>`+
+				`</tbody>`+
+				`</table>`+
+				`</div>`+
+				`</div>`+
+				`<p> third </p>`+
+				`<div class="file-preview-box">`+
+				`<div class="header">`+
+				`<div>`+
+				`<a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20/path/to/file.go#L2-L3" class="muted" rel="nofollow">path/to/file.go</a>`+
+				`</div>`+
+				`<span class="text small grey">`+
+				`Lines 2 to 3 in <a href="http://localhost:3000/gogits/gogs/src/commit/190d9492934af498c3f669d6a2431dc5459e5b20" class="text black" rel="nofollow">190d949</a>`+
+				`</span>`+
+				`</div>`+
+				`<div class="ui table">`+
+				`<table class="file-preview">`+
+				`<tbody>`+
+				`<tr>`+
+				`<td class="lines-num"><span data-line-number="2"></span></td>`+
+				`<td class="lines-code chroma"><code class="code-inner"><span class="nx">B</span>`+"\n"+`</code></td>`+
+				`</tr>`+
+				`<tr>`+
+				`<td class="lines-num"><span data-line-number="3"></span></td>`+
+				`<td class="lines-code chroma"><code class="code-inner"><span class="nx">C</span>`+"\n"+`</code></td>`+
+				`</tr>`+
+				`</tbody>`+
+				`</table>`+
+				`</div>`+
+				`</div>`+
+				`<p></p>`,
+			localMetas,
+		)
+	})
 }
