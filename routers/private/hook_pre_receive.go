@@ -4,6 +4,7 @@
 package private
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -101,6 +102,60 @@ func (ctx *preReceiveContext) AssertCreatePullRequest() bool {
 	return true
 }
 
+var errPermissionDenied = errors.New("permission denied for changing repo settings")
+
+func (ctx *preReceiveContext) canChangeSettings() error {
+	if !ctx.loadPusherAndPermission() {
+		return errPermissionDenied
+	}
+
+	if !ctx.userPerm.IsOwner() && !ctx.userPerm.IsAdmin() {
+		return errPermissionDenied
+	}
+
+	if ctx.Repo.Repository.IsFork {
+		return errPermissionDenied
+	}
+
+	return nil
+}
+
+func (ctx *preReceiveContext) validatePushOptions() error {
+	opts := web.GetForm(ctx).(*private.HookOptions)
+
+	if len(opts.GitPushOptions) == 0 {
+		return nil
+	}
+
+	changesRepoSettings := false
+	for key := range opts.GitPushOptions {
+		switch key {
+		case private.GitPushOptionRepoPrivate, private.GitPushOptionRepoTemplate:
+			changesRepoSettings = true
+		case "topic", "force-push", "title", "description":
+			// Agit options
+		default:
+			return fmt.Errorf("unknown option %s", key)
+		}
+	}
+
+	if changesRepoSettings {
+		return ctx.canChangeSettings()
+	}
+
+	return nil
+}
+
+func (ctx *preReceiveContext) assertPushOptions() bool {
+	if err := ctx.validatePushOptions(); err != nil {
+		ctx.JSON(http.StatusForbidden, private.Response{
+			UserMsg: fmt.Sprintf("options validation failed: %v", err),
+		})
+		return false
+	}
+	return true
+}
+
 // HookPreReceive checks whether a individual commit is acceptable
 func HookPreReceive(ctx *gitea_context.PrivateContext) {
 	opts := web.GetForm(ctx).(*private.HookOptions)
@@ -110,6 +165,12 @@ func HookPreReceive(ctx *gitea_context.PrivateContext) {
 		env:            generateGitEnv(opts), // Generate git environment for checking commits
 		opts:           opts,
 	}
+
+	if !ourCtx.assertPushOptions() {
+		log.Trace("Git push options validation failed")
+		return
+	}
+	log.Trace("Git push options validation succeeded")
 
 	// Iterate across the provided old commit IDs
 	for i := range opts.OldCommitIDs {
