@@ -136,11 +136,11 @@ func wrapTmplErrMsg(msg string) {
 		return
 	}
 	if setting.IsProd {
-		// in prod mode, Gitea must have correct templates to run
-		log.Fatal("Gitea can't run with template errors: %s", msg)
+		// in prod mode, Forgejo must have correct templates to run
+		log.Fatal("Forgejo can't run with template errors: %s", msg)
 	} else {
 		// in dev mode, do not need to really exit, because the template errors could be fixed by developer soon and the templates get reloaded
-		log.Error("There are template errors but Gitea continues to run in dev mode: %s", msg)
+		log.Error("There are template errors but Forgejo continues to run in dev mode: %s", msg)
 	}
 }
 

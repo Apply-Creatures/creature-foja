@@ -62,7 +62,7 @@ func (i *Indexer) checkOldIndexes(ctx context.Context) {
 		indexName := versionedIndexName(i.indexName, v)
 		exists, err := i.Client.IndexExists(indexName).Do(ctx)
 		if err == nil && exists {
-			log.Warn("Found older elasticsearch index named %q, Gitea will keep the old NOT DELETED. You can delete the old version after the upgrade succeed.", indexName)
+			log.Warn("Found older elasticsearch index named %q, Forgejo will keep the old NOT DELETED. You can delete the old version after the upgrade succeed.", indexName)
 		}
 	}
 }

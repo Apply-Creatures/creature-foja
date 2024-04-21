@@ -893,7 +893,7 @@ func issueIndexPatternProcessor(ctx *RenderContext, node *html.Node) {
 		} else {
 			// Path determines the type of link that will be rendered. It's unknown at this point whether
 			// the linked item is actually a PR or an issue. Luckily it's of no real consequence because
-			// Gitea will redirect on click as appropriate.
+			// Forgejo will redirect on click as appropriate.
 			path := "issues"
 			if ref.IsPull {
 				path = "pulls"
