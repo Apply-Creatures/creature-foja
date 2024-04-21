@@ -5,6 +5,7 @@ package models
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"code.gitea.io/gitea/models/db"
@@ -120,7 +121,7 @@ func DeleteRepositoryTransfer(ctx context.Context, repoID int64) error {
 func TestRepositoryReadyForTransfer(status repo_model.RepositoryStatus) error {
 	switch status {
 	case repo_model.RepositoryBeingMigrated:
-		return fmt.Errorf("repo is not ready, currently migrating")
+		return errors.New("repo is not ready, currently migrating")
 	case repo_model.RepositoryPendingTransfer:
 		return ErrRepoTransferInProgress{}
 	}
