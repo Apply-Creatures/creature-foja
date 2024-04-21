@@ -4,11 +4,13 @@
 	<div class="ui container">
 		{{template "base/alert" .}}
 
-		<div class="list-header">
+		<div class="list-header list-header-issues">
 			{{template "repo/issue/navbar" .}}
 			{{template "repo/issue/search" .}}
 			{{if and (or .CanWriteIssues .CanWritePulls) (not .Repository.IsArchived)}}
-				<a class="ui small primary button" href="{{$.Link}}/new">{{ctx.Locale.Tr "repo.milestones.new"}}</a>
+				<div class="top-right-buttons">
+					<a class="ui small primary button" href="{{$.Link}}/new">{{ctx.Locale.Tr "repo.milestones.new"}}</a>
+				</div>
 			{{end}}
 		</div>
 
