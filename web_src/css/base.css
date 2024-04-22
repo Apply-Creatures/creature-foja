@@ -453,6 +453,7 @@ a.label,
 
 .ui.selection.dropdown .menu > .item {
   border-color: var(--color-secondary);
+  white-space: nowrap;
 }
 
 .ui.selection.visible.dropdown > .text:not(.default) {
@@ -472,6 +473,12 @@ a.label,
 
 .ui.dropdown .menu > .message:not(.ui) {
   color: var(--color-text-light-2);
+}
+
+.ui.dropdown > .text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* extend fomantic style '.ui.dropdown > .text > img' to include svg.img */
@@ -1562,6 +1569,7 @@ table th[data-sortt-desc] .svg {
   align-items: center;
   gap: .25rem;
   vertical-align: middle;
+  min-width: 0;
 }
 
 .ui.ui.button {
@@ -1582,4 +1590,5 @@ table th[data-sortt-desc] .svg {
   display: flex;
   align-items: center;
   gap: .25rem;
+  min-width: 0;
 }
