@@ -38,4 +38,17 @@ func Test_loadMailerFrom(t *testing.T) {
 			assert.EqualValues(t, kase.SMTPPort, MailService.SMTPPort)
 		})
 	}
+
+	t.Run("property aliases", func(t *testing.T) {
+		cfg, _ := NewConfigProviderFromData("")
+		sec := cfg.Section("mailer")
+		sec.NewKey("ENABLED", "true")
+		sec.NewKey("USERNAME", "jane.doe@example.com")
+		sec.NewKey("PASSWORD", "y0u'll n3v3r gUess th1S!!1")
+
+		loadMailerFrom(cfg)
+
+		assert.EqualValues(t, "jane.doe@example.com", MailService.User)
+		assert.EqualValues(t, "y0u'll n3v3r gUess th1S!!1", MailService.Passwd)
+	})
 }
