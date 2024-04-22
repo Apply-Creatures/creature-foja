@@ -38,6 +38,15 @@ func loadIncomingEmailFrom(rootCfg ConfigProvider) {
 		return
 	}
 
+	// Handle aliases
+	sec := rootCfg.Section("email.incoming")
+	if sec.HasKey("USER") && !sec.HasKey("USERNAME") {
+		IncomingEmail.Username = sec.Key("USER").String()
+	}
+	if sec.HasKey("PASSWD") && !sec.HasKey("PASSWORD") {
+		IncomingEmail.Password = sec.Key("PASSWD").String()
+	}
+
 	if err := checkReplyToAddress(IncomingEmail.ReplyToAddress); err != nil {
 		log.Fatal("Invalid incoming_mail.REPLY_TO_ADDRESS (%s): %v", IncomingEmail.ReplyToAddress, err)
 	}

@@ -134,6 +134,14 @@ func loadMailerFrom(rootCfg ConfigProvider) {
 		sec.Key("PROTOCOL").SetValue("smtp+starttls")
 	}
 
+	// Handle aliases
+	if sec.HasKey("USERNAME") && !sec.HasKey("USER") {
+		sec.Key("USER").SetValue(sec.Key("USERNAME").String())
+	}
+	if sec.HasKey("PASSWORD") && !sec.HasKey("PASSWD") {
+		sec.Key("PASSWD").SetValue(sec.Key("PASSWORD").String())
+	}
+
 	// Set default values & validate
 	sec.Key("NAME").MustString(AppName)
 	sec.Key("PROTOCOL").In("", []string{"smtp", "smtps", "smtp+starttls", "smtp+unix", "sendmail", "dummy"})
