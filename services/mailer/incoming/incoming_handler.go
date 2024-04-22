@@ -82,31 +82,34 @@ func (h *ReplyHandler) Handle(ctx context.Context, content *MailContent, doer *u
 		return nil
 	}
 
+	log.Trace("incoming mail related to %T", ref)
+
+	attachmentIDs := make([]string, 0, len(content.Attachments))
+	if setting.Attachment.Enabled {
+		for _, attachment := range content.Attachments {
+			a, err := attachment_service.UploadAttachment(ctx, bytes.NewReader(attachment.Content), setting.Attachment.AllowedTypes, int64(len(attachment.Content)), &repo_model.Attachment{
+				Name:       attachment.Name,
+				UploaderID: doer.ID,
+				RepoID:     issue.Repo.ID,
+			})
+			if err != nil {
+				if upload.IsErrFileTypeForbidden(err) {
+					log.Info("Skipping disallowed attachment type: %s", attachment.Name)
+					continue
+				}
+				return err
+			}
+			attachmentIDs = append(attachmentIDs, a.UUID)
+		}
+	}
+
+	if content.Content == "" && len(attachmentIDs) == 0 {
+		log.Trace("incoming mail has no content and no attachement", ref)
+		return nil
+	}
+
 	switch r := ref.(type) {
 	case *issues_model.Issue:
-		attachmentIDs := make([]string, 0, len(content.Attachments))
-		if setting.Attachment.Enabled {
-			for _, attachment := range content.Attachments {
-				a, err := attachment_service.UploadAttachment(ctx, bytes.NewReader(attachment.Content), setting.Attachment.AllowedTypes, int64(len(attachment.Content)), &repo_model.Attachment{
-					Name:       attachment.Name,
-					UploaderID: doer.ID,
-					RepoID:     issue.Repo.ID,
-				})
-				if err != nil {
-					if upload.IsErrFileTypeForbidden(err) {
-						log.Info("Skipping disallowed attachment type: %s", attachment.Name)
-						continue
-					}
-					return err
-				}
-				attachmentIDs = append(attachmentIDs, a.UUID)
-			}
-		}
-
-		if content.Content == "" && len(attachmentIDs) == 0 {
-			return nil
-		}
-
 		_, err = issue_service.CreateIssueComment(ctx, doer, issue.Repo, issue, content.Content, attachmentIDs)
 		if err != nil {
 			return fmt.Errorf("CreateIssueComment failed: %w", err)
@@ -114,11 +117,13 @@ func (h *ReplyHandler) Handle(ctx context.Context, content *MailContent, doer *u
 	case *issues_model.Comment:
 		comment := r
 
-		if content.Content == "" {
-			return nil
-		}
-
-		if comment.Type == issues_model.CommentTypeCode {
+		switch comment.Type {
+		case issues_model.CommentTypeComment, issues_model.CommentTypeReview:
+			_, err = issue_service.CreateIssueComment(ctx, doer, issue.Repo, issue, content.Content, attachmentIDs)
+			if err != nil {
+				return fmt.Errorf("CreateIssueComment failed: %w", err)
+			}
+		case issues_model.CommentTypeCode:
 			_, err := pull_service.CreateCodeComment(
 				ctx,
 				doer,
@@ -130,12 +135,16 @@ func (h *ReplyHandler) Handle(ctx context.Context, content *MailContent, doer *u
 				false, // not pending review but a single review
 				comment.ReviewID,
 				"",
-				nil,
+				attachmentIDs,
 			)
 			if err != nil {
 				return fmt.Errorf("CreateCodeComment failed: %w", err)
 			}
+		default:
+			log.Trace("incoming mail related to comment of type %v is ignored", comment.Type)
 		}
+	default:
+		log.Trace("incoming mail related to %T is ignored", ref)
 	}
 	return nil
 }
