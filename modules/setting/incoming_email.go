@@ -47,6 +47,15 @@ func loadIncomingEmailFrom(rootCfg ConfigProvider) {
 		IncomingEmail.Password = sec.Key("PASSWD").String()
 	}
 
+	// Infer Port if not set
+	if IncomingEmail.Port == 0 {
+		if IncomingEmail.UseTLS {
+			IncomingEmail.Port = 993
+		} else {
+			IncomingEmail.Port = 143
+		}
+	}
+
 	if err := checkReplyToAddress(IncomingEmail.ReplyToAddress); err != nil {
 		log.Fatal("Invalid incoming_mail.REPLY_TO_ADDRESS (%s): %v", IncomingEmail.ReplyToAddress, err)
 	}
