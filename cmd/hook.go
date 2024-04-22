@@ -482,7 +482,7 @@ func hookPrintResults(results []private.HookPostReceiveBranchResult) {
 			fmt.Fprintf(os.Stderr, "  %s\n", res.URL)
 		}
 		fmt.Fprintln(os.Stderr, "")
-		os.Stderr.Sync()
+		_ = os.Stderr.Sync()
 	}
 }
 

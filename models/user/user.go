@@ -1007,9 +1007,8 @@ func GetUserIDsByNames(ctx context.Context, names []string, ignoreNonExistent bo
 		if err != nil {
 			if ignoreNonExistent {
 				continue
-			} else {
-				return nil, err
 			}
+			return nil, err
 		}
 		ids = append(ids, u.ID)
 	}

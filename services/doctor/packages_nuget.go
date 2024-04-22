@@ -51,7 +51,6 @@ func PackagesNugetNuspecCheck(ctx context.Context, logger log.Logger, autofix bo
 		logger.Info("Found %d versions for package %s", len(pvs), pkg.Name)
 
 		for _, pv := range pvs {
-
 			pfs, err := packages.GetFilesByVersionID(ctx, pv.ID)
 			if err != nil {
 				logger.Error("Failed to get files for package version %s %s: %v", pkg.Name, pv.Version, err)

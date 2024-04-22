@@ -460,7 +460,6 @@ func TestColorPreview(t *testing.T) {
 		res, err := markdown.RenderString(&markup.RenderContext{Ctx: git.DefaultContext}, test.testcase)
 		assert.NoError(t, err, "Unexpected error in testcase: %q", test.testcase)
 		assert.Equal(t, template.HTML(test.expected), res, "Unexpected result in testcase %q", test.testcase)
-
 	}
 
 	negativeTests := []string{
@@ -555,7 +554,6 @@ func TestMathBlock(t *testing.T) {
 		res, err := markdown.RenderString(&markup.RenderContext{Ctx: git.DefaultContext}, test.testcase)
 		assert.NoError(t, err, "Unexpected error in testcase: %q", test.testcase)
 		assert.Equal(t, template.HTML(test.expected), res, "Unexpected result in testcase %q", test.testcase)
-
 	}
 }
 

@@ -214,7 +214,6 @@ func RecreateTable(sess *xorm.Session, bean any) error {
 				return err
 			}
 			sequenceMap[sequence] = sequenceData
-
 		}
 
 		// CASCADE causes postgres to drop all the constraints on the old table
@@ -279,7 +278,6 @@ func RecreateTable(sess *xorm.Session, bean any) error {
 					return err
 				}
 			}
-
 		}
 
 	default:

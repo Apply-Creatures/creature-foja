@@ -480,7 +480,6 @@ aiIK5QoSDwAAAAAAAAAAAAAAAP/IK49O1e8AKAAA`
 					req = NewRequest(t, "DELETE", fmt.Sprintf("%s/%s/%s/x86_64/%s-%s.apk", rootURL, branch, repository, pkg, packageVersion)).
 						AddBasicAuth(user.Name)
 					MakeRequest(t, req, http.StatusNoContent)
-
 				}
 				// Deleting the last file of an architecture should remove that index
 				req := NewRequest(t, "GET", fmt.Sprintf("%s/%s/%s/x86_64/APKINDEX.tar.gz", rootURL, branch, repository))

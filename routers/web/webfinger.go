@@ -102,23 +102,11 @@ func WebfingerQuery(ctx *context.Context) {
 			default:
 				ctx.Error(http.StatusNotFound)
 				return
-
-			}
-		case 4:
-			//nolint:gocritic
-			if parts[3] == "teams" {
-				ctx.Error(http.StatusNotFound)
-				return
-
-			} else {
-				ctx.Error(http.StatusNotFound)
-				return
 			}
 
 		default:
 			ctx.Error(http.StatusNotFound)
 			return
-
 		}
 
 	default:

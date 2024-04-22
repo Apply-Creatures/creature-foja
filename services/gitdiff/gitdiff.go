@@ -1040,8 +1040,8 @@ func createDiffFile(diff *Diff, line string) *DiffFile {
 			// diff --git a/b b/b b/b b/b b/b b/b
 			//
 			midpoint := (len(line) + len(cmdDiffHead) - 1) / 2
-			new, old := line[len(cmdDiffHead):midpoint], line[midpoint+1:]
-			if len(new) > 2 && len(old) > 2 && new[2:] == old[2:] {
+			newl, old := line[len(cmdDiffHead):midpoint], line[midpoint+1:]
+			if len(newl) > 2 && len(old) > 2 && newl[2:] == old[2:] {
 				curFile.OldName = old[2:]
 				curFile.Name = old[2:]
 			}
