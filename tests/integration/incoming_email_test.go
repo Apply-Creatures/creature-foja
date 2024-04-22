@@ -76,13 +76,10 @@ func TestIncomingEmail(t *testing.T) {
 
 	t.Run("Handler", func(t *testing.T) {
 		t.Run("Reply", func(t *testing.T) {
-			t.Run("Comment", func(t *testing.T) {
-				defer tests.PrintCurrentTest(t)()
+			checkReply := func(t *testing.T, payload []byte, issue *issues_model.Issue, commentType issues_model.CommentType) {
+				t.Helper()
 
 				handler := &incoming.ReplyHandler{}
-
-				payload, err := incoming_payload.CreateReferencePayload(issue)
-				assert.NoError(t, err)
 
 				assert.Error(t, handler.Handle(db.DefaultContext, &incoming.MailContent{}, nil, payload))
 				assert.NoError(t, handler.Handle(db.DefaultContext, &incoming.MailContent{}, user, payload))
@@ -101,7 +98,7 @@ func TestIncomingEmail(t *testing.T) {
 
 				comments, err := issues_model.FindComments(db.DefaultContext, &issues_model.FindCommentsOptions{
 					IssueID: issue.ID,
-					Type:    issues_model.CommentTypeComment,
+					Type:    commentType,
 				})
 				assert.NoError(t, err)
 				assert.NotEmpty(t, comments)
@@ -113,6 +110,14 @@ func TestIncomingEmail(t *testing.T) {
 				attachment := comment.Attachments[0]
 				assert.Equal(t, content.Attachments[0].Name, attachment.Name)
 				assert.EqualValues(t, 4, attachment.Size)
+			}
+			t.Run("Issue", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				payload, err := incoming_payload.CreateReferencePayload(issue)
+				assert.NoError(t, err)
+
+				checkReply(t, payload, issue, issues_model.CommentTypeComment)
 			})
 
 			t.Run("CodeComment", func(t *testing.T) {
@@ -121,33 +126,22 @@ func TestIncomingEmail(t *testing.T) {
 				comment := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: 6})
 				issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: comment.IssueID})
 
-				handler := &incoming.ReplyHandler{}
-				content := &incoming.MailContent{
-					Content: "code reply by mail",
-					Attachments: []*incoming.Attachment{
-						{
-							Name:    "attachment.txt",
-							Content: []byte("test"),
-						},
-					},
-				}
+				payload, err := incoming_payload.CreateReferencePayload(comment)
+				assert.NoError(t, err)
+
+				checkReply(t, payload, issue, issues_model.CommentTypeCode)
+			})
+
+			t.Run("Comment", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				comment := unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: 2})
+				issue := unittest.AssertExistsAndLoadBean(t, &issues_model.Issue{ID: comment.IssueID})
 
 				payload, err := incoming_payload.CreateReferencePayload(comment)
 				assert.NoError(t, err)
 
-				assert.NoError(t, handler.Handle(db.DefaultContext, content, user, payload))
-
-				comments, err := issues_model.FindComments(db.DefaultContext, &issues_model.FindCommentsOptions{
-					IssueID: issue.ID,
-					Type:    issues_model.CommentTypeCode,
-				})
-				assert.NoError(t, err)
-				assert.NotEmpty(t, comments)
-				comment = comments[len(comments)-1]
-				assert.Equal(t, user.ID, comment.PosterID)
-				assert.Equal(t, content.Content, comment.Content)
-				assert.NoError(t, comment.LoadAttachments(db.DefaultContext))
-				assert.Empty(t, comment.Attachments)
+				checkReply(t, payload, issue, issues_model.CommentTypeComment)
 			})
 		})
 
