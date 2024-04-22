@@ -13,5 +13,10 @@ fi
 if [ $# -gt 0 ]; then
     exec "$@"
 else
+    # TODO: remove on next major version release
+    # Honour legacy config file if existing
+    if [ -f ${GITEA_APP_INI_LEGACY} ]; then
+        GITEA_APP_INI=${GITEA_APP_INI_LEGACY}
+    fi
     exec /usr/local/bin/gitea -c ${GITEA_APP_INI} web
 fi
