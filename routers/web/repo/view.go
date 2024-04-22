@@ -556,7 +556,7 @@ func renderFile(ctx *context.Context, entry *git.TreeEntry) {
 
 			// The Open Group Base Specification: https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap03.html
 			//   empty: 0 lines; "a": 1 incomplete-line; "a\n": 1 line; "a\nb": 1 line, 1 incomplete-line;
-			// Gitea uses the definition (like most modern editors):
+			// Forgejo uses the definition (like most modern editors):
 			//   empty: 0 lines; "a": 1 line; "a\n": 2 lines; "a\nb": 2 lines;
 			//   When rendering, the last empty line is not rendered in UI, while the line-number is still counted, to tell users that the file contains a trailing EOL.
 			//   To make the UI more consistent, it could use an icon mark to indicate that there is no trailing EOL, and show line-number as the rendered lines.

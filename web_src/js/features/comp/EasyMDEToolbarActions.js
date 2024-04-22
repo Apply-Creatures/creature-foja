@@ -99,7 +99,7 @@ export function easyMDEToolbarActions(EasyMDE, editor) {
       title: 'Side by Side',
     },
 
-    // gitea's custom actions
+    // Forgejo custom actions
     'gitea-checkbox-empty': {
       action(e) {
         const cm = e.codemirror;

@@ -130,7 +130,7 @@ then resh (ר), and finally heh (ה) (which should appear leftmost).`,
 	},
 	{
 		// UTF-8/16/32 all use the same codepoint for BOM
-		// Gitea could read UTF-16/32 content and convert into UTF-8 internally then render it, so we only process UTF-8 internally
+		// Forgejo could read UTF-16/32 content and convert into UTF-8 internally then render it, so we only process UTF-8 internally
 		name:   "UTF BOM",
 		text:   "\xef\xbb\xbftest",
 		result: "\xef\xbb\xbftest",
