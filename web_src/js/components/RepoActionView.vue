@@ -110,34 +110,6 @@ const sfc = {
   },
 
   methods: {
-    // get the active container element, either the `job-step-logs` or the `job-log-list` in the `job-log-group`
-    getLogsContainer(idx) {
-      const el = this.$refs.logs[idx];
-      return el._stepLogsActiveContainer ?? el;
-    },
-    // begin a log group
-    beginLogGroup(idx) {
-      const el = this.$refs.logs[idx];
-
-      const elJobLogGroup = document.createElement('div');
-      elJobLogGroup.classList.add('job-log-group');
-
-      const elJobLogGroupSummary = document.createElement('div');
-      elJobLogGroupSummary.classList.add('job-log-group-summary');
-
-      const elJobLogList = document.createElement('div');
-      elJobLogList.classList.add('job-log-list');
-
-      elJobLogGroup.append(elJobLogGroupSummary);
-      elJobLogGroup.append(elJobLogList);
-      el._stepLogsActiveContainer = elJobLogList;
-    },
-    // end a log group
-    endLogGroup(idx) {
-      const el = this.$refs.logs[idx];
-      el._stepLogsActiveContainer = null;
-    },
-
     // show/hide the step logs for a step
     toggleStepLogs(idx) {
       this.currentJobStepsStates[idx].expanded = !this.currentJobStepsStates[idx].expanded;
@@ -153,8 +125,18 @@ const sfc = {
     approveRun() {
       POST(`${this.run.link}/approve`);
     },
+    // show/hide the step logs for a group
+    toggleGroupLogs(event) {
+      const line = event.target.parentElement;
+      const list = line.nextSibling;
+      if (event.newState === 'open') {
+        list.classList.remove('hidden');
+      } else {
+        list.classList.add('hidden');
+      }
+    },
 
-    createLogLine(line, startTime, stepIndex) {
+    createLogLine(line, startTime, stepIndex, group) {
       const div = document.createElement('div');
       div.classList.add('job-log-line');
       div.setAttribute('id', `jobstep-${stepIndex}-${line.index}`);
@@ -180,9 +162,19 @@ const sfc = {
       logTimeSeconds.textContent = `${seconds}s`;
       toggleElem(logTimeSeconds, this.timeVisible['log-time-seconds']);
 
-      const logMessage = document.createElement('span');
-      logMessage.className = 'log-msg';
+      let logMessage = document.createElement('span');
       logMessage.innerHTML = renderAnsi(line.message);
+      if (group.isHeader) {
+        const details = document.createElement('details');
+        details.addEventListener('toggle', this.toggleGroupLogs);
+        const summary = document.createElement('summary');
+        summary.append(logMessage);
+        details.append(summary);
+        logMessage = details;
+      }
+      logMessage.className = 'log-msg';
+      logMessage.style.paddingLeft = `${group.depth}em`;
+
       div.append(logTimeStamp);
       div.append(logMessage);
       div.append(logTimeSeconds);
@@ -191,10 +183,38 @@ const sfc = {
     },
 
     appendLogs(stepIndex, logLines, startTime) {
+      const groupStack = [];
+      const container = this.$refs.logs[stepIndex];
       for (const line of logLines) {
-        // TODO: group support: ##[group]GroupTitle , ##[endgroup]
-        const el = this.getLogsContainer(stepIndex);
-        el.append(this.createLogLine(line, startTime, stepIndex));
+        const el = groupStack.length > 0 ? groupStack[groupStack.length - 1] : container;
+        const group = {
+          depth: groupStack.length,
+          isHeader: false,
+        };
+        if (line.message.startsWith('##[group]')) {
+          group.isHeader = true;
+
+          const logLine = this.createLogLine(
+            {
+              ...line,
+              message: line.message.substring(9),
+            },
+            startTime, stepIndex, group,
+          );
+          logLine.setAttribute('data-group', group.index);
+          el.append(logLine);
+
+          const list = document.createElement('div');
+          list.classList.add('job-log-list');
+          list.classList.add('hidden');
+          list.setAttribute('data-group', group.index);
+          groupStack.push(list);
+          el.append(list);
+        } else if (line.message.startsWith('##[endgroup]')) {
+          groupStack.pop();
+        } else {
+          el.append(this.createLogLine(line, startTime, stepIndex, group));
+        }
       }
     },
 
@@ -878,15 +898,7 @@ export function initRepositoryActionView() {
   border-radius: 0;
 }
 
-/* TODO: group support
-
-.job-log-group {
-
+.job-log-list.hidden {
+  display: none;
 }
-.job-log-group-summary {
-
-}
-.job-log-list {
-
-} */
 </style>
