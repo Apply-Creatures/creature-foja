@@ -15,6 +15,7 @@
     "helpers:pinGitHubActionDigests"
   ],
   "semanticCommits": "disabled",
+  "automergeStrategy": "merge-commit",
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths", "npmDedupe"],
   "prConcurrentLimit": 5,
   "packageRules": [
