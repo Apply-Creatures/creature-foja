@@ -132,13 +132,10 @@ func CreateScheduleTask(ctx context.Context, cron *actions_model.ActionSchedule)
 		Status:        actions_model.StatusWaiting,
 	}
 
-	if err := run.LoadAttributes(ctx); err != nil {
-		log.Error("LoadAttributes: %v", err)
-	}
-
 	vars, err := actions_model.GetVariablesOfRun(ctx, run)
 	if err != nil {
-		log.Error("GetVariablesOfSchedule: %v", err)
+		log.Error("GetVariablesOfRun: %v", err)
+		return err
 	}
 
 	// Parse the workflow specification from the cron schedule
