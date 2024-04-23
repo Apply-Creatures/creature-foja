@@ -1,8 +1,8 @@
 # Release Notes
 
-A Forgejo release is published shortly after a Gitea release is published and they have [matching release numbers](https://codeberg.org/forgejo/forgejo/src/branch/forgejo/CONTRIBUTING/RELEASE.md#release-numbering). Additional Forgejo releases may be published to address urgent security issues or bug fixes.
+A minor or major Forgejo release is published every [three months](https://forgejo.org/docs/latest/user/versions/), with more patch releases in between depending on the severity of the bug and security fixes it contains.
 
-The Forgejo admin should carefully read the required manual actions before upgrading. A point release (e.g. v1.21.1-0 or v1.21.2-0) does not require manual actions but others might (e.g. v1.20, v1.21).
+A [patch or minor release](https://semver.org/spec/v2.0.0.html) (e.g. upgrading from v7.0.0 to v7.0.1 or v7.1.0) does not require manual intervention. But [major releases](https://semver.org/spec/v2.0.0.html#spec-item-8) where the first version number changes (e.g. upgrading from v1.21 to v7.0) contain breaking changes and the release notes explain how to deal with them.
 
 ## 7.0.0
 
