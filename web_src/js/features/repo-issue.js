@@ -583,12 +583,13 @@ export function initRepoIssueWipToggle() {
     e.preventDefault();
     const toggleWip = e.currentTarget.closest('.toggle-wip');
     const title = toggleWip.getAttribute('data-title');
-    const wipPrefix = toggleWip.getAttribute('data-wip-prefix');
+    const wipPrefixes = JSON.parse(toggleWip.getAttribute('data-wip-prefixes'));
     const updateUrl = toggleWip.getAttribute('data-update-url');
+    const prefix = wipPrefixes.find((prefix) => title.startsWith(prefix));
 
     try {
       const params = new URLSearchParams();
-      params.append('title', title?.startsWith(wipPrefix) ? title.slice(wipPrefix.length).trim() : `${wipPrefix.trim()} ${title}`);
+      params.append('title', prefix !== undefined ? title.slice(prefix.length).trim() : `${wipPrefixes[0].trim()} ${title}`);
 
       const response = await POST(updateUrl, {data: params});
       if (!response.ok) {
