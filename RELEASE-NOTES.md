@@ -12,6 +12,7 @@ The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/bran
 $ git clone https://codeberg.org/forgejo/forgejo/
 $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/forgejo
 ```
+
 * **Breaking changes requiring manual intervention:**
   * [MySQL 8.0 or PostgreSQL 12](https://codeberg.org/forgejo/forgejo/commit/e94f9fcafdcf284561e7fb33f60156a69c4ad6a5) are the minimum supported versions. The database must be migrated before upgrading. The requirements regarding SQLite did not change.
   * The `per_page` parameter is [no longer a synonym for `limit`](https://codeberg.org/forgejo/forgejo/commit/0aab2d38a7d91bc8caff332e452364468ce52d9a) in the [/repos/{owner}/{repo}/releases](https://code.forgejo.org/api/swagger/#/repository/repoListReleases) API endpoint.
@@ -36,6 +37,10 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
   * It is [no longer possible to replace the default web editor](https://codeberg.org/forgejo/forgejo/pulls/2916) used to write comments or issues and pull requests with the EasyMDE editor. It is however still available as an alternative to edit releases and wiki pages.
   * [The list of all repositories and the `New Issue` button are no longer available in the user dashboard](https://codeberg.org/forgejo/forgejo/commit/beb71f5ef6e8074dc744ac995c15f7b5947a3f2e) for issues and pull requests.
 * **Migration warning**
+  * If the logs show a line like the following, [run doctor convert](https://forgejo.org/docs/v7.0/admin/command-line/#doctor-convert) to fix it.
+    ```
+    [W] Current database is using a case-insensitive collation "utf8mb4_general_ci"
+    ```
   * Large instances may experience slow migrations when the database is upgraded to support SHA-256 git repositories. For instance, here are the logs from a test migration of the https://codeberg.org production database:
     ```
     [I] Migration[286]: Add support for SHA256 git repositories
@@ -44,6 +49,8 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
     [W] [Slow SQL Query] ALTER TABLE `release` MODIFY COLUMN `sha1` VARCHAR(64) [] - 22.06241145s
     ```
 * **Features and enhancements**
+  * Repository settings have been refactored, lifting out the repository unit-related settings to their own page. ([#2221](https://codeberg.org/forgejo/forgejo/pulls/2221))
+    - When additional units can be enabled, an "Add more..." link will be displayed for repository admins. This can be turned off. ([#2533](https://codeberg.org/forgejo/forgejo/pulls/2533))
   * Repository administrators can [allow anyone to edit the wiki](https://forgejo.org/docs/v7.0/user/wiki/#activation-and-permissions) in the repository Settings. ([#2001](https://codeberg.org/forgejo/forgejo/pulls/2001))
   * Instance administrators can enable [repository badges](https://forgejo.org/docs/v7.0/user/readme-badges/) in the [configuration file](https://forgejo.org/docs/v7.0/admin/config-cheat-sheet/#badges-badges). This feature depends on a shield generator service such as shields.io, and is disabled by default. ([#2070](https://codeberg.org/forgejo/forgejo/pulls/2070))
   * Instance administrators can configure the additional clone methods displayed on the repository home view. ([gitea#29320](https://github.com/go-gitea/gitea/pull/29320))
@@ -58,8 +65,6 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
   * Users who signed up, but have not activated their accounts yet, are now able to [change their email before activation](https://codeberg.org/forgejo/forgejo/pulls/1891). ([#1891](https://codeberg.org/forgejo/forgejo/pulls/1891))
   * The "You pushed on branch ...." banner is now displayed for repositories you have a fork of with recently pushed branches too ([#2195](https://codeberg.org/forgejo/forgejo/pulls/2195)), and it will no longer consider branches that share no history with the default branch. ([#2196](https://codeberg.org/forgejo/forgejo/pulls/2196))
   * Forgejo will now highlight signed tags in a similar way it highlights signed commits. ([#2534](https://codeberg.org/forgejo/forgejo/pulls/2534))
-  * Repository settings have been refactored, lifting out the repository unit-related settings to their own page. ([#2221](https://codeberg.org/forgejo/forgejo/pulls/2221))
-    - When additional units can be enabled, an "Add more..." link will be displayed for repository admins. This can be turned off. ([#2533](https://codeberg.org/forgejo/forgejo/pulls/2533))
   * Forgejo gained support for the more recent GitHub-style alert blocks. ([#2348](https://codeberg.org/forgejo/forgejo/pulls/2348))
     - The older style remains supported too.
   * [[ACTIONS] Add vars context to cron jobs](https://codeberg.org/forgejo/forgejo/pulls/3059)
