@@ -36,6 +36,7 @@ import (
 	"code.gitea.io/gitea/modules/graceful"
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/testlogger"
 	"code.gitea.io/gitea/modules/util"
@@ -652,15 +653,26 @@ func GetHTMLTitle(t testing.TB, session *TestSession, urlStr string) string {
 	return doc.Find("head title").Text()
 }
 
-func CreateDeclarativeRepo(t *testing.T, owner *user_model.User, name string, enabledUnits, disabledUnits []unit_model.Type, files []*files_service.ChangeRepoFile) (*repo_model.Repository, string, func()) {
+type DeclarativeRepoOptions struct {
+	Name          optional.Option[string]
+	EnabledUnits  optional.Option[[]unit_model.Type]
+	DisabledUnits optional.Option[[]unit_model.Type]
+	Files         optional.Option[[]*files_service.ChangeRepoFile]
+}
+
+func CreateDeclarativeRepoWithOptions(t *testing.T, owner *user_model.User, opts DeclarativeRepoOptions) (*repo_model.Repository, string, func()) {
 	t.Helper()
 
-	repoName := name
-	if repoName == "" {
+	// Not using opts.Name.ValueOrDefault() here to avoid unnecessarily
+	// generating an UUID when a name is specified.
+	var repoName string
+	if opts.Name.Has() {
+		repoName = opts.Name.Value()
+	} else {
 		repoName = gouuid.NewString()
 	}
 
-	// Create a new repository
+	// Create the repository
 	repo, err := repo_service.CreateRepository(db.DefaultContext, owner, owner, repo_service.CreateRepoOptions{
 		Name:          repoName,
 		Description:   "Temporary Repo",
@@ -673,21 +685,31 @@ func CreateDeclarativeRepo(t *testing.T, owner *user_model.User, name string, en
 	assert.NoError(t, err)
 	assert.NotEmpty(t, repo)
 
-	if enabledUnits != nil || disabledUnits != nil {
-		units := make([]repo_model.RepoUnit, len(enabledUnits))
-		for i, unitType := range enabledUnits {
-			units[i] = repo_model.RepoUnit{
+	// Populate `enabledUnits` if we have any enabled.
+	var enabledUnits []repo_model.RepoUnit
+	if opts.EnabledUnits.Has() {
+		units := opts.EnabledUnits.Value()
+		enabledUnits = make([]repo_model.RepoUnit, len(units))
+
+		for i, unitType := range units {
+			enabledUnits[i] = repo_model.RepoUnit{
 				RepoID: repo.ID,
 				Type:   unitType,
 			}
 		}
+	}
 
-		err := repo_service.UpdateRepositoryUnits(db.DefaultContext, repo, units, disabledUnits)
+	// Adjust the repo units according to our parameters.
+	if opts.EnabledUnits.Has() || opts.DisabledUnits.Has() {
+		err := repo_service.UpdateRepositoryUnits(db.DefaultContext, repo, enabledUnits, opts.DisabledUnits.ValueOrDefault(nil))
 		assert.NoError(t, err)
 	}
 
+	// Add files, if any.
 	var sha string
-	if len(files) > 0 {
+	if opts.Files.Has() {
+		files := opts.Files.Value()
+
 		resp, err := files_service.ChangeRepoFiles(git.DefaultContext, repo, owner, &files_service.ChangeRepoFilesOptions{
 			Files:     files,
 			Message:   "add files",
@@ -712,7 +734,30 @@ func CreateDeclarativeRepo(t *testing.T, owner *user_model.User, name string, en
 		sha = resp.Commit.SHA
 	}
 
+	// Return the repo, the top commit, and a defer-able function to delete the
+	// repo.
 	return repo, sha, func() {
 		repo_service.DeleteRepository(db.DefaultContext, owner, repo, false)
 	}
+}
+
+func CreateDeclarativeRepo(t *testing.T, owner *user_model.User, name string, enabledUnits, disabledUnits []unit_model.Type, files []*files_service.ChangeRepoFile) (*repo_model.Repository, string, func()) {
+	t.Helper()
+
+	var opts DeclarativeRepoOptions
+
+	if name != "" {
+		opts.Name = optional.Some(name)
+	}
+	if enabledUnits != nil {
+		opts.EnabledUnits = optional.Some(enabledUnits)
+	}
+	if disabledUnits != nil {
+		opts.DisabledUnits = optional.Some(disabledUnits)
+	}
+	if files != nil {
+		opts.Files = optional.Some(files)
+	}
+
+	return CreateDeclarativeRepoWithOptions(t, owner, opts)
 }
