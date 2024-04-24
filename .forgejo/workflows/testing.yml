@@ -140,6 +140,8 @@ jobs:
         env:
           MINIO_ROOT_USER: 123456
           MINIO_ROOT_PASSWORD: 12345678
+      ldap:
+        image: docker.io/gitea/test-openldap:latest
       pgsql:
         image: 'docker.io/postgres:15'
         env:
@@ -176,6 +178,7 @@ jobs:
           TAGS: bindata
           RACE_ENABLED: true
           USE_REPO_TEST_DIR: 1
+          TEST_LDAP: 1
   test-sqlite:
     if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
     runs-on: docker
