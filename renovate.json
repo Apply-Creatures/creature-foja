@@ -18,6 +18,7 @@
   "automergeStrategy": "merge-commit",
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths", "npmDedupe"],
   "prConcurrentLimit": 5,
+  "internalChecksFilter": "strict",
   "packageRules": [
     {
       "description": "Require approval for go and python minor version",
@@ -74,6 +75,16 @@
       "matchDepNames": ["actions/cascading-pr"],
       "matchManagers": ["github-actions"],
       "enabled": false
+    },
+    {
+      "description": "Automerge some packages when ci succeeds",
+      "extends": ["packages:linters"],
+      "matchDepNames": ["vitest"],
+      "automerge": true
+    }, {
+      "description": "Hold back on some package updates for a few days",
+      "matchDepNames": ["monaco-editor"],
+      "minimumReleaseAge": "30 days"
     }
   ],
   "customManagers": [
