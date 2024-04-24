@@ -16,6 +16,7 @@ import (
 	unit_model "code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/optional"
 	api "code.gitea.io/gitea/modules/structs"
 	repo_service "code.gitea.io/gitea/services/repository"
 	"code.gitea.io/gitea/tests"
@@ -381,4 +382,29 @@ func TestAPIListPageRevisions(t *testing.T) {
 	}
 
 	assert.Equal(t, dummyrevisions, revisions)
+}
+
+func TestAPIWikiNonMasterBranch(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+	repo, _, f := CreateDeclarativeRepoWithOptions(t, user, DeclarativeRepoOptions{
+		WikiBranch: optional.Some("main"),
+	})
+	defer f()
+
+	uris := []string{
+		"revisions/Home",
+		"pages",
+		"page/Home",
+	}
+	baseURL := fmt.Sprintf("/api/v1/repos/%s/wiki", repo.FullName())
+	for _, uri := range uris {
+		t.Run(uri, func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			req := NewRequestf(t, "GET", "%s/%s", baseURL, uri)
+			MakeRequest(t, req, http.StatusOK)
+		})
+	}
 }
