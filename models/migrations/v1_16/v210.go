@@ -68,11 +68,6 @@ func RemigrateU2FCredentials(x *xorm.Engine) error {
 		if err != nil {
 			return err
 		}
-	case schemas.ORACLE:
-		_, err := x.Exec("ALTER TABLE webauthn_credential MODIFY credential_id VARCHAR(410)")
-		if err != nil {
-			return err
-		}
 	case schemas.POSTGRES:
 		_, err := x.Exec("ALTER TABLE webauthn_credential ALTER COLUMN credential_id TYPE VARCHAR(410)")
 		if err != nil {
