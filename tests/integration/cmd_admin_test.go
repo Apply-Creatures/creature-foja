@@ -53,6 +53,14 @@ func Test_Cmd_AdminUser(t *testing.T) {
 				user := unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: name})
 				assert.Equal(t, testCase.mustChangePassword, user.MustChangePassword)
 
+				options = []string{"user", "change-password", "--username", name, "--password", "password"}
+				options = append(options, testCase.options...)
+				output, err = runMainApp("admin", options...)
+				assert.NoError(t, err)
+				assert.Contains(t, output, "has been successfully updated")
+				user = unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: name})
+				assert.Equal(t, testCase.mustChangePassword, user.MustChangePassword)
+
 				_, err = runMainApp("admin", "user", "delete", "--username", name)
 				assert.NoError(t, err)
 				unittest.AssertNotExistsBean(t, &user_model.User{Name: name})
