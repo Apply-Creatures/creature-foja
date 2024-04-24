@@ -12,6 +12,8 @@ In addition to the following notable bug fixes, you can browse the [full list of
 
 * **Bug fixes:**
 
+- Fixed a bug where the `/api/v1/repos/{owner}/{repo}/wiki` API endpoints were using a hardcoded "master" branch for the wiki, rather than the branch they really use. ([#3430](https://codeberg.org/forgejo/forgejo/pulls/3430))
+
 ## 7.0.0
 
 The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v7.0/forgejo) included in the `Forgejo v7.0.0` release can be reviewed from the command line with:
