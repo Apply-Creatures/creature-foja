@@ -22,7 +22,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
 ```
 
 * **Regression and workaround:**
-  * The [`fogejo admin user create`](https://forgejo.org/docs/v7.0/admin/command-line/#admin-user-create) CLI command [requires a password](https://codeberg.org/forgejo/forgejo/commit/b122c6ef8b9254120432aed373cbe075331132ac) change by default. The `--must-change-password=false` argument must be given to not require a password change. The first user created on a new Forgejo instance is the exception, it will not require a password change by default. This regression will be [fixed in 7.0.1](https://codeberg.org/forgejo/forgejo/issues/3399).
+  * The [`fogejo admin user create`](https://forgejo.org/docs/v7.0/admin/command-line/#admin-user-create) CLI command [requires a password](https://codeberg.org/forgejo/forgejo/commit/b122c6ef8b9254120432aed373cbe075331132ac) change by default when creating the first user and the `--admin` flag is not specified. The `--must-change-password=false` argument must be given to not require a password change. This regression will be [fixed in 7.0.1](https://codeberg.org/forgejo/forgejo/issues/3399).
 * **Breaking changes requiring manual intervention:**
   * [MySQL 8.0 or PostgreSQL 12](https://codeberg.org/forgejo/forgejo/commit/e94f9fcafdcf284561e7fb33f60156a69c4ad6a5) are the minimum supported versions. The database must be migrated before upgrading. The requirements regarding SQLite did not change.
   * The `per_page` parameter is [no longer a synonym for `limit`](https://codeberg.org/forgejo/forgejo/commit/0aab2d38a7d91bc8caff332e452364468ce52d9a) in the [/repos/{owner}/{repo}/releases](https://code.forgejo.org/api/swagger/#/repository/repoListReleases) API endpoint.
