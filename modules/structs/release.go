@@ -9,18 +9,19 @@ import (
 
 // Release represents a repository release
 type Release struct {
-	ID           int64  `json:"id"`
-	TagName      string `json:"tag_name"`
-	Target       string `json:"target_commitish"`
-	Title        string `json:"name"`
-	Note         string `json:"body"`
-	URL          string `json:"url"`
-	HTMLURL      string `json:"html_url"`
-	TarURL       string `json:"tarball_url"`
-	ZipURL       string `json:"zipball_url"`
-	UploadURL    string `json:"upload_url"`
-	IsDraft      bool   `json:"draft"`
-	IsPrerelease bool   `json:"prerelease"`
+	ID               int64  `json:"id"`
+	TagName          string `json:"tag_name"`
+	Target           string `json:"target_commitish"`
+	Title            string `json:"name"`
+	Note             string `json:"body"`
+	URL              string `json:"url"`
+	HTMLURL          string `json:"html_url"`
+	TarURL           string `json:"tarball_url"`
+	ZipURL           string `json:"zipball_url"`
+	HideArchiveLinks bool   `json:"hide_archive_links"`
+	UploadURL        string `json:"upload_url"`
+	IsDraft          bool   `json:"draft"`
+	IsPrerelease     bool   `json:"prerelease"`
 	// swagger:strfmt date-time
 	CreatedAt time.Time `json:"created_at"`
 	// swagger:strfmt date-time
@@ -33,20 +34,22 @@ type Release struct {
 // CreateReleaseOption options when creating a release
 type CreateReleaseOption struct {
 	// required: true
-	TagName      string `json:"tag_name" binding:"Required"`
-	Target       string `json:"target_commitish"`
-	Title        string `json:"name"`
-	Note         string `json:"body"`
-	IsDraft      bool   `json:"draft"`
-	IsPrerelease bool   `json:"prerelease"`
+	TagName          string `json:"tag_name" binding:"Required"`
+	Target           string `json:"target_commitish"`
+	Title            string `json:"name"`
+	Note             string `json:"body"`
+	IsDraft          bool   `json:"draft"`
+	IsPrerelease     bool   `json:"prerelease"`
+	HideArchiveLinks bool   `json:"hide_archive_links"`
 }
 
 // EditReleaseOption options when editing a release
 type EditReleaseOption struct {
-	TagName      string `json:"tag_name"`
-	Target       string `json:"target_commitish"`
-	Title        string `json:"name"`
-	Note         string `json:"body"`
-	IsDraft      *bool  `json:"draft"`
-	IsPrerelease *bool  `json:"prerelease"`
+	TagName          string `json:"tag_name"`
+	Target           string `json:"target_commitish"`
+	Title            string `json:"name"`
+	Note             string `json:"body"`
+	IsDraft          *bool  `json:"draft"`
+	IsPrerelease     *bool  `json:"prerelease"`
+	HideArchiveLinks *bool  `json:"hide_archive_links"`
 }

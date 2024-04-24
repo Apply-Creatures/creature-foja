@@ -9,15 +9,19 @@ import (
 	"testing"
 	"time"
 
+	auth_model "code.gitea.io/gitea/models/auth"
+	"code.gitea.io/gitea/models/db"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
 	"code.gitea.io/gitea/modules/setting"
+	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/modules/test"
 	"code.gitea.io/gitea/modules/translation"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func createNewRelease(t *testing.T, session *TestSession, repoURL, tag, title string, preRelease, draft bool) {
@@ -306,4 +310,35 @@ func TestDownloadReleaseAttachment(t *testing.T) {
 	req = NewRequest(t, "GET", url)
 	session := loginUser(t, "user2")
 	session.MakeRequest(t, req, http.StatusOK)
+}
+
+func TestReleaseHideArchiveLinksUI(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	release := unittest.AssertExistsAndLoadBean(t, &repo_model.Release{TagName: "v2.0"})
+
+	require.NoError(t, release.LoadAttributes(db.DefaultContext))
+
+	session := loginUser(t, release.Repo.OwnerName)
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository)
+
+	zipURL := fmt.Sprintf("%s/archive/%s.zip", release.Repo.Link(), release.TagName)
+	tarGzURL := fmt.Sprintf("%s/archive/%s.tar.gz", release.Repo.Link(), release.TagName)
+
+	resp := session.MakeRequest(t, NewRequest(t, "GET", release.HTMLURL()), http.StatusOK)
+	body := resp.Body.String()
+	assert.Contains(t, body, zipURL)
+	assert.Contains(t, body, tarGzURL)
+
+	hideArchiveLinks := true
+
+	req := NewRequestWithJSON(t, "PATCH", release.APIURL(), &api.EditReleaseOption{
+		HideArchiveLinks: &hideArchiveLinks,
+	}).AddTokenAuth(token)
+	MakeRequest(t, req, http.StatusOK)
+
+	resp = session.MakeRequest(t, NewRequest(t, "GET", release.HTMLURL()), http.StatusOK)
+	body = resp.Body.String()
+	assert.NotContains(t, body, zipURL)
+	assert.NotContains(t, body, tarGzURL)
 }

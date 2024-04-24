@@ -133,14 +133,18 @@ func TestAPICreateAndUpdateRelease(t *testing.T) {
 	assert.Equal(t, newRelease.TagName, release.TagName)
 	assert.Equal(t, newRelease.Title, release.Title)
 	assert.Equal(t, newRelease.Note, release.Note)
+	assert.False(t, newRelease.HideArchiveLinks)
+
+	hideArchiveLinks := true
 
 	req = NewRequestWithJSON(t, "PATCH", urlStr, &api.EditReleaseOption{
-		TagName:      release.TagName,
-		Title:        release.Title,
-		Note:         "updated",
-		IsDraft:      &release.IsDraft,
-		IsPrerelease: &release.IsPrerelease,
-		Target:       release.Target,
+		TagName:          release.TagName,
+		Title:            release.Title,
+		Note:             "updated",
+		IsDraft:          &release.IsDraft,
+		IsPrerelease:     &release.IsPrerelease,
+		Target:           release.Target,
+		HideArchiveLinks: &hideArchiveLinks,
 	}).AddTokenAuth(token)
 	resp = MakeRequest(t, req, http.StatusOK)
 
@@ -152,6 +156,7 @@ func TestAPICreateAndUpdateRelease(t *testing.T) {
 	}
 	unittest.AssertExistsAndLoadBean(t, rel)
 	assert.EqualValues(t, rel.Note, newRelease.Note)
+	assert.True(t, newRelease.HideArchiveLinks)
 }
 
 func TestAPICreateReleaseToDefaultBranch(t *testing.T) {

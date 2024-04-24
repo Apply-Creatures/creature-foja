@@ -559,15 +559,16 @@ type UpdateAllowEditsForm struct {
 
 // NewReleaseForm form for creating release
 type NewReleaseForm struct {
-	TagName    string `binding:"Required;GitRefName;MaxSize(255)"`
-	Target     string `form:"tag_target" binding:"Required;MaxSize(255)"`
-	Title      string `binding:"MaxSize(255)"`
-	Content    string
-	Draft      string
-	TagOnly    string
-	Prerelease bool
-	AddTagMsg  bool
-	Files      []string
+	TagName          string `binding:"Required;GitRefName;MaxSize(255)"`
+	Target           string `form:"tag_target" binding:"Required;MaxSize(255)"`
+	Title            string `binding:"MaxSize(255)"`
+	Content          string
+	Draft            string
+	TagOnly          string
+	Prerelease       bool
+	AddTagMsg        bool
+	HideArchiveLinks bool
+	Files            []string
 }
 
 // Validate validates the fields
@@ -578,11 +579,12 @@ func (f *NewReleaseForm) Validate(req *http.Request, errs binding.Errors) bindin
 
 // EditReleaseForm form for changing release
 type EditReleaseForm struct {
-	Title      string `form:"title" binding:"Required;MaxSize(255)"`
-	Content    string `form:"content"`
-	Draft      string `form:"draft"`
-	Prerelease bool   `form:"prerelease"`
-	Files      []string
+	Title            string `form:"title" binding:"Required;MaxSize(255)"`
+	Content          string `form:"content"`
+	Draft            string `form:"draft"`
+	Prerelease       bool   `form:"prerelease"`
+	HideArchiveLinks bool
+	Files            []string
 }
 
 // Validate validates the fields
