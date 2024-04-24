@@ -271,9 +271,6 @@ i.grey.icon.icon.icon.icon {
   border-radius: 0.28571429rem !important;
   overflow: hidden;
 }
-.ui.secondary.vertical.menu > .item {
-  border-radius: 0 !important;
-}
 .ui.basic.primary.button.item {
   background-color: var(--color-active) !important;
   color: var(--color-text) !important;
