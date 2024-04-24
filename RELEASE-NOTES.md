@@ -11,6 +11,7 @@ This is a bug fix release. See the documentation for more information on the [up
 In addition to the following notable bug fixes, you can browse the [full list of commits](https://codeberg.org/forgejo/forgejo/compare/v7.0.0...v7.0.1) included in this release.
 
 * **Bug fixes:**
+  * The regression in the [`fogejo admin user create`](https://forgejo.org/docs/v7.0/admin/command-line/#admin-user-create) CLI command [is fixed](https://codeberg.org/forgejo/forgejo/issues/3399) and it is backward compatible.
 
 ## 7.0.0
 
