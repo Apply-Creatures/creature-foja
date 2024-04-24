@@ -34,7 +34,11 @@
     },
     {
       "description": "Require dashboard approval for some deps",
-      "matchDepNames": ["github.com/go-ap/activitypub", "bitnami/minio"],
+      "matchDepNames": [
+        "bitnami/minio",
+        "github.com/go-ap/activitypub",
+        "github.com/nektos/act"
+      ],
       "dependencyDashboardApproval": true
     },
     {
@@ -81,7 +85,8 @@
       "extends": ["packages:linters"],
       "matchDepNames": ["vitest"],
       "automerge": true
-    }, {
+    },
+    {
       "description": "Hold back on some package updates for a few days",
       "matchDepNames": ["monaco-editor"],
       "minimumReleaseAge": "30 days"
