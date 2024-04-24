@@ -124,7 +124,7 @@ func runCreateUser(c *cli.Context) error {
 		if err != nil {
 			return fmt.Errorf("IsTableNotEmpty: %w", err)
 		}
-		if !hasUserRecord && isAdmin {
+		if !hasUserRecord {
 			// if this is the first admin being created, don't force to change password (keep the old behavior)
 			mustChangePassword = false
 		}
