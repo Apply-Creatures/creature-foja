@@ -46,6 +46,7 @@ import (
 	repo_service "code.gitea.io/gitea/services/repository"
 	files_service "code.gitea.io/gitea/services/repository/files"
 	user_service "code.gitea.io/gitea/services/user"
+	wiki_service "code.gitea.io/gitea/services/wiki"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/PuerkitoBio/goquery"
@@ -658,6 +659,7 @@ type DeclarativeRepoOptions struct {
 	EnabledUnits  optional.Option[[]unit_model.Type]
 	DisabledUnits optional.Option[[]unit_model.Type]
 	Files         optional.Option[[]*files_service.ChangeRepoFile]
+	WikiBranch    optional.Option[string]
 }
 
 func CreateDeclarativeRepoWithOptions(t *testing.T, owner *user_model.User, opts DeclarativeRepoOptions) (*repo_model.Repository, string, func()) {
@@ -732,6 +734,22 @@ func CreateDeclarativeRepoWithOptions(t *testing.T, owner *user_model.User, opts
 		assert.NotEmpty(t, resp)
 
 		sha = resp.Commit.SHA
+	}
+
+	// If there's a Wiki branch specified, create a wiki, and a default wiki page.
+	if opts.WikiBranch.Has() {
+		// Set the wiki branch in the database first
+		repo.WikiBranch = opts.WikiBranch.Value()
+		err := repo_model.UpdateRepositoryCols(db.DefaultContext, repo, "wiki_branch")
+		assert.NoError(t, err)
+
+		// Initialize the wiki
+		err = wiki_service.InitWiki(db.DefaultContext, repo)
+		assert.NoError(t, err)
+
+		// Add a new wiki page
+		err = wiki_service.AddWikiPage(db.DefaultContext, owner, repo, "Home", "Welcome to the wiki!", "Add a Home page")
+		assert.NoError(t, err)
 	}
 
 	// Return the repo, the top commit, and a defer-able function to delete the
