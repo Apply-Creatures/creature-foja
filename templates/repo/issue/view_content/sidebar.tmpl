@@ -1,5 +1,5 @@
 <div class="issue-content-right ui segment">
-	{{template "repo/issue/branch_selector_field" .}}
+	{{template "repo/issue/view_content/sidebar/branch_selector_field" .}}
 	{{if .Issue.IsPull}}
 		<input id="reviewer_id" name="reviewer_id" type="hidden" value="{{.reviewer_id}}">
 		<div class="ui {{if or (and (not .Reviewers) (not .TeamReviewers)) (not .CanChooseReviewer) .Repository.IsArchived}}disabled{{end}} floating jump select-reviewers-modify dropdown">
