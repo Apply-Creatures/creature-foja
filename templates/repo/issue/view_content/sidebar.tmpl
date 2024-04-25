@@ -52,7 +52,15 @@
 		{{template "repo/issue/view_content/sidebar/actions" .}}
 	{{end}}
 
-	{{if and .Issue.IsPull .IsIssuePoster (not .Issue.IsClosed) .Issue.PullRequest.HeadRepo}}
+	{{if and
+		.Issue.IsPull
+		.IsIssuePoster
+		(not .Issue.IsClosed)
+		.Issue.PullRequest.HeadRepo
+		(not (eq .Issue.PullRequest.HeadRepo.FullName .Issue.PullRequest.BaseRepo.FullName))
+		.CanWriteToHeadRepo
+	}}
+		<div class="divider"></div>
 		{{template "repo/issue/view_content/sidebar/pull_maintainer_edits" .}}
 	{{end}}
 </div>
