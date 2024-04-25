@@ -307,6 +307,16 @@ func TestIssueCommentUpdate(t *testing.T) {
 
 	comment = unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: commentID})
 	assert.Equal(t, modifiedContent, comment.Content)
+
+	// make the comment empty
+	req = NewRequestWithValues(t, "POST", fmt.Sprintf("/%s/%s/comments/%d", "user2", "repo1", commentID), map[string]string{
+		"_csrf":   GetCSRF(t, session, issueURL),
+		"content": "",
+	})
+	session.MakeRequest(t, req, http.StatusOK)
+
+	comment = unittest.AssertExistsAndLoadBean(t, &issues_model.Comment{ID: commentID})
+	assert.Equal(t, "", comment.Content)
 }
 
 func TestIssueReaction(t *testing.T) {
