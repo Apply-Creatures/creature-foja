@@ -80,4 +80,26 @@ func TestLFSRender(t *testing.T) {
 		content := doc.Find("div.file-view").Text()
 		assert.Contains(t, content, "Testing READMEs in LFS")
 	})
+
+	t.Run("/settings/lfs/pointers", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		// visit /user2/lfs/settings/lfs/pointer
+		req := NewRequest(t, "GET", "/user2/lfs/settings/lfs/pointers")
+		resp := session.MakeRequest(t, req, http.StatusOK)
+
+		// follow the first link to /user2/lfs/settings/lfs/find?oid=....
+		filesTable := NewHTMLParser(t, resp.Body).doc.Find("#lfs-files-table")
+		assert.Contains(t, filesTable.Text(), "Find commits")
+		lfsFind := filesTable.Find(`.primary.button[href^="/user2"]`)
+		assert.Greater(t, lfsFind.Length(), 0)
+		lfsFindPath, exists := lfsFind.First().Attr("href")
+		assert.True(t, exists)
+
+		assert.Contains(t, lfsFindPath, "oid=")
+		req = NewRequest(t, "GET", lfsFindPath)
+		resp = session.MakeRequest(t, req, http.StatusOK)
+		doc := NewHTMLParser(t, resp.Body).doc
+		assert.Contains(t, doc.Text(), "README.md")
+	})
 }
