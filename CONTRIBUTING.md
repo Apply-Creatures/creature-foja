@@ -4,21 +4,4 @@ The Forgejo project is run by a community of people who are expected to follow t
 
 Sensitive security-related issues should be reported to [security@forgejo.org](mailto:security@forgejo.org) using [encryption](https://keyoxide.org/security@forgejo.org).
 
-## For everyone involved
-
-- [Documentation](https://forgejo.org/docs/next/)
-- [Code of Conduct](https://forgejo.org/docs/latest/developer/coc/)
-- [Bugs, features, security and others discussions](https://forgejo.org/docs/latest/developer/discussions/)
-- [Governance](https://forgejo.org/docs/latest/developer/governance/)
-- [Sustainability and funding](https://codeberg.org/forgejo/sustainability/src/branch/main/README.md)
-
-## For contributors
-
-- [Developer Certificate of Origin (DCO)](https://forgejo.org/docs/latest/developer/dco/)
-- [Development workflow](https://forgejo.org/docs/latest/developer/workflow/)
-- [Compiling from source](https://forgejo.org/docs/latest/developer/from-source/)
-
-## For maintainers
-
-- [Release management](https://forgejo.org/docs/latest/developer/release/)
-- [Secrets](https://forgejo.org/docs/latest/developer/secrets/)
+You can find links to the different aspects of Developer documentation on this page: [Forgejo developer guide](https://forgejo.org/docs/next/developer/).
