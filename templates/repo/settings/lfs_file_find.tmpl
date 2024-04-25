@@ -23,9 +23,9 @@
 								<span class="text grey">{{svg "octicon-git-branch"}}{{.BranchName}}</span>
 							</td>
 							<td>
-								{{if .ParentHashes}}
+								{{if .ParentIDs}}
 									{{ctx.Locale.Tr "repo.diff.parent"}}
-									{{range .ParentHashes}}
+									{{range .ParentIDs}}
 										<a class="ui primary sha label" href="{{$.RepoLink}}/commit/{{.String}}">{{ShortSha .String}}</a>
 									{{end}}
 								{{end}}
