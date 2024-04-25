@@ -3160,12 +3160,6 @@ func UpdateCommentContent(ctx *context.Context) {
 
 	oldContent := comment.Content
 	comment.Content = ctx.FormString("content")
-	if len(comment.Content) == 0 {
-		ctx.JSON(http.StatusOK, map[string]any{
-			"content": "",
-		})
-		return
-	}
 	if err = issue_service.UpdateComment(ctx, comment, ctx.Doer, oldContent); err != nil {
 		ctx.ServerError("UpdateComment", err)
 		return
