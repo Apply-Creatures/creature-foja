@@ -100,6 +100,6 @@ func TestLFSRender(t *testing.T) {
 		req = NewRequest(t, "GET", lfsFindPath)
 		resp = session.MakeRequest(t, req, http.StatusOK)
 		doc := NewHTMLParser(t, resp.Body).doc
-		assert.Contains(t, doc.Text(), "README.md")
+		assert.Equal(t, 1, doc.Find(`.sha.label[href="/user2/lfs/commit/73cf03db6ece34e12bf91e8853dc58f678f2f82d"]`).Length(), "could not find link to commit")
 	})
 }
