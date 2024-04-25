@@ -69,6 +69,21 @@
       "automerge": true
     },
     {
+      "description": "Split minor and patch updates",
+      "matchDepNames": [
+        "swagger-ui-dist"
+      ],
+      "separateMinorPatch": true
+    },
+    {
+      "description": "Automerge patch updates",
+      "matchDepNames": [
+        "swagger-ui-dist"
+      ],
+      "matchUpdateTypes": ["patch"],
+      "automerge": true
+    },
+    {
       "description": "Update renovate with higher prio to come through rate limit",
       "matchDatasources": ["docker"],
       "matchDepNames": ["ghcr.io/visualon/renovate"],
