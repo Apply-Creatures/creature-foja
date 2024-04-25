@@ -177,18 +177,18 @@
 					{{$highlightSettings := true}}
 					{{if and .SignedUser.EnableRepoUnitHints (not (.Repository.AllUnitsEnabled ctx))}}
 						{{$highlightSettings = false}}
-						<a class="{{if .PageIsRepoSettingsUnits}}active {{end}}item" href="{{.RepoLink}}/settings/units">
+						<a id="settings-btn" class="{{if .PageIsRepoSettingsUnits}}active {{end}}right item" href="{{.RepoLink}}/settings/units">
 							{{svg "octicon-diff-added"}} {{ctx.Locale.Tr "repo.settings.units.add_more"}}
 						</a>
 					{{end}}
-					<a class="{{if and .PageIsRepoSettings (or $highlightSettings (not .PageIsRepoSettingsUnits))}}active {{end}} item" href="{{.RepoLink}}/settings">
+					<a id="settings-btn" class="{{if and .PageIsRepoSettings (or $highlightSettings (not .PageIsRepoSettingsUnits))}}active {{end}}right item" href="{{.RepoLink}}/settings">
 						{{svg "octicon-tools"}} {{ctx.Locale.Tr "repo.settings"}}
 					</a>
 				{{end}}
 			</div>
 		{{else if .Permission.IsAdmin}}
 			<div class="overflow-menu-items">
-				<a class="{{if .PageIsRepoSettings}}active {{end}} item" href="{{.RepoLink}}/settings">
+				<a id="settings-btn" class="{{if .PageIsRepoSettings}}active {{end}}right item" href="{{.RepoLink}}/settings">
 					{{svg "octicon-tools"}} {{ctx.Locale.Tr "repo.settings"}}
 				</a>
 			</div>

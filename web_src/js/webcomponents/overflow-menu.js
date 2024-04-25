@@ -69,10 +69,32 @@ window.customElements.define('overflow-menu', class extends HTMLElement {
     this.tippyItems = [];
     const menuRight = this.offsetLeft + this.offsetWidth;
     const menuItems = this.menuItemsEl.querySelectorAll('.item');
+    const settingItem = this.menuItemsEl.querySelector('#settings-btn');
     for (const item of menuItems) {
       const itemRight = item.offsetLeft + item.offsetWidth;
-      if (menuRight - itemRight < 38) { // roughly the width of .overflow-menu-button
+      // Width of the settings button plus a small value to get the next item to the left if there is directly one
+      // If no setting button is in the menu the default threshold is 38 - roughly the width of .overflow-menu-button
+      const overflowBtnThreshold = 38;
+      const threshold = settingItem?.offsetWidth ?? overflowBtnThreshold;
+      // If we have a settings item on the right-hand side, we must also check if the first,
+      // possibly overflowing item would still fit on the left-hand side of the overflow menu
+      // If not, it must be added to the array (twice). The duplicate is removed with the shift.
+      if (settingItem && !this.tippyItems?.length && item !== settingItem && menuRight - itemRight < overflowBtnThreshold) {
+        this.tippyItems.push(settingItem);
+      }
+      if (menuRight - itemRight < threshold) {
         this.tippyItems.push(item);
+      }
+    }
+
+    // Special handling for settings button on right. Only done if a setting item is present
+    if (settingItem) {
+      // If less than 2 items overflow, remove all items (only settings "overflowed" - because it's on the right side)
+      if (this.tippyItems?.length < 2) {
+        this.tippyItems = [];
+      } else {
+        // Remove the first item of the list, because we have always one item more in the array due to the big threshold above
+        this.tippyItems.shift();
       }
     }
 
