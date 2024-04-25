@@ -9,7 +9,7 @@
 
 -
 
-  id: 2
+  id: 2 # this is an LFS orphan object
   oid: 2eccdb43825d2a49d99d542daa20075cff1d97d9d2349a8977efe9c03661737c
   size: 107
   repository_id: 54
