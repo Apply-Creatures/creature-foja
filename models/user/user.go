@@ -216,7 +216,7 @@ func (u *User) GetEmail() string {
 // GetAllUsers returns a slice of all individual users found in DB.
 func GetAllUsers(ctx context.Context) ([]*User, error) {
 	users := make([]*User, 0)
-	return users, db.GetEngine(ctx).OrderBy("id").Where("type = ?", UserTypeIndividual).Find(&users)
+	return users, db.GetEngine(ctx).OrderBy("id").In("type", UserTypeIndividual, UserTypeRemoteUser).Find(&users)
 }
 
 // GetAllAdmins returns a slice of all adminusers found in DB.
@@ -414,6 +414,10 @@ func (u *User) IsIndividual() bool {
 // IsBot returns whether or not the user is of type bot
 func (u *User) IsBot() bool {
 	return u.Type == UserTypeBot
+}
+
+func (u *User) IsRemote() bool {
+	return u.Type == UserTypeRemoteUser
 }
 
 // DisplayName returns full name if it's not empty,
@@ -918,7 +922,8 @@ func GetUserByName(ctx context.Context, name string) (*User, error) {
 	if len(name) == 0 {
 		return nil, ErrUserNotExist{Name: name}
 	}
-	u := &User{LowerName: strings.ToLower(name), Type: UserTypeIndividual}
+	// adding Type: UserTypeIndividual is a noop because it is zero and discarded
+	u := &User{LowerName: strings.ToLower(name)}
 	has, err := db.GetEngine(ctx).Get(u)
 	if err != nil {
 		return nil, err

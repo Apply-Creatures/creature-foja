@@ -33,6 +33,7 @@ const (
 	DLDAP       // 5
 	OAuth2      // 6
 	SSPI        // 7
+	Remote      // 8
 )
 
 // String returns the string name of the LoginType
@@ -53,6 +54,7 @@ var Names = map[Type]string{
 	PAM:    "PAM",
 	OAuth2: "OAuth2",
 	SSPI:   "SPNEGO with SSPI",
+	Remote: "Remote",
 }
 
 // Config represents login config as far as the db is concerned
@@ -179,6 +181,10 @@ func (source *Source) IsOAuth2() bool {
 // IsSSPI returns true of this source is of the SSPI type.
 func (source *Source) IsSSPI() bool {
 	return source.Type == SSPI
+}
+
+func (source *Source) IsRemote() bool {
+	return source.Type == Remote
 }
 
 // HasTLS returns true of this source supports TLS.
