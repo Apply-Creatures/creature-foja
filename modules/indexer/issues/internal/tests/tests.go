@@ -131,6 +131,20 @@ var cases = []*testIndexerCase{
 		ExpectedTotal: 3,
 	},
 	{
+		Name: "Keyword Fuzzy",
+		ExtraData: []*internal.IndexerData{
+			{ID: 1000, Title: "hi hello world"},
+			{ID: 1001, Content: "hi hello world"},
+			{ID: 1002, Comments: []string{"hi", "hello world"}},
+		},
+		SearchOptions: &internal.SearchOptions{
+			Keyword:        "hello wrold",
+			IsFuzzyKeyword: true,
+		},
+		ExpectedIDs:   []int64{1002, 1001, 1000},
+		ExpectedTotal: 3,
+	},
+	{
 		Name: "RepoIDs",
 		ExtraData: []*internal.IndexerData{
 			{ID: 1001, Title: "hello world", RepoID: 1, IsPublic: false},

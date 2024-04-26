@@ -39,6 +39,8 @@ const (
 	maxBatchSize = 16
 	// fuzzyDenominator determines the levenshtein distance per each character of a keyword
 	fuzzyDenominator = 4
+	// see https://github.com/blevesearch/bleve/issues/1563#issuecomment-786822311
+	maxFuzziness = 2
 )
 
 // IndexerData an update to the issue indexer
@@ -162,7 +164,7 @@ func (b *Indexer) Search(ctx context.Context, options *internal.SearchOptions) (
 	if options.Keyword != "" {
 		fuzziness := 0
 		if options.IsFuzzyKeyword {
-			fuzziness = len(options.Keyword) / fuzzyDenominator
+			fuzziness = min(maxFuzziness, len(options.Keyword)/fuzzyDenominator)
 		}
 
 		queries = append(queries, bleve.NewDisjunctionQuery([]query.Query{

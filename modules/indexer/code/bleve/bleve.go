@@ -41,6 +41,8 @@ const (
 	maxBatchSize         = 16
 	// fuzzyDenominator determines the levenshtein distance per each character of a keyword
 	fuzzyDenominator = 4
+	// see https://github.com/blevesearch/bleve/issues/1563#issuecomment-786822311
+	maxFuzziness = 2
 )
 
 func addUnicodeNormalizeTokenFilter(m *mapping.IndexMappingImpl) error {
@@ -246,7 +248,7 @@ func (b *Indexer) Search(ctx context.Context, opts *internal.SearchOptions) (int
 	phraseQuery.Analyzer = repoIndexerAnalyzer
 	keywordQuery = phraseQuery
 	if opts.IsKeywordFuzzy {
-		phraseQuery.Fuzziness = len(opts.Keyword) / fuzzyDenominator
+		phraseQuery.Fuzziness = min(maxFuzziness, len(opts.Keyword)/fuzzyDenominator)
 	}
 
 	if len(opts.RepoIDs) > 0 {

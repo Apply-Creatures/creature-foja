@@ -51,6 +51,12 @@ func testIndexer(name string, t *testing.T, indexer internal.Indexer) {
 			},
 			{
 				RepoIDs: nil,
+				Keyword: "Description for",
+				IDs:     []int64{repoID},
+				Langs:   1,
+			},
+			{
+				RepoIDs: nil,
 				Keyword: "repo1",
 				IDs:     []int64{repoID},
 				Langs:   1,
