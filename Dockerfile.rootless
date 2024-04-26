@@ -100,8 +100,11 @@ ENV GITEA_CUSTOM /var/lib/gitea/custom
 ENV GITEA_TEMP /tmp/gitea
 ENV TMPDIR /tmp/gitea
 
-#TODO add to docs the ability to define the ini to load (useful to test and revert a config)
-ENV GITEA_APP_INI /etc/gitea/app.ini
+# Legacy config file for backwards compatibility
+# TODO: remove on next major version release
+ENV GITEA_APP_INI_LEGACY /etc/gitea/app.ini
+
+ENV GITEA_APP_INI ${GITEA_CUSTOM}/conf/app.ini
 ENV HOME "/var/lib/gitea/git"
 VOLUME ["/var/lib/gitea", "/etc/gitea"]
 WORKDIR /var/lib/gitea
