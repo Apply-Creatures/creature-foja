@@ -8,6 +8,19 @@ A [patch or minor release](https://semver.org/spec/v2.0.0.html) (e.g. upgrading 
 
 - [8.0.0](/release-notes/8.0.0/)
 
+## 7.0.1
+
+This is a bug fix release. See the documentation for more information on the [upgrade procedure](https://forgejo.org/docs/v7.0/admin/upgrade/).
+
+In addition to the following notable bug fixes, you can browse the [full list of commits](https://codeberg.org/forgejo/forgejo/compare/v7.0.0...v7.0.1) included in this release.
+
+* **Bug fixes:**
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3466): LFS data corruption when running the [`forgejo doctor check --fix`](https://forgejo.org/docs/v7.0/admin/command-line/#doctor-check) CLI command or setting [`[cron.gc_lfs].ENABLED=true`](https://forgejo.org/docs/v7.0/admin/config-cheat-sheet/#cron---garbage-collect-lfs-pointers-in-repositories-crongc_lfs) (the default is `false`).
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3412): [non backward compatible change](https://codeberg.org/forgejo/forgejo/issues/3399) in the [`forgejo admin user create`](https://forgejo.org/docs/v7.0/admin/command-line/#admin-user-create) CLI command.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3448): error 500 because of an incorrect evaluation of the template when visiting the LFS settings of a repository.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3464): `GET /repos/{owner}/{name}` API endpoint [always returns an empty string for the `object_format_name` field](https://codeberg.org/forgejo/forgejo/issues/3458).
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3444): fuzzy search [may fail with bleve](https://codeberg.org/forgejo/forgejo/issues/3443).
+
 ## 7.0.0
 
 The [complete list of commits](https://codeberg.org/forgejo/forgejo/commits/branch/v7.0/forgejo) included in the `Forgejo v7.0.0` release can be reviewed from the command line with:
@@ -19,7 +32,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
 
 * **Regressions and workarounds:**
   * Running the [`forgejo doctor check --fix`](https://forgejo.org/docs/v7.0/admin/command-line/#doctor-check) CLI command or setting [`[cron.gc_lfs].ENABLED=true`](https://forgejo.org/docs/v7.0/admin/config-cheat-sheet/#cron---garbage-collect-lfs-pointers-in-repositories-crongc_lfs) (the default is `false`) will corrupt the LFS storage. The workaround is to not run the doctor CLI command and disable the `cron.gc_lfs`. This regression will be [fixed in 7.0.1](https://codeberg.org/forgejo/forgejo/issues/3438).
-  * The [`fogejo admin user create`](https://forgejo.org/docs/v7.0/admin/command-line/#admin-user-create) CLI command [requires a password](https://codeberg.org/forgejo/forgejo/commit/b122c6ef8b9254120432aed373cbe075331132ac) change by default when creating the first user and the `--admin` flag is not specified. The `--must-change-password=false` argument must be given to not require a password change. This regression will be [fixed in 7.0.1](https://codeberg.org/forgejo/forgejo/issues/3399).
+  * The [`forgejo admin user create`](https://forgejo.org/docs/v7.0/admin/command-line/#admin-user-create) CLI command [requires a password](https://codeberg.org/forgejo/forgejo/commit/b122c6ef8b9254120432aed373cbe075331132ac) change by default when creating the first user and the `--admin` flag is not specified. The `--must-change-password=false` argument must be given to not require a password change. This regression will be [fixed in 7.0.1](https://codeberg.org/forgejo/forgejo/issues/3399).
 * **Breaking changes requiring manual intervention:**
   * [MySQL 8.0 or PostgreSQL 12](https://codeberg.org/forgejo/forgejo/commit/e94f9fcafdcf284561e7fb33f60156a69c4ad6a5) are the minimum supported versions. The database must be migrated before upgrading. The requirements regarding SQLite did not change.
   * The `per_page` parameter is [no longer a synonym for `limit`](https://codeberg.org/forgejo/forgejo/commit/0aab2d38a7d91bc8caff332e452364468ce52d9a) in the [/repos/{owner}/{repo}/releases](https://code.forgejo.org/api/swagger/#/repository/repoListReleases) API endpoint.
