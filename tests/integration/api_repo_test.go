@@ -701,3 +701,14 @@ func TestAPIRepoGetAssignees(t *testing.T) {
 	DecodeJSON(t, resp, &assignees)
 	assert.Len(t, assignees, 1)
 }
+
+func TestAPIViewRepoObjectFormat(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	var repo api.Repository
+
+	req := NewRequest(t, "GET", "/api/v1/repos/user2/repo1")
+	resp := MakeRequest(t, req, http.StatusOK)
+	DecodeJSON(t, resp, &repo)
+	assert.EqualValues(t, "sha1", repo.ObjectFormatName)
+}
