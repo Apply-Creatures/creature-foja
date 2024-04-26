@@ -28,8 +28,12 @@ func TestGarbageCollectLFSMetaObjects(t *testing.T) {
 	err := storage.Init()
 	assert.NoError(t, err)
 
-	repo, err := repo_model.GetRepositoryByOwnerAndName(db.DefaultContext, "user2", "repo1")
+	repo, err := repo_model.GetRepositoryByOwnerAndName(db.DefaultContext, "user2", "lfs")
 	assert.NoError(t, err)
+
+	validLFSObjects, err := db.GetEngine(db.DefaultContext).Count(git_model.LFSMetaObject{RepositoryID: repo.ID})
+	assert.NoError(t, err)
+	assert.Greater(t, validLFSObjects, int64(1))
 
 	// add lfs object
 	lfsContent := []byte("gitea1")
@@ -39,13 +43,18 @@ func TestGarbageCollectLFSMetaObjects(t *testing.T) {
 	err = repo_service.GarbageCollectLFSMetaObjects(context.Background(), repo_service.GarbageCollectLFSMetaObjectsOptions{
 		AutoFix:                 true,
 		OlderThan:               time.Now().Add(7 * 24 * time.Hour).Add(5 * 24 * time.Hour),
-		UpdatedLessRecentlyThan: time.Now().Add(7 * 24 * time.Hour).Add(3 * 24 * time.Hour),
+		UpdatedLessRecentlyThan: time.Time{}, // ensure that the models/fixtures/lfs_meta_object.yml objects are considered as well
+		LogDetail:               t.Logf,
 	})
 	assert.NoError(t, err)
 
 	// lfs meta has been deleted
 	_, err = git_model.GetLFSMetaObjectByOid(db.DefaultContext, repo.ID, lfsOid)
 	assert.ErrorIs(t, err, git_model.ErrLFSObjectNotExist)
+
+	remainingLFSObjects, err := db.GetEngine(db.DefaultContext).Count(git_model.LFSMetaObject{RepositoryID: repo.ID})
+	assert.NoError(t, err)
+	assert.Equal(t, validLFSObjects-1, remainingLFSObjects)
 }
 
 func storeObjectInRepo(t *testing.T, repositoryID int64, content *[]byte) string {

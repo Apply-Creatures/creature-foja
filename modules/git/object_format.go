@@ -6,6 +6,7 @@ package git
 import (
 	"crypto/sha1"
 	"crypto/sha256"
+	"hash"
 	"regexp"
 	"strconv"
 )
@@ -31,6 +32,15 @@ type ObjectFormat interface {
 	MustID(b []byte) ObjectID
 	// ComputeHash compute the hash for a given ObjectType and content
 	ComputeHash(t ObjectType, content []byte) ObjectID
+}
+
+func computeHash(dst []byte, hasher hash.Hash, t ObjectType, content []byte) []byte {
+	_, _ = hasher.Write(t.Bytes())
+	_, _ = hasher.Write([]byte(" "))
+	_, _ = hasher.Write([]byte(strconv.Itoa(len(content))))
+	_, _ = hasher.Write([]byte{0})
+	_, _ = hasher.Write(content)
+	return hasher.Sum(dst)
 }
 
 /* SHA1 Type */
@@ -65,16 +75,9 @@ func (Sha1ObjectFormatImpl) MustID(b []byte) ObjectID {
 
 // ComputeHash compute the hash for a given ObjectType and content
 func (h Sha1ObjectFormatImpl) ComputeHash(t ObjectType, content []byte) ObjectID {
-	hasher := sha1.New()
-	_, _ = hasher.Write(t.Bytes())
-	_, _ = hasher.Write([]byte(" "))
-	_, _ = hasher.Write([]byte(strconv.FormatInt(int64(len(content)), 10)))
-	_, _ = hasher.Write([]byte{0})
-
-	// HashSum generates a SHA1 for the provided hash
-	var sha1 Sha1Hash
-	copy(sha1[:], hasher.Sum(nil))
-	return &sha1
+	var obj Sha1Hash
+	computeHash(obj[:0], sha1.New(), t, content)
+	return &obj
 }
 
 /* SHA256 Type */
@@ -111,16 +114,9 @@ func (Sha256ObjectFormatImpl) MustID(b []byte) ObjectID {
 
 // ComputeHash compute the hash for a given ObjectType and content
 func (h Sha256ObjectFormatImpl) ComputeHash(t ObjectType, content []byte) ObjectID {
-	hasher := sha256.New()
-	_, _ = hasher.Write(t.Bytes())
-	_, _ = hasher.Write([]byte(" "))
-	_, _ = hasher.Write([]byte(strconv.FormatInt(int64(len(content)), 10)))
-	_, _ = hasher.Write([]byte{0})
-
-	// HashSum generates a SHA256 for the provided hash
-	var sha256 Sha1Hash
-	copy(sha256[:], hasher.Sum(nil))
-	return &sha256
+	var obj Sha256Hash
+	computeHash(obj[:0], sha256.New(), t, content)
+	return &obj
 }
 
 var (
