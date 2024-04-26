@@ -129,6 +129,7 @@ func parseLDAPConfig(form forms.AuthenticationForm) *ldap.Source {
 		UserDN:                form.UserDN,
 		BindPassword:          form.BindPassword,
 		UserBase:              form.UserBase,
+		DefaultDomainName:     form.DefaultDomainName,
 		AttributeUsername:     form.AttributeUsername,
 		AttributeName:         form.AttributeName,
 		AttributeSurname:      form.AttributeSurname,

@@ -34,6 +34,7 @@ type Source struct {
 	BindPassword          string // Bind DN password
 	UserBase              string // Base search path for users
 	UserDN                string // Template for the DN of the user for simple auth
+	DefaultDomainName     string // DomainName used if none are in the field, default "localhost.local"
 	AttributeUsername     string // Username attribute
 	AttributeName         string // First name attribute
 	AttributeSurname      string // Surname attribute

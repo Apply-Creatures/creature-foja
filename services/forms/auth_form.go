@@ -26,6 +26,7 @@ type AuthenticationForm struct {
 	AttributeUsername             string
 	AttributeName                 string
 	AttributeSurname              string
+	DefaultDomainName             string
 	AttributeMail                 string
 	AttributeSSHPublicKey         string
 	AttributeAvatar               string
