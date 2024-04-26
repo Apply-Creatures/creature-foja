@@ -64,6 +64,8 @@ var migrations = []*Migration{
 	NewMigration("Add repo_archive_download_count table", forgejo_v1_22.AddRepoArchiveDownloadCount),
 	// v13 -> v14
 	NewMigration("Add `hide_archive_links` column to `release` table", AddHideArchiveLinksToRelease),
+	// v14 -> v15
+	NewMigration("Remove Gitea-specific columns from the repository and badge tables", RemoveGiteaSpecificColumnsFromRepositoryAndBadge),
 }
 
 // GetCurrentDBVersion returns the current Forgejo database version.
