@@ -4,30 +4,9 @@ A minor or major Forgejo release is published every [three months](https://forge
 
 A [patch or minor release](https://semver.org/spec/v2.0.0.html) (e.g. upgrading from v7.0.0 to v7.0.1 or v7.1.0) does not require manual intervention. But [major releases](https://semver.org/spec/v2.0.0.html#spec-item-8) where the first version number changes (e.g. upgrading from v1.21 to v7.0) contain breaking changes and the release notes explain how to deal with them.
 
-## 8.0.0
+## Upcoming releases (not available yet)
 
-This is a major release. It contains breaking changes that may require manual intervention. See the documentation for more information on the [upgrade procedure](https://forgejo.org/docs/v7.0/admin/upgrade/).
-
-* **Breaking changes:**
-
-In addition to the following notable bug fixes, you can browse the [full list of commits](https://codeberg.org/forgejo/forgejo/compare/v8.0.0...v7.0.0) included in this release.
-
-If you have any feedback or suggestions for Forgejo do not hold back, it is also your project.
-Open an issue in [the issue tracker](https://codeberg.org/forgejo/forgejo/issues)
-for feature requests or bug reports, reach out [on the Fediverse](https://floss.social/@forgejo),
-or drop into [the Matrix space](https://matrix.to/#/#forgejo:matrix.org)
-([main chat room](https://matrix.to/#/#forgejo-chat:matrix.org)) and say hi!
-
-## 7.0.1
-
-This is a bug fix release. See the documentation for more information on the [upgrade procedure](https://forgejo.org/docs/v7.0/admin/upgrade/).
-
-In addition to the following notable bug fixes, you can browse the [full list of commits](https://codeberg.org/forgejo/forgejo/compare/v7.0.0...v7.0.1) included in this release.
-
-* **Bug fixes:**
-  * The regression in the [`fogejo admin user create`](https://forgejo.org/docs/v7.0/admin/command-line/#admin-user-create) CLI command [is fixed](https://codeberg.org/forgejo/forgejo/issues/3399) and it is backward compatible.
-  * Fixed a bug where the `/api/v1/repos/{owner}/{repo}/wiki` API endpoints were using a hardcoded "master" branch for the wiki, rather than the branch they really use. ([#3430](https://codeberg.org/forgejo/forgejo/pulls/3430))
-  * Fixed an error 500 when visiting [the LFS settings]() at `/{owner}/{repo}/settings/lfs/find?oid=...`.
+- [8.0.0](/release-notes/8.0.0/)
 
 ## 7.0.0
 
