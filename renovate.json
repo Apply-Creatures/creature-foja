@@ -37,7 +37,8 @@
       "matchDepNames": [
         "bitnami/minio",
         "github.com/go-ap/activitypub",
-        "github.com/nektos/act"
+        "github.com/nektos/act",
+        "gitea.com/gitea/act"
       ],
       "dependencyDashboardApproval": true
     },
