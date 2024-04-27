@@ -51,7 +51,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
   Note that the modifications related to CSS, templates or assets (images, fonts, etc.) are not documented here.
   Although they can be extracted and modified, Forgejo does not provide any guarantee that such changes
   will be portable from one version to another (even a patch version). See also
-  [the developer documentation about interface customization](https://forgejo.org/docs/v1.21/developer/customization/).
+  [the developer documentation about interface customization](https://forgejo.org/docs/v7.0/developer/customization/).
   * [Update checker setting might change](https://codeberg.org/forgejo/forgejo/pulls/2925). The documentation was listing it as enabled by default, however, for a while it was disabled unless it was explicitly specified in the config or on the installation page. Instances migrated from Gitea also had it disabled due to different default value. Since then Forgejo got a privacy-friendly DNS-based update checking mechanism which is now being enabled by default unless explicitly specified [in the config](https://forgejo.org/docs/v7.0/admin/config-cheat-sheet/#cron---check-for-new-forgejo-versions-cronupdate_checker).
   * Language statistics for repositories that use `linguist` attributes in `.gitattributes` *may* show different statistics than previously, because Forgejo recognizes more [linguist attributes](https://forgejo.org/docs/v7.0/user/language-detection/) now.
   * It is [no longer possible to replace the default web editor](https://codeberg.org/forgejo/forgejo/pulls/2916) used to write comments or issues and pull requests with the EasyMDE editor. It is however still available as an alternative to edit releases and wiki pages.
