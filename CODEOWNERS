@@ -16,6 +16,8 @@ web_src/.* @caesar @crystal @gusted
 
 # HTML templates used by the backend.
 templates/.* @caesar @crystal @gusted
+## the issue sidebar was touched by fnetx
+templates/repo/issue/view_content/sidebar.* @fnetx
 
 # Files related to Go development.
 

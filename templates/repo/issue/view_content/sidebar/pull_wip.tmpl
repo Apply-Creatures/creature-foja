@@ -1,0 +1,11 @@
+{{if and (or .HasIssuesOrPullsWritePermission .IsIssuePoster) (not .HasMerged) (not .Issue.IsClosed)}}
+	<div class="toggle-wip" data-title="{{.Issue.Title}}" data-wip-prefixes="{{JsonUtils.EncodeToString .PullRequestWorkInProgressPrefixes}}" data-update-url="{{.Issue.Link}}/title">
+		<a class="muted">
+			{{if .IsPullWorkInProgress}}
+				{{ctx.Locale.Tr "repo.pulls.ready_for_review"}} {{ctx.Locale.Tr "repo.pulls.remove_prefix" (index .PullRequestWorkInProgressPrefixes 0)}}
+			{{else}}
+				{{ctx.Locale.Tr "repo.pulls.still_in_progress"}} {{ctx.Locale.Tr "repo.pulls.add_prefix" (index .PullRequestWorkInProgressPrefixes 0)}}
+			{{end}}
+		</a>
+	</div>
+{{end}}
