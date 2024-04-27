@@ -367,6 +367,14 @@ func getContentFromMailReader(env *enmime.Envelope) *MailContent {
 			Content: attachment.Content,
 		})
 	}
+	for _, inline := range env.Inlines {
+		if inline.FileName != "" {
+			attachments = append(attachments, &Attachment{
+				Name:    inline.FileName,
+				Content: inline.Content,
+			})
+		}
+	}
 
 	return &MailContent{
 		Content:     reply.FromText(env.Text),
