@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	tplWatching base.TplName = "repo/issue/view_content/watching"
+	tplWatching base.TplName = "repo/issue/view_content/sidebar/watching"
 )
 
 // IssueWatch sets issue watching
