@@ -57,7 +57,7 @@ func Activity(ctx *context.Context) {
 		ctx.Repo.CanRead(unit.TypeReleases),
 		ctx.Repo.CanRead(unit.TypeIssues),
 		ctx.Repo.CanRead(unit.TypePullRequests),
-		ctx.Repo.CanRead(unit.TypeCode)); err != nil {
+		ctx.Repo.CanRead(unit.TypeCode) && !ctx.Repo.Repository.IsEmpty); err != nil {
 		ctx.ServerError("GetActivityStats", err)
 		return
 	}

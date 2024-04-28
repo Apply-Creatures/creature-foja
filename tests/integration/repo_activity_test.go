@@ -4,13 +4,20 @@
 package integration
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
 	"testing"
 
+	"code.gitea.io/gitea/models/db"
 	repo_model "code.gitea.io/gitea/models/repo"
+	unit_model "code.gitea.io/gitea/models/unit"
+	"code.gitea.io/gitea/models/unittest"
+	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/test"
+	repo_service "code.gitea.io/gitea/services/repository"
+	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -62,4 +69,123 @@ func TestRepoActivity(t *testing.T) {
 		list = htmlDoc.doc.Find("#new-issues").Next().Find("p.desc")
 		assert.Len(t, list.Nodes, 3)
 	})
+}
+
+func TestRepoActivityAllUnitsDisabled(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: "user1"})
+	session := loginUser(t, user.Name)
+
+	unit_model.LoadUnitConfig()
+
+	// Create a repo, with no unit enabled.
+	repo, err := repo_service.CreateRepository(db.DefaultContext, user, user, repo_service.CreateRepoOptions{
+		Name:     "empty-repo",
+		AutoInit: false,
+	})
+	assert.NoError(t, err)
+	assert.NotEmpty(t, repo)
+
+	enabledUnits := make([]repo_model.RepoUnit, 0)
+	disabledUnits := []unit_model.Type{unit_model.TypeCode, unit_model.TypeIssues, unit_model.TypePullRequests, unit_model.TypeReleases}
+	err = repo_service.UpdateRepositoryUnits(db.DefaultContext, repo, enabledUnits, disabledUnits)
+	assert.NoError(t, err)
+
+	req := NewRequest(t, "GET", fmt.Sprintf("%s/activity", repo.Link()))
+	session.MakeRequest(t, req, http.StatusNotFound)
+	req = NewRequest(t, "GET", fmt.Sprintf("%s/activity/contributors", repo.Link()))
+	session.MakeRequest(t, req, http.StatusNotFound)
+	req = NewRequest(t, "GET", fmt.Sprintf("%s/activity/code-frequency", repo.Link()))
+	session.MakeRequest(t, req, http.StatusNotFound)
+	req = NewRequest(t, "GET", fmt.Sprintf("%s/activity/recent-commits", repo.Link()))
+	session.MakeRequest(t, req, http.StatusNotFound)
+}
+
+func TestRepoActivityOnlyCodeUnitWithEmptyRepo(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: "user1"})
+	session := loginUser(t, user.Name)
+
+	unit_model.LoadUnitConfig()
+
+	// Create a empty repo, with only code unit enabled.
+	repo, err := repo_service.CreateRepository(db.DefaultContext, user, user, repo_service.CreateRepoOptions{
+		Name:     "empty-repo",
+		AutoInit: false,
+	})
+	assert.NoError(t, err)
+	assert.NotEmpty(t, repo)
+
+	enabledUnits := make([]repo_model.RepoUnit, 1)
+	enabledUnits[0] = repo_model.RepoUnit{RepoID: repo.ID, Type: unit_model.TypeCode}
+	disabledUnits := []unit_model.Type{unit_model.TypeIssues, unit_model.TypePullRequests, unit_model.TypeReleases}
+	err = repo_service.UpdateRepositoryUnits(db.DefaultContext, repo, enabledUnits, disabledUnits)
+	assert.NoError(t, err)
+
+	req := NewRequest(t, "GET", fmt.Sprintf("%s/activity", repo.Link()))
+	session.MakeRequest(t, req, http.StatusOK)
+
+	// Git repo empty so no activity for contributors etc
+	req = NewRequest(t, "GET", fmt.Sprintf("%s/activity/contributors", repo.Link()))
+	session.MakeRequest(t, req, http.StatusNotFound)
+	req = NewRequest(t, "GET", fmt.Sprintf("%s/activity/code-frequency", repo.Link()))
+	session.MakeRequest(t, req, http.StatusNotFound)
+	req = NewRequest(t, "GET", fmt.Sprintf("%s/activity/recent-commits", repo.Link()))
+	session.MakeRequest(t, req, http.StatusNotFound)
+}
+
+func TestRepoActivityOnlyCodeUnitWithNonEmptyRepo(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: "user1"})
+	session := loginUser(t, user.Name)
+
+	unit_model.LoadUnitConfig()
+
+	// Create a repo, with only code unit enabled.
+	repo, _, f := CreateDeclarativeRepo(t, user, "", []unit_model.Type{unit_model.TypeCode}, nil, nil)
+	defer f()
+
+	req := NewRequest(t, "GET", fmt.Sprintf("%s/activity", repo.Link()))
+	session.MakeRequest(t, req, http.StatusOK)
+
+	// Git repo not empty so activity for contributors etc
+	req = NewRequest(t, "GET", fmt.Sprintf("%s/activity/contributors", repo.Link()))
+	session.MakeRequest(t, req, http.StatusOK)
+	req = NewRequest(t, "GET", fmt.Sprintf("%s/activity/code-frequency", repo.Link()))
+	session.MakeRequest(t, req, http.StatusOK)
+	req = NewRequest(t, "GET", fmt.Sprintf("%s/activity/recent-commits", repo.Link()))
+	session.MakeRequest(t, req, http.StatusOK)
+}
+
+func TestRepoActivityOnlyIssuesUnit(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{Name: "user1"})
+	session := loginUser(t, user.Name)
+
+	unit_model.LoadUnitConfig()
+
+	// Create a empty repo, with only code unit enabled.
+	repo, err := repo_service.CreateRepository(db.DefaultContext, user, user, repo_service.CreateRepoOptions{
+		Name:     "empty-repo",
+		AutoInit: false,
+	})
+	assert.NoError(t, err)
+	assert.NotEmpty(t, repo)
+
+	enabledUnits := make([]repo_model.RepoUnit, 1)
+	enabledUnits[0] = repo_model.RepoUnit{RepoID: repo.ID, Type: unit_model.TypeIssues}
+	disabledUnits := []unit_model.Type{unit_model.TypeCode, unit_model.TypePullRequests, unit_model.TypeReleases}
+	err = repo_service.UpdateRepositoryUnits(db.DefaultContext, repo, enabledUnits, disabledUnits)
+	assert.NoError(t, err)
+
+	req := NewRequest(t, "GET", fmt.Sprintf("%s/activity", repo.Link()))
+	session.MakeRequest(t, req, http.StatusOK)
+
+	// Git repo empty so no activity for contributors etc
+	req = NewRequest(t, "GET", fmt.Sprintf("%s/activity/contributors", repo.Link()))
+	session.MakeRequest(t, req, http.StatusNotFound)
+	req = NewRequest(t, "GET", fmt.Sprintf("%s/activity/code-frequency", repo.Link()))
+	session.MakeRequest(t, req, http.StatusNotFound)
+	req = NewRequest(t, "GET", fmt.Sprintf("%s/activity/recent-commits", repo.Link()))
+	session.MakeRequest(t, req, http.StatusNotFound)
 }

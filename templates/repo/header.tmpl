@@ -159,7 +159,7 @@
 					</a>
 				{{end}}
 
-				{{if and (.Permission.CanReadAny $.UnitTypePullRequests $.UnitTypeIssues $.UnitTypeReleases) (not .IsEmptyRepo)}}
+				{{if and (.Permission.CanReadAny $.UnitTypeCode $.UnitTypePullRequests $.UnitTypeIssues $.UnitTypeReleases)}}
 					<a class="{{if .PageIsActivity}}active {{end}}item" href="{{.RepoLink}}/activity">
 						{{svg "octicon-pulse"}} {{ctx.Locale.Tr "repo.activity"}}
 					</a>
