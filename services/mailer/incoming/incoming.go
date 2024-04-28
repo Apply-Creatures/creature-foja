@@ -219,6 +219,11 @@ loop:
 			}
 
 			err := func() error {
+				if handledSet.Contains(msg.SeqNum) {
+					log.Debug("Skipping already handled message")
+					return nil
+				}
+
 				r := msg.GetBody(section)
 				if r == nil {
 					return fmt.Errorf("could not get body from message: %w", err)
