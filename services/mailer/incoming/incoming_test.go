@@ -7,9 +7,23 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/emersion/go-imap"
 	"github.com/jhillyerd/enmime"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestNotHandleTwice(t *testing.T) {
+	handledSet := new(imap.SeqSet)
+	msg := imap.NewMessage(90, []imap.FetchItem{imap.FetchBody})
+
+	handled := isAlreadyHandled(handledSet, msg)
+	assert.Equal(t, false, handled)
+
+	handledSet.AddNum(msg.SeqNum)
+
+	handled = isAlreadyHandled(handledSet, msg)
+	assert.Equal(t, true, handled)
+}
 
 func TestIsAutomaticReply(t *testing.T) {
 	cases := []struct {
@@ -90,6 +104,32 @@ func TestGetContentFromMailReader(t *testing.T) {
 	env, err := enmime.ReadEnvelope(strings.NewReader(mailString))
 	assert.NoError(t, err)
 	content := getContentFromMailReader(env)
+	assert.Equal(t, "mail content", content.Content)
+	assert.Len(t, content.Attachments, 1)
+	assert.Equal(t, "attachment.txt", content.Attachments[0].Name)
+	assert.Equal(t, []byte("attachment content"), content.Attachments[0].Content)
+
+	mailString = "Content-Type: multipart/mixed; boundary=message-boundary\r\n" +
+		"\r\n" +
+		"--message-boundary\r\n" +
+		"Content-Type: multipart/alternative; boundary=text-boundary\r\n" +
+		"\r\n" +
+		"--text-boundary\r\n" +
+		"Content-Type: text/plain\r\n" +
+		"Content-Disposition: inline\r\n" +
+		"\r\n" +
+		"mail content\r\n" +
+		"--text-boundary--\r\n" +
+		"--message-boundary\r\n" +
+		"Content-Type: text/plain\r\n" +
+		"Content-Disposition: inline; filename=attachment.txt\r\n" +
+		"\r\n" +
+		"attachment content\r\n" +
+		"--message-boundary--\r\n"
+
+	env, err = enmime.ReadEnvelope(strings.NewReader(mailString))
+	assert.NoError(t, err)
+	content = getContentFromMailReader(env)
 	assert.Equal(t, "mail content", content.Content)
 	assert.Len(t, content.Attachments, 1)
 	assert.Equal(t, "attachment.txt", content.Attachments[0].Name)

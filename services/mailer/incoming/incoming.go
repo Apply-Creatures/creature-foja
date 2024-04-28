@@ -219,7 +219,7 @@ loop:
 			}
 
 			err := func() error {
-				if handledSet.Contains(msg.SeqNum) {
+				if isAlreadyHandled(handledSet, msg) {
 					log.Debug("Skipping already handled message")
 					return nil
 				}
@@ -280,6 +280,11 @@ loop:
 	}
 
 	return nil
+}
+
+// isAlreadyHandled tests if the message was already handled
+func isAlreadyHandled(handledSet *imap.SeqSet, msg *imap.Message) bool {
+	return handledSet.Contains(msg.SeqNum)
 }
 
 // isAutomaticReply tests if the headers indicate an automatic reply
