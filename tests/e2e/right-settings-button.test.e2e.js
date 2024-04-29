@@ -22,6 +22,20 @@ test.describe('desktop viewport', () => {
     await expect(page.locator('.overflow-menu-button')).toHaveCount(0);
   });
 
+  test('Settings button on right of repo header also when add more button is shown', async ({browser}, workerInfo) => {
+    await login_user(browser, workerInfo, 'user12');
+    const context = await load_logged_in_context(browser, workerInfo, 'user12');
+    const page = await context.newPage();
+
+    await page.goto('/user12/repo10');
+
+    const settingsBtn = page.locator('.overflow-menu-items>#settings-btn');
+    await expect(settingsBtn).toBeVisible();
+    await expect(settingsBtn).toHaveClass(/right/);
+
+    await expect(page.locator('.overflow-menu-button')).toHaveCount(0);
+  });
+
   test('Settings button on right of org header', async ({browser}, workerInfo) => {
     const context = await load_logged_in_context(browser, workerInfo, 'user2');
     const page = await context.newPage();
