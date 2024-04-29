@@ -72,6 +72,7 @@
     {
       "description": "Split minor and patch updates",
       "matchDepNames": [
+        "github.com/urfave/cli/v2",
         "swagger-ui-dist"
       ],
       "separateMinorPatch": true
@@ -79,6 +80,7 @@
     {
       "description": "Automerge patch updates",
       "matchDepNames": [
+        "github.com/urfave/cli/v2",
         "swagger-ui-dist"
       ],
       "matchUpdateTypes": ["patch"],
