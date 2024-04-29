@@ -692,6 +692,7 @@ type DeclarativeRepoOptions struct {
 	DisabledUnits optional.Option[[]unit_model.Type]
 	Files         optional.Option[[]*files_service.ChangeRepoFile]
 	WikiBranch    optional.Option[string]
+	AutoInit      optional.Option[bool]
 }
 
 func CreateDeclarativeRepoWithOptions(t *testing.T, owner *user_model.User, opts DeclarativeRepoOptions) (*repo_model.Repository, string, func()) {
@@ -706,11 +707,18 @@ func CreateDeclarativeRepoWithOptions(t *testing.T, owner *user_model.User, opts
 		repoName = gouuid.NewString()
 	}
 
+	var autoInit bool
+	if opts.AutoInit.Has() {
+		autoInit = opts.AutoInit.Value()
+	} else {
+		autoInit = true
+	}
+
 	// Create the repository
 	repo, err := repo_service.CreateRepository(db.DefaultContext, owner, owner, repo_service.CreateRepoOptions{
 		Name:          repoName,
 		Description:   "Temporary Repo",
-		AutoInit:      true,
+		AutoInit:      autoInit,
 		Gitignores:    "",
 		License:       "WTFPL",
 		Readme:        "Default",
@@ -742,6 +750,7 @@ func CreateDeclarativeRepoWithOptions(t *testing.T, owner *user_model.User, opts
 	// Add files, if any.
 	var sha string
 	if opts.Files.Has() {
+		assert.True(t, autoInit, "Files cannot be specified if AutoInit is disabled")
 		files := opts.Files.Value()
 
 		resp, err := files_service.ChangeRepoFiles(git.DefaultContext, repo, owner, &files_service.ChangeRepoFilesOptions{
