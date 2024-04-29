@@ -16,26 +16,26 @@
 						<a class="item" href="{{$.Link}}/rules/{{.ID}}">{{.Type.Name}}</a>
 					</div>
 					<div class="flex-item-body">
-						<i>{{if .Enabled}}{{ctx.Locale.Tr "enabled"}}{{else}}{{ctx.Locale.Tr "disabled"}}{{end}}</i>
+						<p>{{if .Enabled}}{{ctx.Locale.Tr "enabled"}}{{else}}{{ctx.Locale.Tr "disabled"}}{{end}}</p>
 					</div>
 					{{if .KeepCount}}
 					<div class="flex-item-body">
-						<i>{{ctx.Locale.Tr "packages.owner.settings.cleanuprules.keep.count"}}:</i> {{if eq .KeepCount 1}}{{ctx.Locale.Tr "packages.owner.settings.cleanuprules.keep.count.1"}}{{else}}{{ctx.Locale.Tr "packages.owner.settings.cleanuprules.keep.count.n" .KeepCount}}{{end}}
+						<p>{{ctx.Locale.Tr "packages.owner.settings.cleanuprules.keep.count"}}:</p> {{if eq .KeepCount 1}}{{ctx.Locale.Tr "packages.owner.settings.cleanuprules.keep.count.1"}}{{else}}{{ctx.Locale.Tr "packages.owner.settings.cleanuprules.keep.count.n" .KeepCount}}{{end}}
 					</div>
 					{{end}}
 					{{if .KeepPattern}}
 					<div class="flex-item-body">
-						<i>{{ctx.Locale.Tr "packages.owner.settings.cleanuprules.keep.pattern"}}:</i> {{StringUtils.EllipsisString .KeepPattern 100}}
+						<p>{{ctx.Locale.Tr "packages.owner.settings.cleanuprules.keep.pattern"}}:</p> {{StringUtils.EllipsisString .KeepPattern 100}}
 					</div>
 					{{end}}
 					{{if .RemoveDays}}
 					<div class="flex-item-body">
-						<i>{{ctx.Locale.Tr "packages.owner.settings.cleanuprules.remove.days"}}:</i> {{ctx.Locale.Tr "tool.days" .RemoveDays}}
+						<p>{{ctx.Locale.Tr "packages.owner.settings.cleanuprules.remove.days"}}:</p> {{ctx.Locale.Tr "tool.days" .RemoveDays}}
 					</div>
 					{{end}}
 					{{if .RemovePattern}}
 					<div class="flex-item-body">
-						<i>{{ctx.Locale.Tr "packages.owner.settings.cleanuprules.remove.pattern"}}:</i> {{StringUtils.EllipsisString .RemovePattern 100}}
+						<p>{{ctx.Locale.Tr "packages.owner.settings.cleanuprules.remove.pattern"}}:</p> {{StringUtils.EllipsisString .RemovePattern 100}}
 					</div>
 					{{end}}
 				</div>
