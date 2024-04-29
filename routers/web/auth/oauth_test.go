@@ -93,3 +93,10 @@ func TestNewAccessTokenResponse_OIDCToken(t *testing.T) {
 	assert.Equal(t, user.Email, oidcToken.Email)
 	assert.Equal(t, user.IsActive, oidcToken.EmailVerified)
 }
+
+func TestEncodeCodeChallenge(t *testing.T) {
+	// test vector from https://datatracker.ietf.org/doc/html/rfc7636#page-18
+	codeChallenge, err := encodeCodeChallenge("dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk")
+	assert.NoError(t, err)
+	assert.Equal(t, "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM", codeChallenge)
+}
