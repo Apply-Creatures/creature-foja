@@ -215,7 +215,7 @@ func TestBadges(t *testing.T) {
 				token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteRepository)
 				err := release.CreateNewTag(git.DefaultContext, repo.Owner, repo, "main", "repo-name-2.0", "dash in the tag name")
 				assert.NoError(t, err)
-				createNewReleaseUsingAPI(t, session, token, repo.Owner, repo, "repo-name-2.0", "main", "dashed release", "dashed release")
+				createNewReleaseUsingAPI(t, token, repo.Owner, repo, "repo-name-2.0", "main", "dashed release", "dashed release")
 
 				req := NewRequestf(t, "GET", "/user2/%s/badges/release.svg", repo.Name)
 				resp := MakeRequest(t, req, http.StatusSeeOther)

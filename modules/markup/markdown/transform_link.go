@@ -12,10 +12,9 @@ import (
 	giteautil "code.gitea.io/gitea/modules/util"
 
 	"github.com/yuin/goldmark/ast"
-	"github.com/yuin/goldmark/text"
 )
 
-func (g *ASTTransformer) transformLink(ctx *markup.RenderContext, v *ast.Link, reader text.Reader) {
+func (g *ASTTransformer) transformLink(ctx *markup.RenderContext, v *ast.Link) {
 	// Links need their href to munged to be a real value
 	link := v.Destination
 

@@ -16,7 +16,6 @@ import (
 	git_model "code.gitea.io/gitea/models/git"
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
-	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/graceful"
 	"code.gitea.io/gitea/modules/setting"
@@ -170,7 +169,6 @@ func TestCreateBranchInvalidCSRF(t *testing.T) {
 
 func TestDatabaseMissingABranch(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, URL *url.URL) {
-		adminUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{IsAdmin: true})
 		session := loginUser(t, "user2")
 
 		// Create two branches
@@ -178,7 +176,7 @@ func TestDatabaseMissingABranch(t *testing.T) {
 		testCreateBranch(t, session, "user2", "repo1", "branch/master", "will-be-missing", http.StatusSeeOther)
 
 		// Run the repo branch sync, to ensure the db and git agree.
-		err2 := repo_service.AddAllRepoBranchesToSyncQueue(graceful.GetManager().ShutdownContext(), adminUser.ID)
+		err2 := repo_service.AddAllRepoBranchesToSyncQueue(graceful.GetManager().ShutdownContext())
 		assert.NoError(t, err2)
 
 		// Delete one branch from git only, leaving it in the database
@@ -197,7 +195,7 @@ func TestDatabaseMissingABranch(t *testing.T) {
 		assert.GreaterOrEqual(t, firstBranchCount, 3)
 
 		// Run the repo branch sync again
-		err2 = repo_service.AddAllRepoBranchesToSyncQueue(graceful.GetManager().ShutdownContext(), adminUser.ID)
+		err2 = repo_service.AddAllRepoBranchesToSyncQueue(graceful.GetManager().ShutdownContext())
 		assert.NoError(t, err2)
 
 		// Verify that loading the repo's branches page works still, and that it
