@@ -231,7 +231,7 @@
   --color-secondary-bg: var(--zinc-100);
   --color-text-focus: #fff;
   --color-expand-button: var(--zinc-200);
-  --color-placeholder-text: var(--zinc-400);
+  --color-placeholder-text: var(--color-text-light-3);
   --color-editor-line-highlight: var(--zinc-100);
   --color-project-board-bg: var(--color-secondary-light-2);
   --color-project-board-dark-label: var(--color-text-light-3);
