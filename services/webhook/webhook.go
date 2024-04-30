@@ -82,19 +82,17 @@ var hookQueue *queue.WorkerPoolQueue[int64]
 
 // getPayloadBranch returns branch for hook event, if applicable.
 func getPayloadBranch(p api.Payloader) string {
+	var ref string
 	switch pp := p.(type) {
 	case *api.CreatePayload:
-		if pp.RefType == "branch" {
-			return pp.Ref
-		}
+		ref = pp.Ref
 	case *api.DeletePayload:
-		if pp.RefType == "branch" {
-			return pp.Ref
-		}
+		ref = pp.Ref
 	case *api.PushPayload:
-		if strings.HasPrefix(pp.Ref, git.BranchPrefix) {
-			return pp.Ref[len(git.BranchPrefix):]
-		}
+		ref = pp.Ref
+	}
+	if strings.HasPrefix(ref, git.BranchPrefix) {
+		return ref[len(git.BranchPrefix):]
 	}
 	return ""
 }
