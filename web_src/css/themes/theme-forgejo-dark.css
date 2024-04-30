@@ -213,7 +213,7 @@
   --color-secondary-bg: var(--steel-700);
   --color-text-focus: #fff;
   --color-expand-button: #3c404d;
-  --color-placeholder-text: var(--steel-450);
+  --color-placeholder-text: var(--color-text-light-3);
   --color-editor-line-highlight: var(--steel-700);
   --color-project-board-bg: var(--color-secondary-light-3);
   --color-project-board-dark-label: var(--color-text-light-3);
