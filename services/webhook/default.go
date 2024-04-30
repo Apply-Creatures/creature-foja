@@ -12,6 +12,8 @@ import (
 	"strings"
 
 	webhook_model "code.gitea.io/gitea/models/webhook"
+	"code.gitea.io/gitea/modules/git"
+	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/svg"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
@@ -67,6 +69,18 @@ func (defaultHandler) UnmarshalForm(bind func(any)) forms.WebhookForm {
 }
 
 func (defaultHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, t *webhook_model.HookTask) (req *http.Request, body []byte, err error) {
+	payloadContent := t.PayloadContent
+	if w.Type == webhook_module.GITEA &&
+		(t.EventType == webhook_module.HookEventCreate || t.EventType == webhook_module.HookEventDelete) {
+		// Woodpecker expects the ref to be short on tag creation only
+		// https://github.com/woodpecker-ci/woodpecker/blob/00ccec078cdced80cf309cd4da460a5041d7991a/server/forge/gitea/helper.go#L134
+		// see https://codeberg.org/codeberg/community/issues/1556
+		payloadContent, err = substituteRefShortName(payloadContent)
+		if err != nil {
+			return nil, nil, fmt.Errorf("could not substiture ref: %w", err)
+		}
+	}
+
 	switch w.HTTPMethod {
 	case "":
 		log.Info("HTTP Method for %s webhook %s [ID: %d] is not set, defaulting to POST", w.Type, w.URL, w.ID)
@@ -74,7 +88,7 @@ func (defaultHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, 
 	case http.MethodPost:
 		switch w.ContentType {
 		case webhook_model.ContentTypeJSON:
-			req, err = http.NewRequest("POST", w.URL, strings.NewReader(t.PayloadContent))
+			req, err = http.NewRequest("POST", w.URL, strings.NewReader(payloadContent))
 			if err != nil {
 				return nil, nil, err
 			}
@@ -82,7 +96,7 @@ func (defaultHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, 
 			req.Header.Set("Content-Type", "application/json")
 		case webhook_model.ContentTypeForm:
 			forms := url.Values{
-				"payload": []string{t.PayloadContent},
+				"payload": []string{payloadContent},
 			}
 
 			req, err = http.NewRequest("POST", w.URL, strings.NewReader(forms.Encode()))
@@ -100,7 +114,7 @@ func (defaultHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, 
 			return nil, nil, fmt.Errorf("invalid URL: %w", err)
 		}
 		vals := u.Query()
-		vals["payload"] = []string{t.PayloadContent}
+		vals["payload"] = []string{payloadContent}
 		u.RawQuery = vals.Encode()
 		req, err = http.NewRequest("GET", u.String(), nil)
 		if err != nil {
@@ -109,12 +123,12 @@ func (defaultHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, 
 	case http.MethodPut:
 		switch w.Type {
 		case webhook_module.MATRIX: // used when t.Version == 1
-			txnID, err := getMatrixTxnID([]byte(t.PayloadContent))
+			txnID, err := getMatrixTxnID([]byte(payloadContent))
 			if err != nil {
 				return nil, nil, err
 			}
 			url := fmt.Sprintf("%s/%s", w.URL, url.PathEscape(txnID))
-			req, err = http.NewRequest("PUT", url, strings.NewReader(t.PayloadContent))
+			req, err = http.NewRequest("PUT", url, strings.NewReader(payloadContent))
 			if err != nil {
 				return nil, nil, err
 			}
@@ -125,6 +139,22 @@ func (defaultHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, 
 		return nil, nil, fmt.Errorf("invalid http method: %v", w.HTTPMethod)
 	}
 
-	body = []byte(t.PayloadContent)
+	body = []byte(payloadContent)
 	return req, body, shared.AddDefaultHeaders(req, []byte(w.Secret), t, body)
+}
+
+func substituteRefShortName(body string) (string, error) {
+	var m map[string]any
+	if err := json.Unmarshal([]byte(body), &m); err != nil {
+		return body, err
+	}
+	ref, ok := m["ref"].(string)
+	if !ok {
+		return body, fmt.Errorf("expected string 'ref', got %T", m["ref"])
+	}
+
+	m["ref"] = git.RefName(ref).ShortName()
+
+	buf, err := json.Marshal(m)
+	return string(buf), err
 }
