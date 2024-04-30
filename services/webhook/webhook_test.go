@@ -4,6 +4,7 @@
 package webhook
 
 import (
+	"fmt"
 	"testing"
 
 	"code.gitea.io/gitea/models/db"
@@ -41,38 +42,58 @@ func TestPrepareWebhooks(t *testing.T) {
 	}
 }
 
+func eventType(p api.Payloader) webhook_module.HookEventType {
+	switch p.(type) {
+	case *api.CreatePayload:
+		return webhook_module.HookEventCreate
+	case *api.DeletePayload:
+		return webhook_module.HookEventDelete
+	case *api.PushPayload:
+		return webhook_module.HookEventPush
+	}
+	panic(fmt.Sprintf("no event type for payload %T", p))
+}
+
 func TestPrepareWebhooksBranchFilterMatch(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 
-	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 2})
-	activateWebhook(t, 4)
+	// branch_filter: {master,feature*}
+	w := unittest.AssertExistsAndLoadBean(t, &webhook_model.Webhook{ID: 4})
+	activateWebhook(t, w.ID)
 
-	hookTasks := []*webhook_model.HookTask{
-		{HookID: 4, EventType: webhook_module.HookEventPush},
-	}
-	for _, hookTask := range hookTasks {
-		unittest.AssertNotExistsBean(t, hookTask)
-	}
-	// this test also ensures that * doesn't handle / in any special way (like shell would)
-	assert.NoError(t, PrepareWebhooks(db.DefaultContext, EventSource{Repository: repo}, webhook_module.HookEventPush, &api.PushPayload{Ref: "refs/heads/feature/7791", Commits: []*api.PayloadCommit{{}}}))
-	for _, hookTask := range hookTasks {
-		unittest.AssertExistsAndLoadBean(t, hookTask)
+	for _, p := range []api.Payloader{
+		&api.PushPayload{Ref: "refs/heads/feature/7791"},
+		&api.CreatePayload{Ref: "refs/heads/feature/7791"}, // branch creation
+		&api.DeletePayload{Ref: "refs/heads/feature/7791"}, // branch deletion
+	} {
+		t.Run(fmt.Sprintf("%T", p), func(t *testing.T) {
+			db.DeleteBeans(db.DefaultContext, webhook_model.HookTask{HookID: w.ID})
+			typ := eventType(p)
+			assert.NoError(t, PrepareWebhook(db.DefaultContext, w, typ, p))
+			unittest.AssertExistsAndLoadBean(t, &webhook_model.HookTask{
+				HookID:    w.ID,
+				EventType: typ,
+			})
+		})
 	}
 }
 
 func TestPrepareWebhooksBranchFilterNoMatch(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
 
-	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 2})
-	hookTasks := []*webhook_model.HookTask{
-		{HookID: 4, EventType: webhook_module.HookEventPush},
-	}
-	for _, hookTask := range hookTasks {
-		unittest.AssertNotExistsBean(t, hookTask)
-	}
-	assert.NoError(t, PrepareWebhooks(db.DefaultContext, EventSource{Repository: repo}, webhook_module.HookEventPush, &api.PushPayload{Ref: "refs/heads/fix_weird_bug"}))
+	// branch_filter: {master,feature*}
+	w := unittest.AssertExistsAndLoadBean(t, &webhook_model.Webhook{ID: 4})
+	activateWebhook(t, w.ID)
 
-	for _, hookTask := range hookTasks {
-		unittest.AssertNotExistsBean(t, hookTask)
+	for _, p := range []api.Payloader{
+		&api.PushPayload{Ref: "refs/heads/fix_weird_bug"},
+		&api.CreatePayload{Ref: "refs/heads/fix_weird_bug"}, // branch creation
+		&api.DeletePayload{Ref: "refs/heads/fix_weird_bug"}, // branch deletion
+	} {
+		t.Run(fmt.Sprintf("%T", p), func(t *testing.T) {
+			db.DeleteBeans(db.DefaultContext, webhook_model.HookTask{HookID: w.ID})
+			assert.NoError(t, PrepareWebhook(db.DefaultContext, w, eventType(p), p))
+			unittest.AssertNotExistsBean(t, &webhook_model.HookTask{HookID: w.ID})
+		})
 	}
 }
