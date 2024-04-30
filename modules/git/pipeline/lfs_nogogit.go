@@ -213,7 +213,6 @@ func FindLFSFile(repo *git.Repository, objectID git.ObjectID) ([]*LFSResult, err
 				errChan <- err
 				break
 			}
-
 		}
 	}()
 

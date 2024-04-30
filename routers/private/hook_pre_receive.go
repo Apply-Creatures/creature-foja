@@ -259,7 +259,6 @@ func preReceiveBranch(ctx *preReceiveContext, oldCommitID, newCommitID string, r
 				UserMsg: fmt.Sprintf("branch %s is protected from force push", branchName),
 			})
 			return
-
 		}
 	}
 

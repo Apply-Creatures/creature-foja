@@ -4,6 +4,7 @@
 package repo
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -519,7 +520,11 @@ func CreatePullReview(ctx *context.APIContext) {
 	// create review and associate all pending review comments
 	review, _, err := pull_service.SubmitReview(ctx, ctx.Doer, ctx.Repo.GitRepo, pr.Issue, reviewType, opts.Body, opts.CommitID, nil)
 	if err != nil {
-		ctx.Error(http.StatusInternalServerError, "SubmitReview", err)
+		if errors.Is(err, pull_service.ErrSubmitReviewOnClosedPR) {
+			ctx.Error(http.StatusUnprocessableEntity, "", err)
+		} else {
+			ctx.Error(http.StatusInternalServerError, "SubmitReview", err)
+		}
 		return
 	}
 
@@ -607,7 +612,11 @@ func SubmitPullReview(ctx *context.APIContext) {
 	// create review and associate all pending review comments
 	review, _, err = pull_service.SubmitReview(ctx, ctx.Doer, ctx.Repo.GitRepo, pr.Issue, reviewType, opts.Body, headCommitID, nil)
 	if err != nil {
-		ctx.Error(http.StatusInternalServerError, "SubmitReview", err)
+		if errors.Is(err, pull_service.ErrSubmitReviewOnClosedPR) {
+			ctx.Error(http.StatusUnprocessableEntity, "", err)
+		} else {
+			ctx.Error(http.StatusInternalServerError, "SubmitReview", err)
+		}
 		return
 	}
 
@@ -875,7 +884,6 @@ func apiReviewRequest(ctx *context.APIContext, opts api.PullReviewRequestOptions
 	}
 
 	if ctx.Repo.Repository.Owner.IsOrganization() && len(opts.TeamReviewers) > 0 {
-
 		teamReviewers := make([]*organization.Team, 0, len(opts.TeamReviewers))
 		for _, t := range opts.TeamReviewers {
 			var teamReviewer *organization.Team

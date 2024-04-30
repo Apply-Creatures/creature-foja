@@ -147,7 +147,6 @@ func (r *Writer) resolveLink(node org.Node) string {
 	}
 	if len(link) > 0 && !markup.IsLinkStr(link) &&
 		link[0] != '#' && !strings.HasPrefix(link, mailto) {
-
 		var base string
 		if r.Ctx.IsWiki {
 			base = r.Ctx.Links.WikiLink()

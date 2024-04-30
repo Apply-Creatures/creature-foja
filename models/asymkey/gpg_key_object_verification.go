@@ -94,7 +94,6 @@ func ParseObjectWithSignature(ctx context.Context, c *GitObject) *ObjectVerifica
 					Reason:         "gpg.error.no_committer_account",
 				}
 			}
-
 		}
 	}
 

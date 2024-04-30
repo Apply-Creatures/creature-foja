@@ -552,7 +552,7 @@ func getRunJobs(ctx *context_module.Context, runIndex, jobIndex int64) (*actions
 		return nil, nil
 	}
 	if len(jobs) == 0 {
-		ctx.Error(http.StatusNotFound, err.Error())
+		ctx.Error(http.StatusNotFound)
 		return nil, nil
 	}
 
@@ -689,7 +689,6 @@ func ArtifactsDownloadView(ctx *context_module.Context) {
 	writer := zip.NewWriter(ctx.Resp)
 	defer writer.Close()
 	for _, art := range artifacts {
-
 		f, err := storage.ActionsArtifacts.Open(art.StoragePath)
 		if err != nil {
 			ctx.Error(http.StatusInternalServerError, err.Error())
