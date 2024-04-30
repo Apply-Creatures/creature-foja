@@ -183,3 +183,12 @@ func TestOnlyGetDeletedBranchOnCorrectRepo(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, deletedBranch)
 }
+
+func TestFindBranchesByRepoAndBranchName(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	// With no repos or branches given, we find no branches.
+	branches, err := git_model.FindBranchesByRepoAndBranchName(db.DefaultContext, map[int64]string{})
+	assert.NoError(t, err)
+	assert.Len(t, branches, 0)
+}
