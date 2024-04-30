@@ -219,6 +219,11 @@ loop:
 			}
 
 			err := func() error {
+				if isAlreadyHandled(handledSet, msg) {
+					log.Debug("Skipping already handled message")
+					return nil
+				}
+
 				r := msg.GetBody(section)
 				if r == nil {
 					return fmt.Errorf("could not get body from message: %w", err)
@@ -275,6 +280,11 @@ loop:
 	}
 
 	return nil
+}
+
+// isAlreadyHandled tests if the message was already handled
+func isAlreadyHandled(handledSet *imap.SeqSet, msg *imap.Message) bool {
+	return handledSet.Contains(msg.SeqNum)
 }
 
 // isAutomaticReply tests if the headers indicate an automatic reply
@@ -366,6 +376,14 @@ func getContentFromMailReader(env *enmime.Envelope) *MailContent {
 			Name:    attachment.FileName,
 			Content: attachment.Content,
 		})
+	}
+	for _, inline := range env.Inlines {
+		if inline.FileName != "" {
+			attachments = append(attachments, &Attachment{
+				Name:    inline.FileName,
+				Content: inline.Content,
+			})
+		}
 	}
 
 	return &MailContent{
