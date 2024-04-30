@@ -623,10 +623,10 @@ func mentionProcessor(ctx *RenderContext, node *html.Node) {
 		if DefaultProcessorHelper.IsUsernameMentionable != nil && DefaultProcessorHelper.IsUsernameMentionable(ctx.Ctx, mentionedUsername) {
 			replaceContent(node, loc.Start, loc.End, createLink(util.URLJoin(ctx.Links.Prefix(), mentionedUsername), mention, "mention"))
 			node = node.NextSibling.NextSibling
+			start = 0
 		} else {
-			node = node.NextSibling
+			start = loc.End
 		}
-		start = 0
 	}
 }
 

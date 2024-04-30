@@ -50,6 +50,11 @@ func TestApostrophesInMentions(t *testing.T) {
 	assert.EqualValues(t, template.HTML("<p><a href=\"/mention-user\" rel=\"nofollow\">@mention-user</a>&#39;s comment</p>\n"), rendered)
 }
 
+func TestNonExistantUserMention(t *testing.T) {
+	rendered := RenderMarkdownToHtml(context.Background(), "@ThisUserDoesNotExist @mention-user")
+	assert.EqualValues(t, template.HTML("<p>@ThisUserDoesNotExist <a href=\"/mention-user\" rel=\"nofollow\">@mention-user</a></p>\n"), rendered)
+}
+
 func TestRenderCommitBody(t *testing.T) {
 	type args struct {
 		ctx   context.Context
