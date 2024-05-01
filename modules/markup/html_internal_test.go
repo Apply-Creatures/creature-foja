@@ -403,15 +403,18 @@ func TestRegExp_anySHA1Pattern(t *testing.T) {
 		"https://github.com/jquery/jquery/blob/a644101ed04d0beacea864ce805e0c4f86ba1cd1/test/unit/event.js#L2703": {
 			"a644101ed04d0beacea864ce805e0c4f86ba1cd1",
 			"/test/unit/event.js",
+			"",
 			"#L2703",
 		},
 		"https://github.com/jquery/jquery/blob/a644101ed04d0beacea864ce805e0c4f86ba1cd1/test/unit/event.js": {
 			"a644101ed04d0beacea864ce805e0c4f86ba1cd1",
 			"/test/unit/event.js",
 			"",
+			"",
 		},
 		"https://github.com/jquery/jquery/commit/0705be475092aede1eddae01319ec931fb9c65fc": {
 			"0705be475092aede1eddae01319ec931fb9c65fc",
+			"",
 			"",
 			"",
 		},
@@ -419,11 +422,19 @@ func TestRegExp_anySHA1Pattern(t *testing.T) {
 			"0705be475092aede1eddae01319ec931fb9c65fc",
 			"/src",
 			"",
+			"",
 		},
 		"https://try.gogs.io/gogs/gogs/commit/d8a994ef243349f321568f9e36d5c3f444b99cae#diff-2": {
 			"d8a994ef243349f321568f9e36d5c3f444b99cae",
 			"",
+			"",
 			"#diff-2",
+		},
+		"https://codeberg.org/forgejo/forgejo/src/commit/949ab9a5c4cac742f84ae5a9fa186f8d6eb2cdc0/RELEASE-NOTES.md?display=source&w=1#L7-L9": {
+			"949ab9a5c4cac742f84ae5a9fa186f8d6eb2cdc0",
+			"/RELEASE-NOTES.md",
+			"?display=source&w=1",
+			"#L7-L9",
 		},
 	}
 

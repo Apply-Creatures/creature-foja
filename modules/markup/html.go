@@ -54,7 +54,7 @@ var (
 	shortLinkPattern = regexp.MustCompile(`\[\[(.*?)\]\](\w*)`)
 
 	// anySHA1Pattern splits url containing SHA into parts
-	anyHashPattern = regexp.MustCompile(`https?://(?:\S+/){4,5}([0-9a-f]{40,64})(/[-+~_%.a-zA-Z0-9/]+)?(#[-+~_%.a-zA-Z0-9]+)?`)
+	anyHashPattern = regexp.MustCompile(`https?://(?:\S+/){4,5}([0-9a-f]{40,64})(/[-+~_%.a-zA-Z0-9/]+)?(\?[-+~_%\.a-zA-Z0-9=&]+)?(#[-+~_%.a-zA-Z0-9]+)?`)
 
 	// comparePattern matches "http://domain/org/repo/compare/COMMIT1...COMMIT2#hash"
 	comparePattern = regexp.MustCompile(`https?://(?:\S+/){4,5}([0-9a-f]{7,64})(\.\.\.?)([0-9a-f]{7,64})?(#[-+~_%.a-zA-Z0-9]+)?`)
@@ -969,10 +969,10 @@ func fullHashPatternProcessor(ctx *RenderContext, node *html.Node) {
 			subpath = node.Data[m[4]:m[5]]
 		}
 
-		// 4th capture group matches a optional url hash
+		// 5th capture group matches a optional url hash
 		hash := ""
-		if m[7] > 0 {
-			hash = node.Data[m[6]:m[7]][1:]
+		if m[9] > 0 {
+			hash = node.Data[m[8]:m[9]][1:]
 		}
 
 		start := m[0]
