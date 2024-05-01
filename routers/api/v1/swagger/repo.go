@@ -422,6 +422,13 @@ type swaggerBlockedUserList struct {
 	Body []api.BlockedUser `json:"body"`
 }
 
+// TasksList
+// swagger:response TasksList
+type swaggerRepoTasksList struct {
+	// in:body
+	Body api.ActionTaskResponse `json:"body"`
+}
+
 // swagger:response Compare
 type swaggerCompare struct {
 	// in:body
