@@ -127,6 +127,9 @@ func CreateCommitStatus(ctx context.Context, repo *repo_model.Repository, creato
 
 // FindReposLastestCommitStatuses loading repository default branch latest combinded commit status with cache
 func FindReposLastestCommitStatuses(ctx context.Context, repos []*repo_model.Repository) ([]*git_model.CommitStatus, error) {
+	if len(repos) == 0 {
+		return nil, nil
+	}
 	results := make([]*git_model.CommitStatus, len(repos))
 	for i, repo := range repos {
 		if cv := getCommitStatusCache(repo.ID, repo.DefaultBranch); cv != nil {
