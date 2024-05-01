@@ -8,6 +8,23 @@ A [patch or minor release](https://semver.org/spec/v2.0.0.html) (e.g. upgrading 
 
 - [8.0.0](/release-notes/8.0.0/)
 
+## 7.0.2
+
+This is a bug fix release. See the documentation for more information on the [upgrade procedure](https://forgejo.org/docs/v7.0/admin/upgrade/).
+
+In addition to the following notable bug fixes, you can browse the [full list of commits](https://codeberg.org/forgejo/forgejo/compare/v7.0.1...v7.0.2) included in this release.
+
+* **Bug fixes:**
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3562): a v7.0.0 regression where subscribing to or unsubscribing from an issue in a repository with no code produced an internal server error.
+  * [PR](https://codeberg.org/forgejo/forgejo/issues/3559): a v7.0.0 regression makes all the refs sent in Gitea webhooks to be full refs and might break Woodpecker CI pipelines triggered on tag (`CI_COMMIT_TAG` contained the full ref). This issue [has been fixed](https://github.com/woodpecker-ci/woodpecker/pull/3664) in the `main` branch of Woodpecker CI as well.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3555): the webhook branch filter wrongly applied the match on the full ref for branch creation and deletion (wrongly skipping events).
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3537): toggling the WIP state of a pull request is possible from the sidebar, but not from the footer.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3565): when mentioning a user, the markup post-processor does not handle the case where the mentioned user does not exist: it tries to skip to the next node, which in turn, ended up skipping the rest of the line.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3570): excessive and unnecessary database queries when a user with no repositories is viewing their dashboard.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3580): duplicate status check contexts show in the branch protection settings.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3497): profile info fails to render german singular translation.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3504): inline attachments of [incoming emails](https://forgejo.org/docs/v7.0/user/incoming/) (as they occur for example with Apple Mail) are not attached to comments.
+
 ## 7.0.1
 
 This is a bug fix release. See the documentation for more information on the [upgrade procedure](https://forgejo.org/docs/v7.0/admin/upgrade/).
@@ -34,6 +51,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
   * Running the [`forgejo doctor check --fix`](https://forgejo.org/docs/v7.0/admin/command-line/#doctor-check) CLI command or setting [`[cron.gc_lfs].ENABLED=true`](https://forgejo.org/docs/v7.0/admin/config-cheat-sheet/#cron---garbage-collect-lfs-pointers-in-repositories-crongc_lfs) (the default is `false`) will corrupt the LFS storage. The workaround is to not run the doctor CLI command and disable the `cron.gc_lfs`. This regression will be [fixed in 7.0.1](https://codeberg.org/forgejo/forgejo/issues/3438).
   * The [`forgejo admin user create`](https://forgejo.org/docs/v7.0/admin/command-line/#admin-user-create) CLI command [requires a password](https://codeberg.org/forgejo/forgejo/commit/b122c6ef8b9254120432aed373cbe075331132ac) change by default when creating the first user and the `--admin` flag is not specified. The `--must-change-password=false` argument must be given to not require a password change. This regression will be [fixed in 7.0.1](https://codeberg.org/forgejo/forgejo/issues/3399).
 * **Breaking changes requiring manual intervention:**
+  * [Forgejo webhooks](https://codeberg.org/forgejo/forgejo/issues/3055) now always send full refs (starting with `refs/`) instead of sending short refs in some cases. This new behavior may require changes when the receiving end assumes a short ref will be received (for instance some versions of Woodpecker CI when receiving webhook payloads when a tag is set).
   * [MySQL 8.0 or PostgreSQL 12](https://codeberg.org/forgejo/forgejo/commit/e94f9fcafdcf284561e7fb33f60156a69c4ad6a5) are the minimum supported versions. The database must be migrated before upgrading. The requirements regarding SQLite did not change.
   * The `per_page` parameter is [no longer a synonym for `limit`](https://codeberg.org/forgejo/forgejo/commit/0aab2d38a7d91bc8caff332e452364468ce52d9a) in the [/repos/{owner}/{repo}/releases](https://code.forgejo.org/api/swagger/#/repository/repoListReleases) API endpoint.
   * The date format of the `created` and `last_update` fields of the [`/repos/{owner}/{repo}/push_mirrors`](https://code.forgejo.org/api/swagger/#/repository/repoListPushMirrors) and [/repos/{owner}/{repo}/push_mirrors](https://code.forgejo.org/api/swagger/#/repository/repoAddPushMirror) API endpoint changed [to be timestamps instead of numbers](https://codeberg.org/forgejo/forgejo/commit/0ee7cbf725f45650136be45f8e0f74d395f73b5c).
