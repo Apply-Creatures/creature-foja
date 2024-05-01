@@ -38,17 +38,24 @@ func (f *GogsDownloaderFactory) New(ctx context.Context, opts base.MigrateOption
 		return nil, err
 	}
 
-	baseURL := u.Scheme + "://" + u.Host
 	repoNameSpace := strings.TrimSuffix(u.Path, ".git")
 	repoNameSpace = strings.Trim(repoNameSpace, "/")
 
 	fields := strings.Split(repoNameSpace, "/")
-	if len(fields) < 2 {
+	numFields := len(fields)
+	if numFields < 2 {
 		return nil, fmt.Errorf("invalid path: %s", repoNameSpace)
 	}
 
-	log.Trace("Create gogs downloader. BaseURL: %s RepoOwner: %s RepoName: %s", baseURL, fields[0], fields[1])
-	return NewGogsDownloader(ctx, baseURL, opts.AuthUsername, opts.AuthPassword, opts.AuthToken, fields[0], fields[1]), nil
+	repoOwner := fields[numFields-2]
+	repoName := fields[numFields-1]
+
+	u.Path = ""
+	u = u.JoinPath(fields[:numFields-2]...)
+	baseURL := u.String()
+
+	log.Trace("Create gogs downloader. BaseURL: %s RepoOwner: %s RepoName: %s", baseURL, repoOwner, repoName)
+	return NewGogsDownloader(ctx, baseURL, opts.AuthUsername, opts.AuthPassword, opts.AuthToken, repoOwner, repoName), nil
 }
 
 // GitServiceType returns the type of git service
