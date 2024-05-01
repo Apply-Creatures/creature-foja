@@ -22,6 +22,7 @@ import (
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/indexer/issues"
+	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/modules/references"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
@@ -874,5 +875,25 @@ body:
 			checkboxLabel := htmlDoc.Find("#new-issue .field .ui.checkbox label").Text()
 			assert.Contains(t, checkboxLabel, "This is a label")
 		})
+	})
+}
+
+func TestIssueUnsubscription(t *testing.T) {
+	onGiteaRun(t, func(t *testing.T, u *url.URL) {
+		defer tests.PrepareTestEnv(t)()
+
+		user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+		repo, _, f := CreateDeclarativeRepoWithOptions(t, user, DeclarativeRepoOptions{
+			AutoInit: optional.Some(false),
+		})
+		defer f()
+		session := loginUser(t, user.Name)
+
+		issueURL := testNewIssue(t, session, user.Name, repo.Name, "Issue title", "Description")
+		req := NewRequestWithValues(t, "POST", fmt.Sprintf("%s/watch", issueURL), map[string]string{
+			"_csrf": GetCSRF(t, session, issueURL),
+			"watch": "0",
+		})
+		session.MakeRequest(t, req, http.StatusOK)
 	})
 }
