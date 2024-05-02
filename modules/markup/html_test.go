@@ -127,6 +127,12 @@ func TestRender_CrossReferences(t *testing.T) {
 	test(
 		util.URLJoin(markup.TestAppURL, "gogitea", "some-repo-name", "issues", "12345"),
 		`<p><a href="`+util.URLJoin(markup.TestAppURL, "gogitea", "some-repo-name", "issues", "12345")+`" class="ref-issue" rel="nofollow">gogitea/some-repo-name#12345</a></p>`)
+
+	sha := "65f1bf27bc3bf70f64657658635e66094edbcb4d"
+	urlWithQuery := util.URLJoin(markup.TestAppURL, "forgejo", "some-repo-name", "commit", sha, "README.md") + "?display=source#L1-L5"
+	test(
+		urlWithQuery,
+		`<p><a href="`+urlWithQuery+`" rel="nofollow"><code>`+sha[:10]+`/README.md (L1-L5)</code></a></p>`)
 }
 
 func TestMisc_IsSameDomain(t *testing.T) {
