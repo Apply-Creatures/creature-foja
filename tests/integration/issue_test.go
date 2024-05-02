@@ -15,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	auth_model "code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/models/db"
 	issues_model "code.gitea.io/gitea/models/issues"
 	repo_model "code.gitea.io/gitea/models/repo"
@@ -192,6 +193,93 @@ func TestNewIssue(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	session := loginUser(t, "user2")
 	testNewIssue(t, session, "user2", "repo1", "Title", "Description")
+}
+
+func TestIssueDependencies(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 1})
+	session := loginUser(t, owner.Name)
+	token := getTokenForLoggedInUser(t, session, auth_model.AccessTokenScopeWriteIssue)
+
+	repo, _, f := CreateDeclarativeRepoWithOptions(t, owner, DeclarativeRepoOptions{})
+	defer f()
+
+	createIssue := func(t *testing.T, title string) api.Issue {
+		t.Helper()
+
+		urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues", owner.Name, repo.Name)
+		req := NewRequestWithJSON(t, "POST", urlStr, &api.CreateIssueOption{
+			Body:  "",
+			Title: title,
+		}).AddTokenAuth(token)
+		resp := MakeRequest(t, req, http.StatusCreated)
+
+		var apiIssue api.Issue
+		DecodeJSON(t, resp, &apiIssue)
+
+		return apiIssue
+	}
+	addDependency := func(t *testing.T, issue, dependency api.Issue) {
+		t.Helper()
+
+		urlStr := fmt.Sprintf("/%s/%s/issues/%d/dependency/add", owner.Name, repo.Name, issue.Index)
+		req := NewRequestWithValues(t, "POST", urlStr, map[string]string{
+			"_csrf":         GetCSRF(t, session, fmt.Sprintf("/%s/%s/issues/%d", owner.Name, repo.Name, issue.Index)),
+			"newDependency": fmt.Sprintf("%d", dependency.Index),
+		})
+		session.MakeRequest(t, req, http.StatusSeeOther)
+	}
+	removeDependency := func(t *testing.T, issue, dependency api.Issue) {
+		t.Helper()
+
+		urlStr := fmt.Sprintf("/%s/%s/issues/%d/dependency/delete", owner.Name, repo.Name, issue.Index)
+		req := NewRequestWithValues(t, "POST", urlStr, map[string]string{
+			"_csrf":              GetCSRF(t, session, fmt.Sprintf("/%s/%s/issues/%d", owner.Name, repo.Name, issue.Index)),
+			"removeDependencyID": fmt.Sprintf("%d", dependency.Index),
+			"dependencyType":     "blockedBy",
+		})
+		session.MakeRequest(t, req, http.StatusSeeOther)
+	}
+
+	assertHasDependency := func(t *testing.T, issueID, dependencyID int64, hasDependency bool) {
+		t.Helper()
+
+		urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/issues/%d/dependencies", owner.Name, repo.Name, issueID)
+		req := NewRequest(t, "GET", urlStr)
+		resp := MakeRequest(t, req, http.StatusOK)
+
+		var issues []api.Issue
+		DecodeJSON(t, resp, &issues)
+
+		if hasDependency {
+			assert.NotEmpty(t, issues)
+			assert.EqualValues(t, issues[0].Index, dependencyID)
+		} else {
+			assert.Empty(t, issues)
+		}
+	}
+
+	t.Run("Add dependency", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		issue1 := createIssue(t, "issue #1")
+		issue2 := createIssue(t, "issue #2")
+		addDependency(t, issue1, issue2)
+
+		assertHasDependency(t, issue1.Index, issue2.Index, true)
+	})
+
+	t.Run("Remove dependency", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+
+		issue1 := createIssue(t, "issue #1")
+		issue2 := createIssue(t, "issue #2")
+		addDependency(t, issue1, issue2)
+		removeDependency(t, issue1, issue2)
+
+		assertHasDependency(t, issue1.Index, issue2.Index, false)
+	})
 }
 
 func TestIssueCommentClose(t *testing.T) {
