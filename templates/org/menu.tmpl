@@ -6,6 +6,7 @@
 				{{if .RepoCount}}
 					<div class="ui small label">{{.RepoCount}}</div>
 				{{end}}
+        <span hidden test-name="repository-count">{{.RepoCount}}</span>
 			</a>
 			{{if .CanReadProjects}}
 			<a class="{{if .PageIsViewProjects}}active {{end}}item" href="{{$.Org.HomeLink}}/-/projects">
@@ -13,6 +14,7 @@
 				{{if .ProjectCount}}
 					<div class="ui small label">{{.ProjectCount}}</div>
 				{{end}}
+				<span hidden test-name="project-count">{{.ProjectCount}}</span>
 			</a>
 			{{end}}
 			{{if and .IsPackageEnabled .CanReadPackages}}
@@ -31,6 +33,7 @@
 				<div class="ui small label">{{.NumMembers}}</div>
 			</a>
 			{{end}}
+			<span hidden test-name="member-count">{{.NumMembers}}</span>
 			{{if .IsOrganizationMember}}
 			<a class="{{if $.PageIsOrgTeams}}active {{end}}item" href="{{$.OrgLink}}/teams">
 				{{svg "octicon-people"}} {{ctx.Locale.Tr "org.teams"}}
@@ -39,6 +42,7 @@
 				{{end}}
 			</a>
 			{{end}}
+			<span hidden test-name="team-count">{{.NumTeams}}</span>
 			{{if .IsOrganizationOwner}}
 			<a id="settings-btn" class="{{if .PageIsOrgSettings}}active {{end}}right item" href="{{.OrgLink}}/settings">
 			{{svg "octicon-tools"}} {{ctx.Locale.Tr "repo.settings"}}

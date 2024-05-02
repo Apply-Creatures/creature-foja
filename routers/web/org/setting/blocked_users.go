@@ -10,6 +10,7 @@ import (
 
 	"code.gitea.io/gitea/models/db"
 	user_model "code.gitea.io/gitea/models/user"
+	shared_user "code.gitea.io/gitea/routers/web/shared/user"
 	"code.gitea.io/gitea/services/context"
 	user_service "code.gitea.io/gitea/services/user"
 )
@@ -24,6 +25,12 @@ func BlockedUsers(ctx *context.Context) {
 	blockedUsers, err := user_model.ListBlockedUsers(ctx, ctx.Org.Organization.ID, db.ListOptions{})
 	if err != nil {
 		ctx.ServerError("ListBlockedUsers", err)
+		return
+	}
+
+	err = shared_user.LoadHeaderCount(ctx)
+	if err != nil {
+		ctx.ServerError("LoadHeaderCount", err)
 		return
 	}
 

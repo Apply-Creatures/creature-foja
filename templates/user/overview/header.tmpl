@@ -10,6 +10,7 @@
 			{{if .RepoCount}}
 				<div class="ui small label">{{.RepoCount}}</div>
 			{{end}}
+			<span hidden test-name="repository-count">{{.RepoCount}}</span>
 		</a>
 		{{if or .ContextUser.IsIndividual .CanReadProjects}}
 		<a href="{{.ContextUser.HomeLink}}/-/projects" class="{{if .PageIsViewProjects}}active {{end}}item">
@@ -17,6 +18,7 @@
 			{{if .ProjectCount}}
 				<div class="ui small label">{{.ProjectCount}}</div>
 			{{end}}
+			<span hidden test-name="project-count">{{.ProjectCount}}</span>
 		</a>
 		{{end}}
 		{{if and .IsPackageEnabled (or .ContextUser.IsIndividual .CanReadPackages)}}
