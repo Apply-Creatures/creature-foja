@@ -141,6 +141,7 @@
   /* other colors */
   --color-gold: #b1983b;
   --color-white: #ffffff;
+  --color-pure-black: #000000;
   --color-diff-removed-word-bg: #783030;
   --color-diff-added-word-bg: #255c39;
   --color-diff-removed-row-bg: #432121;
@@ -304,7 +305,7 @@ i.grey.icon.icon.icon.icon {
 }
 ::selection {
   background: var(--steel-100) !important;
-  color: var(--color-white) !important;
+  color: var(--color-pure-black) !important;
 }
 strong.attention-important, svg.attention-important {
   color: var(--color-violet-light);
