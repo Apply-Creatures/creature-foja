@@ -121,7 +121,8 @@
       "customType": "regex",
       "fileMatch": ["^.forgejo/workflows/.+\\.yml$"],
       "matchStrings": ["\\s+node-version: ['\"]?(?<currentValue>.+?)['\"]?\\s"],
-      "depNameTemplate": "node"
+      "depNameTemplate": "node",
+      "datasourceTemplate": "node-version"
     },
     {
       "description": "Update deps inside Makefile",
