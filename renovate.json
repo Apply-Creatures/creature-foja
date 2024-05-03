@@ -60,7 +60,9 @@
     {
       "description": "Group nodejs packages",
       "matchDepNames": ["node", "docker.io/node", "docker.io/library/node"],
-      "groupName": "nodejs packages"
+      "groupName": "nodejs packages",
+      "versionCompatibility": "^(?<version>[^-]+)(?<compatibility>-.*)?$",
+      "versioning": "node"
     },
     {
       "description": "Automerge renovate updates",
@@ -71,20 +73,12 @@
     },
     {
       "description": "Split minor and patch updates",
-      "matchDepNames": [
-        "vue",
-        "github.com/urfave/cli/v2",
-        "swagger-ui-dist"
-      ],
+      "matchDepNames": ["vue", "github.com/urfave/cli/v2", "swagger-ui-dist"],
       "separateMinorPatch": true
     },
     {
       "description": "Automerge patch updates",
-      "matchDepNames": [
-        "vue",
-        "github.com/urfave/cli/v2",
-        "swagger-ui-dist"
-      ],
+      "matchDepNames": ["vue", "github.com/urfave/cli/v2", "swagger-ui-dist"],
       "matchUpdateTypes": ["patch"],
       "automerge": true
     },
@@ -127,8 +121,7 @@
       "customType": "regex",
       "fileMatch": ["^.forgejo/workflows/.+\\.yml$"],
       "matchStrings": ["\\s+node-version: ['\"]?(?<currentValue>.+?)['\"]?\\s"],
-      "depNameTemplate": "node",
-      "datasourceTemplate": "node-version"
+      "depNameTemplate": "node"
     },
     {
       "description": "Update deps inside Makefile",
