@@ -97,7 +97,7 @@
     {
       "description": "Automerge some packages when ci succeeds",
       "extends": ["packages:linters"],
-      "matchDepNames": ["vitest"],
+      "matchDepNames": ["vitest", "vite-string-plugin"],
       "automerge": true
     },
     {
