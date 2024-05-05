@@ -16,7 +16,7 @@ require (
 	github.com/42wim/sshsig v0.0.0-20211121163825-841cf5bbc121
 	github.com/Azure/go-ntlmssp v0.0.0-20221128193559-754e69321358
 	github.com/ProtonMail/go-crypto v1.0.0
-	github.com/PuerkitoBio/goquery v1.8.1
+	github.com/PuerkitoBio/goquery v1.9.2
 	github.com/alecthomas/chroma/v2 v2.13.0
 	github.com/blakesmith/ar v0.0.0-20190502131153-809d4375e1fb
 	github.com/blevesearch/bleve/v2 v2.3.10
@@ -99,11 +99,11 @@ require (
 	github.com/yuin/goldmark v1.7.0
 	github.com/yuin/goldmark-highlighting/v2 v2.0.0-20230729083705-37449abec8cc
 	github.com/yuin/goldmark-meta v1.1.0
-	golang.org/x/crypto v0.21.0
+	golang.org/x/crypto v0.22.0
 	golang.org/x/image v0.15.0
-	golang.org/x/net v0.23.0
+	golang.org/x/net v0.24.0
 	golang.org/x/oauth2 v0.16.0
-	golang.org/x/sys v0.18.0
+	golang.org/x/sys v0.19.0
 	golang.org/x/text v0.14.0
 	golang.org/x/tools v0.17.0
 	google.golang.org/grpc v1.60.1
