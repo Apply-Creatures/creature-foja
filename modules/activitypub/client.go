@@ -1,6 +1,8 @@
 // Copyright 2022 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
+// TODO: Think about whether this should be moved to services/activitypub (compare to exosy/services/activitypub/client.go)
 package activitypub
 
 import (
@@ -10,11 +12,13 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
 
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/log"
 	"code.gitea.io/gitea/modules/proxy"
 	"code.gitea.io/gitea/modules/setting"
 
@@ -84,6 +88,7 @@ func NewClient(ctx context.Context, user *user_model.User, pubID string) (c *Cli
 			Transport: &http.Transport{
 				Proxy: proxy.Proxy(),
 			},
+			Timeout: 5 * time.Second,
 		},
 		algs:        setting.HttpsigAlgs,
 		digestAlg:   httpsig.DigestAlgorithm(setting.Federation.DigestAlgorithm),
@@ -96,9 +101,9 @@ func NewClient(ctx context.Context, user *user_model.User, pubID string) (c *Cli
 }
 
 // NewRequest function
-func (c *Client) NewRequest(b []byte, to string) (req *http.Request, err error) {
+func (c *Client) NewRequest(method string, b []byte, to string) (req *http.Request, err error) {
 	buf := bytes.NewBuffer(b)
-	req, err = http.NewRequest(http.MethodPost, to, buf)
+	req, err = http.NewRequest(method, to, buf)
 	if err != nil {
 		return nil, err
 	}
@@ -116,9 +121,52 @@ func (c *Client) NewRequest(b []byte, to string) (req *http.Request, err error) 
 // Post function
 func (c *Client) Post(b []byte, to string) (resp *http.Response, err error) {
 	var req *http.Request
-	if req, err = c.NewRequest(b, to); err != nil {
+	if req, err = c.NewRequest(http.MethodPost, b, to); err != nil {
 		return nil, err
 	}
 	resp, err = c.client.Do(req)
 	return resp, err
+}
+
+// Create an http GET request with forgejo/gitea specific headers
+func (c *Client) Get(to string) (resp *http.Response, err error) { // ToDo: we might not need the b parameter
+	var req *http.Request
+	emptyBody := []byte{0}
+	if req, err = c.NewRequest(http.MethodGet, emptyBody, to); err != nil {
+		return nil, err
+	}
+	resp, err = c.client.Do(req)
+	return resp, err
+}
+
+// Create an http GET request with forgejo/gitea specific headers
+func (c *Client) GetBody(uri string) ([]byte, error) {
+	response, err := c.Get(uri)
+	if err != nil {
+		return nil, err
+	}
+	log.Debug("Client: got status: %v", response.Status)
+	if response.StatusCode != 200 {
+		err = fmt.Errorf("got non 200 status code for id: %v", uri)
+		return nil, err
+	}
+	defer response.Body.Close()
+	body, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+	log.Debug("Client: got body: %v", charLimiter(string(body), 120))
+	return body, nil
+}
+
+// Limit number of characters in a string (useful to prevent log injection attacks and overly long log outputs)
+// Thanks to https://www.socketloop.com/tutorials/golang-characters-limiter-example
+func charLimiter(s string, limit int) string {
+	reader := strings.NewReader(s)
+	buff := make([]byte, limit)
+	n, _ := io.ReadAtLeast(reader, buff, limit)
+	if n != 0 {
+		return fmt.Sprint(string(buff), "...")
+	}
+	return s
 }
