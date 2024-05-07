@@ -455,8 +455,6 @@ func TestRecentlyPushed(t *testing.T) {
 		t.Run("unrelated branches are not shown", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
-			adminUser := unittest.AssertExistsAndLoadBean(t, &user_model.User{IsAdmin: true})
-
 			// Create a new branch with no relation to the default branch.
 			// 1. Create a new Tree object
 			cmd := git.NewCommand(db.DefaultContext, "write-tree")
@@ -473,7 +471,7 @@ func TestRecentlyPushed(t *testing.T) {
 			_, _, gitErr = cmd.RunStdString(&git.RunOpts{Dir: repo.RepoPath()})
 			assert.NoError(t, gitErr)
 			// 4. Sync the git repo to the database
-			syncErr := repo_service.AddAllRepoBranchesToSyncQueue(graceful.GetManager().ShutdownContext(), adminUser.ID)
+			syncErr := repo_service.AddAllRepoBranchesToSyncQueue(graceful.GetManager().ShutdownContext())
 			assert.NoError(t, syncErr)
 			// 5. Add a fresh commit, so that FindRecentlyPushedBranches has
 			// something to find.
