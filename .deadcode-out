@@ -168,6 +168,14 @@ package "code.gitea.io/gitea/modules/emoji"
 package "code.gitea.io/gitea/modules/eventsource"
 	func (*Event).String
 
+package "code.gitea.io/gitea/modules/forgefed"
+	func NewForgeLike
+	func GetItemByType
+	func JSONUnmarshalerFn
+	func NotEmpty
+	func ToRepository
+	func OnRepository
+
 package "code.gitea.io/gitea/modules/git"
 	func AllowLFSFiltersArgs
 	func AddChanges
@@ -301,6 +309,9 @@ package "code.gitea.io/gitea/modules/translation"
 
 package "code.gitea.io/gitea/modules/util/filebuffer"
 	func CreateFromReader
+
+package "code.gitea.io/gitea/modules/validation"
+	func ValidateMaxLen
 
 package "code.gitea.io/gitea/modules/web"
 	func RouteMock

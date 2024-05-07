@@ -23,6 +23,65 @@
   },
   "basePath": "{{AppSubUrl | JSEscape}}/api/v1",
   "paths": {
+    "/activitypub/repository-id/{repository-id}": {
+      "get": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "activitypub"
+        ],
+        "summary": "Returns the Repository actor for a repo",
+        "operationId": "activitypubRepository",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "repository ID of the repo",
+            "name": "repository-id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/responses/ActivityPub"
+          }
+        }
+      }
+    },
+    "/activitypub/repository-id/{repository-id}/inbox": {
+      "post": {
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "activitypub"
+        ],
+        "summary": "Send to the inbox",
+        "operationId": "activitypubRepositoryInbox",
+        "parameters": [
+          {
+            "type": "integer",
+            "description": "repository ID of the repo",
+            "name": "repository-id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/ForgeLike"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/empty"
+          }
+        }
+      }
+    },
     "/activitypub/user-id/{user-id}": {
       "get": {
         "produces": [
@@ -21372,6 +21431,11 @@
         }
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
+    "ForgeLike": {
+      "description": "ForgeLike activity data type",
+      "type": "object",
+      "x-go-package": "code.gitea.io/gitea/modules/forgefed"
     },
     "GPGKey": {
       "description": "GPGKey a user GPG key to sign commit and tag in repository",

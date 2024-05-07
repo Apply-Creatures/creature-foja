@@ -1,9 +1,11 @@
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // Copyright 2017 The Gitea Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package swagger
 
 import (
+	ffed "code.gitea.io/gitea/modules/forgefed"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/services/forms"
 )
@@ -14,6 +16,9 @@ import (
 // parameterBodies
 // swagger:response parameterBodies
 type swaggerParameterBodies struct {
+	// in:body
+	ForgeLike ffed.ForgeLike
+
 	// in:body
 	AddCollaboratorOption api.AddCollaboratorOption
 
