@@ -43,6 +43,10 @@ package "code.gitea.io/gitea/models/dbfs"
 	func Create
 	func Rename
 
+package "code.gitea.io/gitea/models/forgefed"
+	func GetFederationHost
+	func UpdateFederationHost
+
 package "code.gitea.io/gitea/models/forgejo/semver"
 	func GetVersion
 	func SetVersionString
@@ -134,12 +138,7 @@ package "code.gitea.io/gitea/models/user"
 	func GetUserNamesByIDs
 
 package "code.gitea.io/gitea/modules/activitypub"
-	func CurrentTime
-	func containsRequiredHTTPHeaders
-	func NewClient
-	func (*Client).NewRequest
 	func (*Client).Post
-	func GetPrivateKey
 
 package "code.gitea.io/gitea/modules/assetfs"
 	func Bindata
@@ -170,6 +169,16 @@ package "code.gitea.io/gitea/modules/eventsource"
 
 package "code.gitea.io/gitea/modules/forgefed"
 	func NewForgeLike
+	func NewPersonID
+	func (PersonID).AsWebfinger
+	func (PersonID).AsLoginName
+	func (PersonID).HostSuffix
+	func (PersonID).Validate
+	func NewRepositoryID
+	func (RepositoryID).Validate
+	func (ForgePerson).MarshalJSON
+	func (*ForgePerson).UnmarshalJSON
+	func (ForgePerson).Validate
 	func GetItemByType
 	func JSONUnmarshalerFn
 	func NotEmpty
@@ -309,9 +318,6 @@ package "code.gitea.io/gitea/modules/translation"
 
 package "code.gitea.io/gitea/modules/util/filebuffer"
 	func CreateFromReader
-
-package "code.gitea.io/gitea/modules/validation"
-	func ValidateMaxLen
 
 package "code.gitea.io/gitea/modules/web"
 	func RouteMock
