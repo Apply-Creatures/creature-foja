@@ -39,6 +39,7 @@ import (
 	"code.gitea.io/gitea/routers/web/repo/badges"
 	repo_flags "code.gitea.io/gitea/routers/web/repo/flags"
 	repo_setting "code.gitea.io/gitea/routers/web/repo/setting"
+	"code.gitea.io/gitea/routers/web/shared/project"
 	"code.gitea.io/gitea/routers/web/user"
 	user_setting "code.gitea.io/gitea/routers/web/user/setting"
 	"code.gitea.io/gitea/routers/web/user/setting/security"
@@ -976,6 +977,7 @@ func registerRoutes(m *web.Route) {
 				m.Post("/new", web.Bind(forms.CreateProjectForm{}), org.NewProjectPost)
 				m.Group("/{id}", func() {
 					m.Post("", web.Bind(forms.EditProjectBoardForm{}), org.AddBoardToProjectPost)
+					m.Post("/move", project.MoveColumns)
 					m.Post("/delete", org.DeleteProject)
 
 					m.Get("/edit", org.RenderEditProject)
@@ -1349,6 +1351,7 @@ func registerRoutes(m *web.Route) {
 				m.Post("/new", web.Bind(forms.CreateProjectForm{}), repo.NewProjectPost)
 				m.Group("/{id}", func() {
 					m.Post("", web.Bind(forms.EditProjectBoardForm{}), repo.AddBoardToProjectPost)
+					m.Post("/move", project.MoveColumns)
 					m.Post("/delete", repo.DeleteProject)
 
 					m.Get("/edit", repo.RenderEditProject)
