@@ -95,9 +95,22 @@
       "enabled": false
     },
     {
-      "description": "Automerge some packages when ci succeeds",
-      "extends": ["packages:linters"],
-      "matchDepNames": ["github.com/PuerkitoBio/goquery", "vitest", "vite-string-plugin"],
+      "description": "Automerge some packages when CI succeeds",
+      "extends": ["packages:linters", "packages:test"],
+      "matchDepNames": [
+          "github.com/PuerkitoBio/goquery",
+          "happy-dom",
+          "markdownlint-cli",
+          "updates",
+          "vite-string-plugin",
+          "@vue/test-utils"
+      ],
+      "matchPackagePrefixes": [
+          "@eslint-community/",
+          "@playwright/",
+          "@stoplight/spectral-cli",
+          "@stylistic/"
+      ],
       "automerge": true
     },
     {
