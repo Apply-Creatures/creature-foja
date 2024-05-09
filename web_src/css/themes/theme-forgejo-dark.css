@@ -226,6 +226,8 @@
   --color-tooltip-bg: #000000f0;
   --color-nav-bg: var(--steel-900);
   --color-nav-hover-bg: var(--steel-600);
+  --color-nav-text: var(--color-text);
+  --color-secondary-nav-bg: var(--color-body);
   --color-label-text: #fff;
   --color-label-bg: var(--steel-600);
   --color-label-hover-bg: var(--steel-550);
