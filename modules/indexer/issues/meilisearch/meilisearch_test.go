@@ -66,7 +66,7 @@ func TestConvertHits(t *testing.T) {
 				"id":       float64(11),
 				"title":    "a title",
 				"content":  "issue body with no match",
-				"comments": []any{"hey whats up?", "I'm currently bowling", "nice"},
+				"comments": []any{"hey what's up?", "I'm currently bowling", "nice"},
 			},
 			map[string]any{
 				"id":       float64(22),

@@ -31,7 +31,7 @@ func TestActionsAutomerge(t *testing.T) {
 		job := unittest.AssertExistsAndLoadBean(t, &actions_model.ActionRunJob{ID: 292})
 
 		assert.False(t, pr.HasMerged, "PR should not be merged")
-		assert.Equal(t, issues_model.PullRequestStatusMergeable, pr.Status, "PR should be mergable")
+		assert.Equal(t, issues_model.PullRequestStatusMergeable, pr.Status, "PR should be mergeable")
 
 		scheduled, err := automerge.ScheduleAutoMerge(ctx, user, pr, repo_model.MergeStyleMerge, "Dummy")
 

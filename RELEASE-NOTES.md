@@ -512,7 +512,7 @@ This stable release contains a single bug fix for a regression introduced in v1.
 
 ## 1.21.11-0
 
-[The complete list of new commits included in the Forgejo v1.21.11-0 release can be reviewed here](https://codeberg.org/forgejo/forgejo/compare/v1.21.10-0...v1.21.11-0), or from the comand line with:
+[The complete list of new commits included in the Forgejo v1.21.11-0 release can be reviewed here](https://codeberg.org/forgejo/forgejo/compare/v1.21.10-0...v1.21.11-0), or from the command line with:
 
 ```shell
 $ git clone https://codeberg.org/forgejo/forgejo
@@ -580,7 +580,7 @@ Note that there is no `Forgejo v1.21.9-0` release. The release numbering of the 
   * [Fix paths when finding files via the web interface that were not escaped](https://codeberg.org/forgejo/forgejo/commit/b22be0c03fa4814c1b8b892346de5d4547782ce7).
   * [Respect `DEFAULT_ORG_MEMBER_VISIBLE` setting when adding creator to org](https://codeberg.org/forgejo/forgejo/commit/5e5574c7b328e2c500d497517047b8d1fd0ca478).
   * [Fix duplicate migrated milestones](https://codeberg.org/forgejo/forgejo/commit/706ff7aa9fcfe4c43893dc12e27d064064e80635).
-  * [Fix inline math blocks can't be preceeded/followed by alphanumerical characters](https://codeberg.org/forgejo/forgejo/commit/0d3f446460b22a29c259e7d42ed89f90fd216ca7).
+  * [Fix inline math blocks can't be preceded/followed by alphanumerical characters](https://codeberg.org/forgejo/forgejo/commit/0d3f446460b22a29c259e7d42ed89f90fd216ca7).
 
 ## 1.21.8-0
 
@@ -687,7 +687,7 @@ This stable release contains bug fixes and a **security fix**, as explained in t
   * [Fix push to create with capitalize repo name](https://codeberg.org/forgejo/forgejo/commit/8782275c9c66ad6fc7c44503d7df9dae7196aa65).
   * In Markdown [don't try to make the link absolute if the link has a schema that's defined in `[markdown].CUSTOM_URL_SCHEMES`](https://codeberg.org/forgejo/forgejo/commit/6c100083c29fb0ccf0cc52e8767e540a260d9468), because they can't be made absolute.
   * [Fix Ctrl+Enter on submitting review comment](https://codeberg.org/forgejo/forgejo/commit/1c3a31d85112d10fb948d6f0b763191ed6f68e90).
-  * In Git version v2.43.1, the behavior of `GIT_FLUSH` was accidentially flipped. This causes Forgejo to hang on the `check-attr` command, because no output was being flushed. [Workaround this by detecting if Git v2.43.1 is used and set `GIT_FLUSH=0` thus getting the correct behavior](https://codeberg.org/forgejo/forgejo/commit/ff468ab5e426582b068586ce13d5a5348365e783).
+  * In Git version v2.43.1, the behavior of `GIT_FLUSH` was accidentally flipped. This causes Forgejo to hang on the `check-attr` command, because no output was being flushed. [Workaround this by detecting if Git v2.43.1 is used and set `GIT_FLUSH=0` thus getting the correct behavior](https://codeberg.org/forgejo/forgejo/commit/ff468ab5e426582b068586ce13d5a5348365e783).
   * [When setting `url.host` on a URL object with no port specified (like is the case of default port), the resulting URL's port will not change. Workaround this quirk in the URL standard by explicitly setting port for the http and https protocols](https://codeberg.org/forgejo/forgejo/commit/628e1036cfbcfae442cb6494249fe11410447056).
   * [Fix elasticsearch Request Entity Too Large](https://codeberg.org/forgejo/forgejo/commit/e6f59f6e1489d63d53de0da1de406a7a71a82adb).
   * [Do not send update/delete release notifications when it is in a draft state](https://codeberg.org/forgejo/forgejo/commit/3c54a1dbf62e56d948feb1008512900140033737).
@@ -777,7 +777,7 @@ This stable release includes security and bug fixes as well as documentation imp
   * [Gracefully handle missing branches](https://codeberg.org/forgejo/forgejo/commit/c2fa9c308f5cdb08dd84fb8ec6623a57e75d5152) when a branch is missing from Git but still lingering in the database.
   * [Fix panic in `canSoftDeleteContentHistory`](https://codeberg.org/forgejo/forgejo/commit/ab1ccc55dca7fd05e59a01343e6dfe53be6195d0)
   * [Check for Commit in opengraph](https://codeberg.org/forgejo/forgejo/commit/b473a44a2bb59591f3e24bfcdeed1d8fbb0f9204)
-  * [Handle non-existant commit in Archive request](https://codeberg.org/forgejo/forgejo/commit/0fbf761d1930f9336be6da8d17ae6032203a9381)
+  * [Handle non-existent commit in Archive request](https://codeberg.org/forgejo/forgejo/commit/0fbf761d1930f9336be6da8d17ae6032203a9381)
   * [Fix NPE in `ToPullReviewList`](https://codeberg.org/forgejo/forgejo/commit/f5349b66b78968301d7dc4c45e8e08b46910aa6e)
   * [Fix URL in the mail to include the host](https://codeberg.org/forgejo/forgejo/commit/ac889d42903b2ce2129a02ace620a10a6f940920)
   * [Fix the event of a scheduled action](https://codeberg.org/forgejo/forgejo/commit/892a8e1f4a5cc09cc3136e0b0e6487c154c5ed2b) to be "schedule" instead of a semi-random event from the default branch.
@@ -888,7 +888,7 @@ $ git clone https://codeberg.org/forgejo/forgejo/
 $ git -C forgejo log --oneline --no-merges v1.21.1-0..v1.21.2-0
 ```
 
-This stable release includes bug fixes. It was built with Go v1.21.5 that fixes [CVE-2023-39326](https://groups.google.com/g/golang-announce/c/iLGK3x6yuNo) which a malicious HTTP client can exploit to cause a server to automatically read a large amount of data. It allows for memory exhaustion in the situation that HTTP chuncked encoding requests can reach Forgejo.
+This stable release includes bug fixes. It was built with Go v1.21.5 that fixes [CVE-2023-39326](https://groups.google.com/g/golang-announce/c/iLGK3x6yuNo) which a malicious HTTP client can exploit to cause a server to automatically read a large amount of data. It allows for memory exhaustion in the situation that HTTP chunked encoding requests can reach Forgejo.
 
 * Recommended Action
 
@@ -953,7 +953,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.20/forgejo..origin/v1.21/fo
   - [Add](https://codeberg.org/forgejo/forgejo/commit/0d55f64e6cd3de2e1e5c0ee795605823efb14231) support for [recurring actions similar to cron jobs](https://forgejo.org/docs/v1.21/user/actions/#onschedule).
   - [Add](https://codeberg.org/forgejo/forgejo/commit/19872063a3c14256a1d89b2a104d63e7538a3a28) the possibility to [disable workflows from the user interface](https://forgejo.org/docs/v1.21/user/actions/#list-of-runners-and-their-tasks).
   - [Add](https://codeberg.org/forgejo/forgejo/commit/460a2b0edffe71d9e64633beaa1071fcf4a33369) automatic [cleanup of artificats](https://forgejo.org/docs/v1.21/user/actions/#artifacts).
-  - [Add](https://codeberg.org/forgejo/forgejo/commit/44781f9f5c4ede618660d8cfe42437f0e8dc22a0) automatic cancelation [of jobs when pushing new commits](https://forgejo.org/docs/v1.21/user/actions/#auto-cancelation-of-workflows) to a PR.
+  - [Add](https://codeberg.org/forgejo/forgejo/commit/44781f9f5c4ede618660d8cfe42437f0e8dc22a0) automatic cancellation [of jobs when pushing new commits](https://forgejo.org/docs/v1.21/user/actions/#auto-cancellation-of-workflows) to a PR.
   - [Add](https://codeberg.org/forgejo/forgejo/commit/f3d293d2bbe0b2eab047bdd403046069cffbc0c4) support for [uploading multiple artificats](https://forgejo.org/docs/v1.21/user/actions/#artifacts).
   - [Add](https://codeberg.org/forgejo/forgejo/commit/48e5a74f215d78813a816c57fc5a85a909a003d5) support for the [`pull_request_target` event](https://forgejo.org/docs/v1.21/user/actions/#onpull_request_target) which has access to secrets because it runs using the workflows from the base branch instead of the pull request.
   - [Add](https://codeberg.org/forgejo/forgejo/commit/8228751c55d6a4263f0fec2932ca16181c09c97d) support for reading labels from the runner [instead of specifying them during registration](https://forgejo.org/docs/v1.21/admin/actions/#registration).
@@ -1268,7 +1268,7 @@ this situation, [follow the instructions in the companion blog post](https://for
   * [The CLI exit code now is different from zero when an error occurs](https://codeberg.org/forgejo/forgejo/commit/089af9ab1)
   * [Fix error when a Debian package has a double newline character at the end of the control block](https://codeberg.org/forgejo/forgejo/commit/dd7180846)
   * [Fix a condition that would cause git related tasks to hang for longer than necessary in the queues and use too many resources as a result](https://codeberg.org/forgejo/forgejo/commit/36f8fbe1b)
-  * [Fix the topic validation rule and suport dots](https://codeberg.org/forgejo/forgejo/commit/a578b75d7)
+  * [Fix the topic validation rule and support dots](https://codeberg.org/forgejo/forgejo/commit/a578b75d7)
   * [Fix pull request check list when there are more than 30](https://codeberg.org/forgejo/forgejo/commit/e226b9646)
   * [Fix attachment clipboard copy on insecure origin](https://codeberg.org/forgejo/forgejo/commit/12ac84c26)
   * [Fix the profile README rendering](https://codeberg.org/forgejo/forgejo/commit/84c3b60a4) that [was inconsistent with other markdown files renderings](https://codeberg.org/forgejo/forgejo/issues/833)
@@ -1297,7 +1297,7 @@ This stable release includes bug fixes and displays [warnings in the administrat
 
   The most prominent ones are described here, others can be found in the list of commits included in the release as described above.
 
-  * [Add missing assets to the Forgejo sources tarbal](https://codeberg.org/forgejo/forgejo/commit/e14d239005)
+  * [Add missing assets to the Forgejo sources tarball](https://codeberg.org/forgejo/forgejo/commit/e14d239005)
   * [Fix user type selection error when creating a user](https://codeberg.org/forgejo/forgejo/commit/268569b462) and selecting `public` or `private`.
   * [Fix access check for org-level project](https://codeberg.org/forgejo/forgejo/commit/5afb0294f4)
   * [Warn instead of reporting an error when a webhook cannot be found](https://codeberg.org/forgejo/forgejo/commit/4c3dcdf815)
@@ -1352,7 +1352,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
   - The storage settings were [refactored](https://codeberg.org/forgejo/forgejo/commit/d6dd6d641b593c54fe1a1041c153111ce81dbc20). Read more about [storage settings](https://forgejo.org/docs/v1.20/admin/storage/).
   - [The [repository.editor] PREVIEWABLE_FILE_MODES setting was removed](https://codeberg.org/forgejo/forgejo/commit/84daddc2fa74393cdc13371b0cc44f0444cfdae0). This setting served no practical purpose and was not working correctly. Instead a preview tab is always shown in the file editor when supported.
   - In addition to the already deprecated options inside [queue], many options have been dropped as well. Those are WRAP_IF_NECESSARY, MAX_ATTEMPTS, TIMEOUT, WORKERS, BLOCK_TIMEOUT, BOOST_TIMEOUT, BOOST_WORKERS. You can remove them from your app.ini now. Additionally, some default values have changed in this section.
-  - The default CSS and templates included in Forgejo were heavily refactored and a large number of variables renamed. These changes are not documented and there is a very high chance that a tempate extracted and modified for a particular Forgejo instance will no longer work as it did. Browsing through the git history of the template in the sources is the best way to figure out how and why it was modified.
+  - The default CSS and templates included in Forgejo were heavily refactored and a large number of variables renamed. These changes are not documented and there is a very high chance that a template extracted and modified for a particular Forgejo instance will no longer work as it did. Browsing through the git history of the template in the sources is the best way to figure out how and why it was modified.
 - **Moderation:**
   Blocking another user is desirable if they are acting maliciously or are spamming your repository. When you block a user, Forgejo does not explicitly notify them, but they may learn through an interaction with you that is blocked. [Read more about blocking users](https://forgejo.org/docs/v1.20/user/blocking-user/).
 - **Package:**
@@ -1360,7 +1360,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.19/forgejo..origin/v1.20/fo
 - **Accessibility:**
   numerous improvements for [issue comments](https://codeberg.org/forgejo/forgejo/commit/6c354546547cd3a9595a7db119a6480d9cd506a7), [the menu on the navbar](https://codeberg.org/forgejo/forgejo/commit/a78e0b7dade16bc6509b943fe86e74962f1b95b6), [scoped labels](https://codeberg.org/forgejo/forgejo/commit/e8935606f5f1fff3c59222ebca6d4615ab06fb0b), [checkboxes and dropdowns](https://codeberg.org/forgejo/forgejo/commit/d4f35bd681af0632da988e15306f330e020422b2), [RTL rendering support to Markdown](https://codeberg.org/forgejo/forgejo/commit/32d9c47ec7706d8f06e09b42e09a28d7a0e3c526), [file (re-)views](https://codeberg.org/forgejo/forgejo/commit/e95b42e187cde9ac4bd541cd714bdb4f5c1fd8bc), [interactive tooltips](https://codeberg.org/forgejo/forgejo/commit/87f0f7e670c6c0e6aeab8c4458bfdb9d954eacec), [using a button element](https://codeberg.org/forgejo/forgejo/commit/81fe5d61851c0e586af7d32c29171ceff9a571bb), [repository list](https://codeberg.org/forgejo/forgejo/commit/e82f1b15c7120ad13fd3b67cf7e2c6cb9915c22d) and more.
 - **Time:**
-  The display and localization of time was improved for [tooltips](https://codeberg.org/forgejo/forgejo/commit/b7b58348317cbe0145dc453d45c886b8e2764b4c), [milestones](https://codeberg.org/forgejo/forgejo/commit/97176754beb4de23fa0f68df715c4737919c93b0), [due date and translations that contain dates](https://codeberg.org/forgejo/forgejo/commit/70bb4984cdad9a15d676708bd345b590aa42d72a), [commit graphs](https://codeberg.org/forgejo/forgejo/commit/5bc9f7fcf9aece92c3fa2a0ea56e5585261a7f28), [runners](https://codeberg.org/forgejo/forgejo/commit/62ca5825f73ad5a25ffeb6c3ef66f0eaf5d30cdf), [webhooks](https://codeberg.org/forgejo/forgejo/commit/dbb37367854d108ebfffcac27837c0afac199a8e), [tests](https://codeberg.org/forgejo/forgejo/commit/3d266dd0f3dbae7e417c0e790e266aebc0078814) and more. Previously each rendered timestamp would be static, now the real time since an event happend is show. If a comment was added 2 minutes before the page rendered it would show as "2 minutes ago" on the initial render and if another 8 minutes have passed, without a page refresh you'd see "10 minutes ago".
+  The display and localization of time was improved for [tooltips](https://codeberg.org/forgejo/forgejo/commit/b7b58348317cbe0145dc453d45c886b8e2764b4c), [milestones](https://codeberg.org/forgejo/forgejo/commit/97176754beb4de23fa0f68df715c4737919c93b0), [due date and translations that contain dates](https://codeberg.org/forgejo/forgejo/commit/70bb4984cdad9a15d676708bd345b590aa42d72a), [commit graphs](https://codeberg.org/forgejo/forgejo/commit/5bc9f7fcf9aece92c3fa2a0ea56e5585261a7f28), [runners](https://codeberg.org/forgejo/forgejo/commit/62ca5825f73ad5a25ffeb6c3ef66f0eaf5d30cdf), [webhooks](https://codeberg.org/forgejo/forgejo/commit/dbb37367854d108ebfffcac27837c0afac199a8e), [tests](https://codeberg.org/forgejo/forgejo/commit/3d266dd0f3dbae7e417c0e790e266aebc0078814) and more. Previously each rendered timestamp would be static, now the real time since an event happened is show. If a comment was added 2 minutes before the page rendered it would show as "2 minutes ago" on the initial render and if another 8 minutes have passed, without a page refresh you'd see "10 minutes ago".
 - **[Wiki](https://forgejo.org/docs/v1.20/user/wiki/)**
   - Improve the [display of the table of content](https://codeberg.org/forgejo/forgejo/commit/1ab16e48cccc086e7f97fb3ae8a293fe47a3a452)
   - Fixed a bug [preventing team users who have wiki write permission from deleting a page](https://codeberg.org/forgejo/forgejo/commit/284b41f45244bbe46fc8feee15bbfdf66d150e79)
@@ -1701,7 +1701,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.18/forgejo..origin/v1.19/fo
 
     Forgejo access token, used with the [API](https://forgejo.org/docs/v1.19/admin/api-usage/) can now have a "scope" that limits what it can access. Existing tokens stored in the database and created before Forgejo v1.19 had unlimited access. For backward compatibility, their access will remain the same and they will continue to work as before. However, **newly created token that do not specify a scope will now only have read-only access to public user profile and public repositories**.
 
-    For instance, the `/users/{username}/tokens` API endpoint will require the `scopes: ['all', 'sudo']` parameter and the `forgejo admin user generate-access-token` will require the `--scopes all,sudo` argument obtain tokens with ulimited access as before for admin users.
+    For instance, the `/users/{username}/tokens` API endpoint will require the `scopes: ['all', 'sudo']` parameter and the `forgejo admin user generate-access-token` will require the `--scopes all,sudo` argument obtain tokens with unlimited access as before for admin users.
 
     [Read more about the scoped tokens](https://forgejo.org/docs/v1.19/user/oauth2-provider/#scoped-tokens).
 
@@ -1818,7 +1818,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.18/forgejo..origin/v1.19/fo
 
     It appears for the first time in this Forgejo release but is not yet fit for production. It is not fully implemented and may be insecure. However, as long as it is not enabled, it presents no risk to existing Forgejo instances.
 
-    If a repository has a file such as `.forgejo/workflows/test.yml`, it will be interpreted, for instance to run tests and verify the code in the repository works as expected (Continuous Integration). It can also be used to create HTML pages for a website and publish them (Continous Deployment). The syntax is similar to GitHub Actions and the jobs can be controled from the Forgejo web interface.
+    If a repository has a file such as `.forgejo/workflows/test.yml`, it will be interpreted, for instance to run tests and verify the code in the repository works as expected (Continuous Integration). It can also be used to create HTML pages for a website and publish them (Continuous Deployment). The syntax is similar to GitHub Actions and the jobs can be controlled from the Forgejo web interface.
 
     [Read more about Forgejo Actions](https://forgejo.codeberg.page/2023-02-27-forgejo-actions/)
 

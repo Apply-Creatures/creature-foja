@@ -103,7 +103,7 @@ func TestPullrequestReopen(t *testing.T) {
 		})
 		assert.NoError(t, err)
 
-		// Create the pull reuqest.
+		// Create the pull request.
 		pullIssue := &issues_model.Issue{
 			RepoID:   baseRepo.ID,
 			Title:    "Testing reopen functionality",

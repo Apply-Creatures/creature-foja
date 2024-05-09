@@ -104,7 +104,7 @@ func (h *ReplyHandler) Handle(ctx context.Context, content *MailContent, doer *u
 	}
 
 	if content.Content == "" && len(attachmentIDs) == 0 {
-		log.Trace("incoming mail has no content and no attachement", ref)
+		log.Trace("incoming mail has no content and no attachment", ref)
 		return nil
 	}
 

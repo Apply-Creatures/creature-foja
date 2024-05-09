@@ -115,7 +115,7 @@ func TestRepoFork(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
 
 				// Make sure the repo we try to fork is private.
-				// We're also choosing user15/big_test_private_2, becase it has the Code unit disabled.
+				// We're also choosing user15/big_test_private_2, because it has the Code unit disabled.
 				repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 20, IsPrivate: true})
 
 				// user1, even though an admin, can't fork a repo without a code unit.

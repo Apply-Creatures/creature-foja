@@ -1759,8 +1759,8 @@ func ViewIssue(ctx *context.Context) {
 			// drop error since times could be pruned from DB..
 			_ = comment.LoadTime(ctx)
 			if comment.Content != "" {
-				// Content before v1.21 did store the formated string instead of seconds,
-				// so "|" is used as delimeter to mark the new format
+				// Content before v1.21 did store the formatted string instead of seconds,
+				// so "|" is used as delimiter to mark the new format
 				if comment.Content[0] != '|' {
 					// handle old time comments that have formatted text stored
 					comment.RenderedContent = templates.SanitizeHTML(comment.Content)
@@ -2752,8 +2752,8 @@ func ListIssues(ctx *context.Context) {
 	}
 
 	var labelIDs []int64
-	if splitted := strings.Split(ctx.FormString("labels"), ","); len(splitted) > 0 {
-		labelIDs, err = issues_model.GetLabelIDsInRepoByNames(ctx, ctx.Repo.Repository.ID, splitted)
+	if split := strings.Split(ctx.FormString("labels"), ","); len(split) > 0 {
+		labelIDs, err = issues_model.GetLabelIDsInRepoByNames(ctx, ctx.Repo.Repository.ID, split)
 		if err != nil {
 			ctx.Error(http.StatusInternalServerError, err.Error())
 			return

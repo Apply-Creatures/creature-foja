@@ -86,7 +86,7 @@ func GetContributorStats(ctx context.Context, cache cache.Cache, repo *repo_mode
 	if !cache.IsExist(cacheKey) {
 		genReady := make(chan struct{})
 
-		// dont start multible async generations
+		// dont start multiple async generations
 		_, run := generateLock.Load(cacheKey)
 		if run {
 			return nil, ErrAwaitGeneration

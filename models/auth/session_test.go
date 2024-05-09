@@ -85,7 +85,7 @@ func TestAuthSession(t *testing.T) {
 		err = auth.DestroySession(db.DefaultContext, key)
 		assert.NoError(t, err)
 
-		// Ensure it doens't exists.
+		// Ensure it doesn't exists.
 		ok, err = auth.ExistSession(db.DefaultContext, key)
 		assert.NoError(t, err)
 		assert.False(t, ok)

@@ -1,7 +1,7 @@
 -
   id: 1001
   type: 0 # pull request
-  status: 2 # mergable
+  status: 2 # mergeable
   issue_id: 1001
   index: 1001
   head_repo_id: 1

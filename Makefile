@@ -223,6 +223,9 @@ help:
 	@echo " - lint-frontend-fix                lint frontend files and fix issues"
 	@echo " - lint-backend                     lint backend files"
 	@echo " - lint-backend-fix                 lint backend files and fix issues"
+	@echo " - lint-codespell                   lint typos"
+	@echo " - lint-codespell-fix               lint typos and fix them automatically"
+	@echo " - lint-codespell-fix-i             lint typos and fix them interactively"
 	@echo " - lint-go                          lint go files"
 	@echo " - lint-go-fix                      lint go files and fix issues"
 	@echo " - lint-go-vet                      lint go files with vet"
@@ -398,6 +401,18 @@ lint-backend: lint-go lint-go-vet lint-editorconfig
 .PHONY: lint-backend-fix
 lint-backend-fix: lint-go-fix lint-go-vet lint-editorconfig
 
+.PHONY: lint-codespell
+lint-codespell:
+	codespell
+
+.PHONY: lint-codespell-fix
+lint-codespell-fix:
+	codespell -w
+
+.PHONY: lint-codespell-fix-i
+lint-codespell-fix-i:
+	codespell -w -i 3 -C 2
+
 .PHONY: lint-js
 lint-js: node_modules
 	npx eslint --color --max-warnings=0 --ext js,vue $(ESLINT_FILES)
@@ -423,11 +438,11 @@ lint-md: node_modules
 	npx markdownlint docs *.md
 
 .PHONY: lint-spell
-lint-spell:
+lint-spell: lint-codespell
 	@go run $(MISSPELL_PACKAGE) -error $(SPELLCHECK_FILES)
 
 .PHONY: lint-spell-fix
-lint-spell-fix:
+lint-spell-fix: lint-codespell-fix
 	@go run $(MISSPELL_PACKAGE) -w $(SPELLCHECK_FILES)
 
 .PHONY: lint-go

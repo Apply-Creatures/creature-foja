@@ -248,11 +248,11 @@ var ignoredErrorMessage = []string{
 	// TestIssuePinMove
 	`:IssuePinMove() [E] Issue does not belong to this repository`,
 	// TestLinksLogin
-	`:GetIssuesAllCommitStatus() [E] getAllCommitStatus: cant get commit statuses of pull [6]: object does not exist [id: refs/pull/2/head, rel_path: ]`,
+	`:GetIssuesAllCommitStatus() [E] getAllCommitStatus: can't get commit statuses of pull [6]: object does not exist [id: refs/pull/2/head, rel_path: ]`,
 	// TestLinksLogin
-	`:GetIssuesAllCommitStatus() [E] getAllCommitStatus: cant get commit statuses of pull [6]: object does not exist [id: refs/pull/2/head, rel_path: ]`,
+	`:GetIssuesAllCommitStatus() [E] getAllCommitStatus: can't get commit statuses of pull [6]: object does not exist [id: refs/pull/2/head, rel_path: ]`,
 	// TestLinksLogin
-	`:GetIssuesAllCommitStatus() [E] getAllCommitStatus: cant get commit statuses of pull [6]: object does not exist [id: refs/pull/2/head, rel_path: ]`,
+	`:GetIssuesAllCommitStatus() [E] getAllCommitStatus: can't get commit statuses of pull [6]: object does not exist [id: refs/pull/2/head, rel_path: ]`,
 	// TestLinksLogin
 	`:GetIssuesAllCommitStatus() [E] Cannot open git repository <Repository 23:org17/big_test_public_4> for issue #1[20]. Error: no such file or directory`,
 	// TestMigrate

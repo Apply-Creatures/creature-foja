@@ -51,7 +51,7 @@ func (g *GitHubLegacyCalloutTransformer) Transform(node *ast.Document, reader te
 			// color the blockquote
 			v.SetAttributeString("class", []byte("attention-header attention-"+calloutType))
 
-			// Create new parargaph.
+			// Create new paragraph.
 			attentionParagraph := ast.NewParagraph()
 			attentionParagraph.SetAttributeString("class", []byte("attention-title"))
 

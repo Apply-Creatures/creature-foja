@@ -15,7 +15,7 @@
   repo_id: 1
   state: "warning"
   sha: "1234123412341234123412341234123412341234"
-  target_url: https://example.com/converage/
+  target_url: https://example.com/coverage/
   description: My awesome Coverage service
   context: cov/awesomeness
   creator_id: 2
@@ -26,7 +26,7 @@
   repo_id: 1
   state: "success"
   sha: "1234123412341234123412341234123412341234"
-  target_url: https://example.com/converage/
+  target_url: https://example.com/coverage/
   description: My awesome Coverage service
   context: cov/awesomeness
   creator_id: 2

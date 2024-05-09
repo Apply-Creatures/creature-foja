@@ -113,7 +113,7 @@ func (ca GitAttribute) Bool() optional.Option[bool] {
 }
 
 // gitCheckAttrCommand prepares the "git check-attr" command for later use as one-shot or streaming
-// instanciation.
+// instantiation.
 func (repo *Repository) gitCheckAttrCommand(treeish string, attributes ...string) (*Command, *RunOpts, context.CancelFunc, error) {
 	if len(attributes) == 0 {
 		return nil, nil, nil, fmt.Errorf("no provided attributes to check-attr")

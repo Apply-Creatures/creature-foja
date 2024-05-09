@@ -57,7 +57,7 @@ func getUsersByLoginName(ctx context.Context, name string) ([]*user_model.User, 
 //	LoginName   set to the unique identifier of the originating authentication source
 //	LoginSource set to the Remote source that can be matched against an OAuth2 source
 //
-// If the source from which an authentification happens is OAuth2, an existing
+// If the source from which an authentication happens is OAuth2, an existing
 // remote user will be promoted to an OAuth2 user provided:
 //
 //	user.LoginName is the same as goth.UserID (argument loginName)

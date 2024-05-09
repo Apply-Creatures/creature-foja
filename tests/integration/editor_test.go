@@ -405,7 +405,7 @@ func TestCommitMail(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
 			// Upload two separate times, so we have two different 'uploads' that can
-			// be used indepently of each other.
+			// be used independently of each other.
 			uploadFile := func(t *testing.T, name, content string) string {
 				t.Helper()
 

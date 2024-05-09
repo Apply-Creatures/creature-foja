@@ -138,7 +138,7 @@ var cases = []*testIndexerCase{
 			{ID: 1002, Comments: []string{"hi", "hello world"}},
 		},
 		SearchOptions: &internal.SearchOptions{
-			Keyword:        "hello wrold",
+			Keyword:        "hello world",
 			IsFuzzyKeyword: true,
 		},
 		ExpectedIDs:   []int64{1002, 1001, 1000},

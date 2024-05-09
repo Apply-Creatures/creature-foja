@@ -54,7 +54,7 @@ func testRenameBranch(t *testing.T, u *url.URL) {
 		assert.Equal(t, "main", repo1.DefaultBranch)
 	})
 
-	t.Run("Database syncronization", func(t *testing.T) {
+	t.Run("Database synchronization", func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 
 		req := NewRequestWithValues(t, "POST", "/user2/repo1/settings/rename_branch", map[string]string{

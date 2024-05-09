@@ -36,7 +36,7 @@ func CountArchiveDownload(ctx context.Context, repoID, releaseID int64, tp git.A
 		return nil
 	}
 
-	// The archive does not esxists in the databse, so let's add it
+	// The archive does not esxists in the database, so let's add it
 	newCounter := &RepoArchiveDownloadCount{
 		RepoID:    repoID,
 		ReleaseID: releaseID,
