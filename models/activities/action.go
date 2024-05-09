@@ -431,14 +431,15 @@ func (a *Action) GetIssueContent(ctx context.Context) string {
 // GetFeedsOptions options for retrieving feeds
 type GetFeedsOptions struct {
 	db.ListOptions
-	RequestedUser   *user_model.User       // the user we want activity for
-	RequestedTeam   *organization.Team     // the team we want activity for
-	RequestedRepo   *repo_model.Repository // the repo we want activity for
-	Actor           *user_model.User       // the user viewing the activity
-	IncludePrivate  bool                   // include private actions
-	OnlyPerformedBy bool                   // only actions performed by requested user
-	IncludeDeleted  bool                   // include deleted actions
-	Date            string                 // the day we want activity for: YYYY-MM-DD
+	RequestedUser        *user_model.User       // the user we want activity for
+	RequestedTeam        *organization.Team     // the team we want activity for
+	RequestedRepo        *repo_model.Repository // the repo we want activity for
+	Actor                *user_model.User       // the user viewing the activity
+	IncludePrivate       bool                   // include private actions
+	OnlyPerformedBy      bool                   // only actions performed by requested user
+	OnlyPerformedByActor bool                   // only actions performed by the original actor
+	IncludeDeleted       bool                   // include deleted actions
+	Date                 string                 // the day we want activity for: YYYY-MM-DD
 }
 
 // GetFeeds returns actions according to the provided options
@@ -480,6 +481,10 @@ func ActivityReadable(user, doer *user_model.User) bool {
 
 func activityQueryCondition(ctx context.Context, opts GetFeedsOptions) (builder.Cond, error) {
 	cond := builder.NewCond()
+
+	if opts.OnlyPerformedByActor {
+		cond = cond.And(builder.Expr("`action`.user_id = `action`.act_user_id"))
+	}
 
 	if opts.RequestedTeam != nil && opts.RequestedUser == nil {
 		org, err := user_model.GetUserByID(ctx, opts.RequestedTeam.OrgID)
