@@ -16,10 +16,11 @@ import (
 // ShowRepoFeed shows user activity on the repo as RSS / Atom feed
 func ShowRepoFeed(ctx *context.Context, repo *repo_model.Repository, formatType string) {
 	actions, _, err := activities_model.GetFeeds(ctx, activities_model.GetFeedsOptions{
-		RequestedRepo:  repo,
-		Actor:          ctx.Doer,
-		IncludePrivate: true,
-		Date:           ctx.FormString("date"),
+		OnlyPerformedByActor: true,
+		RequestedRepo:        repo,
+		Actor:                ctx.Doer,
+		IncludePrivate:       true,
+		Date:                 ctx.FormString("date"),
 	})
 	if err != nil {
 		ctx.ServerError("GetFeeds", err)

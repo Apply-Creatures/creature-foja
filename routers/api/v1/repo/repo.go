@@ -1307,11 +1307,12 @@ func ListRepoActivityFeeds(ctx *context.APIContext) {
 	listOptions := utils.GetListOptions(ctx)
 
 	opts := activities_model.GetFeedsOptions{
-		RequestedRepo:  ctx.Repo.Repository,
-		Actor:          ctx.Doer,
-		IncludePrivate: true,
-		Date:           ctx.FormString("date"),
-		ListOptions:    listOptions,
+		RequestedRepo:        ctx.Repo.Repository,
+		OnlyPerformedByActor: true,
+		Actor:                ctx.Doer,
+		IncludePrivate:       true,
+		Date:                 ctx.FormString("date"),
+		ListOptions:          listOptions,
 	}
 
 	feeds, count, err := activities_model.GetFeeds(ctx, opts)
