@@ -179,6 +179,10 @@
   --color-orange-badge-bg: #f2711c1a;
   --color-orange-badge-hover-bg: #f2711c4d;
   --color-git: #f05133;
+  /* Icon colors (PR/Issue/...) */
+  --color-icon-green: var(--color-green);
+  --color-icon-red: var(--color-red);
+  --color-icon-purple: var(--color-purple);
   /* target-based colors */
   --color-body: #ffffff;
   --color-box-header: #f1f3f5;
