@@ -98,6 +98,7 @@
       "description": "Automerge some packages when CI succeeds",
       "extends": ["packages:linters", "packages:test"],
       "matchDepNames": [
+          "github.com/golangci/golangci-lint/cmd/golangci-lint",
           "github.com/PuerkitoBio/goquery",
           "happy-dom",
           "markdownlint-cli",
