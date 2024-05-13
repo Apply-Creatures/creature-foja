@@ -439,7 +439,7 @@
 				{{end}}
 				<div class="flex-item">
 					<div class="flex-item-main">
-						<div class="flex-item-title">{{ctx.Locale.Tr "repo.settings.transfer"}}</div>
+						<div class="flex-item-title">{{ctx.Locale.Tr "repo.settings.transfer.title"}}</div>
 						<div class="flex-item-body">
 							{{if .RepoTransfer}}
 								{{ctx.Locale.Tr "repo.settings.transfer_started" .RepoTransfer.Recipient.DisplayName}}
@@ -456,7 +456,7 @@
 								<button class="ui red button">{{ctx.Locale.Tr "repo.settings.transfer_abort"}}</button>
 							</form>
 						{{else}}
-							<button class="ui basic red show-modal button" data-modal="#transfer-repo-modal">{{ctx.Locale.Tr "repo.settings.transfer"}}</button>
+							<button class="ui basic red show-modal button" data-modal="#transfer-repo-modal">{{ctx.Locale.Tr "repo.settings.transfer.button"}}</button>
 						{{end}}
 					</div>
 				</div>
@@ -584,7 +584,7 @@
 	{{end}}
 	<div class="ui small modal" id="transfer-repo-modal">
 		<div class="header">
-			{{ctx.Locale.Tr "repo.settings.transfer"}}
+			{{ctx.Locale.Tr "repo.settings.transfer.modal.title"}}
 		</div>
 		<div class="content">
 			<div class="ui warning message">

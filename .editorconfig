@@ -26,3 +26,6 @@ indent_style = tab
 
 [*.svg]
 insert_final_newline = false
+
+[options/locale/locale_*.ini]
+insert_final_newline = false
