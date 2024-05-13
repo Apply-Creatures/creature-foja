@@ -125,15 +125,27 @@ func TestGetContentFromMailReader(t *testing.T) {
 		"Content-Disposition: inline; filename=attachment.txt\r\n" +
 		"\r\n" +
 		"attachment content\r\n" +
+		"--message-boundary\r\n" +
+		"Content-Type: text/html\r\n" +
+		"Content-Disposition: inline; filename=attachment.html\r\n" +
+		"\r\n" +
+		"<p>html attachment content</p>\r\n" +
+		"--message-boundary\r\n" +
+		"Content-Type: image/png\r\n" +
+		"Content-Disposition: inline; filename=attachment.png\r\n" +
+		"Content-Transfer-Encoding: base64\r\n" +
+		"\r\n" +
+		"iVBORw0KGgoAAAANSUhEUgAAAAgAAAAIAQMAAAD+wSzIAAAABlBMVEX///+/v7+jQ3Y5AAAADklEQVQI12P4AIX8EAgALgAD/aNpbtEAAAAASUVORK5CYII\r\n" +
 		"--message-boundary--\r\n"
 
 	env, err = enmime.ReadEnvelope(strings.NewReader(mailString))
 	assert.NoError(t, err)
 	content = getContentFromMailReader(env)
-	assert.Equal(t, "mail content", content.Content)
-	assert.Len(t, content.Attachments, 1)
-	assert.Equal(t, "attachment.txt", content.Attachments[0].Name)
-	assert.Equal(t, []byte("attachment content"), content.Attachments[0].Content)
+	assert.Equal(t, "mail content\n--\nattachment content", content.Content)
+	assert.Len(t, content.Attachments, 2)
+	assert.Equal(t, "attachment.html", content.Attachments[0].Name)
+	assert.Equal(t, []byte("<p>html attachment content</p>"), content.Attachments[0].Content)
+	assert.Equal(t, "attachment.png", content.Attachments[1].Name)
 
 	mailString = "Content-Type: multipart/mixed; boundary=message-boundary\r\n" +
 		"\r\n" +
@@ -164,7 +176,7 @@ func TestGetContentFromMailReader(t *testing.T) {
 		"Content-Disposition: inline\r\n" +
 		"\r\n" +
 		"mail content without signature\r\n" +
-		"--\r\n" +
+		"----\r\n" +
 		"signature\r\n" +
 		"--text-boundary--\r\n" +
 		"--message-boundary--\r\n"

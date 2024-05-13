@@ -17,7 +17,7 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/services/mailer/token"
 
-	"github.com/dimiro1/reply"
+	"code.forgejo.org/forgejo/reply"
 	"github.com/emersion/go-imap"
 	"github.com/emersion/go-imap/client"
 	"github.com/jhillyerd/enmime"
@@ -377,9 +377,10 @@ func getContentFromMailReader(env *enmime.Envelope) *MailContent {
 			Content: attachment.Content,
 		})
 	}
+	inlineAttachments := make([]*Attachment, 0, len(env.Inlines))
 	for _, inline := range env.Inlines {
-		if inline.FileName != "" {
-			attachments = append(attachments, &Attachment{
+		if inline.FileName != "" && inline.ContentType != "text/plain" {
+			inlineAttachments = append(inlineAttachments, &Attachment{
 				Name:    inline.FileName,
 				Content: inline.Content,
 			})
@@ -388,6 +389,6 @@ func getContentFromMailReader(env *enmime.Envelope) *MailContent {
 
 	return &MailContent{
 		Content:     reply.FromText(env.Text),
-		Attachments: attachments,
+		Attachments: append(attachments, inlineAttachments...),
 	}
 }
