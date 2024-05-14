@@ -110,7 +110,10 @@
           "@eslint-community/",
           "@playwright/",
           "@stoplight/spectral-cli",
-          "@stylistic/"
+          "@stylistic/",
+          "ghcr.io/devcontainers/features/",
+          "ghcr.io/devcontainers-contrib/features/",
+          "mcr.microsoft.com/devcontainers/"
       ],
       "automerge": true
     },
