@@ -798,6 +798,7 @@ func SettingsPost(ctx *context.Context) {
 			ctx.Repo.GitRepo = nil
 		}
 
+		oldFullname := repo.FullName()
 		if err := repo_service.StartRepositoryTransfer(ctx, ctx.Doer, newOwner, repo, nil); err != nil {
 			if errors.Is(err, user_model.ErrBlockedByUser) {
 				ctx.RenderWithErr(ctx.Tr("repo.settings.new_owner_blocked_doer"), tplSettingsOptions, nil)
@@ -812,8 +813,13 @@ func SettingsPost(ctx *context.Context) {
 			return
 		}
 
-		log.Trace("Repository transfer process was started: %s/%s -> %s", ctx.Repo.Owner.Name, repo.Name, newOwner)
-		ctx.Flash.Success(ctx.Tr("repo.settings.transfer_started", newOwner.DisplayName()))
+		if ctx.Repo.Repository.Status == repo_model.RepositoryPendingTransfer {
+			log.Trace("Repository transfer process was started: %s/%s -> %s", ctx.Repo.Owner.Name, repo.Name, newOwner)
+			ctx.Flash.Success(ctx.Tr("repo.settings.transfer_started", newOwner.DisplayName()))
+		} else {
+			log.Trace("Repository transferred: %s -> %s", oldFullname, ctx.Repo.Repository.FullName())
+			ctx.Flash.Success(ctx.Tr("repo.settings.transfer_succeed"))
+		}
 		ctx.Redirect(repo.Link() + "/settings")
 
 	case "cancel_transfer":

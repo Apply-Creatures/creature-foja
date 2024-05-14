@@ -186,7 +186,6 @@ package "code.gitea.io/gitea/modules/git"
 	func (ErrExecTimeout).Error
 	func (ErrUnsupportedVersion).Error
 	func SetUpdateHook
-	func GetObjectFormatOfRepo
 	func openRepositoryWithDefaultContext
 	func IsTagExist
 	func ToEntryMode
@@ -325,8 +324,6 @@ package "code.gitea.io/gitea/routers/web"
 
 package "code.gitea.io/gitea/routers/web/org"
 	func MustEnableProjects
-	func getActionIssues
-	func UpdateIssueProject
 
 package "code.gitea.io/gitea/services/context"
 	func GetPrivateContext
