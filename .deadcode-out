@@ -131,7 +131,6 @@ package "code.gitea.io/gitea/models/user"
 	func (ErrUserInactive).Unwrap
 	func IsErrExternalLoginUserAlreadyExist
 	func IsErrExternalLoginUserNotExist
-	func NewFederatedUser
 	func IsErrUserSettingIsNotExist
 	func GetUserAllSettings
 	func DeleteUserSetting

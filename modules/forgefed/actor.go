@@ -137,8 +137,8 @@ func NewRepositoryID(uri, source string) (RepositoryID, error) {
 
 	// validate Person specific path
 	repoID := RepositoryID{result}
-	if valid, outcome := validation.IsValid(repoID); !valid {
-		return RepositoryID{}, outcome
+	if valid, err := validation.IsValid(repoID); !valid {
+		return RepositoryID{}, err
 	}
 
 	return repoID, nil
