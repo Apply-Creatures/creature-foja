@@ -131,6 +131,7 @@ package "code.gitea.io/gitea/models/user"
 	func (ErrUserInactive).Unwrap
 	func IsErrExternalLoginUserAlreadyExist
 	func IsErrExternalLoginUserNotExist
+	func NewFederatedUser
 	func IsErrUserSettingIsNotExist
 	func GetUserAllSettings
 	func DeleteUserSetting
@@ -318,6 +319,9 @@ package "code.gitea.io/gitea/modules/translation"
 
 package "code.gitea.io/gitea/modules/util/filebuffer"
 	func CreateFromReader
+
+package "code.gitea.io/gitea/modules/validation"
+	func IsErrNotValid
 
 package "code.gitea.io/gitea/modules/web"
 	func RouteMock

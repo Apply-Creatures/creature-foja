@@ -4,6 +4,7 @@
 package forgefed
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -23,12 +24,34 @@ func Test_FederationHostValidation(t *testing.T) {
 	}
 
 	sut = FederationHost{
+		HostFqdn: "",
+		NodeInfo: NodeInfo{
+			SoftwareName: "forgejo",
+		},
+		LatestActivity: time.Now(),
+	}
+	if res, _ := validation.IsValid(sut); res {
+		t.Errorf("sut should be invalid: HostFqdn empty")
+	}
+
+	sut = FederationHost{
+		HostFqdn: strings.Repeat("fill", 64),
+		NodeInfo: NodeInfo{
+			SoftwareName: "forgejo",
+		},
+		LatestActivity: time.Now(),
+	}
+	if res, _ := validation.IsValid(sut); res {
+		t.Errorf("sut should be invalid: HostFqdn too long (len=256)")
+	}
+
+	sut = FederationHost{
 		HostFqdn:       "host.do.main",
 		NodeInfo:       NodeInfo{},
 		LatestActivity: time.Now(),
 	}
 	if res, _ := validation.IsValid(sut); res {
-		t.Errorf("sut should be invalid")
+		t.Errorf("sut should be invalid: NodeInfo invalid")
 	}
 
 	sut = FederationHost{

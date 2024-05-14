@@ -33,7 +33,7 @@ type NodeInfoWellKnown struct {
 	Href string
 }
 
-// Factory function for PersonID. Created struct is asserted to be valid
+// Factory function for NodeInfoWellKnown. Created struct is asserted to be valid.
 func NewNodeInfoWellKnown(body []byte) (NodeInfoWellKnown, error) {
 	result, err := NodeInfoWellKnownUnmarshalJSON(body)
 	if err != nil {

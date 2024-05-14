@@ -91,6 +91,22 @@ func TestActivityPubRepositoryInboxValid(t *testing.T) {
 				`"openRegistrations":true,"usage":{"users":{"total":14,"activeHalfyear":2}},"metadata":{}}`)
 			fmt.Fprint(res, responseBody)
 		})
+	federatedRoutes.HandleFunc("/api/v1/activitypub/user-id/2",
+		func(res http.ResponseWriter, req *http.Request) {
+			// curl -H "Accept: application/json" https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/2
+			responseBody := fmt.Sprintf(`{"@context":["https://www.w3.org/ns/activitystreams","https://w3id.org/security/v1"],` +
+				`"id":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/2","type":"Person",` +
+				`"icon":{"type":"Image","mediaType":"image/png","url":"https://federated-repo.prod.meissa.de/avatars/1bb05d9a5f6675ed0272af9ea193063c"},` +
+				`"url":"https://federated-repo.prod.meissa.de/stargoose1","inbox":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/2/inbox",` +
+				`"outbox":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/2/outbox","preferredUsername":"stargoose1",` +
+				`"publicKey":{"id":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/2#main-key","owner":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/2",` +
+				`"publicKeyPem":"-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEA18H5s7N6ItZUAh9tneII\nIuZdTTa3cZlLa/9ejWAHTkcp3WLW+/zbsumlMrWYfBy2/yTm56qasWt38iY4D6ul\n` +
+				`CPiwhAqX3REvVq8tM79a2CEqZn9ka6vuXoDgBg/sBf/BUWqf7orkjUXwk/U0Egjf\nk5jcurF4vqf1u+rlAHH37dvSBaDjNj6Qnj4OP12bjfaY/yvs7+jue/eNXFHjzN4E\n` +
+				`T2H4B/yeKTJ4UuAwTlLaNbZJul2baLlHelJPAsxiYaziVuV5P+IGWckY6RSerRaZ\nAkc4mmGGtjAyfN9aewe+lNVfwS7ElFx546PlLgdQgjmeSwLX8FWxbPE5A/PmaXCs\n` +
+				`nx+nou+3dD7NluULLtdd7K+2x02trObKXCAzmi5/Dc+yKTzpFqEz+hLNCz7TImP/\ncK//NV9Q+X67J9O27baH9R9ZF4zMw8rv2Pg0WLSw1z7lLXwlgIsDapeMCsrxkVO4\n` +
+				`LXX5AQ1xQNtlssnVoUBqBrvZsX2jUUKUocvZqMGuE4hfAgMBAAE=\n-----END PUBLIC KEY-----\n"}}`)
+			fmt.Fprint(res, responseBody)
+		})
 	federatedRoutes.HandleFunc("/",
 		func(res http.ResponseWriter, req *http.Request) {
 			t.Errorf("Unhandled request: %q", req.URL.EscapedPath())
@@ -126,9 +142,7 @@ func TestActivityPubRepositoryInboxValid(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 
-		federationHost := unittest.AssertExistsAndLoadBean(t, &forgefed.FederationHost{ID: 1})
-		assert.Equal(t, "127.0.0.1", federationHost.HostFqdn)
-
+		unittest.AssertExistsAndLoadBean(t, &forgefed.FederationHost{HostFqdn: "127.0.0.1"})
 	})
 }
 

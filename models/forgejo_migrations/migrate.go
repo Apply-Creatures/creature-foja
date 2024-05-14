@@ -66,6 +66,8 @@ var migrations = []*Migration{
 	NewMigration("Add `hide_archive_links` column to `release` table", AddHideArchiveLinksToRelease),
 	// v14 -> v15
 	NewMigration("Remove Gitea-specific columns from the repository and badge tables", RemoveGiteaSpecificColumnsFromRepositoryAndBadge),
+	// v15 -> v16
+	NewMigration("Create the `federation_host` table", CreateFederationHostTable),
 }
 
 // GetCurrentDBVersion returns the current Forgejo database version.

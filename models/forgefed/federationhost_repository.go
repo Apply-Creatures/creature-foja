@@ -25,7 +25,7 @@ func GetFederationHost(ctx context.Context, ID int64) (*FederationHost, error) {
 		return nil, fmt.Errorf("FederationInfo record %v does not exist", ID)
 	}
 	if res, err := validation.IsValid(host); !res {
-		return nil, fmt.Errorf("FederationInfo is not valid: %v", err)
+		return nil, err
 	}
 	return host, nil
 }
@@ -39,14 +39,14 @@ func FindFederationHostByFqdn(ctx context.Context, fqdn string) (*FederationHost
 		return nil, nil
 	}
 	if res, err := validation.IsValid(host); !res {
-		return nil, fmt.Errorf("FederationInfo is not valid: %v", err)
+		return nil, err
 	}
 	return host, nil
 }
 
 func CreateFederationHost(ctx context.Context, host *FederationHost) error {
 	if res, err := validation.IsValid(host); !res {
-		return fmt.Errorf("FederationInfo is not valid: %v", err)
+		return err
 	}
 	_, err := db.GetEngine(ctx).Insert(host)
 	return err
@@ -54,7 +54,7 @@ func CreateFederationHost(ctx context.Context, host *FederationHost) error {
 
 func UpdateFederationHost(ctx context.Context, host *FederationHost) error {
 	if res, err := validation.IsValid(host); !res {
-		return fmt.Errorf("FederationInfo is not valid: %v", err)
+		return err
 	}
 	_, err := db.GetEngine(ctx).ID(host.ID).Update(host)
 	return err

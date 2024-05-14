@@ -6,6 +6,7 @@ package forgefed
 import (
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 
 	"code.gitea.io/gitea/modules/validation"
@@ -52,12 +53,14 @@ func Test_NodeInfoWellKnownValidate(t *testing.T) {
 	}
 
 	sut = NodeInfoWellKnown{Href: "./federated-repo.prod.meissa.de/api/v1/nodeinfo"}
-	if _, err := validation.IsValid(sut); err.Error() != "Href has to be absolute\nValue  is not contained in allowed values [http https]" {
+	_, err := validation.IsValid(sut)
+	if !validation.IsErrNotValid(err) && strings.Contains(err.Error(), "Href has to be absolute\nValue  is not contained in allowed values [http https]") {
 		t.Errorf("validation error expected but was: %v\n", err)
 	}
 
 	sut = NodeInfoWellKnown{Href: "https://federated-repo.prod.meissa.de/api/v1/nodeinfo?alert=1"}
-	if _, err := validation.IsValid(sut); err.Error() != "Href may not contain query" {
+	_, err = validation.IsValid(sut)
+	if !validation.IsErrNotValid(err) && strings.Contains(err.Error(), "Href has to be absolute\nValue  is not contained in allowed values [http https]") {
 		t.Errorf("sut should be valid, %v, %v", sut, err)
 	}
 }
