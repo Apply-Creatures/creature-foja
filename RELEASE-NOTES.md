@@ -6,7 +6,7 @@ A [patch or minor release](https://semver.org/spec/v2.0.0.html) (e.g. upgrading 
 
 ## Upcoming releases (not available yet)
 
-- [8.0.0](/release-notes/8.0.0/)
+- [8.0.0](release-notes/8.0.0/)
 
 ## 7.0.2
 
