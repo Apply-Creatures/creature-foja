@@ -6,11 +6,27 @@ package validation
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 	"unicode/utf8"
 
 	"code.gitea.io/gitea/modules/timeutil"
 )
+
+// ErrNotValid represents an validation error
+type ErrNotValid struct {
+	Message string
+}
+
+func (err ErrNotValid) Error() string {
+	return fmt.Sprintf("Validation Error: %v", err.Message)
+}
+
+// IsErrNotValid checks if an error is a ErrNotValid.
+func IsErrNotValid(err error) bool {
+	_, ok := err.(ErrNotValid)
+	return ok
+}
 
 type Validateable interface {
 	Validate() []string
@@ -18,8 +34,9 @@ type Validateable interface {
 
 func IsValid(v Validateable) (bool, error) {
 	if err := v.Validate(); len(err) > 0 {
+		typeof := reflect.TypeOf(v)
 		errString := strings.Join(err, "\n")
-		return false, fmt.Errorf(errString)
+		return false, ErrNotValid{fmt.Sprint(typeof, ": ", errString)}
 	}
 
 	return true, nil

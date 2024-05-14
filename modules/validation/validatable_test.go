@@ -26,8 +26,12 @@ func Test_IsValid(t *testing.T) {
 		t.Errorf("sut expected to be valid: %v\n", sut.Validate())
 	}
 	sut = Sut{valid: false}
-	if res, _ := IsValid(sut); res {
+	res, err := IsValid(sut)
+	if res {
 		t.Errorf("sut expected to be invalid: %v\n", sut.Validate())
+	}
+	if err == nil || !IsErrNotValid(err) || err.Error() != "Validation Error: validation.Sut: invalid" {
+		t.Errorf("validation error expected, but was %v", err)
 	}
 }
 
