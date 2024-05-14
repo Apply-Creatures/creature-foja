@@ -30,6 +30,7 @@ jobs:
         with:
           path: |
             .tmp/cache/renovate/repository
+            .tmp/osv
           key: repo-cache-${{ github.run_id }}
           restore-keys: |
             repo-cache-
@@ -51,10 +52,13 @@ jobs:
           GIT_COMMITTER_NAME: 'Renovate Bot'
           GIT_COMMITTER_EMAIL: 'forgejo-renovate-action@forgejo.org'
 
+          OSV_OFFLINE_ROOT_DIR: ${{ github.workspace }}/.tmp/osv
+
       - name: Save renovate repo cache
         if: always() && env.RENOVATE_DRY_RUN != 'full'
         uses: https://code.forgejo.org/actions/cache/save@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: |
             .tmp/cache/renovate/repository
+            .tmp/osv
           key: repo-cache-${{ github.run_id }}

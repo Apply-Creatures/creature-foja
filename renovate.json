@@ -19,6 +19,7 @@
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths", "npmDedupe"],
   "prConcurrentLimit": 5,
   "internalChecksFilter": "strict",
+  "osvVulnerabilityAlerts": true,
   "packageRules": [
     {
       "description": "Require approval for go and python minor version",
