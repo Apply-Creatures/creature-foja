@@ -8,10 +8,10 @@
 		<div class="repo-description">
 			<div id="repo-desc" class="gt-word-break tw-text-16">
 				{{$description := .Repository.DescriptionHTML $.Context}}
-				{{if $description}}<span class="description">{{$description | RenderCodeBlock}}</span>{{else if .IsRepositoryAdmin}}<span class="no-description text-italic">{{ctx.Locale.Tr "repo.no_desc"}}</span>{{end}}
-				<a class="link" href="{{.Repository.Website}}">{{.Repository.Website}}</a>
+				{{if $description}}<span class="description">{{$description | RenderCodeBlock}}</span>{{else}}<span class="no-description text-italic">{{ctx.Locale.Tr "repo.no_desc"}}</span>{{end}}
+				{{if .Repository.Website}}<a class="link" href="{{.Repository.Website}}">{{.Repository.Website}}</a>{{end}}
 			</div>
-			<form class="ignore-dirty" action="{{.RepoLink}}/search" method="get">
+			<form class="ignore-dirty" action="{{.RepoLink}}/search/{{if .CodeIndexerDisabled}}{{.BranchNameSubURL}}{{end}}" method="get" data-test-tag="codesearch">
 				<div class="ui small action input">
 					<input name="q" value="{{.Keyword}}" placeholder="{{ctx.Locale.Tr "search.code_kind"}}">
 					{{template "shared/search/button"}}
@@ -106,16 +106,7 @@
 						{{ctx.Locale.Tr "repo.use_template"}}
 					</a>
 				{{end}}
-				{{if $isHomepage}}
-					{{/* only show the "code search" on the repo home page, it only does global search,
-						so do not show it when viewing file or directory to avoid misleading users (it doesn't search in a directory) */}}
-					<form class="ignore-dirty" action="{{.RepoLink}}/search" method="get">
-						<div class="ui small action input">
-							<input name="q" placeholder="{{ctx.Locale.Tr "search.code_kind"}}">
-							{{template "shared/search/button"}}
-						</div>
-					</form>
-				{{else}}
+				{{if (not $isHomepage)}}
 					<span class="breadcrumb repo-path tw-ml-1">
 						<a class="section" href="{{.RepoLink}}/src/{{.BranchNameSubURL}}" title="{{.Repository.Name}}">{{StringUtils.EllipsisString .Repository.Name 30}}</a>
 						{{- range $i, $v := .TreeNames -}}

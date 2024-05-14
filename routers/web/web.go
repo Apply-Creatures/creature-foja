@@ -1570,11 +1570,17 @@ func registerRoutes(m *web.Route) {
 
 	m.Group("/{username}/{reponame}", func() {
 		if !setting.Repository.DisableStars {
-			m.Get("/stars", repo.Stars)
+			m.Get("/stars", context.RepoRef(), repo.Stars)
 		}
-		m.Get("/watchers", repo.Watchers)
-		m.Get("/search", reqRepoCodeReader, repo.Search)
-	}, ignSignIn, context.RepoAssignment, context.RepoRef(), context.UnitTypes())
+		m.Get("/watchers", context.RepoRef(), repo.Watchers)
+		m.Group("/search", func() {
+			m.Get("", context.RepoRef(), repo.Search)
+			if !setting.Indexer.RepoIndexerEnabled {
+				m.Get("/branch/*", context.RepoRefByType(context.RepoRefBranch), repo.Search)
+				m.Get("/tag/*", context.RepoRefByType(context.RepoRefTag), repo.Search)
+			}
+		}, reqRepoCodeReader)
+	}, ignSignIn, context.RepoAssignment, context.UnitTypes())
 
 	m.Group("/{username}", func() {
 		m.Group("/{reponame}", func() {

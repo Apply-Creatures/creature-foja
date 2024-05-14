@@ -64,7 +64,11 @@ func Search(ctx *context.Context) {
 			ctx.Data["CodeIndexerUnavailable"] = !code_indexer.IsAvailable(ctx)
 		}
 	} else {
-		res, err := git.GrepSearch(ctx, ctx.Repo.GitRepo, keyword, git.GrepOptions{ContextLineNumber: 3, IsFuzzy: isFuzzy})
+		res, err := git.GrepSearch(ctx, ctx.Repo.GitRepo, keyword, git.GrepOptions{
+			ContextLineNumber: 1,
+			IsFuzzy:           isFuzzy,
+			RefName:           ctx.Repo.RefName,
+		})
 		if err != nil {
 			ctx.ServerError("GrepSearch", err)
 			return

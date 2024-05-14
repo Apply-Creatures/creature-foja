@@ -29,6 +29,7 @@ type GrepOptions struct {
 	MaxResultLimit    int
 	ContextLineNumber int
 	IsFuzzy           bool
+	PathSpec          []setting.Glob
 }
 
 func GrepSearch(ctx context.Context, repo *Repository, search string, opts GrepOptions) ([]*GrepResult, error) {
@@ -61,15 +62,20 @@ func GrepSearch(ctx context.Context, repo *Repository, search string, opts GrepO
 	} else {
 		cmd.AddOptionValues("-e", strings.TrimLeft(search, "-"))
 	}
+
 	// pathspec
-	files := make([]string, 0, len(setting.Indexer.IncludePatterns)+len(setting.Indexer.ExcludePatterns))
-	for _, expr := range setting.Indexer.IncludePatterns {
-		files = append(files, expr.Pattern())
+	files := make([]string, 0,
+		len(setting.Indexer.IncludePatterns)+
+			len(setting.Indexer.ExcludePatterns)+
+			len(opts.PathSpec))
+	for _, expr := range append(setting.Indexer.IncludePatterns, opts.PathSpec...) {
+		files = append(files, ":"+expr.Pattern())
 	}
 	for _, expr := range setting.Indexer.ExcludePatterns {
 		files = append(files, ":^"+expr.Pattern())
 	}
 	cmd.AddDynamicArguments(cmp.Or(opts.RefName, "HEAD")).AddDashesAndList(files...)
+
 	opts.MaxResultLimit = cmp.Or(opts.MaxResultLimit, 50)
 	stderr := bytes.Buffer{}
 	err = cmd.Run(&RunOpts{

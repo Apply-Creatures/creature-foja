@@ -1140,6 +1140,7 @@ PostRecentBranchCheck:
 	ctx.Data["TreeLink"] = treeLink
 	ctx.Data["TreeNames"] = treeNames
 	ctx.Data["BranchLink"] = branchLink
+	ctx.Data["CodeIndexerDisabled"] = !setting.Indexer.RepoIndexerEnabled
 	ctx.HTML(http.StatusOK, tplRepoHome)
 }
 
