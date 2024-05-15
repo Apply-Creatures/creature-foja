@@ -329,7 +329,7 @@ func (repo *Repository) HTMLURL() string {
 // CommitLink make link to by commit full ID
 // note: won't check whether it's an right id
 func (repo *Repository) CommitLink(commitID string) (result string) {
-	if git.IsEmptyCommitID(commitID) {
+	if git.IsEmptyCommitID(commitID, nil) {
 		result = ""
 	} else {
 		result = repo.Link() + "/commit/" + url.PathEscape(commitID)

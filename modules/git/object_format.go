@@ -122,6 +122,7 @@ func (h Sha256ObjectFormatImpl) ComputeHash(t ObjectType, content []byte) Object
 var (
 	Sha1ObjectFormat   ObjectFormat = Sha1ObjectFormatImpl{}
 	Sha256ObjectFormat ObjectFormat = Sha256ObjectFormatImpl{}
+	// any addition must be reflected in IsEmptyCommitID
 )
 
 var SupportedObjectFormats = []ObjectFormat{

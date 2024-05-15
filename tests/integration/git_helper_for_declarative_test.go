@@ -117,10 +117,10 @@ func doGitCloneFail(u *url.URL) func(*testing.T) {
 	}
 }
 
-func doGitInitTestRepository(dstPath string) func(*testing.T) {
+func doGitInitTestRepository(dstPath string, objectFormat git.ObjectFormat) func(*testing.T) {
 	return func(t *testing.T) {
 		// Init repository in dstPath
-		assert.NoError(t, git.InitRepository(git.DefaultContext, dstPath, false, git.Sha1ObjectFormat.Name()))
+		assert.NoError(t, git.InitRepository(git.DefaultContext, dstPath, false, objectFormat.Name()))
 		// forcibly set default branch to master
 		_, _, err := git.NewCommand(git.DefaultContext, "symbolic-ref", "HEAD", git.BranchPrefix+"master").RunStdString(&git.RunOpts{Dir: dstPath})
 		assert.NoError(t, err)
@@ -148,6 +148,7 @@ func doGitAddRemote(dstPath, remoteName string, u *url.URL) func(*testing.T) {
 
 func doGitPushTestRepository(dstPath string, args ...string) func(*testing.T) {
 	return func(t *testing.T) {
+		t.Helper()
 		_, _, err := git.NewCommand(git.DefaultContext, "push", "-u").AddArguments(git.ToTrustedCmdArgs(args)...).RunStdString(&git.RunOpts{Dir: dstPath})
 		assert.NoError(t, err)
 	}

@@ -64,7 +64,7 @@ func testPushDeployKeyOnEmptyRepo(t *testing.T, u *url.URL) {
 		// Setup the testing repository
 		dstPath := t.TempDir()
 
-		t.Run("InitTestRepository", doGitInitTestRepository(dstPath))
+		t.Run("InitTestRepository", doGitInitTestRepository(dstPath, git.Sha1ObjectFormat)) // FIXME: use forEachObjectFormat
 
 		// Setup remote link
 		sshURL := createSSHUrl(ctx.GitPath(), u)
