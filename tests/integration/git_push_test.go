@@ -24,90 +24,101 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func forEachObjectFormat(t *testing.T, f func(t *testing.T, objectFormat git.ObjectFormat)) {
+	for _, objectFormat := range []git.ObjectFormat{git.Sha256ObjectFormat, git.Sha1ObjectFormat} {
+		t.Run(objectFormat.Name(), func(t *testing.T) {
+			f(t, objectFormat)
+		})
+	}
+}
+
 func TestGitPush(t *testing.T) {
 	onGiteaRun(t, testGitPush)
 }
 
 func testGitPush(t *testing.T, u *url.URL) {
-	t.Run("Push branches at once", func(t *testing.T) {
-		runTestGitPush(t, u, func(t *testing.T, gitPath string) (pushed, deleted []string) {
-			for i := 0; i < 100; i++ {
-				branchName := fmt.Sprintf("branch-%d", i)
-				pushed = append(pushed, branchName)
-				doGitCreateBranch(gitPath, branchName)(t)
-			}
-			pushed = append(pushed, "master")
-			doGitPushTestRepository(gitPath, "origin", "--all")(t)
-			return pushed, deleted
+	forEachObjectFormat(t, func(t *testing.T, objectFormat git.ObjectFormat) {
+		t.Run("Push branches at once", func(t *testing.T) {
+			runTestGitPush(t, u, objectFormat, func(t *testing.T, gitPath string) (pushed, deleted []string) {
+				for i := 0; i < 100; i++ {
+					branchName := fmt.Sprintf("branch-%d", i)
+					pushed = append(pushed, branchName)
+					doGitCreateBranch(gitPath, branchName)(t)
+				}
+				pushed = append(pushed, "master")
+				doGitPushTestRepository(gitPath, "origin", "--all")(t)
+				return pushed, deleted
+			})
 		})
-	})
 
-	t.Run("Push branches one by one", func(t *testing.T) {
-		runTestGitPush(t, u, func(t *testing.T, gitPath string) (pushed, deleted []string) {
-			for i := 0; i < 100; i++ {
-				branchName := fmt.Sprintf("branch-%d", i)
-				doGitCreateBranch(gitPath, branchName)(t)
-				doGitPushTestRepository(gitPath, "origin", branchName)(t)
-				pushed = append(pushed, branchName)
-			}
-			return pushed, deleted
+		t.Run("Push branches one by one", func(t *testing.T) {
+			runTestGitPush(t, u, objectFormat, func(t *testing.T, gitPath string) (pushed, deleted []string) {
+				for i := 0; i < 100; i++ {
+					branchName := fmt.Sprintf("branch-%d", i)
+					doGitCreateBranch(gitPath, branchName)(t)
+					doGitPushTestRepository(gitPath, "origin", branchName)(t)
+					pushed = append(pushed, branchName)
+				}
+				return pushed, deleted
+			})
 		})
-	})
 
-	t.Run("Delete branches", func(t *testing.T) {
-		runTestGitPush(t, u, func(t *testing.T, gitPath string) (pushed, deleted []string) {
-			doGitPushTestRepository(gitPath, "origin", "master")(t) // make sure master is the default branch instead of a branch we are going to delete
-			pushed = append(pushed, "master")
+		t.Run("Delete branches", func(t *testing.T) {
+			runTestGitPush(t, u, objectFormat, func(t *testing.T, gitPath string) (pushed, deleted []string) {
+				doGitPushTestRepository(gitPath, "origin", "master")(t) // make sure master is the default branch instead of a branch we are going to delete
+				pushed = append(pushed, "master")
 
-			for i := 0; i < 100; i++ {
-				branchName := fmt.Sprintf("branch-%d", i)
-				pushed = append(pushed, branchName)
-				doGitCreateBranch(gitPath, branchName)(t)
-			}
-			doGitPushTestRepository(gitPath, "origin", "--all")(t)
+				for i := 0; i < 100; i++ {
+					branchName := fmt.Sprintf("branch-%d", i)
+					pushed = append(pushed, branchName)
+					doGitCreateBranch(gitPath, branchName)(t)
+				}
+				doGitPushTestRepository(gitPath, "origin", "--all")(t)
 
-			for i := 0; i < 10; i++ {
-				branchName := fmt.Sprintf("branch-%d", i)
-				doGitPushTestRepository(gitPath, "origin", "--delete", branchName)(t)
-				deleted = append(deleted, branchName)
-			}
-			return pushed, deleted
+				for i := 0; i < 10; i++ {
+					branchName := fmt.Sprintf("branch-%d", i)
+					doGitPushTestRepository(gitPath, "origin", "--delete", branchName)(t)
+					deleted = append(deleted, branchName)
+				}
+				return pushed, deleted
+			})
 		})
-	})
 
-	t.Run("Push to deleted branch", func(t *testing.T) {
-		runTestGitPush(t, u, func(t *testing.T, gitPath string) (pushed, deleted []string) {
-			doGitPushTestRepository(gitPath, "origin", "master")(t) // make sure master is the default branch instead of a branch we are going to delete
-			pushed = append(pushed, "master")
+		t.Run("Push to deleted branch", func(t *testing.T) {
+			runTestGitPush(t, u, objectFormat, func(t *testing.T, gitPath string) (pushed, deleted []string) {
+				doGitPushTestRepository(gitPath, "origin", "master")(t) // make sure master is the default branch instead of a branch we are going to delete
+				pushed = append(pushed, "master")
 
-			doGitCreateBranch(gitPath, "branch-1")(t)
-			doGitPushTestRepository(gitPath, "origin", "branch-1")(t)
-			pushed = append(pushed, "branch-1")
+				doGitCreateBranch(gitPath, "branch-1")(t)
+				doGitPushTestRepository(gitPath, "origin", "branch-1")(t)
+				pushed = append(pushed, "branch-1")
 
-			// delete and restore
-			doGitPushTestRepository(gitPath, "origin", "--delete", "branch-1")(t)
-			doGitPushTestRepository(gitPath, "origin", "branch-1")(t)
+				// delete and restore
+				doGitPushTestRepository(gitPath, "origin", "--delete", "branch-1")(t)
+				doGitPushTestRepository(gitPath, "origin", "branch-1")(t)
 
-			return pushed, deleted
+				return pushed, deleted
+			})
 		})
 	})
 }
 
-func runTestGitPush(t *testing.T, u *url.URL, gitOperation func(t *testing.T, gitPath string) (pushed, deleted []string)) {
+func runTestGitPush(t *testing.T, u *url.URL, objectFormat git.ObjectFormat, gitOperation func(t *testing.T, gitPath string) (pushed, deleted []string)) {
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
 	repo, err := repo_service.CreateRepository(db.DefaultContext, user, user, repo_service.CreateRepoOptions{
-		Name:          "repo-to-push",
-		Description:   "test git push",
-		AutoInit:      false,
-		DefaultBranch: "main",
-		IsPrivate:     false,
+		Name:             "repo-to-push",
+		Description:      "test git push",
+		AutoInit:         false,
+		DefaultBranch:    "main",
+		IsPrivate:        false,
+		ObjectFormatName: objectFormat.Name(),
 	})
 	require.NoError(t, err)
 	require.NotEmpty(t, repo)
 
 	gitPath := t.TempDir()
 
-	doGitInitTestRepository(gitPath)(t)
+	doGitInitTestRepository(gitPath, objectFormat)(t)
 
 	oldPath := u.Path
 	oldUser := u.User
@@ -158,83 +169,87 @@ func TestOptionsGitPush(t *testing.T) {
 
 func testOptionsGitPush(t *testing.T, u *url.URL) {
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
-	repo, err := repo_service.CreateRepository(db.DefaultContext, user, user, repo_service.CreateRepoOptions{
-		Name:          "repo-to-push",
-		Description:   "test git push",
-		AutoInit:      false,
-		DefaultBranch: "main",
-		IsPrivate:     false,
-	})
-	require.NoError(t, err)
-	require.NotEmpty(t, repo)
 
-	gitPath := t.TempDir()
-
-	doGitInitTestRepository(gitPath)(t)
-
-	u.Path = repo.FullName() + ".git"
-	u.User = url.UserPassword(user.LowerName, userPassword)
-	doGitAddRemote(gitPath, "origin", u)(t)
-
-	t.Run("Unknown push options are rejected", func(t *testing.T) {
-		logChecker, cleanup := test.NewLogChecker(log.DEFAULT, log.TRACE)
-		logChecker.Filter("unknown option").StopMark("Git push options validation")
-		defer cleanup()
-		branchName := "branch0"
-		doGitCreateBranch(gitPath, branchName)(t)
-		doGitPushTestRepositoryFail(gitPath, "origin", branchName, "-o", "repo.template=false", "-o", "uknownoption=randomvalue")(t)
-		logFiltered, logStopped := logChecker.Check(5 * time.Second)
-		assert.True(t, logStopped)
-		assert.True(t, logFiltered[0])
-	})
-
-	t.Run("Owner sets private & template to true via push options", func(t *testing.T) {
-		branchName := "branch1"
-		doGitCreateBranch(gitPath, branchName)(t)
-		doGitPushTestRepository(gitPath, "origin", branchName, "-o", "repo.private=true", "-o", "repo.template=true")(t)
-		repo, err := repo_model.GetRepositoryByOwnerAndName(db.DefaultContext, user.Name, "repo-to-push")
+	forEachObjectFormat(t, func(t *testing.T, objectFormat git.ObjectFormat) {
+		repo, err := repo_service.CreateRepository(db.DefaultContext, user, user, repo_service.CreateRepoOptions{
+			Name:             "repo-to-push",
+			Description:      "test git push",
+			AutoInit:         false,
+			DefaultBranch:    "main",
+			IsPrivate:        false,
+			ObjectFormatName: objectFormat.Name(),
+		})
 		require.NoError(t, err)
-		require.True(t, repo.IsPrivate)
-		require.True(t, repo.IsTemplate)
+		require.NotEmpty(t, repo)
+
+		gitPath := t.TempDir()
+
+		doGitInitTestRepository(gitPath, objectFormat)(t)
+
+		u.Path = repo.FullName() + ".git"
+		u.User = url.UserPassword(user.LowerName, userPassword)
+		doGitAddRemote(gitPath, "origin", u)(t)
+
+		t.Run("Unknown push options are rejected", func(t *testing.T) {
+			logChecker, cleanup := test.NewLogChecker(log.DEFAULT, log.TRACE)
+			logChecker.Filter("unknown option").StopMark("Git push options validation")
+			defer cleanup()
+			branchName := "branch0"
+			doGitCreateBranch(gitPath, branchName)(t)
+			doGitPushTestRepositoryFail(gitPath, "origin", branchName, "-o", "repo.template=false", "-o", "uknownoption=randomvalue")(t)
+			logFiltered, logStopped := logChecker.Check(5 * time.Second)
+			assert.True(t, logStopped)
+			assert.True(t, logFiltered[0])
+		})
+
+		t.Run("Owner sets private & template to true via push options", func(t *testing.T) {
+			branchName := "branch1"
+			doGitCreateBranch(gitPath, branchName)(t)
+			doGitPushTestRepository(gitPath, "origin", branchName, "-o", "repo.private=true", "-o", "repo.template=true")(t)
+			repo, err := repo_model.GetRepositoryByOwnerAndName(db.DefaultContext, user.Name, "repo-to-push")
+			require.NoError(t, err)
+			require.True(t, repo.IsPrivate)
+			require.True(t, repo.IsTemplate)
+		})
+
+		t.Run("Owner sets private & template to false via push options", func(t *testing.T) {
+			branchName := "branch2"
+			doGitCreateBranch(gitPath, branchName)(t)
+			doGitPushTestRepository(gitPath, "origin", branchName, "-o", "repo.private=false", "-o", "repo.template=false")(t)
+			repo, err = repo_model.GetRepositoryByOwnerAndName(db.DefaultContext, user.Name, "repo-to-push")
+			require.NoError(t, err)
+			require.False(t, repo.IsPrivate)
+			require.False(t, repo.IsTemplate)
+		})
+
+		// create a collaborator with write access
+		collaborator := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 5})
+		u.User = url.UserPassword(collaborator.LowerName, userPassword)
+		doGitAddRemote(gitPath, "collaborator", u)(t)
+		repo_module.AddCollaborator(db.DefaultContext, repo, collaborator)
+
+		t.Run("Collaborator with write access is allowed to push", func(t *testing.T) {
+			branchName := "branch3"
+			doGitCreateBranch(gitPath, branchName)(t)
+			doGitPushTestRepository(gitPath, "collaborator", branchName)(t)
+		})
+
+		t.Run("Collaborator with write access fails to change private & template via push options", func(t *testing.T) {
+			logChecker, cleanup := test.NewLogChecker(log.DEFAULT, log.TRACE)
+			logChecker.Filter("permission denied for changing repo settings").StopMark("Git push options validation")
+			defer cleanup()
+			branchName := "branch4"
+			doGitCreateBranch(gitPath, branchName)(t)
+			doGitPushTestRepositoryFail(gitPath, "collaborator", branchName, "-o", "repo.private=true", "-o", "repo.template=true")(t)
+			repo, err = repo_model.GetRepositoryByOwnerAndName(db.DefaultContext, user.Name, "repo-to-push")
+			require.NoError(t, err)
+			require.False(t, repo.IsPrivate)
+			require.False(t, repo.IsTemplate)
+			logFiltered, logStopped := logChecker.Check(5 * time.Second)
+			assert.True(t, logStopped)
+			assert.True(t, logFiltered[0])
+		})
+
+		require.NoError(t, repo_service.DeleteRepositoryDirectly(db.DefaultContext, user, repo.ID))
 	})
-
-	t.Run("Owner sets private & template to false via push options", func(t *testing.T) {
-		branchName := "branch2"
-		doGitCreateBranch(gitPath, branchName)(t)
-		doGitPushTestRepository(gitPath, "origin", branchName, "-o", "repo.private=false", "-o", "repo.template=false")(t)
-		repo, err = repo_model.GetRepositoryByOwnerAndName(db.DefaultContext, user.Name, "repo-to-push")
-		require.NoError(t, err)
-		require.False(t, repo.IsPrivate)
-		require.False(t, repo.IsTemplate)
-	})
-
-	// create a collaborator with write access
-	collaborator := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 5})
-	u.User = url.UserPassword(collaborator.LowerName, userPassword)
-	doGitAddRemote(gitPath, "collaborator", u)(t)
-	repo_module.AddCollaborator(db.DefaultContext, repo, collaborator)
-
-	t.Run("Collaborator with write access is allowed to push", func(t *testing.T) {
-		branchName := "branch3"
-		doGitCreateBranch(gitPath, branchName)(t)
-		doGitPushTestRepository(gitPath, "collaborator", branchName)(t)
-	})
-
-	t.Run("Collaborator with write access fails to change private & template via push options", func(t *testing.T) {
-		logChecker, cleanup := test.NewLogChecker(log.DEFAULT, log.TRACE)
-		logChecker.Filter("permission denied for changing repo settings").StopMark("Git push options validation")
-		defer cleanup()
-		branchName := "branch4"
-		doGitCreateBranch(gitPath, branchName)(t)
-		doGitPushTestRepositoryFail(gitPath, "collaborator", branchName, "-o", "repo.private=true", "-o", "repo.template=true")(t)
-		repo, err = repo_model.GetRepositoryByOwnerAndName(db.DefaultContext, user.Name, "repo-to-push")
-		require.NoError(t, err)
-		require.False(t, repo.IsPrivate)
-		require.False(t, repo.IsTemplate)
-		logFiltered, logStopped := logChecker.Check(5 * time.Second)
-		assert.True(t, logStopped)
-		assert.True(t, logFiltered[0])
-	})
-
-	require.NoError(t, repo_service.DeleteRepositoryDirectly(db.DefaultContext, user, repo.ID))
 }
