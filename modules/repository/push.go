@@ -21,14 +21,12 @@ type PushUpdateOptions struct {
 
 // IsNewRef return true if it's a first-time push to a branch, tag or etc.
 func (opts *PushUpdateOptions) IsNewRef() bool {
-	commitID, err := git.NewIDFromString(opts.OldCommitID)
-	return err == nil && commitID.IsZero()
+	return git.IsEmptyCommitID(opts.OldCommitID, nil)
 }
 
 // IsDelRef return true if it's a deletion to a branch or tag
 func (opts *PushUpdateOptions) IsDelRef() bool {
-	commitID, err := git.NewIDFromString(opts.NewCommitID)
-	return err == nil && commitID.IsZero()
+	return git.IsEmptyCommitID(opts.NewCommitID, nil)
 }
 
 // IsUpdateRef return true if it's an update operation

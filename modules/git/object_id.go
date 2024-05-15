@@ -79,17 +79,25 @@ func NewIDFromString(hexHash string) (ObjectID, error) {
 	return theObjectFormat.MustID(b), nil
 }
 
-func IsEmptyCommitID(commitID string) bool {
+// IsEmptyCommitID checks if an hexadecimal string represents an empty commit according to git (only '0').
+// If objectFormat is not nil, the length will be checked as well (otherwise the lenght must match the sha1 or sha256 length).
+func IsEmptyCommitID(commitID string, objectFormat ObjectFormat) bool {
 	if commitID == "" {
 		return true
 	}
-
-	id, err := NewIDFromString(commitID)
-	if err != nil {
+	if objectFormat == nil {
+		if Sha1ObjectFormat.FullLength() != len(commitID) && Sha256ObjectFormat.FullLength() != len(commitID) {
+			return false
+		}
+	} else if objectFormat.FullLength() != len(commitID) {
 		return false
 	}
-
-	return id.IsZero()
+	for _, c := range commitID {
+		if c != '0' {
+			return false
+		}
+	}
+	return true
 }
 
 // ComputeBlobHash compute the hash for a given blob content
