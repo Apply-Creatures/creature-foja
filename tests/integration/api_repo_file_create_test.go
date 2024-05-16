@@ -53,6 +53,10 @@ func getCreateFileOptions() api.CreateFileOptions {
 
 func getExpectedFileResponseForCreate(repoFullName, commitID, treePath, latestCommitSHA string) *api.FileResponse {
 	sha := "a635aa942442ddfdba07468cf9661c08fbdf0ebf"
+	if len(latestCommitSHA) > len(sha) {
+		// repository is in SHA256 format
+		sha = "3edd190f61237b7a0a5c49aa47fb58b2ec14d53a2afc90803bc713fab5d5aec0"
+	}
 	encoding := "base64"
 	content := "VGhpcyBpcyBuZXcgdGV4dA=="
 	selfURL := setting.AppURL + "api/v1/repos/" + repoFullName + "/contents/" + treePath + "?ref=master"
@@ -278,28 +282,31 @@ func TestAPICreateFile(t *testing.T) {
 		MakeRequest(t, req, http.StatusForbidden)
 
 		// Test creating a file in an empty repository
-		doAPICreateRepository(NewAPITestContext(t, "user2", "empty-repo", auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser), true, git.Sha1ObjectFormat)(t) // FIXME: use forEachObjectFormat
-		createFileOptions = getCreateFileOptions()
-		fileID++
-		treePath = fmt.Sprintf("new/file%d.txt", fileID)
-		req = NewRequestWithJSON(t, "POST", fmt.Sprintf("/api/v1/repos/%s/%s/contents/%s", user2.Name, "empty-repo", treePath), &createFileOptions).
-			AddTokenAuth(token2)
-		resp = MakeRequest(t, req, http.StatusCreated)
-		emptyRepo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{OwnerName: "user2", Name: "empty-repo"}) // public repo
-		gitRepo, _ := gitrepo.OpenRepository(stdCtx.Background(), emptyRepo)
-		commitID, _ := gitRepo.GetBranchCommitID(createFileOptions.NewBranchName)
-		latestCommit, _ := gitRepo.GetCommitByPath(treePath)
-		expectedFileResponse := getExpectedFileResponseForCreate("user2/empty-repo", commitID, treePath, latestCommit.ID.String())
-		DecodeJSON(t, resp, &fileResponse)
-		assert.EqualValues(t, expectedFileResponse.Content, fileResponse.Content)
-		assert.EqualValues(t, expectedFileResponse.Commit.SHA, fileResponse.Commit.SHA)
-		assert.EqualValues(t, expectedFileResponse.Commit.HTMLURL, fileResponse.Commit.HTMLURL)
-		assert.EqualValues(t, expectedFileResponse.Commit.Author.Email, fileResponse.Commit.Author.Email)
-		assert.EqualValues(t, expectedFileResponse.Commit.Author.Name, fileResponse.Commit.Author.Name)
-		assert.EqualValues(t, expectedFileResponse.Commit.Author.Date, fileResponse.Commit.Author.Date)
-		assert.EqualValues(t, expectedFileResponse.Commit.Committer.Email, fileResponse.Commit.Committer.Email)
-		assert.EqualValues(t, expectedFileResponse.Commit.Committer.Name, fileResponse.Commit.Committer.Name)
-		assert.EqualValues(t, expectedFileResponse.Commit.Committer.Date, fileResponse.Commit.Committer.Date)
-		gitRepo.Close()
+		forEachObjectFormat(t, func(t *testing.T, objectFormat git.ObjectFormat) {
+			reponame := "empty-repo-" + objectFormat.Name()
+			doAPICreateRepository(NewAPITestContext(t, "user2", reponame, auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser), true, objectFormat)(t)
+			createFileOptions = getCreateFileOptions()
+			fileID++
+			treePath = fmt.Sprintf("new/file%d.txt", fileID)
+			req = NewRequestWithJSON(t, "POST", fmt.Sprintf("/api/v1/repos/%s/%s/contents/%s", user2.Name, reponame, treePath), &createFileOptions).
+				AddTokenAuth(token2)
+			resp = MakeRequest(t, req, http.StatusCreated)
+			emptyRepo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{OwnerName: "user2", Name: reponame}) // public repo
+			gitRepo, _ := gitrepo.OpenRepository(stdCtx.Background(), emptyRepo)
+			commitID, _ := gitRepo.GetBranchCommitID(createFileOptions.NewBranchName)
+			latestCommit, _ := gitRepo.GetCommitByPath(treePath)
+			expectedFileResponse := getExpectedFileResponseForCreate("user2/"+reponame, commitID, treePath, latestCommit.ID.String())
+			DecodeJSON(t, resp, &fileResponse)
+			assert.EqualValues(t, expectedFileResponse.Content, fileResponse.Content)
+			assert.EqualValues(t, expectedFileResponse.Commit.SHA, fileResponse.Commit.SHA)
+			assert.EqualValues(t, expectedFileResponse.Commit.HTMLURL, fileResponse.Commit.HTMLURL)
+			assert.EqualValues(t, expectedFileResponse.Commit.Author.Email, fileResponse.Commit.Author.Email)
+			assert.EqualValues(t, expectedFileResponse.Commit.Author.Name, fileResponse.Commit.Author.Name)
+			assert.EqualValues(t, expectedFileResponse.Commit.Author.Date, fileResponse.Commit.Author.Date)
+			assert.EqualValues(t, expectedFileResponse.Commit.Committer.Email, fileResponse.Commit.Committer.Email)
+			assert.EqualValues(t, expectedFileResponse.Commit.Committer.Name, fileResponse.Commit.Committer.Name)
+			assert.EqualValues(t, expectedFileResponse.Commit.Committer.Date, fileResponse.Commit.Committer.Date)
+			gitRepo.Close()
+		})
 	})
 }
