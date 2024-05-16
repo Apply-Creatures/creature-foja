@@ -173,7 +173,7 @@ func CreateUserFromAP(ctx context.Context, personID fm.PersonID, federationHostI
 		return nil, nil, err
 	}
 	newUser := user.User{
-		LowerName:                    strings.ToLower(person.PreferredUsername.String()),
+		LowerName:                    strings.ToLower(name),
 		Name:                         name,
 		FullName:                     fullName,
 		Email:                        email,

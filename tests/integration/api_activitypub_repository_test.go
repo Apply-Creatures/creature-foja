@@ -91,7 +91,7 @@ func TestActivityPubRepositoryInboxValid(t *testing.T) {
 				`"openRegistrations":true,"usage":{"users":{"total":14,"activeHalfyear":2}},"metadata":{}}`)
 			fmt.Fprint(res, responseBody)
 		})
-	federatedRoutes.HandleFunc("/api/v1/activitypub/user-id/2",
+	federatedRoutes.HandleFunc("/api/v1/activitypub/user-id/15",
 		func(res http.ResponseWriter, req *http.Request) {
 			// curl -H "Accept: application/json" https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/2
 			responseBody := fmt.Sprintf(`{"@context":["https://www.w3.org/ns/activitystreams","https://w3id.org/security/v1"],` +
@@ -132,7 +132,7 @@ func TestActivityPubRepositoryInboxValid(t *testing.T) {
 		activity := []byte(fmt.Sprintf(
 			`{"type":"Like",`+
 				`"startTime":"%s",`+
-				`"actor":"%s/api/v1/activitypub/user-id/2",`+
+				`"actor":"%s/api/v1/activitypub/user-id/15",`+
 				`"object":"%s/api/v1/activitypub/repository-id/%v"}`,
 			time.Now().UTC().Format(time.RFC3339),
 			federatedSrv.URL, srv.URL, repositoryID))
@@ -142,7 +142,9 @@ func TestActivityPubRepositoryInboxValid(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusNoContent, resp.StatusCode)
 
-		unittest.AssertExistsAndLoadBean(t, &forgefed.FederationHost{HostFqdn: "127.0.0.1"})
+		federationHost := unittest.AssertExistsAndLoadBean(t, &forgefed.FederationHost{HostFqdn: "127.0.0.1"})
+		federatedUser := unittest.AssertExistsAndLoadBean(t, &user.FederatedUser{ExternalID: "15", FederationHostID: federationHost.ID})
+		unittest.AssertExistsAndLoadBean(t, &user.User{ID: federatedUser.UserID})
 	})
 }
 
