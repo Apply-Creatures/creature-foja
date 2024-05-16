@@ -49,7 +49,6 @@ func TestPushDeployKeyOnEmptyRepo(t *testing.T) {
 func testPushDeployKeyOnEmptyRepo(t *testing.T, u *url.URL) {
 	// OK login
 	ctx := NewAPITestContext(t, "user2", "deploy-key-empty-repo-1", auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser)
-	ctxWithDeleteRepo := NewAPITestContext(t, "user2", "deploy-key-empty-repo-1", auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser)
 
 	keyname := fmt.Sprintf("%s-push", ctx.Reponame)
 	u.Path = ctx.GitPath()
@@ -75,7 +74,7 @@ func testPushDeployKeyOnEmptyRepo(t *testing.T, u *url.URL) {
 
 		t.Run("CheckIsNotEmpty", doCheckRepositoryEmptyStatus(ctx, false))
 
-		t.Run("DeleteRepository", doAPIDeleteRepository(ctxWithDeleteRepo))
+		t.Run("DeleteRepository", doAPIDeleteRepository(ctx))
 	})
 }
 
