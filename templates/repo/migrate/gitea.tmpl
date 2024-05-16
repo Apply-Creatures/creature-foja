@@ -100,14 +100,18 @@
 					<div class="inline field">
 						<label>{{ctx.Locale.Tr "repo.visibility"}}</label>
 						<div class="ui checkbox">
-							{{if .IsForcedPrivate}}
-								<input name="private" type="checkbox" checked readonly>
-								<label>{{ctx.Locale.Tr "repo.visibility_helper_forced"}}</label>
-							{{else}}
-								<input name="private" type="checkbox" {{if .private}} checked{{end}}>
-								<label>{{ctx.Locale.Tr "repo.visibility_helper"}}</label>
-							{{end}}
+							<input name="private" type="checkbox"
+								{{if .IsForcedPrivate}}
+									checked disabled
+								{{else}}
+									{{if .private}}checked{{end}}
+								{{end}}>
+							<label>{{ctx.Locale.Tr "repo.visibility_helper"}}</label>
 						</div>
+						{{if .IsForcedPrivate}}
+							<span class="help">{{ctx.Locale.Tr "repo.visibility_helper_forced"}}</span>
+						{{end}}
+						<span class="help">{{ctx.Locale.Tr "repo.visibility_description"}}</span>
 					</div>
 					<div class="inline field {{if .Err_Description}}error{{end}}">
 						<label for="description">{{ctx.Locale.Tr "repo.repo_desc"}}</label>
