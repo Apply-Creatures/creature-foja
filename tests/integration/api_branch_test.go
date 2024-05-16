@@ -11,6 +11,7 @@ import (
 	auth_model "code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/models/db"
 	git_model "code.gitea.io/gitea/models/git"
+	"code.gitea.io/gitea/modules/git"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/tests"
 
@@ -114,7 +115,7 @@ func testAPICreateBranches(t *testing.T, giteaURL *url.URL) {
 	ctx := NewAPITestContext(t, username, "my-noo-repo", auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser)
 	giteaURL.Path = ctx.GitPath()
 
-	t.Run("CreateRepo", doAPICreateRepository(ctx, false))
+	t.Run("CreateRepo", doAPICreateRepository(ctx, false, git.Sha1ObjectFormat)) // FIXME: use forEachObjectFormat
 	testCases := []struct {
 		OldBranch          string
 		NewBranch          string

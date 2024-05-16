@@ -17,6 +17,7 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/gitrepo"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
@@ -277,7 +278,7 @@ func TestAPICreateFile(t *testing.T) {
 		MakeRequest(t, req, http.StatusForbidden)
 
 		// Test creating a file in an empty repository
-		doAPICreateRepository(NewAPITestContext(t, "user2", "empty-repo", auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser), true)(t)
+		doAPICreateRepository(NewAPITestContext(t, "user2", "empty-repo", auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser), true, git.Sha1ObjectFormat)(t) // FIXME: use forEachObjectFormat
 		createFileOptions = getCreateFileOptions()
 		fileID++
 		treePath = fmt.Sprintf("new/file%d.txt", fileID)

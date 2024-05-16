@@ -16,6 +16,7 @@ import (
 	"code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/models/perm"
 	repo_model "code.gitea.io/gitea/models/repo"
+	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/json"
 	"code.gitea.io/gitea/modules/queue"
 	api "code.gitea.io/gitea/modules/structs"
@@ -47,17 +48,18 @@ func (ctx APITestContext) GitPath() string {
 	return fmt.Sprintf("%s/%s.git", ctx.Username, ctx.Reponame)
 }
 
-func doAPICreateRepository(ctx APITestContext, empty bool, callback ...func(*testing.T, api.Repository)) func(*testing.T) {
+func doAPICreateRepository(ctx APITestContext, empty bool, objectFormat git.ObjectFormat, callback ...func(*testing.T, api.Repository)) func(*testing.T) {
 	return func(t *testing.T) {
 		createRepoOption := &api.CreateRepoOption{
-			AutoInit:    !empty,
-			Description: "Temporary repo",
-			Name:        ctx.Reponame,
-			Private:     true,
-			Template:    true,
-			Gitignores:  "",
-			License:     "WTFPL",
-			Readme:      "Default",
+			AutoInit:         !empty,
+			Description:      "Temporary repo",
+			Name:             ctx.Reponame,
+			Private:          true,
+			Template:         true,
+			Gitignores:       "",
+			License:          "WTFPL",
+			Readme:           "Default",
+			ObjectFormatName: objectFormat.Name(),
 		}
 		req := NewRequestWithJSON(t, "POST", "/api/v1/user/repos", createRepoOption).
 			AddTokenAuth(ctx.Token)
