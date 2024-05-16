@@ -11,6 +11,7 @@ import (
 	auth_model "code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/models/db"
 	git_model "code.gitea.io/gitea/models/git"
+	"code.gitea.io/gitea/modules/git"
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/tests"
 
@@ -110,61 +111,62 @@ func TestAPICreateBranch(t *testing.T) {
 }
 
 func testAPICreateBranches(t *testing.T, giteaURL *url.URL) {
-	username := "user2"
-	ctx := NewAPITestContext(t, username, "my-noo-repo", auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser)
-	giteaURL.Path = ctx.GitPath()
+	forEachObjectFormat(t, func(t *testing.T, objectFormat git.ObjectFormat) {
+		ctx := NewAPITestContext(t, "user2", "my-noo-repo-"+objectFormat.Name(), auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser)
+		giteaURL.Path = ctx.GitPath()
 
-	t.Run("CreateRepo", doAPICreateRepository(ctx, false))
-	testCases := []struct {
-		OldBranch          string
-		NewBranch          string
-		ExpectedHTTPStatus int
-	}{
-		// Creating branch from default branch
-		{
-			OldBranch:          "",
-			NewBranch:          "new_branch_from_default_branch",
-			ExpectedHTTPStatus: http.StatusCreated,
-		},
-		// Creating branch from master
-		{
-			OldBranch:          "master",
-			NewBranch:          "new_branch_from_master_1",
-			ExpectedHTTPStatus: http.StatusCreated,
-		},
-		// Trying to create from master but already exists
-		{
-			OldBranch:          "master",
-			NewBranch:          "new_branch_from_master_1",
-			ExpectedHTTPStatus: http.StatusConflict,
-		},
-		// Trying to create from other branch (not default branch)
-		// ps: it can't test the case-sensitive behavior here: the "BRANCH_2" can't be created by git on a case-insensitive filesystem, it makes the test fail quickly before the database code.
-		// Suppose some users are running Gitea on a case-insensitive filesystem, it seems that it's unable to support case-sensitive branch names.
-		{
-			OldBranch:          "new_branch_from_master_1",
-			NewBranch:          "branch_2",
-			ExpectedHTTPStatus: http.StatusCreated,
-		},
-		// Trying to create from a branch which does not exist
-		{
-			OldBranch:          "does_not_exist",
-			NewBranch:          "new_branch_from_non_existent",
-			ExpectedHTTPStatus: http.StatusNotFound,
-		},
-		// Trying to create a branch with UTF8
-		{
-			OldBranch:          "master",
-			NewBranch:          "test-👀",
-			ExpectedHTTPStatus: http.StatusCreated,
-		},
-	}
-	for _, test := range testCases {
-		session := ctx.Session
-		t.Run(test.NewBranch, func(t *testing.T) {
-			testAPICreateBranch(t, session, "user2", "my-noo-repo", test.OldBranch, test.NewBranch, test.ExpectedHTTPStatus)
-		})
-	}
+		t.Run("CreateRepo", doAPICreateRepository(ctx, false, objectFormat))
+		testCases := []struct {
+			OldBranch          string
+			NewBranch          string
+			ExpectedHTTPStatus int
+		}{
+			// Creating branch from default branch
+			{
+				OldBranch:          "",
+				NewBranch:          "new_branch_from_default_branch",
+				ExpectedHTTPStatus: http.StatusCreated,
+			},
+			// Creating branch from master
+			{
+				OldBranch:          "master",
+				NewBranch:          "new_branch_from_master_1",
+				ExpectedHTTPStatus: http.StatusCreated,
+			},
+			// Trying to create from master but already exists
+			{
+				OldBranch:          "master",
+				NewBranch:          "new_branch_from_master_1",
+				ExpectedHTTPStatus: http.StatusConflict,
+			},
+			// Trying to create from other branch (not default branch)
+			// ps: it can't test the case-sensitive behavior here: the "BRANCH_2" can't be created by git on a case-insensitive filesystem, it makes the test fail quickly before the database code.
+			// Suppose some users are running Gitea on a case-insensitive filesystem, it seems that it's unable to support case-sensitive branch names.
+			{
+				OldBranch:          "new_branch_from_master_1",
+				NewBranch:          "branch_2",
+				ExpectedHTTPStatus: http.StatusCreated,
+			},
+			// Trying to create from a branch which does not exist
+			{
+				OldBranch:          "does_not_exist",
+				NewBranch:          "new_branch_from_non_existent",
+				ExpectedHTTPStatus: http.StatusNotFound,
+			},
+			// Trying to create a branch with UTF8
+			{
+				OldBranch:          "master",
+				NewBranch:          "test-👀",
+				ExpectedHTTPStatus: http.StatusCreated,
+			},
+		}
+		for _, test := range testCases {
+			session := ctx.Session
+			t.Run(test.NewBranch, func(t *testing.T) {
+				testAPICreateBranch(t, session, ctx.Username, ctx.Reponame, test.OldBranch, test.NewBranch, test.ExpectedHTTPStatus)
+			})
+		}
+	})
 }
 
 func testAPICreateBranch(t testing.TB, session *TestSession, user, repo, oldBranch, newBranch string, status int) bool {

@@ -16,6 +16,7 @@ import (
 	unit_model "code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
+	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/setting"
 	api "code.gitea.io/gitea/modules/structs"
 	repo_service "code.gitea.io/gitea/services/repository"
@@ -427,7 +428,7 @@ func testAPIRepoMigrateConflict(t *testing.T, u *url.URL) {
 		httpContext := baseAPITestContext
 
 		httpContext.Reponame = "repo-tmp-17"
-		t.Run("CreateRepo", doAPICreateRepository(httpContext, false))
+		t.Run("CreateRepo", doAPICreateRepository(httpContext, false, git.Sha1ObjectFormat)) // FIXME: use forEachObjectFormat
 
 		user, err := user_model.GetUserByName(db.DefaultContext, httpContext.Username)
 		assert.NoError(t, err)
@@ -510,7 +511,7 @@ func testAPIRepoCreateConflict(t *testing.T, u *url.URL) {
 		httpContext := baseAPITestContext
 
 		httpContext.Reponame = "repo-tmp-17"
-		t.Run("CreateRepo", doAPICreateRepository(httpContext, false))
+		t.Run("CreateRepo", doAPICreateRepository(httpContext, false, git.Sha1ObjectFormat)) // FIXME: use forEachObjectFormat
 
 		req := NewRequestWithJSON(t, "POST", "/api/v1/user/repos",
 			&api.CreateRepoOption{

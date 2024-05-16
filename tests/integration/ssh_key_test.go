@@ -47,35 +47,36 @@ func TestPushDeployKeyOnEmptyRepo(t *testing.T) {
 }
 
 func testPushDeployKeyOnEmptyRepo(t *testing.T, u *url.URL) {
-	// OK login
-	ctx := NewAPITestContext(t, "user2", "deploy-key-empty-repo-1", auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser)
-	ctxWithDeleteRepo := NewAPITestContext(t, "user2", "deploy-key-empty-repo-1", auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser)
+	forEachObjectFormat(t, func(t *testing.T, objectFormat git.ObjectFormat) {
+		// OK login
+		ctx := NewAPITestContext(t, "user2", "deploy-key-empty-repo-"+objectFormat.Name(), auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser)
 
-	keyname := fmt.Sprintf("%s-push", ctx.Reponame)
-	u.Path = ctx.GitPath()
+		keyname := fmt.Sprintf("%s-push", ctx.Reponame)
+		u.Path = ctx.GitPath()
 
-	t.Run("CreateEmptyRepository", doAPICreateRepository(ctx, true))
+		t.Run("CreateEmptyRepository", doAPICreateRepository(ctx, true, objectFormat))
 
-	t.Run("CheckIsEmpty", doCheckRepositoryEmptyStatus(ctx, true))
+		t.Run("CheckIsEmpty", doCheckRepositoryEmptyStatus(ctx, true))
 
-	withKeyFile(t, keyname, func(keyFile string) {
-		t.Run("CreatePushDeployKey", doAPICreateDeployKey(ctx, keyname, keyFile, false))
+		withKeyFile(t, keyname, func(keyFile string) {
+			t.Run("CreatePushDeployKey", doAPICreateDeployKey(ctx, keyname, keyFile, false))
 
-		// Setup the testing repository
-		dstPath := t.TempDir()
+			// Setup the testing repository
+			dstPath := t.TempDir()
 
-		t.Run("InitTestRepository", doGitInitTestRepository(dstPath, git.Sha1ObjectFormat)) // FIXME: use forEachObjectFormat
+			t.Run("InitTestRepository", doGitInitTestRepository(dstPath, objectFormat))
 
-		// Setup remote link
-		sshURL := createSSHUrl(ctx.GitPath(), u)
+			// Setup remote link
+			sshURL := createSSHUrl(ctx.GitPath(), u)
 
-		t.Run("AddRemote", doGitAddRemote(dstPath, "origin", sshURL))
+			t.Run("AddRemote", doGitAddRemote(dstPath, "origin", sshURL))
 
-		t.Run("SSHPushTestRepository", doGitPushTestRepository(dstPath, "origin", "master"))
+			t.Run("SSHPushTestRepository", doGitPushTestRepository(dstPath, "origin", "master"))
 
-		t.Run("CheckIsNotEmpty", doCheckRepositoryEmptyStatus(ctx, false))
+			t.Run("CheckIsNotEmpty", doCheckRepositoryEmptyStatus(ctx, false))
 
-		t.Run("DeleteRepository", doAPIDeleteRepository(ctxWithDeleteRepo))
+			t.Run("DeleteRepository", doAPIDeleteRepository(ctx))
+		})
 	})
 }
 
@@ -103,8 +104,8 @@ func testKeyOnlyOneType(t *testing.T, u *url.URL) {
 	failCtx := ctx
 	failCtx.ExpectedCode = http.StatusUnprocessableEntity
 
-	t.Run("CreateRepository", doAPICreateRepository(ctx, false))
-	t.Run("CreateOtherRepository", doAPICreateRepository(otherCtx, false))
+	t.Run("CreateRepository", doAPICreateRepository(ctx, false, git.Sha1ObjectFormat))           // FIXME: use forEachObjectFormat
+	t.Run("CreateOtherRepository", doAPICreateRepository(otherCtx, false, git.Sha1ObjectFormat)) // FIXME: use forEachObjectFormat
 
 	withKeyFile(t, keyname, func(keyFile string) {
 		var userKeyPublicKeyID int64
@@ -178,7 +179,7 @@ func testKeyOnlyOneType(t *testing.T, u *url.URL) {
 
 			t.Run("DeleteOtherRepository", doAPIDeleteRepository(otherCtxWithDeleteRepo))
 
-			t.Run("RecreateRepository", doAPICreateRepository(ctxWithDeleteRepo, false))
+			t.Run("RecreateRepository", doAPICreateRepository(ctxWithDeleteRepo, false, git.Sha1ObjectFormat)) // FIXME: use forEachObjectFormat
 
 			t.Run("CreateUserKey", doAPICreateUserKey(ctx, keyname, keyFile, func(t *testing.T, publicKey api.PublicKey) {
 				userKeyPublicKeyID = publicKey.ID
