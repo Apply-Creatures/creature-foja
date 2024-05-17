@@ -39,6 +39,15 @@
   cursor: inherit;
 }
 
+.project-column-title-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.project-column-header > .dropdown {
+  flex-shrink: 0;
+}
+
 .project-column > .cards {
   flex: 1;
   display: flex;
