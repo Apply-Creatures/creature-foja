@@ -3,7 +3,6 @@
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<meta name="format-detection" content="telephone=no,date=no,address=no,email=no,url=no">
-	<title>{{.locale.Tr "mail.activate_account.title" (.DisplayName|DotEscape)}}</title>
 </head>
 
 {{$activate_url := printf "%suser/activate?code=%s" AppUrl (QueryEscape .Code)}}
