@@ -108,12 +108,12 @@ func TestGetAllUsers(t *testing.T) {
 	assert.False(t, found[user_model.UserTypeOrganization], users)
 }
 
-func TestAPAPIURL(t *testing.T) {
+func TestAPActorID(t *testing.T) {
 	user := user_model.User{ID: 1}
-	url := user.APAPIURL()
+	url := user.APActorID()
 	expected := "https://try.gitea.io/api/v1/activitypub/user-id/1"
 	if url != expected {
-		t.Errorf("unexpected APAPIURL, expected: %q, actual: %q", expected, url)
+		t.Errorf("unexpected APActorID, expected: %q, actual: %q", expected, url)
 	}
 }
 

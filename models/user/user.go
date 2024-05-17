@@ -307,8 +307,8 @@ func (u *User) HTMLURL() string {
 	return setting.AppURL + url.PathEscape(u.Name)
 }
 
-// APAPIURL returns the IRI to the api endpoint of the user
-func (u *User) APAPIURL() string {
+// APActorID returns the IRI to the api endpoint of the user
+func (u *User) APActorID() string {
 	return fmt.Sprintf("%vapi/v1/activitypub/user-id/%v", setting.AppURL, url.PathEscape(fmt.Sprintf("%v", u.ID)))
 }
 
