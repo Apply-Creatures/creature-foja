@@ -35,12 +35,8 @@
 .project-column-title {
   background: none !important;
   line-height: 1.25 !important;
-  cursor: inherit;
-}
-
-.project-column-title,
-.project-column-issue-count {
   color: inherit !important;
+  cursor: inherit;
 }
 
 .project-column > .cards {
