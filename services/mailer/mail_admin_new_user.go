@@ -19,14 +19,11 @@ const (
 	tplNewUserMail base.TplName = "notify/admin_new_user"
 )
 
-var sa = SendAsync
-
 // MailNewUser sends notification emails on new user registrations to all admins
 func MailNewUser(ctx context.Context, u *user_model.User) {
 	if !setting.Admin.SendNotificationEmailOnNewUser {
 		return
 	}
-
 	if setting.MailService == nil {
 		// No mail service configured
 		return
@@ -77,5 +74,5 @@ func mailNewUser(ctx context.Context, u *user_model.User, lang string, tos []str
 		msg.Info = subject
 		msgs = append(msgs, msg)
 	}
-	sa(msgs...)
+	SendAsync(msgs...)
 }
