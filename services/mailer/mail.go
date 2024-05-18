@@ -517,7 +517,7 @@ func actionToTemplate(issue *issues_model.Issue, actionType activities_model.Act
 			case issues_model.ReviewTypeReject:
 				name = "reject"
 			default:
-				name = "review"
+				name = "review" // TODO: there is no activities_model.Action* when sending a review comment, this is deadcode and should be removed
 			}
 		case issues_model.CommentTypeCode:
 			name = "code"
