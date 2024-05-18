@@ -6,6 +6,24 @@
 // This file must be imported before any lazy-loading is being attempted.
 __webpack_public_path__ = `${window.config?.assetUrlPrefix ?? '/assets'}/`;
 
+// Ignore external and some known internal errors that we are unable to currently fix.
+function shouldIgnoreError(err) {
+  const assetBaseUrl = String(new URL(__webpack_public_path__, window.location.origin));
+
+  if (!(err instanceof Error)) return false;
+  // If the error stack trace does not include the base URL of our script assets, it likely came
+  // from a browser extension or inline script. Ignore these errors.
+  if (!err.stack?.includes(assetBaseUrl)) return true;
+  // Ignore some known internal errors that we are unable to currently fix (eg via Monaco).
+  const ignorePatterns = [
+    '/assets/js/monaco.', // https://codeberg.org/forgejo/forgejo/issues/3638 , https://github.com/go-gitea/gitea/issues/30861 , https://github.com/microsoft/monaco-editor/issues/4496
+  ];
+  for (const pattern of ignorePatterns) {
+    if (err.stack?.includes(pattern)) return true;
+  }
+  return false;
+}
+
 const filteredErrors = new Set([
   'getModifierState is not a function', // https://github.com/microsoft/monaco-editor/issues/4325
 ]);
@@ -47,7 +65,6 @@ export function showGlobalErrorMessage(msg) {
  */
 function processWindowErrorEvent({error, reason, message, type, filename, lineno, colno}) {
   const err = error ?? reason;
-  const assetBaseUrl = String(new URL(__webpack_public_path__, window.location.origin));
   const {runModeIsProd} = window.config ?? {};
 
   // `error` and `reason` are not guaranteed to be errors. If the value is falsy, it is likely a
@@ -60,11 +77,8 @@ function processWindowErrorEvent({error, reason, message, type, filename, lineno
     if (runModeIsProd) return;
   }
 
-  // If the error stack trace does not include the base URL of our script assets, it likely came
-  // from a browser extension or inline script. Do not show such errors in production.
-  if (err instanceof Error && !err.stack?.includes(assetBaseUrl) && runModeIsProd) {
-    return;
-  }
+  // In production do not display errors that should be ignored.
+  if (runModeIsProd && shouldIgnoreError(err)) return;
 
   let msg = err?.message ?? message;
   if (lineno) msg += ` (${filename} @ ${lineno}:${colno})`;
