@@ -5,6 +5,7 @@ package actions
 
 import (
 	"context"
+	"encoding/binary"
 	"fmt"
 	"strings"
 	"time"
@@ -253,11 +254,26 @@ func UpdateRunner(ctx context.Context, r *ActionRunner, cols ...string) error {
 
 // DeleteRunner deletes a runner by given ID.
 func DeleteRunner(ctx context.Context, id int64) error {
-	if _, err := GetRunnerByID(ctx, id); err != nil {
+	runner, err := GetRunnerByID(ctx, id)
+	if err != nil {
 		return err
 	}
 
-	_, err := db.DeleteByID[ActionRunner](ctx, id)
+	// Replace the UUID, which was either based on the secret's first 16 bytes or an UUIDv4,
+	// with a sequence of 8 0xff bytes followed by the little-endian version of the record's
+	// identifier. This will prevent the deleted record's identifier from colliding with any
+	// new record.
+	b := make([]byte, 8)
+	binary.LittleEndian.PutUint64(b, uint64(id))
+	runner.UUID = fmt.Sprintf("ffffffff-ffff-ffff-%.2x%.2x-%.2x%.2x%.2x%.2x%.2x%.2x",
+		b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7])
+
+	err = UpdateRunner(ctx, runner, "UUID")
+	if err != nil {
+		return err
+	}
+
+	_, err = db.DeleteByID[ActionRunner](ctx, id)
 	return err
 }
 

@@ -1,0 +1,20 @@
+-
+  # A global runner
+  # Secret is 7e577e577e577e57feedfacefeedfacefeedface
+  id: 12345678
+  uuid: "37653537-3765-3537-3765-353737653537"
+  name: "test"
+  version: ""
+  owner_id: 0
+  repo_id: 0
+  description: ""
+  base: 0
+  repo_range: ""
+  token_hash: "3af8a56b850dba8848044385fedcfa4d9432e17de9f9803e4d279991394ac2945066ceb9a5e7cbe60a087d90d4bad03a8f9b"
+  token_salt: "832f8529db6151a1c3c605dd7570b58f"
+  last_online: 0
+  last_active: 0
+  agent_labels: '[""]'
+  created: 1716104432
+  updated: 1716104432
+  deleted: ~
