@@ -23,7 +23,7 @@
 		{{if and (or .HasIssuesOrPullsWritePermission .IsIssuePoster) (not .Repository.IsArchived)}}
 			<div class="top-right-buttons">
 				<button id="cancel-edit-title" class="ui small basic button in-edit tw-hidden">{{ctx.Locale.Tr "repo.issues.cancel"}}</button>
-				<button id="save-edit-title" class="ui small primary button in-edit tw-hidden tw-mr-0" data-update-url="{{$.RepoLink}}/issues/{{.Issue.Index}}/title" {{if .Issue.IsPull}}data-target-update-url="{{$.RepoLink}}/pull/{{.Issue.Index}}/target_branch"{{end}}>{{ctx.Locale.Tr "repo.issues.save"}}</button>
+				<button id="save-edit-title" class="ui small primary button in-edit tw-hidden tw-mr-0" data-update-url="{{$.RepoLink}}/issues/{{.Issue.Index}}/title">{{ctx.Locale.Tr "repo.issues.save"}}</button>
 			</div>
 		{{end}}
 	</div>
@@ -81,7 +81,7 @@
 							</span>
 						</a>
 					{{end}}
-					<span id="pull-desc-edit" class="tw-hidden flex-text-block">
+					<span id="pull-desc-edit" class="tw-hidden flex-text-block" data-target-update-url="{{$.RepoLink}}/pull/{{.Issue.Index}}/target_branch">
 						<div class="ui floating filter dropdown">
 							<div class="ui basic small button tw-mr-0">
 								<span class="text">{{ctx.Locale.Tr "repo.pulls.compare_compare"}}: {{$.HeadTarget}}</span>
