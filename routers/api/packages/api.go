@@ -586,6 +586,8 @@ func CommonRoutes() *web.Route {
 			r.Get("/specs.4.8.gz", rubygems.EnumeratePackages)
 			r.Get("/latest_specs.4.8.gz", rubygems.EnumeratePackagesLatest)
 			r.Get("/prerelease_specs.4.8.gz", rubygems.EnumeratePackagesPreRelease)
+			r.Get("/info/{package}", rubygems.ServePackageInfo)
+			r.Get("/versions", rubygems.ServeVersionsFile)
 			r.Get("/quick/Marshal.4.8/{filename}", rubygems.ServePackageSpecification)
 			r.Get("/gems/{filename}", rubygems.DownloadPackageFile)
 			r.Group("/api/v1/gems", func() {
