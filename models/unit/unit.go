@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync/atomic"
 
 	"code.gitea.io/gitea/models/perm"
 	"code.gitea.io/gitea/modules/container"
@@ -106,13 +107,26 @@ var (
 		TypeExternalTracker,
 	}
 
-	// DisabledRepoUnits contains the units that have been globally disabled
-	DisabledRepoUnits = []Type{}
+	disabledRepoUnitsAtomic atomic.Pointer[[]Type] // the units that have been globally disabled
 
 	// AllowedRepoUnitGroups contains the units that have been globally enabled,
 	// with mutually exclusive units grouped together.
 	AllowedRepoUnitGroups = [][]Type{}
 )
+
+// DisabledRepoUnitsGet returns the globally disabled units, it is a quick patch to fix data-race during testing.
+// Because the queue worker might read when a test is mocking the value. FIXME: refactor to a clear solution later.
+func DisabledRepoUnitsGet() []Type {
+	v := disabledRepoUnitsAtomic.Load()
+	if v == nil {
+		return nil
+	}
+	return *v
+}
+
+func DisabledRepoUnitsSet(v []Type) {
+	disabledRepoUnitsAtomic.Store(&v)
+}
 
 // Get valid set of default repository units from settings
 func validateDefaultRepoUnits(defaultUnits, settingDefaultUnits []Type) []Type {
@@ -131,7 +145,7 @@ func validateDefaultRepoUnits(defaultUnits, settingDefaultUnits []Type) []Type {
 	}
 
 	// Remove disabled units
-	for _, disabledUnit := range DisabledRepoUnits {
+	for _, disabledUnit := range DisabledRepoUnitsGet() {
 		for i, unit := range units {
 			if unit == disabledUnit {
 				units = append(units[:i], units[i+1:]...)
@@ -144,11 +158,11 @@ func validateDefaultRepoUnits(defaultUnits, settingDefaultUnits []Type) []Type {
 
 // LoadUnitConfig load units from settings
 func LoadUnitConfig() error {
-	var invalidKeys []string
-	DisabledRepoUnits, invalidKeys = FindUnitTypes(setting.Repository.DisabledRepoUnits...)
+	disabledRepoUnits, invalidKeys := FindUnitTypes(setting.Repository.DisabledRepoUnits...)
 	if len(invalidKeys) > 0 {
 		log.Warn("Invalid keys in disabled repo units: %s", strings.Join(invalidKeys, ", "))
 	}
+	DisabledRepoUnitsSet(disabledRepoUnits)
 
 	setDefaultRepoUnits, invalidKeys := FindUnitTypes(setting.Repository.DefaultRepoUnits...)
 	if len(invalidKeys) > 0 {
@@ -210,7 +224,7 @@ func LoadUnitConfig() error {
 
 // UnitGlobalDisabled checks if unit type is global disabled
 func (u Type) UnitGlobalDisabled() bool {
-	for _, ud := range DisabledRepoUnits {
+	for _, ud := range DisabledRepoUnitsGet() {
 		if u == ud {
 			return true
 		}
