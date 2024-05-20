@@ -628,12 +628,12 @@ td .commit-summary {
 .repository.view.issue .issue-title {
   display: flex;
   align-items: center;
+  gap: 0.5em;
   margin-bottom: 8px;
+  min-height: var(--repo-header-issue-min-height);
 }
 
 .repository.view.issue .issue-title h1 {
-  display: flex;
-  align-items: center;
   flex: 1;
   width: 100%;
   font-weight: var(--font-weight-normal);
@@ -641,14 +641,13 @@ td .commit-summary {
   line-height: 40px;
   margin: 0;
   padding-right: 0.5rem;
-  min-height: var(--repo-header-issue-min-height);
 }
 
-.repository.view.issue .issue-title h1 .ui.input {
-  font-size: 0.5em;
+.repository.view.issue .issue-title .ui.input {
+  font-size: 16px;
 }
 
-.repository.view.issue .issue-title h1 .ui.input input {
+.repository.view.issue .issue-title .ui.input input {
   font-size: 1.5em;
   padding: 2px .5rem;
 }
@@ -659,10 +658,6 @@ td .commit-summary {
 
 .repository.view.issue .issue-title .label {
   margin-right: 10px;
-}
-
-.repository.view.issue .issue-title .edit-zone {
-  margin-top: 10px;
 }
 
 .issue-state-label {
