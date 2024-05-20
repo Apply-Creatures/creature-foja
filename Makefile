@@ -38,6 +38,7 @@ GO_LICENSES_PACKAGE ?= github.com/google/go-licenses@v1.6.0 # renovate: datasour
 GOVULNCHECK_PACKAGE ?= golang.org/x/vuln/cmd/govulncheck@v1 # renovate: datasource=go
 ACTIONLINT_PACKAGE ?= github.com/rhysd/actionlint/cmd/actionlint@v1.6.27 # renovate: datasource=go
 DEADCODE_PACKAGE ?= golang.org/x/tools/internal/cmd/deadcode@v0.14.0 # renovate: datasource=go
+GOMOCK_PACKAGE ?= go.uber.org/mock/mockgen@latest
 
 DOCKER_IMAGE ?= gitea/gitea
 DOCKER_TAG ?= latest
@@ -783,6 +784,7 @@ generate-backend: $(TAGS_PREREQ) generate-go
 generate-go: $(TAGS_PREREQ)
 	@echo "Running go generate..."
 	@CC= GOOS= GOARCH= CGO_ENABLED=0 $(GO) generate -tags '$(TAGS)' ./...
+	$(GO) run $(GOMOCK_PACKAGE) -package mock -destination ./modules/queue/mock/redisuniversalclient.go  github.com/redis/go-redis/v9 UniversalClient
 
 .PHONY: merge-locales
 merge-locales:
@@ -884,6 +886,7 @@ deps-tools:
 	$(GO) install $(GO_LICENSES_PACKAGE)
 	$(GO) install $(GOVULNCHECK_PACKAGE)
 	$(GO) install $(ACTIONLINT_PACKAGE)
+	$(GO) install $(GOMOCK_PACKAGE)
 
 node_modules: package-lock.json
 	npm install --no-save

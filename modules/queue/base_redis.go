@@ -26,8 +26,11 @@ type baseRedis struct {
 
 var _ baseQueue = (*baseRedis)(nil)
 
-func newBaseRedisGeneric(cfg *BaseConfig, unique bool) (baseQueue, error) {
-	client := nosql.GetManager().GetRedisClient(cfg.ConnStr)
+func newBaseRedisGeneric(cfg *BaseConfig, unique bool, client redis.UniversalClient) (baseQueue, error) {
+	if client == nil {
+		client = nosql.GetManager().GetRedisClient(cfg.ConnStr)
+	}
+
 	prefix := ""
 	uri := nosql.ToRedisURI(cfg.ConnStr)
 
@@ -62,11 +65,11 @@ func newBaseRedisGeneric(cfg *BaseConfig, unique bool) (baseQueue, error) {
 }
 
 func newBaseRedisSimple(cfg *BaseConfig) (baseQueue, error) {
-	return newBaseRedisGeneric(cfg, false)
+	return newBaseRedisGeneric(cfg, false, nil)
 }
 
 func newBaseRedisUnique(cfg *BaseConfig) (baseQueue, error) {
-	return newBaseRedisGeneric(cfg, true)
+	return newBaseRedisGeneric(cfg, true, nil)
 }
 
 func (q *baseRedis) prefixedName(name string) string {
