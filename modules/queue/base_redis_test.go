@@ -16,6 +16,17 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+const defaultTestRedisServer = "127.0.0.1:6379"
+
+func testRedisHost() string {
+	value := os.Getenv("TEST_REDIS_SERVER")
+	if value != "" {
+		return value
+	}
+
+	return defaultTestRedisServer
+}
+
 func waitRedisReady(conn string, dur time.Duration) (ready bool) {
 	ctxTimed, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
@@ -47,25 +58,67 @@ func redisServerCmd(t *testing.T) *exec.Cmd {
 }
 
 func TestBaseRedis(t *testing.T) {
+	redisAddress := "redis://" + testRedisHost() + "/0"
+	queueSettings := setting.QueueSettings{
+		Length:  10,
+		ConnStr: redisAddress,
+	}
+
 	var redisServer *exec.Cmd
+	if !waitRedisReady(redisAddress, 0) {
+		redisServer = redisServerCmd(t)
+
+		if redisServer == nil {
+			t.Skip("redis-server not found in Forgejo test yet")
+			return
+		}
+
+		assert.NoError(t, redisServer.Start())
+		if !assert.True(t, waitRedisReady(redisAddress, 5*time.Second), "start redis-server") {
+			return
+		}
+	}
+
 	defer func() {
 		if redisServer != nil {
 			_ = redisServer.Process.Signal(os.Interrupt)
 			_ = redisServer.Wait()
 		}
 	}()
-	if !waitRedisReady("redis://127.0.0.1:6379/0", 0) {
+
+	testQueueBasic(t, newBaseRedisSimple, toBaseConfig("baseRedis", queueSettings), false)
+	testQueueBasic(t, newBaseRedisUnique, toBaseConfig("baseRedisUnique", queueSettings), true)
+}
+
+func TestBaseRedisWithPrefix(t *testing.T) {
+	redisAddress := "redis://" + testRedisHost() + "/0?prefix=forgejo:queue:"
+	queueSettings := setting.QueueSettings{
+		Length:  10,
+		ConnStr: redisAddress,
+	}
+
+	var redisServer *exec.Cmd
+	if !waitRedisReady(redisAddress, 0) {
 		redisServer = redisServerCmd(t)
-		if true {
+
+		if redisServer == nil {
 			t.Skip("redis-server not found in Forgejo test yet")
 			return
 		}
+
 		assert.NoError(t, redisServer.Start())
-		if !assert.True(t, waitRedisReady("redis://127.0.0.1:6379/0", 5*time.Second), "start redis-server") {
+		if !assert.True(t, waitRedisReady(redisAddress, 5*time.Second), "start redis-server") {
 			return
 		}
 	}
 
-	testQueueBasic(t, newBaseRedisSimple, toBaseConfig("baseRedis", setting.QueueSettings{Length: 10}), false)
-	testQueueBasic(t, newBaseRedisUnique, toBaseConfig("baseRedisUnique", setting.QueueSettings{Length: 10}), true)
+	defer func() {
+		if redisServer != nil {
+			_ = redisServer.Process.Signal(os.Interrupt)
+			_ = redisServer.Wait()
+		}
+	}()
+
+	testQueueBasic(t, newBaseRedisSimple, toBaseConfig("baseRedis", queueSettings), false)
+	testQueueBasic(t, newBaseRedisUnique, toBaseConfig("baseRedisUnique", queueSettings), true)
 }

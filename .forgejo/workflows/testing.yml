@@ -53,6 +53,8 @@ jobs:
           MINIO_DOMAIN: minio
           MINIO_ROOT_USER: 123456
           MINIO_ROOT_PASSWORD: 12345678
+      redis:
+        image: redis:7.2.4
     steps:
       - uses: https://code.forgejo.org/actions/checkout@v3
       - uses: https://code.forgejo.org/actions/setup-go@v4
@@ -82,6 +84,7 @@ jobs:
         env:
           RACE_ENABLED: 'true'
           TAGS: bindata
+          TEST_REDIS_SERVER: redis:6379
   test-mysql:
     if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
     runs-on: docker
