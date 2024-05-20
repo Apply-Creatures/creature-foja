@@ -1,4 +1,5 @@
 // Copyright 2023 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors c/o Codeberg e.V.. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package integration
@@ -40,12 +41,17 @@ func TestBadges(t *testing.T) {
 					{
 						Operation:     "create",
 						TreePath:      ".gitea/workflows/pr.yml",
-						ContentReader: strings.NewReader("name: test\non:\n  push:\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo helloworld\n"),
+						ContentReader: strings.NewReader("name: pr\non:\n  push:\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo helloworld\n"),
 					},
 					{
 						Operation:     "create",
 						TreePath:      ".gitea/workflows/self-test.yaml",
-						ContentReader: strings.NewReader("name: test\non:\n  push:\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo helloworld\n"),
+						ContentReader: strings.NewReader("name: self-test\non:\n  push:\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo helloworld\n"),
+					},
+					{
+						Operation:     "create",
+						TreePath:      ".gitea/workflows/tag-test.yaml",
+						ContentReader: strings.NewReader("name: tags\non:\n  push:\n    tags: '*'\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo helloworld\n"),
 					},
 				},
 			)
@@ -112,6 +118,25 @@ func TestBadges(t *testing.T) {
 			req = NewRequestf(t, "GET", "/user2/%s/actions/workflows/pr.yml/badge.svg?event=cron", repo.Name)
 			resp = MakeRequest(t, req, http.StatusSeeOther)
 			assertBadge(t, resp, "pr.yml-Not%20found-crimson")
+
+			t.Run("tagged", func(t *testing.T) {
+				defer tests.PrintCurrentTest(t)()
+
+				// With no tags, the workflow has no runs, and isn't found
+				req := NewRequestf(t, "GET", "/user2/%s/actions/workflows/tag-test.yaml/badge.svg", repo.Name)
+				resp := MakeRequest(t, req, http.StatusSeeOther)
+				assertBadge(t, resp, "tag--test.yaml-Not%20found-crimson")
+
+				// Lets create a tag!
+				owner := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+				err := release.CreateNewTag(git.DefaultContext, owner, repo, "main", "v1", "message")
+				assert.NoError(t, err)
+
+				// Now the workflow is wating
+				req = NewRequestf(t, "GET", "/user2/%s/actions/workflows/tag-test.yaml/badge.svg", repo.Name)
+				resp = MakeRequest(t, req, http.StatusSeeOther)
+				assertBadge(t, resp, "tag--test.yaml-waiting-lightgrey")
+			})
 		})
 
 		t.Run("Stars", func(t *testing.T) {
