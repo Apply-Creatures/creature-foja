@@ -251,8 +251,16 @@ func TestCompareCodeExpand(t *testing.T) {
 				owner.Name, repo.Name, forker.Name, repo.Name+"-copy")
 			resp := session.MakeRequest(t, req, http.StatusOK)
 			htmlDoc := NewHTMLParser(t, resp.Body)
-			htmlDoc.AssertElement(t, fmt.Sprintf("button.code-expander-button[hx-get^='/%s/%s/blob_excerpt/'] svg.octicon-fold-up", forker.Name, repo.Name+"-copy"), true)
-			htmlDoc.AssertElement(t, fmt.Sprintf("button.code-expander-button[hx-get^='/%s/%s/blob_excerpt/'] svg.octicon-fold-down", forker.Name, repo.Name+"-copy"), true)
+
+			els := htmlDoc.Find(`button.code-expander-button[hx-get]`)
+
+			// all the links in the comparison should be to the forked repo&branch
+			assert.NotZero(t, els.Length())
+			expectedPrefix := fmt.Sprintf("/%s/%s/blob_excerpt/", forker.Name, repo.Name+"-copy")
+			for i := 0; i < els.Length(); i++ {
+				link := els.Eq(i).AttrOr("hx-get", "")
+				assert.True(t, strings.HasPrefix(link, expectedPrefix))
+			}
 		})
 	})
 }
