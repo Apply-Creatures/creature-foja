@@ -9,6 +9,7 @@ import (
 
 	"code.gitea.io/gitea/modules/nosql"
 	"code.gitea.io/gitea/modules/setting"
+
 	"github.com/stretchr/testify/suite"
 )
 
