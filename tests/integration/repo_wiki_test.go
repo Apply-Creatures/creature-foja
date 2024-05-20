@@ -15,8 +15,25 @@ import (
 	api "code.gitea.io/gitea/modules/structs"
 	"code.gitea.io/gitea/tests"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestWikiSearchContent(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	req := NewRequest(t, "GET", "/user2/repo1/wiki/search?q=This")
+	resp := MakeRequest(t, req, http.StatusOK)
+	doc := NewHTMLParser(t, resp.Body)
+	res := doc.Find(".item > b").Map(func(_ int, el *goquery.Selection) string {
+		return el.Text()
+	})
+	assert.Equal(t, []string{
+		"Home.md",
+		"Page-With-Spaced-Name.md",
+		"Unescaped File.md",
+	}, res)
+}
 
 func TestWikiBranchNormalize(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()

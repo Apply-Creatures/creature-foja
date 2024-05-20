@@ -40,6 +40,7 @@ const (
 	tplWikiRevision base.TplName = "repo/wiki/revision"
 	tplWikiNew      base.TplName = "repo/wiki/new"
 	tplWikiPages    base.TplName = "repo/wiki/pages"
+	tplWikiSearch   base.TplName = "repo/wiki/search"
 )
 
 // MustEnableWiki check if wiki is enabled, if external then redirect
@@ -794,4 +795,21 @@ func DeleteWikiPagePost(ctx *context.Context) {
 	notify_service.DeleteWikiPage(ctx, ctx.Doer, ctx.Repo.Repository, string(wikiName))
 
 	ctx.JSONRedirect(ctx.Repo.RepoLink + "/wiki/")
+}
+
+func WikiSearchContent(ctx *context.Context) {
+	keyword := ctx.FormTrim("q")
+	if keyword == "" {
+		ctx.HTML(http.StatusOK, tplWikiSearch)
+		return
+	}
+
+	res, err := wiki_service.SearchWikiContents(ctx, ctx.Repo.Repository, keyword)
+	if err != nil {
+		ctx.ServerError("SearchWikiContents", err)
+		return
+	}
+
+	ctx.Data["Results"] = res
+	ctx.HTML(http.StatusOK, tplWikiSearch)
 }

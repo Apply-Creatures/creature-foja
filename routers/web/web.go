@@ -1417,6 +1417,7 @@ func registerRoutes(m *web.Route) {
 		})
 
 		m.Group("/wiki", func() {
+			m.Get("/search", repo.WikiSearchContent)
 			m.Get("/raw/*", repo.WikiRaw)
 		}, repo.MustEnableWiki)
 

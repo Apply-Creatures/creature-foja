@@ -44,6 +44,31 @@ func TestGrepSearch(t *testing.T) {
 		},
 	}, res)
 
+	res, err = GrepSearch(context.Background(), repo, "world", GrepOptions{MatchesPerFile: 1})
+	assert.NoError(t, err)
+	assert.Equal(t, []*GrepResult{
+		{
+			Filename:    "i-am-a-python.p",
+			LineNumbers: []int{1},
+			LineCodes:   []string{"## This is a simple file to do a hello world"},
+		},
+		{
+			Filename:    "java-hello/main.java",
+			LineNumbers: []int{1},
+			LineCodes:   []string{"public class HelloWorld"},
+		},
+		{
+			Filename:    "main.vendor.java",
+			LineNumbers: []int{1},
+			LineCodes:   []string{"public class HelloWorld"},
+		},
+		{
+			Filename:    "python-hello/hello.py",
+			LineNumbers: []int{1},
+			LineCodes:   []string{"## This is a simple file to do a hello world"},
+		},
+	}, res)
+
 	res, err = GrepSearch(context.Background(), repo, "no-such-content", GrepOptions{})
 	assert.NoError(t, err)
 	assert.Len(t, res, 0)
