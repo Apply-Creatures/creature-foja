@@ -56,86 +56,90 @@ func testGit(t *testing.T, u *url.URL) {
 	forkedUserCtx := NewAPITestContext(t, "user4", "repo1", auth_model.AccessTokenScopeWriteRepository, auth_model.AccessTokenScopeWriteUser)
 
 	t.Run("HTTP", func(t *testing.T) {
-		defer tests.PrintCurrentTest(t)()
 		ensureAnonymousClone(t, u)
-		httpContext := baseAPITestContext
-		httpContext.Reponame = "repo-tmp-17"
-		forkedUserCtx.Reponame = httpContext.Reponame
-
-		dstPath := t.TempDir()
-
-		t.Run("CreateRepoInDifferentUser", doAPICreateRepository(forkedUserCtx, false, git.Sha1ObjectFormat)) // FIXME: use forEachObjectFormat
-		t.Run("AddUserAsCollaborator", doAPIAddCollaborator(forkedUserCtx, httpContext.Username, perm.AccessModeRead))
-
-		t.Run("ForkFromDifferentUser", doAPIForkRepository(httpContext, forkedUserCtx.Username))
-
-		u.Path = httpContext.GitPath()
-		u.User = url.UserPassword(username, userPassword)
-
-		t.Run("Clone", doGitClone(dstPath, u))
-
-		dstPath2 := t.TempDir()
-
-		t.Run("Partial Clone", doPartialGitClone(dstPath2, u))
-
-		little, big := standardCommitAndPushTest(t, dstPath)
-		littleLFS, bigLFS := lfsCommitAndPushTest(t, dstPath)
-		rawTest(t, &httpContext, little, big, littleLFS, bigLFS)
-		mediaTest(t, &httpContext, little, big, littleLFS, bigLFS)
-
-		t.Run("CreateAgitFlowPull", doCreateAgitFlowPull(dstPath, &httpContext, "test/head"))
-		t.Run("InternalReferences", doInternalReferences(&httpContext, dstPath))
-		t.Run("BranchProtectMerge", doBranchProtectPRMerge(&httpContext, dstPath))
-		t.Run("AutoMerge", doAutoPRMerge(&httpContext, dstPath))
-		t.Run("CreatePRAndSetManuallyMerged", doCreatePRAndSetManuallyMerged(httpContext, httpContext, dstPath, "master", "test-manually-merge"))
-		t.Run("MergeFork", func(t *testing.T) {
+		forEachObjectFormat(t, func(t *testing.T, objectFormat git.ObjectFormat) {
 			defer tests.PrintCurrentTest(t)()
-			t.Run("CreatePRAndMerge", doMergeFork(httpContext, forkedUserCtx, "master", httpContext.Username+":master"))
-			rawTest(t, &forkedUserCtx, little, big, littleLFS, bigLFS)
-			mediaTest(t, &forkedUserCtx, little, big, littleLFS, bigLFS)
-		})
+			httpContext := baseAPITestContext
+			httpContext.Reponame = "repo-tmp-17-" + objectFormat.Name()
+			forkedUserCtx.Reponame = httpContext.Reponame
 
-		t.Run("PushCreate", doPushCreate(httpContext, u))
-	})
-	t.Run("SSH", func(t *testing.T) {
-		defer tests.PrintCurrentTest(t)()
-		sshContext := baseAPITestContext
-		sshContext.Reponame = "repo-tmp-18"
-		keyname := "my-testing-key"
-		forkedUserCtx.Reponame = sshContext.Reponame
-		t.Run("CreateRepoInDifferentUser", doAPICreateRepository(forkedUserCtx, false, git.Sha1ObjectFormat)) // FIXME: use forEachObjectFormat
-		t.Run("AddUserAsCollaborator", doAPIAddCollaborator(forkedUserCtx, sshContext.Username, perm.AccessModeRead))
-		t.Run("ForkFromDifferentUser", doAPIForkRepository(sshContext, forkedUserCtx.Username))
-
-		// Setup key the user ssh key
-		withKeyFile(t, keyname, func(keyFile string) {
-			t.Run("CreateUserKey", doAPICreateUserKey(sshContext, "test-key", keyFile))
-
-			// Setup remote link
-			// TODO: get url from api
-			sshURL := createSSHUrl(sshContext.GitPath(), u)
-
-			// Setup clone folder
 			dstPath := t.TempDir()
 
-			t.Run("Clone", doGitClone(dstPath, sshURL))
+			t.Run("CreateRepoInDifferentUser", doAPICreateRepository(forkedUserCtx, false, objectFormat))
+			t.Run("AddUserAsCollaborator", doAPIAddCollaborator(forkedUserCtx, httpContext.Username, perm.AccessModeRead))
+
+			t.Run("ForkFromDifferentUser", doAPIForkRepository(httpContext, forkedUserCtx.Username))
+
+			u.Path = httpContext.GitPath()
+			u.User = url.UserPassword(username, userPassword)
+
+			t.Run("Clone", doGitClone(dstPath, u))
+
+			dstPath2 := t.TempDir()
+
+			t.Run("Partial Clone", doPartialGitClone(dstPath2, u))
 
 			little, big := standardCommitAndPushTest(t, dstPath)
 			littleLFS, bigLFS := lfsCommitAndPushTest(t, dstPath)
-			rawTest(t, &sshContext, little, big, littleLFS, bigLFS)
-			mediaTest(t, &sshContext, little, big, littleLFS, bigLFS)
+			rawTest(t, &httpContext, little, big, littleLFS, bigLFS)
+			mediaTest(t, &httpContext, little, big, littleLFS, bigLFS)
 
-			t.Run("CreateAgitFlowPull", doCreateAgitFlowPull(dstPath, &sshContext, "test/head2"))
-			t.Run("InternalReferences", doInternalReferences(&sshContext, dstPath))
-			t.Run("BranchProtectMerge", doBranchProtectPRMerge(&sshContext, dstPath))
+			t.Run("CreateAgitFlowPull", doCreateAgitFlowPull(dstPath, &httpContext, "test/head"))
+			t.Run("InternalReferences", doInternalReferences(&httpContext, dstPath))
+			t.Run("BranchProtectMerge", doBranchProtectPRMerge(&httpContext, dstPath))
+			t.Run("AutoMerge", doAutoPRMerge(&httpContext, dstPath))
+			t.Run("CreatePRAndSetManuallyMerged", doCreatePRAndSetManuallyMerged(httpContext, httpContext, dstPath, "master", "test-manually-merge"))
 			t.Run("MergeFork", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
-				t.Run("CreatePRAndMerge", doMergeFork(sshContext, forkedUserCtx, "master", sshContext.Username+":master"))
+				t.Run("CreatePRAndMerge", doMergeFork(httpContext, forkedUserCtx, "master", httpContext.Username+":master"))
 				rawTest(t, &forkedUserCtx, little, big, littleLFS, bigLFS)
 				mediaTest(t, &forkedUserCtx, little, big, littleLFS, bigLFS)
 			})
 
-			t.Run("PushCreate", doPushCreate(sshContext, sshURL))
+			t.Run("PushCreate", doPushCreate(httpContext, u, objectFormat))
+		})
+	})
+	t.Run("SSH", func(t *testing.T) {
+		forEachObjectFormat(t, func(t *testing.T, objectFormat git.ObjectFormat) {
+			defer tests.PrintCurrentTest(t)()
+			sshContext := baseAPITestContext
+			sshContext.Reponame = "repo-tmp-18-" + objectFormat.Name()
+			keyname := "my-testing-key"
+			forkedUserCtx.Reponame = sshContext.Reponame
+			t.Run("CreateRepoInDifferentUser", doAPICreateRepository(forkedUserCtx, false, objectFormat))
+			t.Run("AddUserAsCollaborator", doAPIAddCollaborator(forkedUserCtx, sshContext.Username, perm.AccessModeRead))
+			t.Run("ForkFromDifferentUser", doAPIForkRepository(sshContext, forkedUserCtx.Username))
+
+			// Setup key the user ssh key
+			withKeyFile(t, keyname, func(keyFile string) {
+				t.Run("CreateUserKey", doAPICreateUserKey(sshContext, "test-key-"+objectFormat.Name(), keyFile))
+
+				// Setup remote link
+				// TODO: get url from api
+				sshURL := createSSHUrl(sshContext.GitPath(), u)
+
+				// Setup clone folder
+				dstPath := t.TempDir()
+
+				t.Run("Clone", doGitClone(dstPath, sshURL))
+
+				little, big := standardCommitAndPushTest(t, dstPath)
+				littleLFS, bigLFS := lfsCommitAndPushTest(t, dstPath)
+				rawTest(t, &sshContext, little, big, littleLFS, bigLFS)
+				mediaTest(t, &sshContext, little, big, littleLFS, bigLFS)
+
+				t.Run("CreateAgitFlowPull", doCreateAgitFlowPull(dstPath, &sshContext, "test/head2"))
+				t.Run("InternalReferences", doInternalReferences(&sshContext, dstPath))
+				t.Run("BranchProtectMerge", doBranchProtectPRMerge(&sshContext, dstPath))
+				t.Run("MergeFork", func(t *testing.T) {
+					defer tests.PrintCurrentTest(t)()
+					t.Run("CreatePRAndMerge", doMergeFork(sshContext, forkedUserCtx, "master", sshContext.Username+":master"))
+					rawTest(t, &forkedUserCtx, little, big, littleLFS, bigLFS)
+					mediaTest(t, &forkedUserCtx, little, big, littleLFS, bigLFS)
+				})
+
+				t.Run("PushCreate", doPushCreate(sshContext, sshURL, objectFormat))
+			})
 		})
 	})
 }
@@ -586,8 +590,11 @@ func doEnsureDiffNoChange(ctx APITestContext, pr api.PullRequest, diffHash strin
 	}
 }
 
-func doPushCreate(ctx APITestContext, u *url.URL) func(t *testing.T) {
+func doPushCreate(ctx APITestContext, u *url.URL, objectFormat git.ObjectFormat) func(t *testing.T) {
 	return func(t *testing.T) {
+		if objectFormat == git.Sha256ObjectFormat {
+			t.Skipf("push-create not supported for %s, see https://codeberg.org/forgejo/forgejo/issues/3783", objectFormat)
+		}
 		defer tests.PrintCurrentTest(t)()
 
 		// create a context for a currently non-existent repository
@@ -598,7 +605,7 @@ func doPushCreate(ctx APITestContext, u *url.URL) func(t *testing.T) {
 		tmpDir := t.TempDir()
 
 		// Now create local repository to push as our test and set its origin
-		t.Run("InitTestRepository", doGitInitTestRepository(tmpDir, git.Sha1ObjectFormat)) // FIXME: use forEachObjectFormat
+		t.Run("InitTestRepository", doGitInitTestRepository(tmpDir, objectFormat))
 		t.Run("AddRemote", doGitAddRemote(tmpDir, "origin", u))
 
 		// Disable "Push To Create" and attempt to push
