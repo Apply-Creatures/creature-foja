@@ -8,6 +8,57 @@ A [patch or minor release](https://semver.org/spec/v2.0.0.html) (e.g. upgrading 
 
 - [8.0.0](release-notes/8.0.0/)
 
+## 7.0.3
+
+This is a security release. See the documentation for more information on the [upgrade procedure](https://forgejo.org/docs/v7.0/admin/upgrade/).
+
+In addition to the following notable bug fixes, you can browse the [full list of commits](https://codeberg.org/forgejo/forgejo/compare/v7.0.2...v7.0.3) included in this release.
+
+* Container image upgrades
+
+  In the Forgejo v7.0.3 container images, the Git version was upgraded to [2.43.4](https://pkgs.alpinelinux.org/packages?name=git&branch=v3.19) which includes fixes for [multiple vulnerabilities](https://github.blog/2024-05-14-securing-git-addressing-5-new-vulnerabilities/). However, the vulnerabilities with a high impact can be exploited when Git is used in an environment (or Operating Systems) which is different from the Forgejo OCI image.
+
+* **Security:**
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3673). Fixed: [CVE-2024-24788](https://pkg.go.dev/vuln/GO-2024-2824): a malformed DNS message in response to a query can cause the lookup functions to get stuck in an infinite loop.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3802). Fixed: backticks in [mermaid](https://mermaid.js.org/) block diagram labels [are not sanitized properly](https://github.com/mermaid-js/mermaid/commit/c7fe9a646574597adefe3e6fb2b3707112a151aa).
+
+* **Bug fixes:**
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3588). Fixed: migration of a repository from gogs fails when it is hosted at a subpath.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3591). Fixed: when creating an OAuth2 application the redirect URLs are not enforced to be mandatory.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3659). Fixed: OAuth2 may process authorization requests automatically without user consent or interaction.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3659). Fixed: the API incorrectly excludes repositories where code is not enabled.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3677). Fixed: "Allow edits from maintainers" cannot be modified via the pull request web UI.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3687). Fixed: repository activity feeds (including RSS and Atom feeds) contain repeated activities.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3705). Fixed: uploading maven packages with metadata being uploaded separately will fail.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3751). Fixed: the mail notification sent about commits pushed to pull requests are empty.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3753). Fixed: inline emails attachments are not properly handled when commenting on an issue via email.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3760). Fixed: the links to .zip and tar.gz on the tag list web UI fail.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3767). Fixed: expanding code diff while previewing a pull request before it is created fails.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3772). Fixed: the CLI is not able to migrate Forgejo Actions artifacts.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3772). Fixed: when adopting a repository, the default branch is not taken into account.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3772). Fixed: when using reverse proxy authentication, logout will not be taken into account when immediately trying to login afterwards.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3788). Fixed: pushing to the master branch of a sha256 repository fails.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3827). Fixed: a very long project column name will make the action menu inaccessible.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3842). Fixed: a useless error is displayed when the title of a merged pull request is modified.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3846). Fixed: workflow badges are not working for workflows that are not running on push (such as scheduled workflows, and ones that run on tags and pull requests).
+
+* **Localization:**
+  * Improvements to English locale: [[1]](https://codeberg.org/forgejo/forgejo/pulls/3825), [[2]](https://codeberg.org/forgejo/forgejo/pulls/3750), [[3]](https://codeberg.org/forgejo/forgejo/pulls/3742), [[4]](https://codeberg.org/forgejo/forgejo/pulls/3674), [[5]](https://codeberg.org/forgejo/forgejo/pulls/3641).
+  * Translation updates: [[1]](https://codeberg.org/forgejo/forgejo/pulls/3852), [[2]](https://codeberg.org/forgejo/forgejo/pulls/3749), [[3]](https://codeberg.org/forgejo/forgejo/pulls/3740), [[4]](https://codeberg.org/forgejo/forgejo/pulls/3631).
+
+* Gitea v1.21 compatibility
+
+  This section is for information only and does not require any action.
+
+  The semantic version of the Forgejo 7.0 releases are:
+
+  * `v7.0.0+gitea-1.22.0`
+  * `v7.0.1+gitea-1.22.0`
+  * `v7.0.2+gitea-1.22.0`
+  * `v7.0.3+gitea-1.21.11`
+
+  Gitea v1.22 is [not published yet](https://github.com/go-gitea/gitea/issues/30731) as of 21 May 2024 and in reality all Forgejo v7.0 releases are compatible with Gitea v1.21.11. Advertising they will be compatible with an unpublished Gitea version was incorrect. The Gitea v1.22 release was anticipated to happen shortly after [Forgejo v7.0 was published on 23 April 2024](https://forgejo.org/2024-04-release-v7-0/) because it was already in the late stages of its release candidate lifecycle. However, around 27 April, [the Gitea release candidates were dropped](https://github.com/go-gitea/gitea/issues/30501) and the release candidates restarted from the Gitea development branch.
+
 ## 7.0.2
 
 This is a bug fix release. See the documentation for more information on the [upgrade procedure](https://forgejo.org/docs/v7.0/admin/upgrade/).
