@@ -27,6 +27,7 @@ type GrepResult struct {
 type GrepOptions struct {
 	RefName           string
 	MaxResultLimit    int
+	MatchesPerFile    int
 	ContextLineNumber int
 	IsFuzzy           bool
 	PathSpec          []setting.Glob
@@ -54,6 +55,9 @@ func GrepSearch(ctx context.Context, repo *Repository, search string, opts GrepO
 	var results []*GrepResult
 	cmd := NewCommand(ctx, "grep", "--null", "--break", "--heading", "--fixed-strings", "--line-number", "--ignore-case", "--full-name")
 	cmd.AddOptionValues("--context", fmt.Sprint(opts.ContextLineNumber))
+	if opts.MatchesPerFile > 0 {
+		cmd.AddOptionValues("--max-count", fmt.Sprint(opts.MatchesPerFile))
+	}
 	if opts.IsFuzzy {
 		words := strings.Fields(search)
 		for _, word := range words {

@@ -407,3 +407,19 @@ func DeleteWiki(ctx context.Context, repo *repo_model.Repository) error {
 	system_model.RemoveAllWithNotice(ctx, "Delete repository wiki", repo.WikiPath())
 	return nil
 }
+
+func SearchWikiContents(ctx context.Context, repo *repo_model.Repository, keyword string) ([]*git.GrepResult, error) {
+	gitRepo, err := git.OpenRepository(ctx, repo.WikiPath())
+	if err != nil {
+		return nil, err
+	}
+	defer gitRepo.Close()
+
+	return git.GrepSearch(ctx, gitRepo, keyword, git.GrepOptions{
+		ContextLineNumber: 0,
+		IsFuzzy:           true,
+		RefName:           repo.GetWikiBranchName(),
+		MaxResultLimit:    10,
+		MatchesPerFile:    3,
+	})
+}
