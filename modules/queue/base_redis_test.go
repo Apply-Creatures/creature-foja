@@ -5,120 +5,134 @@ package queue
 
 import (
 	"context"
-	"os"
-	"os/exec"
 	"testing"
-	"time"
 
-	"code.gitea.io/gitea/modules/nosql"
+	"code.gitea.io/gitea/modules/queue/mock"
 	"code.gitea.io/gitea/modules/setting"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/redis/go-redis/v9"
+	"github.com/stretchr/testify/suite"
+	"go.uber.org/mock/gomock"
 )
 
-const defaultTestRedisServer = "127.0.0.1:6379"
+type baseRedisUnitTestSuite struct {
+	suite.Suite
 
-func testRedisHost() string {
-	value := os.Getenv("TEST_REDIS_SERVER")
-	if value != "" {
-		return value
-	}
-
-	return defaultTestRedisServer
-}
-
-func waitRedisReady(conn string, dur time.Duration) (ready bool) {
-	ctxTimed, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-	for t := time.Now(); ; time.Sleep(50 * time.Millisecond) {
-		ret := nosql.GetManager().GetRedisClient(conn).Ping(ctxTimed)
-		if ret.Err() == nil {
-			return true
-		}
-		if time.Since(t) > dur {
-			return false
-		}
-	}
-}
-
-func redisServerCmd(t *testing.T) *exec.Cmd {
-	redisServerProg, err := exec.LookPath("redis-server")
-	if err != nil {
-		return nil
-	}
-	c := &exec.Cmd{
-		Path:   redisServerProg,
-		Args:   []string{redisServerProg, "--bind", "127.0.0.1", "--port", "6379"},
-		Dir:    t.TempDir(),
-		Stdin:  os.Stdin,
-		Stdout: os.Stdout,
-		Stderr: os.Stderr,
-	}
-	return c
+	mockController *gomock.Controller
 }
 
 func TestBaseRedis(t *testing.T) {
-	redisAddress := "redis://" + testRedisHost() + "/0"
-	queueSettings := setting.QueueSettings{
-		Length:  10,
-		ConnStr: redisAddress,
-	}
-
-	var redisServer *exec.Cmd
-	if !waitRedisReady(redisAddress, 0) {
-		redisServer = redisServerCmd(t)
-
-		if redisServer == nil {
-			t.Skip("redis-server not found in Forgejo test yet")
-			return
-		}
-
-		assert.NoError(t, redisServer.Start())
-		if !assert.True(t, waitRedisReady(redisAddress, 5*time.Second), "start redis-server") {
-			return
-		}
-	}
-
-	defer func() {
-		if redisServer != nil {
-			_ = redisServer.Process.Signal(os.Interrupt)
-			_ = redisServer.Wait()
-		}
-	}()
-
-	testQueueBasic(t, newBaseRedisSimple, toBaseConfig("baseRedis", queueSettings), false)
-	testQueueBasic(t, newBaseRedisUnique, toBaseConfig("baseRedisUnique", queueSettings), true)
+	suite.Run(t, &baseRedisUnitTestSuite{})
 }
 
-func TestBaseRedisWithPrefix(t *testing.T) {
-	redisAddress := "redis://" + testRedisHost() + "/0?prefix=forgejo:queue:"
-	queueSettings := setting.QueueSettings{
-		Length:  10,
-		ConnStr: redisAddress,
+func (suite *baseRedisUnitTestSuite) SetupSuite() {
+	suite.mockController = gomock.NewController(suite.T())
+}
+
+func (suite *baseRedisUnitTestSuite) TestBasic() {
+	queueName := "test-queue"
+	testCases := []struct {
+		Name             string
+		ConnectionString string
+		QueueName        string
+		Unique           bool
+	}{
+		{
+			Name:             "unique",
+			ConnectionString: "redis://127.0.0.1/0",
+			QueueName:        queueName,
+			Unique:           true,
+		},
+		{
+			Name:             "non-unique",
+			ConnectionString: "redis://127.0.0.1/0",
+			QueueName:        queueName,
+			Unique:           false,
+		},
+		{
+			Name:             "unique with prefix",
+			ConnectionString: "redis://127.0.0.1/0?prefix=forgejo:queue:",
+			QueueName:        "forgejo:queue:" + queueName,
+			Unique:           true,
+		},
+		{
+			Name:             "non-unique with prefix",
+			ConnectionString: "redis://127.0.0.1/0?prefix=forgejo:queue:",
+			QueueName:        "forgejo:queue:" + queueName,
+			Unique:           false,
+		},
 	}
 
-	var redisServer *exec.Cmd
-	if !waitRedisReady(redisAddress, 0) {
-		redisServer = redisServerCmd(t)
+	for _, testCase := range testCases {
+		suite.Run(testCase.Name, func() {
+			queueSettings := setting.QueueSettings{
+				Length:  10,
+				ConnStr: testCase.ConnectionString,
+			}
 
-		if redisServer == nil {
-			t.Skip("redis-server not found in Forgejo test yet")
-			return
-		}
+			// Configure expectations.
+			mockRedisStore := mock.NewInMemoryMockRedis()
+			redisClient := mock.NewMockUniversalClient(suite.mockController)
 
-		assert.NoError(t, redisServer.Start())
-		if !assert.True(t, waitRedisReady(redisAddress, 5*time.Second), "start redis-server") {
-			return
-		}
+			redisClient.EXPECT().
+				Ping(gomock.Any()).
+				Times(1).
+				Return(&redis.StatusCmd{})
+			redisClient.EXPECT().
+				LLen(gomock.Any(), testCase.QueueName).
+				Times(1).
+				DoAndReturn(mockRedisStore.LLen)
+			redisClient.EXPECT().
+				LPop(gomock.Any(), testCase.QueueName).
+				Times(1).
+				DoAndReturn(mockRedisStore.LPop)
+			redisClient.EXPECT().
+				RPush(gomock.Any(), testCase.QueueName, gomock.Any()).
+				Times(1).
+				DoAndReturn(mockRedisStore.RPush)
+
+			if testCase.Unique {
+				redisClient.EXPECT().
+					SAdd(gomock.Any(), testCase.QueueName+"_unique", gomock.Any()).
+					Times(1).
+					DoAndReturn(mockRedisStore.SAdd)
+				redisClient.EXPECT().
+					SRem(gomock.Any(), testCase.QueueName+"_unique", gomock.Any()).
+					Times(1).
+					DoAndReturn(mockRedisStore.SRem)
+				redisClient.EXPECT().
+					SIsMember(gomock.Any(), testCase.QueueName+"_unique", gomock.Any()).
+					Times(2).
+					DoAndReturn(mockRedisStore.SIsMember)
+			}
+
+			client, err := newBaseRedisGeneric(
+				toBaseConfig(queueName, queueSettings),
+				testCase.Unique,
+				redisClient,
+			)
+			suite.Require().NoError(err)
+
+			ctx := context.Background()
+			expectedContent := []byte("test")
+
+			suite.Require().NoError(client.PushItem(ctx, expectedContent))
+
+			found, err := client.HasItem(ctx, expectedContent)
+			suite.Require().NoError(err)
+			if testCase.Unique {
+				suite.True(found)
+			} else {
+				suite.False(found)
+			}
+
+			found, err = client.HasItem(ctx, []byte("not found content"))
+			suite.Require().NoError(err)
+			suite.False(found)
+
+			content, err := client.PopItem(ctx)
+			suite.Require().NoError(err)
+			suite.Equal(expectedContent, content)
+		})
 	}
-
-	defer func() {
-		if redisServer != nil {
-			_ = redisServer.Process.Signal(os.Interrupt)
-			_ = redisServer.Wait()
-		}
-	}()
-
-	testQueueBasic(t, newBaseRedisSimple, toBaseConfig("baseRedis", queueSettings), false)
-	testQueueBasic(t, newBaseRedisUnique, toBaseConfig("baseRedisUnique", queueSettings), true)
 }

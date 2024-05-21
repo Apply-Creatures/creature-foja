@@ -192,16 +192,24 @@ func (q *WorkerPoolQueue[T]) ShutdownWait(timeout time.Duration) {
 	<-q.shutdownDone
 }
 
-func getNewQueueFn(t string) (string, func(cfg *BaseConfig, unique bool) (baseQueue, error)) {
+func getNewQueue(t string, cfg *BaseConfig, unique bool) (string, baseQueue, error) {
 	switch t {
 	case "dummy", "immediate":
-		return t, newBaseDummy
+		queue, err := newBaseDummy(cfg, unique)
+
+		return t, queue, err
 	case "channel":
-		return t, newBaseChannelGeneric
+		queue, err := newBaseChannelGeneric(cfg, unique)
+
+		return t, queue, err
 	case "redis":
-		return t, newBaseRedisGeneric
+		queue, err := newBaseRedisGeneric(cfg, unique, nil)
+
+		return t, queue, err
 	default: // level(leveldb,levelqueue,persistable-channel)
-		return "level", newBaseLevelQueueGeneric
+		queue, err := newBaseLevelQueueGeneric(cfg, unique)
+
+		return "level", queue, err
 	}
 }
 
@@ -217,14 +225,14 @@ func NewWorkerPoolQueueWithContext[T any](ctx context.Context, name string, queu
 
 	var w WorkerPoolQueue[T]
 	var err error
-	queueType, newQueueFn := getNewQueueFn(queueSetting.Type)
-	w.baseQueueType = queueType
+
 	w.baseConfig = toBaseConfig(name, queueSetting)
-	w.baseQueue, err = newQueueFn(w.baseConfig, unique)
+
+	w.baseQueueType, w.baseQueue, err = getNewQueue(queueSetting.Type, w.baseConfig, unique)
 	if err != nil {
 		return nil, err
 	}
-	log.Trace("Created queue %q of type %q", name, queueType)
+	log.Trace("Created queue %q of type %q", name, w.baseQueueType)
 
 	w.ctxRun, _, w.ctxRunCancel = process.GetManager().AddTypedContext(ctx, "Queue: "+w.GetName(), process.SystemProcessType, false)
 	w.batchChan = make(chan []T)
