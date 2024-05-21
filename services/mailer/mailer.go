@@ -365,10 +365,8 @@ func (s *sendmailSender) Send(from string, to []string, msg io.WriterTo) error {
 	return waitError
 }
 
-// Sender sendmail mail sender
 type dummySender struct{}
 
-// Send send email
 func (s *dummySender) Send(from string, to []string, msg io.WriterTo) error {
 	buf := bytes.Buffer{}
 	if _, err := msg.WriteTo(&buf); err != nil {
