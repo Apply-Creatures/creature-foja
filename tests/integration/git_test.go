@@ -592,6 +592,9 @@ func doEnsureDiffNoChange(ctx APITestContext, pr api.PullRequest, diffHash strin
 
 func doPushCreate(ctx APITestContext, u *url.URL, objectFormat git.ObjectFormat) func(t *testing.T) {
 	return func(t *testing.T) {
+		if objectFormat == git.Sha256ObjectFormat {
+			t.Skipf("push-create not supported for %s, see https://codeberg.org/forgejo/forgejo/issues/3783", objectFormat)
+		}
 		defer tests.PrintCurrentTest(t)()
 
 		// create a context for a currently non-existent repository
