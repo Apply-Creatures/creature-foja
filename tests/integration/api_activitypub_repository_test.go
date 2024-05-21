@@ -95,16 +95,32 @@ func TestActivityPubRepositoryInboxValid(t *testing.T) {
 		func(res http.ResponseWriter, req *http.Request) {
 			// curl -H "Accept: application/json" https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/2
 			responseBody := fmt.Sprintf(`{"@context":["https://www.w3.org/ns/activitystreams","https://w3id.org/security/v1"],` +
-				`"id":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/2","type":"Person",` +
+				`"id":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/15","type":"Person",` +
 				`"icon":{"type":"Image","mediaType":"image/png","url":"https://federated-repo.prod.meissa.de/avatars/1bb05d9a5f6675ed0272af9ea193063c"},` +
-				`"url":"https://federated-repo.prod.meissa.de/stargoose1","inbox":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/2/inbox",` +
-				`"outbox":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/2/outbox","preferredUsername":"stargoose1",` +
-				`"publicKey":{"id":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/2#main-key","owner":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/2",` +
+				`"url":"https://federated-repo.prod.meissa.de/stargoose1","inbox":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/15/inbox",` +
+				`"outbox":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/15/outbox","preferredUsername":"stargoose1",` +
+				`"publicKey":{"id":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/15#main-key","owner":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/15",` +
 				`"publicKeyPem":"-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEA18H5s7N6ItZUAh9tneII\nIuZdTTa3cZlLa/9ejWAHTkcp3WLW+/zbsumlMrWYfBy2/yTm56qasWt38iY4D6ul\n` +
 				`CPiwhAqX3REvVq8tM79a2CEqZn9ka6vuXoDgBg/sBf/BUWqf7orkjUXwk/U0Egjf\nk5jcurF4vqf1u+rlAHH37dvSBaDjNj6Qnj4OP12bjfaY/yvs7+jue/eNXFHjzN4E\n` +
 				`T2H4B/yeKTJ4UuAwTlLaNbZJul2baLlHelJPAsxiYaziVuV5P+IGWckY6RSerRaZ\nAkc4mmGGtjAyfN9aewe+lNVfwS7ElFx546PlLgdQgjmeSwLX8FWxbPE5A/PmaXCs\n` +
 				`nx+nou+3dD7NluULLtdd7K+2x02trObKXCAzmi5/Dc+yKTzpFqEz+hLNCz7TImP/\ncK//NV9Q+X67J9O27baH9R9ZF4zMw8rv2Pg0WLSw1z7lLXwlgIsDapeMCsrxkVO4\n` +
 				`LXX5AQ1xQNtlssnVoUBqBrvZsX2jUUKUocvZqMGuE4hfAgMBAAE=\n-----END PUBLIC KEY-----\n"}}`)
+			fmt.Fprint(res, responseBody)
+		})
+	federatedRoutes.HandleFunc("/api/v1/activitypub/user-id/30",
+		func(res http.ResponseWriter, req *http.Request) {
+			// curl -H "Accept: application/json" https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/3
+			responseBody := fmt.Sprintf(`{"@context":["https://www.w3.org/ns/activitystreams","https://w3id.org/security/v1"],` +
+				`"id":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/30","type":"Person",` +
+				`"icon":{"type":"Image","mediaType":"image/png","url":"https://federated-repo.prod.meissa.de/avatars/9c03f03d1c1f13f21976a22489326fe1"},` +
+				`"url":"https://federated-repo.prod.meissa.de/stargoose2","inbox":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/30/inbox",` +
+				`"outbox":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/30/outbox","preferredUsername":"stargoose2",` +
+				`"publicKey":{"id":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/30#main-key","owner":"https://federated-repo.prod.meissa.de/api/v1/activitypub/user-id/30",` +
+				`"publicKeyPem":"-----BEGIN PUBLIC KEY-----\nMIIBojANBgkqhkiG9w0BAQEFAAOCAY8AMIIBigKCAYEAyv5NytsfqpWXSrwuk8a3\n0W1zE13QJioXb/e3opgN2CfKZkdm3hb+4+mGKoU/rCqegnL9/AO0Aw+R8fCHXx44\n` +
+				`iNkdVpdY8Dzq+tQ9IetPWbyVIBvSzGgvpqfS05JuVPsy8cBX9wByODjr5kq7k1/v\nY1G7E3uh0a/XJc+mZutwGC3gPgR93NSrqsvTPN4wdhCCu9uj02S8OBoKuSYaPkU+\n` +
+				`tZ4CEDpnclAOw/eNiH4x2irMvVtruEgtlTA5K2I4YJrmtGLidus47FCyc8/zEKUh\nAeiD8KWDvqsQgOhUwcQgRxAnYVCoMD9cnE+WFFRHTuQecNlmdNFs3Cr0yKcWjDde\n` +
+				`trvnehW7LfPveGb0tHRHPuVAJpncTOidUR5h/7pqMyvKHzuAHWomm9rEaGUxd/7a\nL1CFjAf39+QIEgu0Anj8mIc7CTiz+DQhDz+0jBOsQ0iDXc5GeBz7X9Xv4Jp966nq\n` +
+				`MUR0GQGXvfZQN9IqMO+WoUVy10Ddhns1EWGlA0x4fecnAgMBAAE=\n-----END PUBLIC KEY-----\n"}}`)
 			fmt.Fprint(res, responseBody)
 		})
 	federatedRoutes.HandleFunc("/",
@@ -129,15 +145,17 @@ func TestActivityPubRepositoryInboxValid(t *testing.T) {
 			"%s/api/v1/activitypub/repository-id/%v/inbox",
 			srv.URL, repositoryID)
 
-		activity := []byte(fmt.Sprintf(
+		timeNow := time.Now().UTC()
+
+		activity1 := []byte(fmt.Sprintf(
 			`{"type":"Like",`+
 				`"startTime":"%s",`+
 				`"actor":"%s/api/v1/activitypub/user-id/15",`+
 				`"object":"%s/api/v1/activitypub/repository-id/%v"}`,
-			time.Now().UTC().Format(time.RFC3339),
+			timeNow.Format(time.RFC3339),
 			federatedSrv.URL, srv.URL, repositoryID))
-		t.Logf("activity: %s", activity)
-		resp, err := c.Post(activity, repoInboxURL)
+		t.Logf("activity: %s", activity1)
+		resp, err := c.Post(activity1, repoInboxURL)
 
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusNoContent, resp.StatusCode)
@@ -145,6 +163,51 @@ func TestActivityPubRepositoryInboxValid(t *testing.T) {
 		federationHost := unittest.AssertExistsAndLoadBean(t, &forgefed.FederationHost{HostFqdn: "127.0.0.1"})
 		federatedUser := unittest.AssertExistsAndLoadBean(t, &user.FederatedUser{ExternalID: "15", FederationHostID: federationHost.ID})
 		unittest.AssertExistsAndLoadBean(t, &user.User{ID: federatedUser.UserID})
+
+		// A like activity by a different user of the same federated host.
+		activity2 := []byte(fmt.Sprintf(
+			`{"type":"Like",`+
+				`"startTime":"%s",`+
+				`"actor":"%s/api/v1/activitypub/user-id/30",`+
+				`"object":"%s/api/v1/activitypub/repository-id/%v"}`,
+			// Make sure this activity happens later then the one before
+			timeNow.Add(time.Second).Format(time.RFC3339),
+			federatedSrv.URL, srv.URL, repositoryID))
+		t.Logf("activity: %s", activity2)
+		resp, err = c.Post(activity2, repoInboxURL)
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+
+		federatedUser = unittest.AssertExistsAndLoadBean(t, &user.FederatedUser{ExternalID: "30", FederationHostID: federationHost.ID})
+		unittest.AssertExistsAndLoadBean(t, &user.User{ID: federatedUser.UserID})
+
+		// The same user sends another like activity
+		otherRepositoryID := 3
+		otherRepoInboxURL := fmt.Sprintf(
+			"%s/api/v1/activitypub/repository-id/%v/inbox",
+			srv.URL, otherRepositoryID)
+		activity3 := []byte(fmt.Sprintf(
+			`{"type":"Like",`+
+				`"startTime":"%s",`+
+				`"actor":"%s/api/v1/activitypub/user-id/30",`+
+				`"object":"%s/api/v1/activitypub/repository-id/%v"}`,
+			// Make sure this activity happens later then the ones before
+			timeNow.Add(time.Second*2).Format(time.RFC3339),
+			federatedSrv.URL, srv.URL, otherRepositoryID))
+		t.Logf("activity: %s", activity3)
+		resp, err = c.Post(activity3, otherRepoInboxURL)
+
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusNoContent, resp.StatusCode)
+
+		federatedUser = unittest.AssertExistsAndLoadBean(t, &user.FederatedUser{ExternalID: "30", FederationHostID: federationHost.ID})
+		unittest.AssertExistsAndLoadBean(t, &user.User{ID: federatedUser.UserID})
+
+		// Replay activity2.
+		resp, err = c.Post(activity2, repoInboxURL)
+		assert.NoError(t, err)
+		assert.Equal(t, http.StatusNotAcceptable, resp.StatusCode)
 	})
 }
 
