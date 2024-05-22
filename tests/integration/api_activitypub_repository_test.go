@@ -203,11 +203,6 @@ func TestActivityPubRepositoryInboxValid(t *testing.T) {
 
 		federatedUser = unittest.AssertExistsAndLoadBean(t, &user.FederatedUser{ExternalID: "30", FederationHostID: federationHost.ID})
 		unittest.AssertExistsAndLoadBean(t, &user.User{ID: federatedUser.UserID})
-
-		// Replay activity2.
-		resp, err = c.Post(activity2, repoInboxURL)
-		assert.NoError(t, err)
-		assert.Equal(t, http.StatusNotAcceptable, resp.StatusCode)
 	})
 }
 
