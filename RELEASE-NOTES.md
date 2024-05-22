@@ -25,7 +25,6 @@ In addition to the following notable bug fixes, you can browse the [full list of
 * **Bug fixes:**
   * [PR](https://codeberg.org/forgejo/forgejo/pulls/3588). Fixed: migration of a repository from gogs fails when it is hosted at a subpath.
   * [PR](https://codeberg.org/forgejo/forgejo/pulls/3591). Fixed: when creating an OAuth2 application the redirect URLs are not enforced to be mandatory.
-  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3659). Fixed: OAuth2 may process authorization requests automatically without user consent or interaction.
   * [PR](https://codeberg.org/forgejo/forgejo/pulls/3659). Fixed: the API incorrectly excludes repositories where code is not enabled.
   * [PR](https://codeberg.org/forgejo/forgejo/pulls/3677). Fixed: "Allow edits from maintainers" cannot be modified via the pull request web UI.
   * [PR](https://codeberg.org/forgejo/forgejo/pulls/3687). Fixed: repository activity feeds (including RSS and Atom feeds) contain repeated activities.
