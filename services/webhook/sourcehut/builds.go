@@ -265,18 +265,18 @@ func (pc sourcehutConvertor) buildManifest(repo *api.Repository, commitID, gitRe
 	}
 	defer r.Close()
 	var manifest struct {
-		Image        string              `yaml:"image"`
-		Arch         string              `yaml:"arch,omitempty"`
-		Packages     []string            `yaml:"packages,omitempty"`
-		Repositories map[string]string   `yaml:"repositories,omitempty"`
-		Artifacts    []string            `yaml:"artifacts,omitempty"`
-		Shell        bool                `yaml:"shell,omitempty"`
-		Sources      []string            `yaml:"sources"`
-		Tasks        []map[string]string `yaml:"tasks"`
-		Triggers     []string            `yaml:"triggers,omitempty"`
-		Environment  map[string]string   `yaml:"environment"`
-		Secrets      []string            `yaml:"secrets,omitempty"`
-		Oauth        string              `yaml:"oauth,omitempty"`
+		Image        yaml.Node         `yaml:"image"`
+		Arch         yaml.Node         `yaml:"arch,omitempty"`
+		Packages     yaml.Node         `yaml:"packages,omitempty"`
+		Repositories yaml.Node         `yaml:"repositories,omitempty"`
+		Artifacts    yaml.Node         `yaml:"artifacts,omitempty"`
+		Shell        yaml.Node         `yaml:"shell,omitempty"`
+		Sources      []string          `yaml:"sources"`
+		Tasks        yaml.Node         `yaml:"tasks"`
+		Triggers     yaml.Node         `yaml:"triggers,omitempty"`
+		Environment  map[string]string `yaml:"environment"`
+		Secrets      yaml.Node         `yaml:"secrets,omitempty"`
+		Oauth        yaml.Node         `yaml:"oauth,omitempty"`
 	}
 	if err := yaml.NewDecoder(r).Decode(&manifest); err != nil {
 		msg := fmt.Sprintf("could not decode manifest %q", pc.meta.ManifestPath)
