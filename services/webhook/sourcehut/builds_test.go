@@ -175,7 +175,7 @@ environment:
 		p := &api.PushPayload{
 			Ref: "refs/heads/main",
 			HeadCommit: &api.PayloadCommit{
-				ID:      "69b217caa89166a02b8cd368b64fb83a44720e14",
+				ID:      "b0404943256a1f5a50c3726f4378756b4c1e5704",
 				Message: "replace simple with complex",
 			},
 			Repo: repo,
@@ -187,15 +187,22 @@ environment:
 		pl, err := pc.Push(p)
 		require.NoError(t, err)
 
-		assert.Equal(t, buildsVariables{
-			Manifest: `image: archlinux
+		assert.Equal(t, `image: archlinux
 packages:
     - nodejs
     - npm
     - rsync
 sources:
-    - http://localhost:3000/testdata/repo.git#69b217caa89166a02b8cd368b64fb83a44720e14
+    - http://localhost:3000/testdata/repo.git#b0404943256a1f5a50c3726f4378756b4c1e5704
 tasks: []
+triggers:
+    - condition: failure
+      action: email
+      to: Jim Jimson <jim@example.org>
+    # report back the status
+    - condition: always
+      action: webhook
+      url: https://hook.example.org
 environment:
     BUILD_SUBMITTER: forgejo
     BUILD_SUBMITTER_URL: https://example.forgejo.org/
@@ -203,7 +210,9 @@ environment:
     deploy: synapse@synapse-bt.org
 secrets:
     - 7ebab768-e5e4-4c9d-ba57-ec41a72c5665
-`,
+`, pl.Variables.Manifest)
+		assert.Equal(t, buildsVariables{
+			Manifest:   pl.Variables.Manifest, // the manifest correctness is checked above, for nicer diff on error
 			Note:       "replace simple with complex",
 			Tags:       []string{"testdata/repo", "branch/main", "complex.yaml"},
 			Secrets:    false,
