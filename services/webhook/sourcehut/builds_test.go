@@ -69,19 +69,21 @@ func TestSourcehutBuildsPayload(t *testing.T) {
 		pc.meta.ManifestPath = "simple.yml"
 		pl, err := pc.Create(p)
 		require.NoError(t, err)
-		assert.Equal(t, buildsVariables{
-			Manifest: `image: alpine/edge
-sources:
+
+		assert.Equal(t, `sources:
     - http://localhost:3000/testdata/repo.git#58771003157b81abc6bf41df0c5db4147a3e3c83
-tasks:
-    - say-hello: |
-        echo hello
-    - say-world: echo world
 environment:
     BUILD_SUBMITTER: forgejo
     BUILD_SUBMITTER_URL: https://example.forgejo.org/
     GIT_REF: refs/heads/test
-`,
+image: alpine/edge
+tasks:
+    - say-hello: |
+        echo hello
+    - say-world: echo world
+`, pl.Variables.Manifest)
+		assert.Equal(t, buildsVariables{
+			Manifest:   pl.Variables.Manifest, // the manifest correctness is checked above, for nicer diff on error
 			Note:       "branch test created",
 			Tags:       []string{"testdata/repo", "branch/test", "simple.yml"},
 			Secrets:    true,
@@ -100,19 +102,21 @@ environment:
 		pc.meta.ManifestPath = "simple.yml"
 		pl, err := pc.Create(p)
 		require.NoError(t, err)
-		assert.Equal(t, buildsVariables{
-			Manifest: `image: alpine/edge
-sources:
+
+		assert.Equal(t, `sources:
     - http://localhost:3000/testdata/repo.git#58771003157b81abc6bf41df0c5db4147a3e3c83
-tasks:
-    - say-hello: |
-        echo hello
-    - say-world: echo world
 environment:
     BUILD_SUBMITTER: forgejo
     BUILD_SUBMITTER_URL: https://example.forgejo.org/
     GIT_REF: refs/tags/v1.0.0
-`,
+image: alpine/edge
+tasks:
+    - say-hello: |
+        echo hello
+    - say-world: echo world
+`, pl.Variables.Manifest)
+		assert.Equal(t, buildsVariables{
+			Manifest:   pl.Variables.Manifest, // the manifest correctness is checked above, for nicer diff on error
 			Note:       "tag v1.0.0 created",
 			Tags:       []string{"testdata/repo", "tag/v1.0.0", "simple.yml"},
 			Secrets:    true,
@@ -151,19 +155,20 @@ environment:
 		pl, err := pc.Push(p)
 		require.NoError(t, err)
 
-		assert.Equal(t, buildsVariables{
-			Manifest: `image: alpine/edge
-sources:
+		assert.Equal(t, `sources:
     - http://localhost:3000/testdata/repo.git#58771003157b81abc6bf41df0c5db4147a3e3c83
-tasks:
-    - say-hello: |
-        echo hello
-    - say-world: echo world
 environment:
     BUILD_SUBMITTER: forgejo
     BUILD_SUBMITTER_URL: https://example.forgejo.org/
     GIT_REF: refs/heads/main
-`,
+image: alpine/edge
+tasks:
+    - say-hello: |
+        echo hello
+    - say-world: echo world
+`, pl.Variables.Manifest)
+		assert.Equal(t, buildsVariables{
+			Manifest:   pl.Variables.Manifest, // the manifest correctness is checked above, for nicer diff on error
 			Note:       "add simple",
 			Tags:       []string{"testdata/repo", "branch/main", "simple.yml"},
 			Secrets:    true,
@@ -187,13 +192,20 @@ environment:
 		pl, err := pc.Push(p)
 		require.NoError(t, err)
 
-		assert.Equal(t, `image: archlinux
+		assert.Equal(t, `sources:
+    - http://localhost:3000/testdata/repo.git#b0404943256a1f5a50c3726f4378756b4c1e5704
+environment:
+    BUILD_SUBMITTER: forgejo
+    BUILD_SUBMITTER_URL: https://example.forgejo.org/
+    GIT_REF: refs/heads/main
+    deploy: synapse@synapse-bt.org
+image: archlinux
 packages:
     - nodejs
     - npm
     - rsync
-sources:
-    - http://localhost:3000/testdata/repo.git#b0404943256a1f5a50c3726f4378756b4c1e5704
+secrets:
+    - 7ebab768-e5e4-4c9d-ba57-ec41a72c5665
 tasks: []
 triggers:
     - condition: failure
@@ -203,13 +215,6 @@ triggers:
     - condition: always
       action: webhook
       url: https://hook.example.org
-environment:
-    BUILD_SUBMITTER: forgejo
-    BUILD_SUBMITTER_URL: https://example.forgejo.org/
-    GIT_REF: refs/heads/main
-    deploy: synapse@synapse-bt.org
-secrets:
-    - 7ebab768-e5e4-4c9d-ba57-ec41a72c5665
 `, pl.Variables.Manifest)
 		assert.Equal(t, buildsVariables{
 			Manifest:   pl.Variables.Manifest, // the manifest correctness is checked above, for nicer diff on error
