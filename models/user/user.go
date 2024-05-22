@@ -1,5 +1,6 @@
 // Copyright 2014 The Gogs Authors. All rights reserved.
 // Copyright 2019 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package user
@@ -130,6 +131,9 @@ type User struct {
 	Avatar          string `xorm:"VARCHAR(2048) NOT NULL"`
 	AvatarEmail     string `xorm:"NOT NULL"`
 	UseCustomAvatar bool
+
+	// For federation
+	NormalizedFederatedURI string
 
 	// Counters
 	NumFollowers int
@@ -301,6 +305,11 @@ func (u *User) HomeLink() string {
 // HTMLURL returns the user or organization's full link.
 func (u *User) HTMLURL() string {
 	return setting.AppURL + url.PathEscape(u.Name)
+}
+
+// APActorID returns the IRI to the api endpoint of the user
+func (u *User) APActorID() string {
+	return fmt.Sprintf("%vapi/v1/activitypub/user-id/%v", setting.AppURL, url.PathEscape(fmt.Sprintf("%v", u.ID)))
 }
 
 // OrganisationLink returns the organization sub page link.
@@ -832,6 +841,17 @@ func ValidateUser(u *User, cols ...string) error {
 	}
 
 	return nil
+}
+
+func (u User) Validate() []string {
+	var result []string
+	if err := ValidateUser(&u); err != nil {
+		result = append(result, err.Error())
+	}
+	if err := ValidateEmail(u.Email); err != nil {
+		result = append(result, err.Error())
+	}
+	return result
 }
 
 // UpdateUserCols update user according special columns

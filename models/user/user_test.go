@@ -1,4 +1,5 @@
 // Copyright 2017 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package user_test
@@ -105,6 +106,15 @@ func TestGetAllUsers(t *testing.T) {
 	assert.True(t, found[user_model.UserTypeIndividual], users)
 	assert.True(t, found[user_model.UserTypeRemoteUser], users)
 	assert.False(t, found[user_model.UserTypeOrganization], users)
+}
+
+func TestAPActorID(t *testing.T) {
+	user := user_model.User{ID: 1}
+	url := user.APActorID()
+	expected := "https://try.gitea.io/api/v1/activitypub/user-id/1"
+	if url != expected {
+		t.Errorf("unexpected APActorID, expected: %q, actual: %q", expected, url)
+	}
 }
 
 func TestSearchUsers(t *testing.T) {
