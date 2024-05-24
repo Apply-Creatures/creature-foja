@@ -242,6 +242,9 @@
   --color-highlight-fg: var(--color-primary-light-4);
   --color-highlight-bg: var(--color-primary-alpha-20);
   --color-overlay-backdrop: #080808c0;
+  /* pattern colors for image diff */
+  --checkerboard-color-1: #474747;
+  --checkerboard-color-2: #313131;
   accent-color: var(--color-accent);
   color-scheme: dark;
 }
