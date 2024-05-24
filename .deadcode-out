@@ -136,7 +136,6 @@ package "code.gitea.io/gitea/models/user"
 	func DeleteUserSetting
 	func GetUserEmailsByNames
 	func GetUserNamesByIDs
-	func DeleteFederatedUser
 
 package "code.gitea.io/gitea/modules/activitypub"
 	func (*Client).Post

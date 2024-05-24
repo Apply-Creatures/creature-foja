@@ -242,4 +242,3 @@ func StoreFollowingRepoList(ctx context.Context, localRepoID int64, followingRep
 func DeleteFollowingRepos(ctx context.Context, localRepoID int64) error {
 	return repo.StoreFollowingRepos(ctx, localRepoID, []*repo.FollowingRepo{})
 }
-
