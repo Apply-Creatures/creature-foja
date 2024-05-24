@@ -1,4 +1,5 @@
 // Copyright 2017 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package repo_test
@@ -216,4 +217,13 @@ func TestComposeSSHCloneURL(t *testing.T) {
 	assert.Equal(t, "git@[::1]:user/repo.git", repo_model.ComposeSSHCloneURL("user", "repo"))
 	setting.SSH.Port = 123
 	assert.Equal(t, "ssh://git@[::1]:123/user/repo.git", repo_model.ComposeSSHCloneURL("user", "repo"))
+}
+
+func TestAPActorID(t *testing.T) {
+	repo := repo_model.Repository{ID: 1}
+	url := repo.APActorID()
+	expected := "https://try.gitea.io/api/v1/activitypub/repository-id/1"
+	if url != expected {
+		t.Errorf("unexpected APActorID, expected: %q, actual: %q", expected, url)
+	}
 }

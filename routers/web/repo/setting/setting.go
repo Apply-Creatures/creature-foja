@@ -1,5 +1,6 @@
 // Copyright 2014 The Gogs Authors. All rights reserved.
 // Copyright 2018 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package setting
@@ -33,6 +34,7 @@ import (
 	actions_service "code.gitea.io/gitea/services/actions"
 	asymkey_service "code.gitea.io/gitea/services/asymkey"
 	"code.gitea.io/gitea/services/context"
+	"code.gitea.io/gitea/services/federation"
 	"code.gitea.io/gitea/services/forms"
 	"code.gitea.io/gitea/services/migrations"
 	mirror_service "code.gitea.io/gitea/services/mirror"
@@ -379,6 +381,41 @@ func SettingsPost(ctx *context.Context) {
 			return
 		}
 		log.Trace("Repository basic settings updated: %s/%s", ctx.Repo.Owner.Name, repo.Name)
+
+		ctx.Flash.Success(ctx.Tr("repo.settings.update_settings_success"))
+		ctx.Redirect(repo.Link() + "/settings")
+
+	case "federation":
+		if !setting.Federation.Enabled {
+			ctx.NotFound("", nil)
+			ctx.Flash.Info(ctx.Tr("repo.settings.federation_not_enabled"))
+			return
+		}
+		// ToDo: Rename to followingRepos
+		federationRepos := strings.TrimSpace(form.FederationRepos)
+		federationRepos = strings.TrimSuffix(federationRepos, ";")
+
+		maxFollowingRepoStrLength := 2048
+		errs := validation.ValidateMaxLen(federationRepos, maxFollowingRepoStrLength, "federationRepos")
+		if len(errs) > 0 {
+			ctx.Data["ERR_FederationRepos"] = true
+			ctx.Flash.Error(ctx.Tr("repo.form.string_too_long", maxFollowingRepoStrLength))
+			ctx.Redirect(repo.Link() + "/settings")
+			return
+		}
+
+		federationRepoSplit := []string{}
+		if federationRepos != "" {
+			federationRepoSplit = strings.Split(federationRepos, ";")
+		}
+		for idx, repo := range federationRepoSplit {
+			federationRepoSplit[idx] = strings.TrimSpace(repo)
+		}
+
+		if _, _, err := federation.StoreFollowingRepoList(ctx, ctx.Repo.Repository.ID, federationRepoSplit); err != nil {
+			ctx.ServerError("UpdateRepository", err)
+			return
+		}
 
 		ctx.Flash.Success(ctx.Tr("repo.settings.update_settings_success"))
 		ctx.Redirect(repo.Link() + "/settings")

@@ -1,3 +1,4 @@
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // Copyright 2021 The Gitea Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
@@ -205,6 +206,13 @@ func DeleteUser(ctx context.Context, u *user_model.User, purge bool) error {
 		// Delete Packages
 		if setting.Packages.Enabled {
 			if _, err := packages.RemoveAllPackages(ctx, u.ID); err != nil {
+				return err
+			}
+		}
+
+		// Delete Federated Users
+		if setting.Federation.Enabled {
+			if err := user_model.DeleteFederatedUser(ctx, u.ID); err != nil {
 				return err
 			}
 		}
