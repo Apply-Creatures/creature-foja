@@ -1,7 +1,7 @@
 // Copyright 2017 The Gitea Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
-package repository_test
+package integration
 
 import (
 	"testing"
@@ -11,6 +11,7 @@ import (
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
+	webhook_model "code.gitea.io/gitea/models/webhook"
 	repo_service "code.gitea.io/gitea/services/repository"
 
 	"github.com/stretchr/testify/assert"
@@ -51,5 +52,22 @@ func TestDeleteOwnerRepositoriesDirectly(t *testing.T) {
 
 	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
 
+	deletedHookID := unittest.AssertExistsAndLoadBean(t, &webhook_model.Webhook{RepoID: 1}).ID
+	unittest.AssertExistsAndLoadBean(t, &webhook_model.HookTask{
+		HookID: deletedHookID,
+	})
+
+	preservedHookID := unittest.AssertExistsAndLoadBean(t, &webhook_model.Webhook{RepoID: 3}).ID
+	unittest.AssertExistsAndLoadBean(t, &webhook_model.HookTask{
+		HookID: preservedHookID,
+	})
+
 	assert.NoError(t, repo_service.DeleteOwnerRepositoriesDirectly(db.DefaultContext, user))
+
+	unittest.AssertNotExistsBean(t, &webhook_model.HookTask{
+		HookID: deletedHookID,
+	})
+	unittest.AssertExistsAndLoadBean(t, &webhook_model.HookTask{
+		HookID: preservedHookID,
+	})
 }
