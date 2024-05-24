@@ -264,19 +264,13 @@ func (pc sourcehutConvertor) buildManifest(repo *api.Repository, commitID, gitRe
 		return []byte(msg), fmt.Errorf(msg+": %w", err)
 	}
 	defer r.Close()
+
+	// reference: https://man.sr.ht/builds.sr.ht/manifest.md
 	var manifest struct {
-		Image        string              `yaml:"image"`
-		Arch         string              `yaml:"arch,omitempty"`
-		Packages     []string            `yaml:"packages,omitempty"`
-		Repositories map[string]string   `yaml:"repositories,omitempty"`
-		Artifacts    []string            `yaml:"artifacts,omitempty"`
-		Shell        bool                `yaml:"shell,omitempty"`
-		Sources      []string            `yaml:"sources"`
-		Tasks        []map[string]string `yaml:"tasks"`
-		Triggers     []string            `yaml:"triggers,omitempty"`
-		Environment  map[string]string   `yaml:"environment"`
-		Secrets      []string            `yaml:"secrets,omitempty"`
-		Oauth        string              `yaml:"oauth,omitempty"`
+		Sources     []string          `yaml:"sources"`
+		Environment map[string]string `yaml:"environment"`
+
+		Rest map[string]yaml.Node `yaml:",inline"`
 	}
 	if err := yaml.NewDecoder(r).Decode(&manifest); err != nil {
 		msg := fmt.Sprintf("could not decode manifest %q", pc.meta.ManifestPath)
