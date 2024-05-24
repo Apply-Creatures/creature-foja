@@ -18,6 +18,7 @@ import (
 	user_model "code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/gitrepo"
 	"code.gitea.io/gitea/modules/optional"
+	"code.gitea.io/gitea/modules/test"
 	repo_service "code.gitea.io/gitea/services/repository"
 	files_service "code.gitea.io/gitea/services/repository/files"
 	"code.gitea.io/gitea/tests"
@@ -257,6 +258,31 @@ func TestCompareCodeExpand(t *testing.T) {
 			// all the links in the comparison should be to the forked repo&branch
 			assert.NotZero(t, els.Length())
 			expectedPrefix := fmt.Sprintf("/%s/%s/blob_excerpt/", forker.Name, repo.Name+"-copy")
+			for i := 0; i < els.Length(); i++ {
+				link := els.Eq(i).AttrOr("hx-get", "")
+				assert.True(t, strings.HasPrefix(link, expectedPrefix))
+			}
+		})
+
+		t.Run("code expander targets the repo in a PR", func(t *testing.T) {
+			defer tests.PrintCurrentTest(t)()
+
+			// Create a pullrequest
+			resp := testPullCreate(t, session, forker.Name, repo.Name+"-copy", false, "main", "code-expand", "This is a pull title")
+
+			// Grab the URL for the PR
+			url := test.RedirectURL(resp) + "/files"
+
+			// Visit the PR's diff
+			req := NewRequest(t, "GET", url)
+			resp = session.MakeRequest(t, req, http.StatusOK)
+			htmlDoc := NewHTMLParser(t, resp.Body)
+
+			els := htmlDoc.Find(`button.code-expander-button[hx-get]`)
+
+			// all the links in the comparison should be to the original repo&branch
+			assert.NotZero(t, els.Length())
+			expectedPrefix := fmt.Sprintf("/%s/%s/blob_excerpt/", owner.Name, repo.Name)
 			for i := 0; i < els.Length(); i++ {
 				link := els.Eq(i).AttrOr("hx-get", "")
 				assert.True(t, strings.HasPrefix(link, expectedPrefix))
