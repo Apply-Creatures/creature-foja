@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"code.gitea.io/gitea/models/forgefed"
+	"code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/models/user"
 	"code.gitea.io/gitea/modules/activitypub"
 	"code.gitea.io/gitea/modules/auth/password"
@@ -77,6 +78,20 @@ func ProcessLikeActivity(ctx context.Context, form any, repositoryID int64) (int
 		log.Info("Created federatedUser from ap: %v", user)
 	}
 	log.Info("Got user:%v", user.Name)
+
+	// execute the activity if the repo was not stared already
+	alreadyStared := repo.IsStaring(ctx, user.ID, repositoryID)
+	if !alreadyStared {
+		err = repo.StarRepo(ctx, user.ID, repositoryID, true)
+		if err != nil {
+			return http.StatusNotAcceptable, "Error staring", err
+		}
+	}
+	federationHost.LatestActivity = activity.StartTime
+	err = forgefed.UpdateFederationHost(ctx, federationHost)
+	if err != nil {
+		return http.StatusNotAcceptable, "Error updating federatedHost", err
+	}
 
 	return 0, "", nil
 }

@@ -45,7 +45,6 @@ package "code.gitea.io/gitea/models/dbfs"
 
 package "code.gitea.io/gitea/models/forgefed"
 	func GetFederationHost
-	func UpdateFederationHost
 
 package "code.gitea.io/gitea/models/forgejo/semver"
 	func GetVersion
