@@ -11,6 +11,7 @@ import (
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/test"
 	"code.gitea.io/gitea/routers"
+	"code.gitea.io/gitea/routers/web"
 	"code.gitea.io/gitea/tests"
 
 	"github.com/stretchr/testify/assert"
@@ -19,6 +20,7 @@ import (
 func TestRepoDownloadArchive(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	defer test.MockVariableValue(&setting.EnableGzip, true)()
+	defer test.MockVariableValue(&web.GzipMinSize, 10)()
 	defer test.MockVariableValue(&testWebRoutes, routers.NormalRoutes())()
 
 	req := NewRequest(t, "GET", "/user2/repo1/archive/master.zip")
