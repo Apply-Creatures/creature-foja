@@ -77,7 +77,7 @@ func (defaultHandler) NewRequest(ctx context.Context, w *webhook_model.Webhook, 
 		// see https://codeberg.org/codeberg/community/issues/1556
 		payloadContent, err = substituteRefShortName(payloadContent)
 		if err != nil {
-			return nil, nil, fmt.Errorf("could not substiture ref: %w", err)
+			return nil, nil, fmt.Errorf("could not substitute ref: %w", err)
 		}
 	}
 
