@@ -23413,6 +23413,11 @@
       "description": "PullRequest represents a pull request",
       "type": "object",
       "properties": {
+        "additions": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Additions"
+        },
         "allow_maintainer_edit": {
           "type": "boolean",
           "x-go-name": "AllowMaintainerEdit"
@@ -23434,6 +23439,11 @@
           "type": "string",
           "x-go-name": "Body"
         },
+        "changed_files": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ChangedFiles"
+        },
         "closed_at": {
           "type": "string",
           "format": "date-time",
@@ -23449,9 +23459,18 @@
           "format": "date-time",
           "x-go-name": "Created"
         },
+        "deletions": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "Deletions"
+        },
         "diff_url": {
           "type": "string",
           "x-go-name": "DiffURL"
+        },
+        "draft": {
+          "type": "boolean",
+          "x-go-name": "Draft"
         },
         "due_date": {
           "type": "string",
@@ -23529,6 +23548,12 @@
           },
           "x-go-name": "RequestedReviewers"
         },
+        "review_comments": {
+          "description": "number of review comments made on the diff of a PR review (not including comments on commits or issues in a PR)",
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ReviewComments"
+        },
         "state": {
           "$ref": "#/definitions/StateType"
         },
@@ -23558,6 +23583,10 @@
         "draft": {
           "type": "boolean",
           "x-go-name": "IsWorkInProgress"
+        },
+        "html_url": {
+          "type": "string",
+          "x-go-name": "HTMLURL"
         },
         "merged": {
           "type": "boolean",
@@ -24903,6 +24932,11 @@
           "description": "the user's full name",
           "type": "string",
           "x-go-name": "FullName"
+        },
+        "html_url": {
+          "description": "URL to the user's gitea page",
+          "type": "string",
+          "x-go-name": "HTMLURL"
         },
         "id": {
           "description": "the user's id",
