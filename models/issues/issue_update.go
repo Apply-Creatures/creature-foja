@@ -25,17 +25,18 @@ import (
 	"xorm.io/builder"
 )
 
-// UpdateIssueCols updates cols of issue
 func UpdateIssueCols(ctx context.Context, issue *Issue, cols ...string) error {
+	_, err := UpdateIssueColsWithCond(ctx, issue, builder.NewCond(), cols...)
+	return err
+}
+
+func UpdateIssueColsWithCond(ctx context.Context, issue *Issue, cond builder.Cond, cols ...string) (int64, error) {
 	sess := db.GetEngine(ctx).ID(issue.ID)
 	if issue.NoAutoTime {
 		cols = append(cols, []string{"updated_unix"}...)
 		sess.NoAutoTime()
 	}
-	if _, err := sess.Cols(cols...).Update(issue); err != nil {
-		return err
-	}
-	return nil
+	return sess.Cols(cols...).Where(cond).Update(issue)
 }
 
 func changeIssueStatus(ctx context.Context, issue *Issue, doer *user_model.User, isClosed, isMergePull bool) (*Comment, error) {
@@ -250,7 +251,7 @@ func UpdateIssueAttachments(ctx context.Context, issueID int64, uuids []string) 
 }
 
 // ChangeIssueContent changes issue content, as the given user.
-func ChangeIssueContent(ctx context.Context, issue *Issue, doer *user_model.User, content string) (err error) {
+func ChangeIssueContent(ctx context.Context, issue *Issue, doer *user_model.User, content string, contentVersion int) (err error) {
 	ctx, committer, err := db.TxContext(ctx)
 	if err != nil {
 		return err
@@ -269,9 +270,15 @@ func ChangeIssueContent(ctx context.Context, issue *Issue, doer *user_model.User
 	}
 
 	issue.Content = content
+	issue.ContentVersion = contentVersion + 1
 
-	if err = UpdateIssueCols(ctx, issue, "content"); err != nil {
+	expectedContentVersion := builder.NewCond().And(builder.Eq{"content_version": contentVersion})
+	affected, err := UpdateIssueColsWithCond(ctx, issue, expectedContentVersion, "content", "content_version")
+	if err != nil {
 		return fmt.Errorf("UpdateIssueCols: %w", err)
+	}
+	if affected == 0 {
+		return ErrIssueAlreadyChanged
 	}
 
 	historyDate := timeutil.TimeStampNow()
