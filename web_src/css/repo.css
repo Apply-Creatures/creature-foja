@@ -2108,13 +2108,14 @@ td .commit-summary {
   padding: 0;
   display: flex;
   flex-wrap: wrap;
+  margin-bottom: 10px;
 }
 
 .user-cards .list .item {
   list-style: none;
-  width: 32%;
-  margin: 10px 10px 10px 0;
-  padding-bottom: 14px;
+  width: 31%;
+  margin: 15px 15px 0 0;
+  padding: 14px;
   float: left;
 }
 
