@@ -369,6 +369,8 @@ func TestGenerateAdditionalHeaders(t *testing.T) {
 		"X-Gitea-Repository-Link":   "https://try.gitea.io/user2/repo1",
 		"X-Gitea-Issue-ID":          "1",
 		"X-Gitea-Issue-Link":        "https://try.gitea.io/user2/repo1/issues/1",
+		"X-Forgejo-Sender":          "user2",
+		"X-Forgejo-Recipient":       "test",
 	}
 
 	for key, value := range expected {
