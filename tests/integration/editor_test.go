@@ -30,26 +30,30 @@ import (
 func TestCreateFile(t *testing.T) {
 	onGiteaRun(t, func(t *testing.T, u *url.URL) {
 		session := loginUser(t, "user2")
-
-		// Request editor page
-		req := NewRequest(t, "GET", "/user2/repo1/_new/master/")
-		resp := session.MakeRequest(t, req, http.StatusOK)
-
-		doc := NewHTMLParser(t, resp.Body)
-		lastCommit := doc.GetInputValueByName("last_commit")
-		assert.NotEmpty(t, lastCommit)
-
-		// Save new file to master branch
-		req = NewRequestWithValues(t, "POST", "/user2/repo1/_new/master/", map[string]string{
-			"_csrf":          doc.GetCSRF(),
-			"last_commit":    lastCommit,
-			"tree_path":      "test.txt",
-			"content":        "Content",
-			"commit_choice":  "direct",
-			"commit_mail_id": "3",
-		})
-		session.MakeRequest(t, req, http.StatusSeeOther)
+		testCreateFile(t, session, "user2", "repo1", "master", "test.txt", "Content")
 	})
+}
+
+func testCreateFile(t *testing.T, session *TestSession, user, repo, branch, filePath, content string) *httptest.ResponseRecorder {
+	// Request editor page
+	newURL := fmt.Sprintf("/%s/%s/_new/%s/", user, repo, branch)
+	req := NewRequest(t, "GET", newURL)
+	resp := session.MakeRequest(t, req, http.StatusOK)
+
+	doc := NewHTMLParser(t, resp.Body)
+	lastCommit := doc.GetInputValueByName("last_commit")
+	assert.NotEmpty(t, lastCommit)
+
+	// Save new file to master branch
+	req = NewRequestWithValues(t, "POST", newURL, map[string]string{
+		"_csrf":          doc.GetCSRF(),
+		"last_commit":    lastCommit,
+		"tree_path":      filePath,
+		"content":        content,
+		"commit_choice":  "direct",
+		"commit_mail_id": "3",
+	})
+	return session.MakeRequest(t, req, http.StatusSeeOther)
 }
 
 func TestCreateFileOnProtectedBranch(t *testing.T) {
