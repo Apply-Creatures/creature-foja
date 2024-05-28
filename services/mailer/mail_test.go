@@ -360,6 +360,7 @@ func TestGenerateAdditionalHeaders(t *testing.T) {
 	expected := map[string]string{
 		"List-ID":                   "user2/repo1 <repo1.user2.localhost>",
 		"List-Archive":              "<https://try.gitea.io/user2/repo1>",
+		"X-Mailer":                  "Forgejo",
 		"X-Gitea-Reason":            "dummy-reason",
 		"X-Gitea-Sender":            "user2",
 		"X-Gitea-Recipient":         "test",
