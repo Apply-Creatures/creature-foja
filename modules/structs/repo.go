@@ -114,6 +114,7 @@ type Repository struct {
 	// swagger:strfmt date-time
 	MirrorUpdated time.Time     `json:"mirror_updated,omitempty"`
 	RepoTransfer  *RepoTransfer `json:"repo_transfer"`
+	Topics        []string      `json:"topics"`
 }
 
 // GetName implements the gitrepo.Repository interface
