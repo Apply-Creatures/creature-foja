@@ -996,7 +996,7 @@ func (g *GiteaLocalUploader) remapUser(source user_model.ExternalUserMigrated, t
 	if userID > 0 {
 		return target.RemapExternalUser("", 0, userID)
 	}
-	return target.RemapExternalUser(source.GetExternalName(), source.GetExternalID(), g.doer.ID)
+	return target.RemapExternalUser(source.GetExternalName(), source.GetExternalID(), user_model.GhostUserID)
 }
 
 func (g *GiteaLocalUploader) remapLocalUser(source user_model.ExternalUserMigrated) (int64, error) {
