@@ -26,6 +26,7 @@ import (
 	actions_module "code.gitea.io/gitea/modules/actions"
 	"code.gitea.io/gitea/modules/lfs"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/storage"
 
 	"xorm.io/builder"
@@ -125,9 +126,25 @@ func DeleteRepositoryDirectly(ctx context.Context, doer *user_model.User, repoID
 		return err
 	}
 
-	if _, err := db.GetEngine(ctx).In("hook_id", builder.Select("id").From("webhook").Where(builder.Eq{"webhook.repo_id": repo.ID})).
-		Delete(&webhook.HookTask{}); err != nil {
-		return err
+	if setting.Database.Type.IsMySQL() {
+		// mariadb:10 does not use the hook_task KEY when using IN.
+		// https://codeberg.org/forgejo/forgejo/issues/3678
+		//
+		// Version 11 does support it, but is not available in debian yet.
+		// Version 11.4 LTS is not available yet (stable should be released mid 2024 https://mariadb.org/mariadb/all-releases/)
+
+		// Sqlite does not support the DELETE *** FROM *** syntax
+		// https://stackoverflow.com/q/24511153/3207406
+
+		// in the meantime, use a dedicated query for mysql...
+		if _, err := db.Exec(ctx, "DELETE `hook_task` FROM `hook_task` INNER JOIN `webhook` ON `webhook`.id = `hook_task`.hook_id WHERE `webhook`.repo_id = ?", repo.ID); err != nil {
+			return err
+		}
+	} else {
+		if _, err := db.GetEngine(ctx).In("hook_id", builder.Select("id").From("webhook").Where(builder.Eq{"webhook.repo_id": repo.ID})).
+			Delete(&webhook.HookTask{}); err != nil {
+			return err
+		}
 	}
 
 	if err := db.DeleteBeans(ctx,

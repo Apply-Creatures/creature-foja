@@ -68,7 +68,7 @@
   position: absolute;
   left: -5.5px;
   top: 30px;
-  border-radius: var(--border-radius-circle);
+  border-radius: var(--border-radius-full);
   border: 2.5px solid var(--color-body);
 }
 

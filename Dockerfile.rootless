@@ -1,6 +1,6 @@
 FROM --platform=$BUILDPLATFORM docker.io/tonistiigi/xx AS xx
 
-FROM --platform=$BUILDPLATFORM docker.io/library/golang:1.22-alpine3.19 as build-env
+FROM --platform=$BUILDPLATFORM code.forgejo.org/oci/golang:1.22-alpine3.19 as build-env
 
 ARG GOPROXY
 ENV GOPROXY ${GOPROXY:-direct}
@@ -49,7 +49,7 @@ RUN chmod 755 /tmp/local/usr/local/bin/docker-entrypoint.sh \
               /go/src/code.gitea.io/gitea/environment-to-ini
 RUN chmod 644 /go/src/code.gitea.io/gitea/contrib/autocompletion/bash_autocomplete
 
-FROM docker.io/library/alpine:3.19
+FROM code.forgejo.org/oci/golang:1.22-alpine3.19
 LABEL maintainer="contact@forgejo.org" \
       org.opencontainers.image.authors="Forgejo" \
       org.opencontainers.image.url="https://forgejo.org" \

@@ -403,7 +403,7 @@ func generateAdditionalHeaders(ctx *mailCommentContext, reason string, recipient
 		// https://datatracker.ietf.org/doc/html/rfc2369
 		"List-Archive": fmt.Sprintf("<%s>", repo.HTMLURL()),
 
-		"X-Mailer":                  "Gitea",
+		"X-Mailer":                  "Forgejo",
 		"X-Gitea-Reason":            reason,
 		"X-Gitea-Sender":            ctx.Doer.Name,
 		"X-Gitea-Recipient":         recipient.Name,
@@ -415,8 +415,8 @@ func generateAdditionalHeaders(ctx *mailCommentContext, reason string, recipient
 		"X-Gitea-Issue-Link":        ctx.Issue.HTMLURL(),
 
 		"X-Forgejo-Reason":            reason,
-		"X-Forgejo-Sender":            ctx.Doer.DisplayName(),
-		"X-Forgejo-Recipient":         recipient.DisplayName(),
+		"X-Forgejo-Sender":            ctx.Doer.Name,
+		"X-Forgejo-Recipient":         recipient.Name,
 		"X-Forgejo-Recipient-Address": recipient.Email,
 		"X-Forgejo-Repository":        repo.Name,
 		"X-Forgejo-Repository-Path":   repo.FullName(),

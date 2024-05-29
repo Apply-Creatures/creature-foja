@@ -145,24 +145,24 @@ func TestGiteaUploadRemapLocalUser(t *testing.T) {
 
 	//
 	// The externalID does not match any existing user, everything
-	// belongs to the doer
+	// belongs to the Ghost user
 	//
 	target := repo_model.Release{}
 	uploader.userMap = make(map[int64]int64)
 	err := uploader.remapUser(&source, &target)
 	assert.NoError(t, err)
-	assert.EqualValues(t, doer.ID, target.GetUserID())
+	assert.EqualValues(t, user_model.GhostUserID, target.GetUserID())
 
 	//
 	// The externalID matches a known user but the name does not match,
-	// everything belongs to the doer
+	// everything belongs to the Ghost user
 	//
 	source.PublisherID = user.ID
 	target = repo_model.Release{}
 	uploader.userMap = make(map[int64]int64)
 	err = uploader.remapUser(&source, &target)
 	assert.NoError(t, err)
-	assert.EqualValues(t, doer.ID, target.GetUserID())
+	assert.EqualValues(t, user_model.GhostUserID, target.GetUserID())
 
 	//
 	// The externalID and externalName match an existing user, everything
@@ -195,13 +195,13 @@ func TestGiteaUploadRemapExternalUser(t *testing.T) {
 
 	//
 	// When there is no user linked to the external ID, the migrated data is authored
-	// by the doer
+	// by the Ghost user
 	//
 	uploader.userMap = make(map[int64]int64)
 	target := repo_model.Release{}
 	err := uploader.remapUser(&source, &target)
 	assert.NoError(t, err)
-	assert.EqualValues(t, doer.ID, target.GetUserID())
+	assert.EqualValues(t, user_model.GhostUserID, target.GetUserID())
 
 	//
 	// Link the external ID to an existing user

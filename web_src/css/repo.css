@@ -50,16 +50,16 @@
   width: 300px;
 }
 
+.issue-content-right .dropdown > .menu {
+  max-width: 270px;
+  min-width: 0;
+}
+
 @media (max-width: 767.98px) {
   .issue-content-left,
   .issue-content-right {
     width: 100%;
   }
-}
-
-.repository .issue-content-right .menu {
-  overflow-x: auto;
-  max-height: 500px;
 }
 
 .repository .issue-content-right .ui.list .dependency {
@@ -111,11 +111,6 @@
   min-width: max-content;
   right: unset;
   left: 0;
-}
-
-.repository .filter.menu .ui.dropdown .menu .item {
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .repository .select-label .desc {
@@ -666,6 +661,7 @@ td .commit-summary {
   font-size: 14px !important;
   padding: 7px 10px !important;
   border-radius: var(--border-radius-medium) !important;
+  flex-shrink: 0;
 }
 
 .issue-state-label .svg {
@@ -791,7 +787,7 @@ td .commit-summary {
   width: 34px;
   height: 34px;
   background-color: var(--color-timeline);
-  border-radius: var(--border-radius-circle);
+  border-radius: var(--border-radius-full);
   display: flex;
   float: left;
   margin-left: -33px;
@@ -1184,10 +1180,6 @@ td .commit-summary {
 
 .repository.compare.pull .title .issue-title .index {
   color: var(--color-text-light-2);
-}
-
-.repository .ui.dropdown.filter > .menu {
-  margin-top: 1px;
 }
 
 .repository.branches .commit-divergence .bar-group {
@@ -2108,13 +2100,14 @@ td .commit-summary {
   padding: 0;
   display: flex;
   flex-wrap: wrap;
+  margin-bottom: 10px;
 }
 
 .user-cards .list .item {
   list-style: none;
-  width: 32%;
-  margin: 10px 10px 10px 0;
-  padding-bottom: 14px;
+  width: 31%;
+  margin: 15px 15px 0 0;
+  padding: 14px;
   float: left;
 }
 

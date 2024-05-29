@@ -57,6 +57,8 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+var GzipMinSize = gzhttp.DefaultMinSize
+
 // optionsCorsHandler return a http handler which sets CORS options if enabled by config, it blocks non-CORS OPTIONS requests.
 func optionsCorsHandler() func(next http.Handler) http.Handler {
 	var corsHandler func(next http.Handler) http.Handler
@@ -242,7 +244,7 @@ func Routes() *web.Route {
 	var mid []any
 
 	if setting.EnableGzip {
-		wrapper, err := gzhttp.NewWrapper(gzhttp.RandomJitter(32, 0, false))
+		wrapper, err := gzhttp.NewWrapper(gzhttp.RandomJitter(32, 0, false), gzhttp.MinSize(GzipMinSize))
 		if err != nil {
 			log.Fatal("gzhttp.NewWrapper failed: %v", err)
 		}

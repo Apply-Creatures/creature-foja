@@ -259,6 +259,9 @@
   --color-highlight-fg: var(--color-primary-light-4);
   --color-highlight-bg: var(--color-primary-light-6);
   --color-overlay-backdrop: #080808c0;
+  /* pattern colors for gradient */
+  --checkerboard-color-1: #ffffff;
+  --checkerboard-color-2: #e5e5e5;
   accent-color: var(--color-accent);
   color-scheme: light;
 }
