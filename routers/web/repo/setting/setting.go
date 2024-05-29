@@ -391,22 +391,21 @@ func SettingsPost(ctx *context.Context) {
 			ctx.Flash.Info(ctx.Tr("repo.settings.federation_not_enabled"))
 			return
 		}
-		// ToDo: Rename to followingRepos
-		federationRepos := strings.TrimSpace(form.FederationRepos)
-		federationRepos = strings.TrimSuffix(federationRepos, ";")
+		followingRepos := strings.TrimSpace(form.FollowingRepos)
+		followingRepos = strings.TrimSuffix(followingRepos, ";")
 
 		maxFollowingRepoStrLength := 2048
-		errs := validation.ValidateMaxLen(federationRepos, maxFollowingRepoStrLength, "federationRepos")
+		errs := validation.ValidateMaxLen(followingRepos, maxFollowingRepoStrLength, "federationRepos")
 		if len(errs) > 0 {
-			ctx.Data["ERR_FederationRepos"] = true
+			ctx.Data["ERR_FollowingRepos"] = true
 			ctx.Flash.Error(ctx.Tr("repo.form.string_too_long", maxFollowingRepoStrLength))
 			ctx.Redirect(repo.Link() + "/settings")
 			return
 		}
 
 		federationRepoSplit := []string{}
-		if federationRepos != "" {
-			federationRepoSplit = strings.Split(federationRepos, ";")
+		if followingRepos != "" {
+			federationRepoSplit = strings.Split(followingRepos, ";")
 		}
 		for idx, repo := range federationRepoSplit {
 			federationRepoSplit[idx] = strings.TrimSpace(repo)

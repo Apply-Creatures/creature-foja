@@ -6,9 +6,11 @@ package integration
 import (
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"code.gitea.io/gitea/models/db"
+	"code.gitea.io/gitea/models/forgefed"
 	git_model "code.gitea.io/gitea/models/git"
 	repo_model "code.gitea.io/gitea/models/repo"
 	unit_model "code.gitea.io/gitea/models/unit"
@@ -261,5 +263,61 @@ func TestProtectedBranch(t *testing.T) {
 
 		// Verify it wasn't added.
 		unittest.AssertCount(t, &git_model.ProtectedBranch{RuleName: "master", RepoID: repo.ID}, 1)
+	})
+}
+
+func TestRepoFollowing(t *testing.T) {
+	setting.Federation.Enabled = true
+	defer tests.PrepareTestEnv(t)()
+	defer func() {
+		setting.Federation.Enabled = false
+	}()
+
+	federatedRoutes := http.NewServeMux()
+	federatedRoutes.HandleFunc("/.well-known/nodeinfo",
+		func(res http.ResponseWriter, req *http.Request) {
+			// curl -H "Accept: application/json" https://federated-repo.prod.meissa.de/.well-known/nodeinfo
+			responseBody := fmt.Sprintf(`{"links":[{"href":"http://%s/api/v1/nodeinfo","rel":"http://nodeinfo.diaspora.software/ns/schema/2.1"}]}`, req.Host)
+			t.Logf("response: %s", responseBody)
+			// TODO: as soon as content-type will become important:  content-type: application/json;charset=utf-8
+			fmt.Fprint(res, responseBody)
+		})
+	federatedRoutes.HandleFunc("/api/v1/nodeinfo",
+		func(res http.ResponseWriter, req *http.Request) {
+			// curl -H "Accept: application/json" https://federated-repo.prod.meissa.de/api/v1/nodeinfo
+			responseBody := fmt.Sprintf(`{"version":"2.1","software":{"name":"forgejo","version":"1.20.0+dev-3183-g976d79044",` +
+				`"repository":"https://codeberg.org/forgejo/forgejo.git","homepage":"https://forgejo.org/"},` +
+				`"protocols":["activitypub"],"services":{"inbound":[],"outbound":["rss2.0"]},` +
+				`"openRegistrations":true,"usage":{"users":{"total":14,"activeHalfyear":2}},"metadata":{}}`)
+			fmt.Fprint(res, responseBody)
+		})
+	federatedRoutes.HandleFunc("/",
+		func(res http.ResponseWriter, req *http.Request) {
+			t.Errorf("Unhandled request: %q", req.URL.EscapedPath())
+		})
+	federatedSrv := httptest.NewServer(federatedRoutes)
+	defer federatedSrv.Close()
+
+	user := unittest.AssertExistsAndLoadBean(t, &user_model.User{ID: 2})
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1, OwnerID: user.ID})
+	session := loginUser(t, user.Name)
+
+	t.Run("Add a following repo", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		link := fmt.Sprintf("/%s/settings", repo.FullName())
+
+		req := NewRequestWithValues(t, "POST", link, map[string]string{
+			"_csrf":           GetCSRF(t, session, link),
+			"action":          "federation",
+			"following_repos": fmt.Sprintf("%s/api/v1/activitypub/repository-id/1", federatedSrv.URL),
+		})
+		session.MakeRequest(t, req, http.StatusSeeOther)
+
+		// Verify it was added.
+		federationHost := unittest.AssertExistsAndLoadBean(t, &forgefed.FederationHost{HostFqdn: "127.0.0.1"})
+		unittest.AssertExistsAndLoadBean(t, &repo_model.FollowingRepo{
+			ExternalID:       "1",
+			FederationHostID: federationHost.ID,
+		})
 	})
 }

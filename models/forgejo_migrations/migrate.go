@@ -72,6 +72,8 @@ var migrations = []*Migration{
 	NewMigration("Create the `federated_user` table", CreateFederatedUserTable),
 	// v17 -> v18
 	NewMigration("Add `normalized_federated_uri` column to `user` table", AddNormalizedFederatedURIToUser),
+	// v18 -> v19
+	NewMigration("Create the `following_repo` table", CreateFollowingRepoTable),
 }
 
 // GetCurrentDBVersion returns the current Forgejo database version.
