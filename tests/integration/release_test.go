@@ -1,4 +1,5 @@
 // Copyright 2017 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package integration
@@ -6,6 +7,7 @@ package integration
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"testing"
 	"time"
 
@@ -66,6 +68,13 @@ func checkLatestReleaseAndCount(t *testing.T, session *TestSession, repoURL, ver
 	titleText := htmlDoc.doc.Find("#release-list > li .detail h4 a").First().Text()
 	assert.EqualValues(t, version, titleText)
 
+	// Check release count in the counter on the Release/Tag switch, as well as that the tab is highlighted
+	if count < 10 { // Only check values less than 10, should be enough attempts before this test cracks
+		// 10 is the pagination limit, but the counter can have more than that
+		releaseTab := htmlDoc.doc.Find(".repository.releases .ui.compact.menu a.active.item[href$='/releases']")
+		assert.Contains(t, releaseTab.Text(), strconv.Itoa(count)+" release") // Could be "1 release" or "4 releases"
+	}
+
 	releaseList := htmlDoc.doc.Find("#release-list > li")
 	assert.EqualValues(t, count, releaseList.Length())
 }
@@ -77,7 +86,7 @@ func TestViewReleases(t *testing.T) {
 	req := NewRequest(t, "GET", "/user2/repo1/releases")
 	session.MakeRequest(t, req, http.StatusOK)
 
-	// if CI is to slow this test fail, so lets wait a bit
+	// if CI is too slow this test fail, so lets wait a bit
 	time.Sleep(time.Millisecond * 100)
 }
 

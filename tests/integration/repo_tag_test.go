@@ -50,12 +50,13 @@ func TestTagViewWithoutRelease(t *testing.T) {
 	req := NewRequestf(t, "GET", "/%s/releases/tag/no-release", repo.FullName())
 	resp := MakeRequest(t, req, http.StatusOK)
 
-	// Test that the tags sub-menu is active
+	// Test that the tags sub-menu is active and has a counter
 	htmlDoc := NewHTMLParser(t, resp.Body)
-	htmlDoc.AssertElement(t, ".small-menu-items .active.item[href*='/tags']", true)
+	tagsTab := htmlDoc.Find(".small-menu-items .active.item[href$='/tags']")
+	assert.Contains(t, tagsTab.Text(), "4 tags")
 
 	// Test that the release sub-menu isn't active
-	releaseLink := htmlDoc.Find(".small-menu-items .item[href*='/releases']")
+	releaseLink := htmlDoc.Find(".small-menu-items .item[href$='/releases']")
 	assert.False(t, releaseLink.HasClass("active"))
 
 	// Test that the title is displayed
