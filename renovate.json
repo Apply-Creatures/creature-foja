@@ -100,6 +100,7 @@
       "extends": ["packages:linters", "packages:test"],
       "matchDepNames": [
           "github.com/golangci/golangci-lint/cmd/golangci-lint",
+	  "github.com/go-testfixtures/testfixtures",
           "github.com/PuerkitoBio/goquery",
           "happy-dom",
           "markdownlint-cli",
