@@ -212,3 +212,33 @@ func CreateUserFromAP(ctx context.Context, personID fm.PersonID, federationHostI
 
 	return &newUser, &federatedUser, nil
 }
+
+// Create or update a list of FollowingRepo structs
+func StoreFollowingRepoList(ctx context.Context, localRepoID int64, followingRepoList []string) (int, string, error) {
+	followingRepos := make([]*repo.FollowingRepo, 0, len(followingRepoList))
+	for _, uri := range followingRepoList {
+		federationHost, err := GetFederationHostForURI(ctx, uri)
+		if err != nil {
+			return http.StatusInternalServerError, "Wrong FederationHost", err
+		}
+		followingRepoID, err := fm.NewRepositoryID(uri, string(federationHost.NodeInfo.SoftwareName))
+		if err != nil {
+			return http.StatusNotAcceptable, "Invalid federated repo", err
+		}
+		followingRepo, err := repo.NewFollowingRepo(localRepoID, followingRepoID.ID, federationHost.ID, uri)
+		if err != nil {
+			return http.StatusNotAcceptable, "Invalid federated repo", err
+		}
+		followingRepos = append(followingRepos, &followingRepo)
+	}
+
+	if err := repo.StoreFollowingRepos(ctx, localRepoID, followingRepos); err != nil {
+		return 0, "", err
+	}
+
+	return 0, "", nil
+}
+
+func DeleteFollowingRepos(ctx context.Context, localRepoID int64) error {
+	return repo.StoreFollowingRepos(ctx, localRepoID, []*repo.FollowingRepo{})
+}

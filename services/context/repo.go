@@ -1,3 +1,4 @@
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // Copyright 2014 The Gogs Authors. All rights reserved.
 // Copyright 2017 The Gitea Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
@@ -386,6 +387,21 @@ func repoAssignment(ctx *Context, repo *repo_model.Repository) {
 	ctx.Data["HasAccess"] = true
 	ctx.Data["Permission"] = &ctx.Repo.Permission
 
+	followingRepoList, err := repo_model.FindFollowingReposByRepoID(ctx, repo.ID)
+	if err == nil {
+		followingRepoString := ""
+		for idx, followingRepo := range followingRepoList {
+			if idx > 0 {
+				followingRepoString += ";"
+			}
+			followingRepoString += followingRepo.URI
+		}
+		ctx.Data["FollowingRepos"] = followingRepoString
+	} else if err != repo_model.ErrMirrorNotExist {
+		ctx.ServerError("FindFollowingRepoByRepoID", err)
+		return
+	}
+
 	if repo.IsMirror {
 		pullMirror, err := repo_model.GetMirrorByRepoID(ctx, repo.ID)
 		if err == nil {
@@ -566,6 +582,7 @@ func RepoAssignment(ctx *Context) context.CancelFunc {
 
 	ctx.Data["Title"] = owner.Name + "/" + repo.Name
 	ctx.Data["Repository"] = repo
+	ctx.Data["RepositoryAPActorID"] = repo.APActorID()
 	ctx.Data["Owner"] = ctx.Repo.Repository.Owner
 	ctx.Data["IsRepositoryOwner"] = ctx.Repo.IsOwner()
 	ctx.Data["IsRepositoryAdmin"] = ctx.Repo.IsAdmin()

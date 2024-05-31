@@ -1,4 +1,5 @@
 // Copyright 2021 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package repo
@@ -340,6 +341,11 @@ func (repo *Repository) CommitLink(commitID string) (result string) {
 // APIURL returns the repository API URL
 func (repo *Repository) APIURL() string {
 	return setting.AppURL + "api/v1/repos/" + url.PathEscape(repo.OwnerName) + "/" + url.PathEscape(repo.Name)
+}
+
+// APActorID returns the activitypub repository API URL
+func (repo *Repository) APActorID() string {
+	return fmt.Sprintf("%vapi/v1/activitypub/repository-id/%v", setting.AppURL, url.PathEscape(fmt.Sprint(repo.ID)))
 }
 
 // GetCommitsCountCacheKey returns cache key used for commits count caching.

@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"strings"
 
-	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/validation"
 
 	ap "github.com/go-ap/activitypub"
@@ -71,10 +70,6 @@ type PersonID struct {
 
 // Factory function for PersonID. Created struct is asserted to be valid
 func NewPersonID(uri, source string) (PersonID, error) {
-	// TODO: remove after test
-	//if !validation.IsValidExternalURL(uri) {
-	//	return PersonId{}, fmt.Errorf("uri %s is not a valid external url", uri)
-	//}
 	result, err := newActorID(uri)
 	if err != nil {
 		return PersonID{}, err
@@ -126,16 +121,13 @@ type RepositoryID struct {
 
 // Factory function for RepositoryID. Created struct is asserted to be valid.
 func NewRepositoryID(uri, source string) (RepositoryID, error) {
-	if !validation.IsAPIURL(uri) {
-		return RepositoryID{}, fmt.Errorf("uri %s is not a valid repo url on this host %s", uri, setting.AppURL+"api")
-	}
 	result, err := newActorID(uri)
 	if err != nil {
 		return RepositoryID{}, err
 	}
 	result.Source = source
 
-	// validate Person specific path
+	// validate Person specific
 	repoID := RepositoryID{result}
 	if valid, err := validation.IsValid(repoID); !valid {
 		return RepositoryID{}, err

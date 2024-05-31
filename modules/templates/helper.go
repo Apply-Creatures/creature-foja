@@ -1,3 +1,4 @@
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // Copyright 2018 The Gitea Authors. All rights reserved.
 // Copyright 2014 The Gogs Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
@@ -155,6 +156,9 @@ func NewFuncMap() template.FuncMap {
 		},
 		"MermaidMaxSourceCharacters": func() int {
 			return setting.MermaidMaxSourceCharacters
+		},
+		"FederationEnabled": func() bool {
+			return setting.Federation.Enabled
 		},
 
 		// -----------------------------------------------------------------

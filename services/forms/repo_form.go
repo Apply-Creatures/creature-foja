@@ -1,3 +1,4 @@
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // Copyright 2014 The Gogs Authors. All rights reserved.
 // Copyright 2017 The Gitea Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
@@ -113,6 +114,7 @@ type RepoSettingForm struct {
 	RepoName               string `binding:"Required;AlphaDashDot;MaxSize(100)"`
 	Description            string `binding:"MaxSize(2048)"`
 	Website                string `binding:"ValidUrl;MaxSize(1024)"`
+	FollowingRepos         string
 	Interval               string
 	MirrorAddress          string
 	MirrorUsername         string
