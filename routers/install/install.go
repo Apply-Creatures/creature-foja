@@ -151,7 +151,7 @@ func Install(ctx *context.Context) {
 
 	form.EnableOpenIDSignIn = setting.Service.EnableOpenIDSignIn
 	form.EnableOpenIDSignUp = setting.Service.EnableOpenIDSignUp
-	form.DisableRegistration = setting.Service.DisableRegistration
+	form.DisableRegistration = true // Force it to true, for the installation, to discourage creating instances with open registration, which invite all kinds of spam.
 	form.AllowOnlyExternalRegistration = setting.Service.AllowOnlyExternalRegistration
 	form.EnableCaptcha = setting.Service.EnableCaptcha
 	form.RequireSignInView = setting.Service.RequireSignInView
