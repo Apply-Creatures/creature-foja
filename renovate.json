@@ -122,6 +122,11 @@
       "description": "Hold back on some package updates for a few days",
       "matchDepNames": ["monaco-editor"],
       "minimumReleaseAge": "30 days"
+    },
+    {
+      "description": "disallow `eslint-plugin-no-use-extend-native` v0.6.0+, requires eslint v9",
+      "matchDepNames":["eslint-plugin-no-use-extend-native"],
+      "allowedVersions": "<0.6.0"
     }
   ],
   "customManagers": [
