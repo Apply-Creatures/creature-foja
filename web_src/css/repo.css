@@ -1775,7 +1775,7 @@ td .commit-summary {
 }
 
 .file-view.markup {
-  padding: 1em 2em;
+  padding: 2em;
 }
 .repository .activity-header {
   display: flex;

@@ -105,7 +105,7 @@
 }
 
 #readme_profile {
-  padding: 1em 2em;
+  padding: 1.5em;
   background: var(--color-box-body);
   border: 1px solid var(--color-secondary);
   border-radius: var(--border-radius);
