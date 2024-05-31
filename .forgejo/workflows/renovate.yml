@@ -30,6 +30,7 @@ jobs:
         with:
           path: |
             .tmp/cache/renovate/repository
+            .tmp/cache/renovate/renovate-cache-sqlite
             .tmp/osv
           key: repo-cache-${{ github.run_id }}
           restore-keys: |
@@ -47,6 +48,8 @@ jobs:
           RENOVATE_TOKEN: ${{ secrets.RENOVATE_TOKEN }}
           RENOVATE_GIT_AUTHOR: 'Renovate Bot <forgejo-renovate-action@forgejo.org>'
 
+          RENOVATE_X_SQLITE_PACKAGE_CACHE: true
+
           GIT_AUTHOR_NAME: 'Renovate Bot'
           GIT_AUTHOR_EMAIL: 'forgejo-renovate-action@forgejo.org'
           GIT_COMMITTER_NAME: 'Renovate Bot'
@@ -60,5 +63,6 @@ jobs:
         with:
           path: |
             .tmp/cache/renovate/repository
+            .tmp/cache/renovate/renovate-cache-sqlite
             .tmp/osv
           key: repo-cache-${{ github.run_id }}
