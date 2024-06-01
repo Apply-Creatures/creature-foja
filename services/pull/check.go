@@ -119,12 +119,16 @@ func CheckPullMergeable(stdCtx context.Context, doer *user_model.User, perm *acc
 
 			// * if the doer is admin, they could skip the branch protection check,
 			// if that's allowed by the protected branch rule.
-			if adminSkipProtectionCheck && !pb.ApplyToAdmins {
-				if isRepoAdmin, errCheckAdmin := access_model.IsUserRepoAdmin(ctx, pr.BaseRepo, doer); errCheckAdmin != nil {
-					log.Error("Unable to check if %-v is a repo admin in %-v: %v", doer, pr.BaseRepo, errCheckAdmin)
-					return errCheckAdmin
-				} else if isRepoAdmin {
-					err = nil // repo admin can skip the check, so clear the error
+			if adminSkipProtectionCheck {
+				if doer.IsAdmin {
+					err = nil // instance admin can skip the check, so clear the error
+				} else if !pb.ApplyToAdmins {
+					if isRepoAdmin, errCheckAdmin := access_model.IsUserRepoAdmin(ctx, pr.BaseRepo, doer); errCheckAdmin != nil {
+						log.Error("Unable to check if %-v is a repo admin in %-v: %v", doer, pr.BaseRepo, errCheckAdmin)
+						return errCheckAdmin
+					} else if isRepoAdmin {
+						err = nil // repo admin can skip the check, so clear the error
+					}
 				}
 			}
 
