@@ -86,7 +86,7 @@ func testGit(t *testing.T, u *url.URL) {
 
 			t.Run("CreateAgitFlowPull", doCreateAgitFlowPull(dstPath, &httpContext, "test/head"))
 			t.Run("InternalReferences", doInternalReferences(&httpContext, dstPath))
-			t.Run("BranchProtectMerge", doBranchProtectPRMerge(&httpContext, dstPath))
+			t.Run("BranchProtect", doBranchProtect(&httpContext, dstPath))
 			t.Run("AutoMerge", doAutoPRMerge(&httpContext, dstPath))
 			t.Run("CreatePRAndSetManuallyMerged", doCreatePRAndSetManuallyMerged(httpContext, httpContext, dstPath, "master", "test-manually-merge"))
 			t.Run("MergeFork", func(t *testing.T) {
@@ -130,7 +130,7 @@ func testGit(t *testing.T, u *url.URL) {
 
 				t.Run("CreateAgitFlowPull", doCreateAgitFlowPull(dstPath, &sshContext, "test/head2"))
 				t.Run("InternalReferences", doInternalReferences(&sshContext, dstPath))
-				t.Run("BranchProtectMerge", doBranchProtectPRMerge(&sshContext, dstPath))
+				t.Run("BranchProtect", doBranchProtect(&sshContext, dstPath))
 				t.Run("MergeFork", func(t *testing.T) {
 					defer tests.PrintCurrentTest(t)()
 					t.Run("CreatePRAndMerge", doMergeFork(sshContext, forkedUserCtx, "master", sshContext.Username+":master"))
@@ -361,67 +361,66 @@ func generateCommitWithNewData(size int, repoPath, email, fullName, prefix strin
 	return filepath.Base(tmpFile.Name()), err
 }
 
-func doBranchProtectPRMerge(baseCtx *APITestContext, dstPath string) func(t *testing.T) {
+func doBranchProtect(baseCtx *APITestContext, dstPath string) func(t *testing.T) {
 	return func(t *testing.T) {
 		defer tests.PrintCurrentTest(t)()
 		t.Run("CreateBranchProtected", doGitCreateBranch(dstPath, "protected"))
 		t.Run("PushProtectedBranch", doGitPushTestRepository(dstPath, "origin", "protected"))
 
 		ctx := NewAPITestContext(t, baseCtx.Username, baseCtx.Reponame, auth_model.AccessTokenScopeWriteRepository)
-		t.Run("ProtectProtectedBranchNoWhitelist", doProtectBranch(ctx, "protected"))
-		t.Run("GenerateCommit", func(t *testing.T) {
-			_, err := generateCommitWithNewData(littleSize, dstPath, "user2@example.com", "User Two", "branch-data-file-")
-			assert.NoError(t, err)
-		})
-		t.Run("FailToPushToProtectedBranch", doGitPushTestRepositoryFail(dstPath, "origin", "protected"))
-		t.Run("PushToUnprotectedBranch", doGitPushTestRepository(dstPath, "origin", "protected:unprotected"))
-		var pr api.PullRequest
-		var err error
-		t.Run("CreatePullRequest", func(t *testing.T) {
-			pr, err = doAPICreatePullRequest(ctx, baseCtx.Username, baseCtx.Reponame, "protected", "unprotected")(t)
-			assert.NoError(t, err)
-		})
-		t.Run("GenerateCommit", func(t *testing.T) {
-			_, err := generateCommitWithNewData(littleSize, dstPath, "user2@example.com", "User Two", "branch-data-file-")
-			assert.NoError(t, err)
-		})
-		t.Run("PushToUnprotectedBranch", doGitPushTestRepository(dstPath, "origin", "protected:unprotected-2"))
-		var pr2 api.PullRequest
-		t.Run("CreatePullRequest", func(t *testing.T) {
-			pr2, err = doAPICreatePullRequest(ctx, baseCtx.Username, baseCtx.Reponame, "unprotected", "unprotected-2")(t)
-			assert.NoError(t, err)
-		})
-		t.Run("MergePR2", doAPIMergePullRequest(ctx, baseCtx.Username, baseCtx.Reponame, pr2.Index))
-		t.Run("MergePR", doAPIMergePullRequest(ctx, baseCtx.Username, baseCtx.Reponame, pr.Index))
-		t.Run("PullProtected", doGitPull(dstPath, "origin", "protected"))
 
-		t.Run("ProtectProtectedBranchUnprotectedFilePaths", doProtectBranch(ctx, "protected", parameterProtectBranch{
-			"unprotected_file_patterns": "unprotected-file-*",
-		}))
-		t.Run("GenerateCommit", func(t *testing.T) {
-			_, err := generateCommitWithNewData(littleSize, dstPath, "user2@example.com", "User Two", "unprotected-file-")
-			assert.NoError(t, err)
+		t.Run("FailToPushToProtectedBranch", func(t *testing.T) {
+			t.Run("ProtectProtectedBranch", doProtectBranch(ctx, "protected"))
+			t.Run("Create modified-protected-branch", doGitCheckoutBranch(dstPath, "-b", "modified-protected-branch", "protected"))
+			t.Run("GenerateCommit", func(t *testing.T) {
+				_, err := generateCommitWithNewData(littleSize, dstPath, "user2@example.com", "User Two", "branch-data-file-")
+				assert.NoError(t, err)
+			})
+
+			doGitPushTestRepositoryFail(dstPath, "origin", "modified-protected-branch:protected")(t)
 		})
-		t.Run("PushUnprotectedFilesToProtectedBranch", doGitPushTestRepository(dstPath, "origin", "protected"))
+
+		t.Run("PushToUnprotectedBranch", doGitPushTestRepository(dstPath, "origin", "modified-protected-branch:unprotected"))
+
+		t.Run("PushUnprotectedFilesToProtectedBranch", func(t *testing.T) {
+			t.Run("Create modified-unprotected-file-protected-branch", doGitCheckoutBranch(dstPath, "-b", "modified-unprotected-file-protected-branch", "protected"))
+			t.Run("UnprotectedFilePaths", doProtectBranch(ctx, "protected", parameterProtectBranch{
+				"unprotected_file_patterns": "unprotected-file-*",
+			}))
+			t.Run("GenerateCommit", func(t *testing.T) {
+				_, err := generateCommitWithNewData(littleSize, dstPath, "user2@example.com", "User Two", "unprotected-file-")
+				assert.NoError(t, err)
+			})
+			doGitPushTestRepository(dstPath, "origin", "modified-unprotected-file-protected-branch:protected")(t)
+			doGitCheckoutBranch(dstPath, "protected")(t)
+			doGitPull(dstPath, "origin", "protected")(t)
+		})
 
 		user, err := user_model.GetUserByName(db.DefaultContext, baseCtx.Username)
 		assert.NoError(t, err)
-		t.Run("ProtectProtectedBranchWhitelist", doProtectBranch(ctx, "protected", parameterProtectBranch{
+		t.Run("WhitelistUsers", doProtectBranch(ctx, "protected", parameterProtectBranch{
 			"enable_push":      "whitelist",
 			"enable_whitelist": "on",
 			"whitelist_users":  strconv.FormatInt(user.ID, 10),
 		}))
 
-		t.Run("CheckoutMaster", doGitCheckoutBranch(dstPath, "master"))
-		t.Run("CreateBranchForced", doGitCreateBranch(dstPath, "toforce"))
-		t.Run("GenerateCommit", func(t *testing.T) {
-			_, err := generateCommitWithNewData(littleSize, dstPath, "user2@example.com", "User Two", "branch-data-file-")
-			assert.NoError(t, err)
+		t.Run("WhitelistedUserFailToForcePushToProtectedBranch", func(t *testing.T) {
+			t.Run("Create toforce", doGitCheckoutBranch(dstPath, "-b", "toforce", "master"))
+			t.Run("GenerateCommit", func(t *testing.T) {
+				_, err := generateCommitWithNewData(littleSize, dstPath, "user2@example.com", "User Two", "branch-data-file-")
+				assert.NoError(t, err)
+			})
+			doGitPushTestRepositoryFail(dstPath, "-f", "origin", "toforce:protected")(t)
 		})
-		t.Run("FailToForcePushToProtectedBranch", doGitPushTestRepositoryFail(dstPath, "-f", "origin", "toforce:protected"))
-		t.Run("MergeProtectedToToforce", doGitMerge(dstPath, "protected"))
-		t.Run("PushToProtectedBranch", doGitPushTestRepository(dstPath, "origin", "toforce:protected"))
-		t.Run("CheckoutMasterAgain", doGitCheckoutBranch(dstPath, "master"))
+
+		t.Run("WhitelistedUserPushToProtectedBranch", func(t *testing.T) {
+			t.Run("Create topush", doGitCheckoutBranch(dstPath, "-b", "topush", "protected"))
+			t.Run("GenerateCommit", func(t *testing.T) {
+				_, err := generateCommitWithNewData(littleSize, dstPath, "user2@example.com", "User Two", "branch-data-file-")
+				assert.NoError(t, err)
+			})
+			doGitPushTestRepository(dstPath, "origin", "topush:protected")(t)
+		})
 	}
 }
 
