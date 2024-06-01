@@ -479,6 +479,9 @@ async function onEditContent(event) {
     editContentZone.addEventListener('ce-quick-submit', saveAndRefresh);
     editContentZone.querySelector('.cancel.button').addEventListener('click', cancelAndReset);
     editContentZone.querySelector('.save.button').addEventListener('click', saveAndRefresh);
+  } else {
+    const tabEditor = editContentZone.querySelector('.combo-markdown-editor').querySelector('.tabular.menu > a[data-tab-for=markdown-writer]');
+    tabEditor?.click();
   }
 
   // Show write/preview tab and copy raw content as needed
