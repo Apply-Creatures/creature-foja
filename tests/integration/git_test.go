@@ -368,7 +368,7 @@ func doBranchProtectPRMerge(baseCtx *APITestContext, dstPath string) func(t *tes
 		t.Run("PushProtectedBranch", doGitPushTestRepository(dstPath, "origin", "protected"))
 
 		ctx := NewAPITestContext(t, baseCtx.Username, baseCtx.Reponame, auth_model.AccessTokenScopeWriteRepository)
-		t.Run("ProtectProtectedBranchNoWhitelist", doProtectBranch(ctx, "protected", "", ""))
+		t.Run("ProtectProtectedBranchNoWhitelist", doProtectBranch(ctx, "protected"))
 		t.Run("GenerateCommit", func(t *testing.T) {
 			_, err := generateCommitWithNewData(littleSize, dstPath, "user2@example.com", "User Two", "branch-data-file-")
 			assert.NoError(t, err)
@@ -395,14 +395,22 @@ func doBranchProtectPRMerge(baseCtx *APITestContext, dstPath string) func(t *tes
 		t.Run("MergePR", doAPIMergePullRequest(ctx, baseCtx.Username, baseCtx.Reponame, pr.Index))
 		t.Run("PullProtected", doGitPull(dstPath, "origin", "protected"))
 
-		t.Run("ProtectProtectedBranchUnprotectedFilePaths", doProtectBranch(ctx, "protected", "", "unprotected-file-*"))
+		t.Run("ProtectProtectedBranchUnprotectedFilePaths", doProtectBranch(ctx, "protected", parameterProtectBranch{
+			"unprotected_file_patterns": "unprotected-file-*",
+		}))
 		t.Run("GenerateCommit", func(t *testing.T) {
 			_, err := generateCommitWithNewData(littleSize, dstPath, "user2@example.com", "User Two", "unprotected-file-")
 			assert.NoError(t, err)
 		})
 		t.Run("PushUnprotectedFilesToProtectedBranch", doGitPushTestRepository(dstPath, "origin", "protected"))
 
-		t.Run("ProtectProtectedBranchWhitelist", doProtectBranch(ctx, "protected", baseCtx.Username, ""))
+		user, err := user_model.GetUserByName(db.DefaultContext, baseCtx.Username)
+		assert.NoError(t, err)
+		t.Run("ProtectProtectedBranchWhitelist", doProtectBranch(ctx, "protected", parameterProtectBranch{
+			"enable_push":      "whitelist",
+			"enable_whitelist": "on",
+			"whitelist_users":  strconv.FormatInt(user.ID, 10),
+		}))
 
 		t.Run("CheckoutMaster", doGitCheckoutBranch(dstPath, "master"))
 		t.Run("CreateBranchForced", doGitCreateBranch(dstPath, "toforce"))
@@ -417,7 +425,9 @@ func doBranchProtectPRMerge(baseCtx *APITestContext, dstPath string) func(t *tes
 	}
 }
 
-func doProtectBranch(ctx APITestContext, branch, userToWhitelist, unprotectedFilePatterns string) func(t *testing.T) {
+type parameterProtectBranch map[string]string
+
+func doProtectBranch(ctx APITestContext, branch string, addParameter ...parameterProtectBranch) func(t *testing.T) {
 	// We are going to just use the owner to set the protection.
 	return func(t *testing.T) {
 		repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{Name: ctx.Reponame, OwnerName: ctx.Username})
@@ -426,30 +436,20 @@ func doProtectBranch(ctx APITestContext, branch, userToWhitelist, unprotectedFil
 
 		csrf := GetCSRF(t, ctx.Session, fmt.Sprintf("/%s/%s/settings/branches", url.PathEscape(ctx.Username), url.PathEscape(ctx.Reponame)))
 
-		if userToWhitelist == "" {
-			// Change branch to protected
-			req := NewRequestWithValues(t, "POST", fmt.Sprintf("/%s/%s/settings/branches/edit", url.PathEscape(ctx.Username), url.PathEscape(ctx.Reponame)), map[string]string{
-				"_csrf":                     csrf,
-				"rule_id":                   strconv.FormatInt(rule.ID, 10),
-				"rule_name":                 branch,
-				"unprotected_file_patterns": unprotectedFilePatterns,
-			})
-			ctx.Session.MakeRequest(t, req, http.StatusSeeOther)
-		} else {
-			user, err := user_model.GetUserByName(db.DefaultContext, userToWhitelist)
-			assert.NoError(t, err)
-			// Change branch to protected
-			req := NewRequestWithValues(t, "POST", fmt.Sprintf("/%s/%s/settings/branches/edit", url.PathEscape(ctx.Username), url.PathEscape(ctx.Reponame)), map[string]string{
-				"_csrf":                     csrf,
-				"rule_name":                 branch,
-				"rule_id":                   strconv.FormatInt(rule.ID, 10),
-				"enable_push":               "whitelist",
-				"enable_whitelist":          "on",
-				"whitelist_users":           strconv.FormatInt(user.ID, 10),
-				"unprotected_file_patterns": unprotectedFilePatterns,
-			})
-			ctx.Session.MakeRequest(t, req, http.StatusSeeOther)
+		parameter := parameterProtectBranch{
+			"_csrf":     csrf,
+			"rule_id":   strconv.FormatInt(rule.ID, 10),
+			"rule_name": branch,
 		}
+		if len(addParameter) > 0 {
+			for k, v := range addParameter[0] {
+				parameter[k] = v
+			}
+		}
+
+		// Change branch to protected
+		req := NewRequestWithValues(t, "POST", fmt.Sprintf("/%s/%s/settings/branches/edit", url.PathEscape(ctx.Username), url.PathEscape(ctx.Reponame)), parameter)
+		ctx.Session.MakeRequest(t, req, http.StatusSeeOther)
 		// Check if master branch has been locked successfully
 		flashCookie := ctx.Session.GetCookie(gitea_context.CookieNameFlash)
 		assert.NotNil(t, flashCookie)
