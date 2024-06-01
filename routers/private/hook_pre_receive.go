@@ -397,6 +397,11 @@ func preReceiveBranch(ctx *preReceiveContext, oldCommitID, newCommitID string, r
 			return
 		}
 
+		// If we're an admin for the instance, we can ignore checks
+		if ctx.user.IsAdmin {
+			return
+		}
+
 		// It's not allowed t overwrite protected files. Unless if the user is an
 		// admin and the protected branch rule doesn't apply to admins.
 		if changedProtectedfiles && (!ctx.user.IsAdmin || protectBranch.ApplyToAdmins) {
