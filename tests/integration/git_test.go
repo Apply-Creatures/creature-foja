@@ -382,6 +382,20 @@ func doBranchProtect(baseCtx *APITestContext, dstPath string) func(t *testing.T)
 
 		t.Run("PushToUnprotectedBranch", doGitPushTestRepository(dstPath, "origin", "modified-protected-branch:unprotected"))
 
+		t.Run("FailToPushProtectedFilesToProtectedBranch", func(t *testing.T) {
+			t.Run("Create modified-protected-file-protected-branch", doGitCheckoutBranch(dstPath, "-b", "modified-protected-file-protected-branch", "protected"))
+			t.Run("GenerateCommit", func(t *testing.T) {
+				_, err := generateCommitWithNewData(littleSize, dstPath, "user2@example.com", "User Two", "protected-file-")
+				assert.NoError(t, err)
+			})
+
+			t.Run("ProtectedFilePathsApplyToAdmins", doProtectBranch(ctx, "protected"))
+			doGitPushTestRepositoryFail(dstPath, "origin", "modified-protected-file-protected-branch:protected")(t)
+
+			doGitCheckoutBranch(dstPath, "protected")(t)
+			doGitPull(dstPath, "origin", "protected")(t)
+		})
+
 		t.Run("PushUnprotectedFilesToProtectedBranch", func(t *testing.T) {
 			t.Run("Create modified-unprotected-file-protected-branch", doGitCheckoutBranch(dstPath, "-b", "modified-unprotected-file-protected-branch", "protected"))
 			t.Run("UnprotectedFilePaths", doProtectBranch(ctx, "protected", parameterProtectBranch{
