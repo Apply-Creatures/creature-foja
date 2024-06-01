@@ -45,7 +45,20 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type optionsPullMerge map[string]string
+
 func testPullMerge(t *testing.T, session *TestSession, user, repo, pullnum string, mergeStyle repo_model.MergeStyle, deleteBranch bool) *httptest.ResponseRecorder {
+	options := optionsPullMerge{
+		"do": string(mergeStyle),
+	}
+	if deleteBranch {
+		options["delete_branch_after_merge"] = "on"
+	}
+
+	return testPullMergeForm(t, session, http.StatusOK, user, repo, pullnum, options)
+}
+
+func testPullMergeForm(t *testing.T, session *TestSession, expectedCode int, user, repo, pullnum string, addOptions optionsPullMerge) *httptest.ResponseRecorder {
 	req := NewRequest(t, "GET", path.Join(user, repo, "pulls", pullnum))
 	resp := session.MakeRequest(t, req, http.StatusOK)
 
@@ -54,22 +67,22 @@ func testPullMerge(t *testing.T, session *TestSession, user, repo, pullnum strin
 
 	options := map[string]string{
 		"_csrf": htmlDoc.GetCSRF(),
-		"do":    string(mergeStyle),
 	}
-
-	if deleteBranch {
-		options["delete_branch_after_merge"] = "on"
+	for k, v := range addOptions {
+		options[k] = v
 	}
 
 	req = NewRequestWithValues(t, "POST", link, options)
-	resp = session.MakeRequest(t, req, http.StatusOK)
+	resp = session.MakeRequest(t, req, expectedCode)
 
-	respJSON := struct {
-		Redirect string
-	}{}
-	DecodeJSON(t, resp, &respJSON)
+	if expectedCode == http.StatusOK {
+		respJSON := struct {
+			Redirect string
+		}{}
+		DecodeJSON(t, resp, &respJSON)
 
-	assert.EqualValues(t, fmt.Sprintf("/%s/%s/pulls/%s", user, repo, pullnum), respJSON.Redirect)
+		assert.EqualValues(t, fmt.Sprintf("/%s/%s/pulls/%s", user, repo, pullnum), respJSON.Redirect)
+	}
 
 	return resp
 }
