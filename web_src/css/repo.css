@@ -185,12 +185,24 @@ td .commit-summary {
   white-space: normal;
 }
 
+.commit-list .js-toggle-commit-body {
+  margin: 0 0 0 0.25em;
+}
+
+.commit-list .commit-status {
+  margin: 0 0 0 0.25em;
+}
+
 .latest-commit {
   display: flex;
   flex: 1;
   align-items: center;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.latest-commit .commit-status {
+  margin-right: 0.25em;
 }
 
 @media (max-width: 767.98px) {
@@ -874,12 +886,6 @@ td .commit-summary {
 
 .singular-commit .shabox .sha.label.isSigned.isVerifiedUnmatched:hover {
   background: var(--color-orange-badge-hover-bg) !important;
-}
-
-.repository.view.issue .comment-list .timeline-item.event > .commit-status-link {
-  float: right;
-  margin-right: 8px;
-  margin-top: 4px;
 }
 
 .repository.view.issue .comment-list .timeline-item .comparebox {
@@ -2465,11 +2471,6 @@ tbody.commit-list {
   tr.commit-list {
     width: 1127px;
   }
-}
-
-.commit-list .commit-status-link {
-  display: inline-block;
-  vertical-align: middle;
 }
 
 .commit-body {
