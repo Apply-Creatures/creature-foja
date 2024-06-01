@@ -183,14 +183,6 @@ func doGitCheckoutBranch(dstPath string, args ...string) func(*testing.T) {
 	}
 }
 
-func doGitMerge(dstPath string, args ...string) func(*testing.T) {
-	return func(t *testing.T) {
-		t.Helper()
-		_, _, err := git.NewCommand(git.DefaultContext, "merge").AddArguments(git.ToTrustedCmdArgs(args)...).RunStdString(&git.RunOpts{Dir: dstPath})
-		assert.NoError(t, err)
-	}
-}
-
 func doGitPull(dstPath string, args ...string) func(*testing.T) {
 	return func(t *testing.T) {
 		t.Helper()

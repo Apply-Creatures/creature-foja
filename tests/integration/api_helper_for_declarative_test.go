@@ -257,39 +257,49 @@ func doAPIGetPullRequest(ctx APITestContext, owner, repo string, index int64) fu
 
 func doAPIMergePullRequest(ctx APITestContext, owner, repo string, index int64) func(*testing.T) {
 	return func(t *testing.T) {
-		urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/pulls/%d/merge", owner, repo, index)
-
-		var req *RequestWrapper
-		var resp *httptest.ResponseRecorder
-
-		for i := 0; i < 6; i++ {
-			req = NewRequestWithJSON(t, http.MethodPost, urlStr, &forms.MergePullRequestForm{
-				MergeMessageField: "doAPIMergePullRequest Merge",
-				Do:                string(repo_model.MergeStyleMerge),
-			}).AddTokenAuth(ctx.Token)
-
-			resp = ctx.Session.MakeRequest(t, req, NoExpectedStatus)
-
-			if resp.Code != http.StatusMethodNotAllowed {
-				break
-			}
-			err := api.APIError{}
-			DecodeJSON(t, resp, &err)
-			assert.EqualValues(t, "Please try again later", err.Message)
-			queue.GetManager().FlushAll(context.Background(), 5*time.Second)
-			<-time.After(1 * time.Second)
-		}
-
-		expected := ctx.ExpectedCode
-		if expected == 0 {
-			expected = http.StatusOK
-		}
-
-		if !assert.EqualValues(t, expected, resp.Code,
-			"Request: %s %s", req.Method, req.URL.String()) {
-			logUnexpectedResponse(t, resp)
-		}
+		t.Helper()
+		doAPIMergePullRequestForm(t, ctx, owner, repo, index, &forms.MergePullRequestForm{
+			MergeMessageField: "doAPIMergePullRequest Merge",
+			Do:                string(repo_model.MergeStyleMerge),
+		})
 	}
+}
+
+func doAPIMergePullRequestForm(t *testing.T, ctx APITestContext, owner, repo string, index int64, merge *forms.MergePullRequestForm) *httptest.ResponseRecorder {
+	t.Helper()
+	urlStr := fmt.Sprintf("/api/v1/repos/%s/%s/pulls/%d/merge", owner, repo, index)
+
+	var req *RequestWrapper
+	var resp *httptest.ResponseRecorder
+
+	for i := 0; i < 6; i++ {
+		req = NewRequestWithJSON(t, http.MethodPost, urlStr, merge).AddTokenAuth(ctx.Token)
+
+		resp = ctx.Session.MakeRequest(t, req, NoExpectedStatus)
+
+		if resp.Code != http.StatusMethodNotAllowed {
+			break
+		}
+		err := api.APIError{}
+		DecodeJSON(t, resp, &err)
+		if err.Message != "Please try again later" {
+			break
+		}
+		queue.GetManager().FlushAll(context.Background(), 5*time.Second)
+		<-time.After(1 * time.Second)
+	}
+
+	expected := ctx.ExpectedCode
+	if expected == 0 {
+		expected = http.StatusOK
+	}
+
+	if !assert.EqualValues(t, expected, resp.Code,
+		"Request: %s %s", req.Method, req.URL.String()) {
+		logUnexpectedResponse(t, resp)
+	}
+
+	return resp
 }
 
 func doAPIManuallyMergePullRequest(ctx APITestContext, owner, repo, commitID string, index int64) func(*testing.T) {
