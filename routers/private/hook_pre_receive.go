@@ -397,9 +397,14 @@ func preReceiveBranch(ctx *preReceiveContext, oldCommitID, newCommitID string, r
 			return
 		}
 
+		// If we're an admin for the instance, we can ignore checks
+		if ctx.user.IsAdmin {
+			return
+		}
+
 		// It's not allowed t overwrite protected files. Unless if the user is an
 		// admin and the protected branch rule doesn't apply to admins.
-		if changedProtectedfiles && (!ctx.user.IsAdmin || protectBranch.ApplyToAdmins) {
+		if changedProtectedfiles && (!ctx.userPerm.IsAdmin() || protectBranch.ApplyToAdmins) {
 			log.Warn("Forbidden: Branch: %s in %-v is protected from changing file %s", branchName, repo, protectedFilePath)
 			ctx.JSON(http.StatusForbidden, private.Response{
 				UserMsg: fmt.Sprintf("branch %s is protected from changing file %s", branchName, protectedFilePath),
@@ -411,7 +416,7 @@ func preReceiveBranch(ctx *preReceiveContext, oldCommitID, newCommitID string, r
 		if pb, err := pull_service.CheckPullBranchProtections(ctx, pr, true); err != nil {
 			if models.IsErrDisallowedToMerge(err) {
 				// Allow this if the rule doesn't apply to admins and the user is an admin.
-				if ctx.user.IsAdmin && !pb.ApplyToAdmins {
+				if ctx.userPerm.IsAdmin() && !pb.ApplyToAdmins {
 					return
 				}
 				log.Warn("Forbidden: User %d is not allowed push to protected branch %s in %-v and pr #%d is not ready to be merged: %s", ctx.opts.UserID, branchName, repo, pr.Index, err.Error())
