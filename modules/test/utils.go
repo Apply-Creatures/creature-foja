@@ -34,8 +34,15 @@ func IsNormalPageCompleted(s string) bool {
 	return strings.Contains(s, `<footer class="page-footer"`) && strings.Contains(s, `</html>`)
 }
 
+// use for global variables only
 func MockVariableValue[T any](p *T, v T) (reset func()) {
 	old := *p
 	*p = v
+	return func() { *p = old }
+}
+
+// use for global variables only
+func MockProtect[T any](p *T) (reset func()) {
+	old := *p
 	return func() { *p = old }
 }
