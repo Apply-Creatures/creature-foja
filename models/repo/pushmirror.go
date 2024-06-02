@@ -94,7 +94,9 @@ func UpdatePushMirrorInterval(ctx context.Context, m *PushMirror) error {
 	return err
 }
 
-func DeletePushMirrors(ctx context.Context, opts PushMirrorOptions) error {
+var DeletePushMirrors = deletePushMirrors
+
+func deletePushMirrors(ctx context.Context, opts PushMirrorOptions) error {
 	if opts.RepoID > 0 {
 		_, err := db.Delete[PushMirror](ctx, opts)
 		return err
