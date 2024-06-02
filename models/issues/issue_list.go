@@ -88,7 +88,9 @@ func (issues IssueList) LoadPosters(ctx context.Context) error {
 	}
 
 	for _, issue := range issues {
-		issue.Poster = getPoster(issue.PosterID, posterMaps)
+		if issue.Poster == nil {
+			issue.Poster = getPoster(issue.PosterID, posterMaps)
+		}
 	}
 	return nil
 }
