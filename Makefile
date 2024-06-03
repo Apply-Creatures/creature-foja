@@ -249,9 +249,6 @@ help:
 	@echo " - test-frontend                    test frontend files"
 	@echo " - test-backend                     test backend files"
 	@echo " - test-e2e-sqlite[\#name.test.e2e] test end to end using playwright and sqlite"
-	@echo " - update                           update js and py dependencies"
-	@echo " - update-js                        update js dependencies"
-	@echo " - update-py                        update py dependencies"
 	@echo " - webpack                          build webpack files"
 	@echo " - svg                              build svg files"
 	@echo " - fomantic                         build fomantic files"
@@ -893,23 +890,6 @@ node_modules: package-lock.json
 	@touch node_modules
 
 .venv: poetry.lock
-	poetry install --no-root
-	@touch .venv
-
-.PHONY: update
-update: update-js update-py
-
-.PHONY: update-js
-update-js: node-check | node_modules
-	npx updates -u -f package.json
-	rm -rf node_modules package-lock.json
-	npm install --package-lock
-	@touch node_modules
-
-.PHONY: update-py
-update-py: node-check | node_modules
-	npx updates -u -f pyproject.toml
-	rm -rf .venv poetry.lock
 	poetry install --no-root
 	@touch .venv
 
