@@ -48,8 +48,8 @@ const (
 {
 	"mappings": {
 		"properties": {
-			"id": { "type": "integer", "index": true },
-			"repo_id": { "type": "integer", "index": true },
+			"id": { "type": "long", "index": true },
+			"repo_id": { "type": "long", "index": true },
 			"is_public": { "type": "boolean", "index": true },
 
 			"title": {  "type": "text", "index": true },
@@ -58,22 +58,22 @@ const (
 
 			"is_pull": { "type": "boolean", "index": true },
 			"is_closed": { "type": "boolean", "index": true },
-			"label_ids": { "type": "integer", "index": true },
+			"label_ids": { "type": "long", "index": true },
 			"no_label": { "type": "boolean", "index": true },
-			"milestone_id": { "type": "integer", "index": true },
-			"project_id": { "type": "integer", "index": true },
-			"project_board_id": { "type": "integer", "index": true },
-			"poster_id": { "type": "integer", "index": true },
-			"assignee_id": { "type": "integer", "index": true },
-			"mention_ids": { "type": "integer", "index": true },
-			"reviewed_ids": { "type": "integer", "index": true },
-			"review_requested_ids": { "type": "integer", "index": true },
-			"subscriber_ids": { "type": "integer", "index": true },
-			"updated_unix": { "type": "integer", "index": true },
+			"milestone_id": { "type": "long", "index": true },
+			"project_id": { "type": "long", "index": true },
+			"project_board_id": { "type": "long", "index": true },
+			"poster_id": { "type": "long", "index": true },
+			"assignee_id": { "type": "long", "index": true },
+			"mention_ids": { "type": "long", "index": true },
+			"reviewed_ids": { "type": "long", "index": true },
+			"review_requested_ids": { "type": "long", "index": true },
+			"subscriber_ids": { "type": "long", "index": true },
+			"updated_unix": { "type": "long", "index": true },
 
-			"created_unix": { "type": "integer", "index": true },
-			"deadline_unix": { "type": "integer", "index": true },
-			"comment_count": { "type": "integer", "index": true }
+			"created_unix": { "type": "long", "index": true },
+			"deadline_unix": { "type": "long", "index": true },
+			"comment_count": { "type": "long", "index": true }
 		}
 	}
 }

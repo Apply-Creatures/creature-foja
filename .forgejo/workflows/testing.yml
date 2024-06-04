@@ -45,6 +45,10 @@ jobs:
     container:
       image: 'docker.io/node:20-bookworm'
     services:
+      elasticsearch:
+        image: elasticsearch:7.5.0
+        env:
+          discovery.type: single-node
       minio:
         image: bitnami/minio:2024.3.30
         options: >-
@@ -85,6 +89,7 @@ jobs:
           RACE_ENABLED: 'true'
           TAGS: bindata
           TEST_REDIS_SERVER: redis:6379
+          TEST_ELASTICSEARCH_URL: http://elasticsearch:9200
   test-mysql:
     if: ${{ !startsWith(vars.ROLE, 'forgejo-') }}
     runs-on: docker

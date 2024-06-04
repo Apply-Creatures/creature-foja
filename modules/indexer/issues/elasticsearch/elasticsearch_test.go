@@ -14,8 +14,7 @@ import (
 )
 
 func TestElasticsearchIndexer(t *testing.T) {
-	t.Skip("elasticsearch not found in Forgejo test yet")
-	// The elasticsearch instance started by pull-db-tests.yml > test-unit > services > elasticsearch
+	// The elasticsearch instance started by testing.yml > test-unit > services > elasticsearch
 	url := "http://elastic:changeme@elasticsearch:9200"
 
 	if os.Getenv("CI") == "" {
