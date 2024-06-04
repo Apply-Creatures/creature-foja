@@ -12,7 +12,7 @@ import (
 
 func Test_discardStorage(t *testing.T) {
 	tests := []discardStorage{
-		uninitializedStorage,
+		UninitializedStorage,
 		discardStorage("empty"),
 	}
 	for _, tt := range tests {

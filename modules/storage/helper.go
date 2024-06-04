@@ -10,7 +10,7 @@ import (
 	"os"
 )
 
-var uninitializedStorage = discardStorage("uninitialized storage")
+var UninitializedStorage = discardStorage("uninitialized storage")
 
 type discardStorage string
 

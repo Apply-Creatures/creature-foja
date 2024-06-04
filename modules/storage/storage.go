@@ -109,26 +109,26 @@ func SaveFrom(objStorage ObjectStorage, p string, callback func(w io.Writer) err
 
 var (
 	// Attachments represents attachments storage
-	Attachments ObjectStorage = uninitializedStorage
+	Attachments ObjectStorage = UninitializedStorage
 
 	// LFS represents lfs storage
-	LFS ObjectStorage = uninitializedStorage
+	LFS ObjectStorage = UninitializedStorage
 
 	// Avatars represents user avatars storage
-	Avatars ObjectStorage = uninitializedStorage
+	Avatars ObjectStorage = UninitializedStorage
 	// RepoAvatars represents repository avatars storage
-	RepoAvatars ObjectStorage = uninitializedStorage
+	RepoAvatars ObjectStorage = UninitializedStorage
 
 	// RepoArchives represents repository archives storage
-	RepoArchives ObjectStorage = uninitializedStorage
+	RepoArchives ObjectStorage = UninitializedStorage
 
 	// Packages represents packages storage
-	Packages ObjectStorage = uninitializedStorage
+	Packages ObjectStorage = UninitializedStorage
 
 	// Actions represents actions storage
-	Actions ObjectStorage = uninitializedStorage
+	Actions ObjectStorage = UninitializedStorage
 	// Actions Artifacts represents actions artifacts storage
-	ActionsArtifacts ObjectStorage = uninitializedStorage
+	ActionsArtifacts ObjectStorage = UninitializedStorage
 )
 
 // Init init the stoarge
