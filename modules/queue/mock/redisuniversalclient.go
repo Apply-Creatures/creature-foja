@@ -598,6 +598,25 @@ func (mr *MockUniversalClientMockRecorder) BitField(arg0, arg1 any, arg2 ...any)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BitField", reflect.TypeOf((*MockUniversalClient)(nil).BitField), varargs...)
 }
 
+// BitFieldRO mocks base method.
+func (m *MockUniversalClient) BitFieldRO(arg0 context.Context, arg1 string, arg2 ...any) *redis.IntSliceCmd {
+	m.ctrl.T.Helper()
+	varargs := []any{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "BitFieldRO", varargs...)
+	ret0, _ := ret[0].(*redis.IntSliceCmd)
+	return ret0
+}
+
+// BitFieldRO indicates an expected call of BitFieldRO.
+func (mr *MockUniversalClientMockRecorder) BitFieldRO(arg0, arg1 any, arg2 ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BitFieldRO", reflect.TypeOf((*MockUniversalClient)(nil).BitFieldRO), varargs...)
+}
+
 // BitOpAnd mocks base method.
 func (m *MockUniversalClient) BitOpAnd(arg0 context.Context, arg1 string, arg2 ...string) *redis.IntCmd {
 	m.ctrl.T.Helper()
@@ -3636,6 +3655,20 @@ func (m *MockUniversalClient) ObjectEncoding(arg0 context.Context, arg1 string) 
 func (mr *MockUniversalClientMockRecorder) ObjectEncoding(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ObjectEncoding", reflect.TypeOf((*MockUniversalClient)(nil).ObjectEncoding), arg0, arg1)
+}
+
+// ObjectFreq mocks base method.
+func (m *MockUniversalClient) ObjectFreq(arg0 context.Context, arg1 string) *redis.IntCmd {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ObjectFreq", arg0, arg1)
+	ret0, _ := ret[0].(*redis.IntCmd)
+	return ret0
+}
+
+// ObjectFreq indicates an expected call of ObjectFreq.
+func (mr *MockUniversalClientMockRecorder) ObjectFreq(arg0, arg1 any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ObjectFreq", reflect.TypeOf((*MockUniversalClient)(nil).ObjectFreq), arg0, arg1)
 }
 
 // ObjectIdleTime mocks base method.
