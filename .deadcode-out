@@ -77,7 +77,7 @@ package "code.gitea.io/gitea/models/perm/access"
 	func GetRepoWriters
 
 package "code.gitea.io/gitea/models/project"
-	func UpdateBoardSorting
+	func UpdateColumnSorting
 	func ChangeProjectStatus
 
 package "code.gitea.io/gitea/models/repo"

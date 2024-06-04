@@ -35,23 +35,23 @@ func TestMoveRepoProjectColumns(t *testing.T) {
 	repo2 := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 2})
 
 	project1 := project_model.Project{
-		Title:     "new created project",
-		RepoID:    repo2.ID,
-		Type:      project_model.TypeRepository,
-		BoardType: project_model.BoardTypeNone,
+		Title:        "new created project",
+		RepoID:       repo2.ID,
+		Type:         project_model.TypeRepository,
+		TemplateType: project_model.TemplateTypeNone,
 	}
 	err := project_model.NewProject(db.DefaultContext, &project1)
 	assert.NoError(t, err)
 
 	for i := 0; i < 3; i++ {
-		err = project_model.NewBoard(db.DefaultContext, &project_model.Board{
+		err = project_model.NewColumn(db.DefaultContext, &project_model.Column{
 			Title:     fmt.Sprintf("column %d", i+1),
 			ProjectID: project1.ID,
 		})
 		assert.NoError(t, err)
 	}
 
-	columns, err := project1.GetBoards(db.DefaultContext)
+	columns, err := project1.GetColumns(db.DefaultContext)
 	assert.NoError(t, err)
 	assert.Len(t, columns, 3)
 	assert.EqualValues(t, 0, columns[0].Sorting)
@@ -72,7 +72,7 @@ func TestMoveRepoProjectColumns(t *testing.T) {
 	})
 	sess.MakeRequest(t, req, http.StatusOK)
 
-	columnsAfter, err := project1.GetBoards(db.DefaultContext)
+	columnsAfter, err := project1.GetColumns(db.DefaultContext)
 	assert.NoError(t, err)
 	assert.Len(t, columns, 3)
 	assert.EqualValues(t, columns[1].ID, columnsAfter[0].ID)
