@@ -608,3 +608,24 @@ func TestSignUpViaOAuthWithMissingFields(t *testing.T) {
 	resp := MakeRequest(t, req, http.StatusSeeOther)
 	assert.Equal(t, test.RedirectURL(resp), "/user/link_account")
 }
+
+func TestOAuth_GrantApplicationOAuth(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	req := NewRequest(t, "GET", "/login/oauth/authorize?client_id=da7da3ba-9a13-4167-856f-3899de0b0138&redirect_uri=a&response_type=code&state=thestate")
+	ctx := loginUser(t, "user4")
+	resp := ctx.MakeRequest(t, req, http.StatusOK)
+
+	htmlDoc := NewHTMLParser(t, resp.Body)
+	htmlDoc.AssertElement(t, "#authorize-app", true)
+
+	req = NewRequestWithValues(t, "POST", "/login/oauth/grant", map[string]string{
+		"_csrf":        htmlDoc.GetCSRF(),
+		"client_id":    "da7da3ba-9a13-4167-856f-3899de0b0138",
+		"redirect_uri": "a",
+		"state":        "thestate",
+		"granted":      "false",
+	})
+	resp = ctx.MakeRequest(t, req, http.StatusSeeOther)
+	assert.Contains(t, test.RedirectURL(resp), "error=access_denied&error_description=the+request+is+denied")
+}
