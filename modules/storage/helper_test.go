@@ -11,9 +11,9 @@ import (
 )
 
 func Test_discardStorage(t *testing.T) {
-	tests := []discardStorage{
+	tests := []DiscardStorage{
 		UninitializedStorage,
-		discardStorage("empty"),
+		DiscardStorage("empty"),
 	}
 	for _, tt := range tests {
 		t.Run(string(tt), func(t *testing.T) {

@@ -10,30 +10,30 @@ import (
 	"os"
 )
 
-var UninitializedStorage = discardStorage("uninitialized storage")
+var UninitializedStorage = DiscardStorage("uninitialized storage")
 
-type discardStorage string
+type DiscardStorage string
 
-func (s discardStorage) Open(_ string) (Object, error) {
+func (s DiscardStorage) Open(_ string) (Object, error) {
 	return nil, fmt.Errorf("%s", s)
 }
 
-func (s discardStorage) Save(_ string, _ io.Reader, _ int64) (int64, error) {
+func (s DiscardStorage) Save(_ string, _ io.Reader, _ int64) (int64, error) {
 	return 0, fmt.Errorf("%s", s)
 }
 
-func (s discardStorage) Stat(_ string) (os.FileInfo, error) {
+func (s DiscardStorage) Stat(_ string) (os.FileInfo, error) {
 	return nil, fmt.Errorf("%s", s)
 }
 
-func (s discardStorage) Delete(_ string) error {
+func (s DiscardStorage) Delete(_ string) error {
 	return fmt.Errorf("%s", s)
 }
 
-func (s discardStorage) URL(_, _ string) (*url.URL, error) {
+func (s DiscardStorage) URL(_, _ string) (*url.URL, error) {
 	return nil, fmt.Errorf("%s", s)
 }
 
-func (s discardStorage) IterateObjects(_ string, _ func(string, Object) error) error {
+func (s DiscardStorage) IterateObjects(_ string, _ func(string, Object) error) error {
 	return fmt.Errorf("%s", s)
 }
