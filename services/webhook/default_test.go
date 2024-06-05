@@ -11,6 +11,7 @@ import (
 	"code.gitea.io/gitea/modules/json"
 	webhook_module "code.gitea.io/gitea/modules/webhook"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -220,5 +221,40 @@ func TestForgejoPayload(t *testing.T) {
 		err = json.NewDecoder(req.Body).Decode(&body)
 		assert.NoError(t, err)
 		assert.Equal(t, "refs/heads/test", body.Ref) // full ref
+	})
+}
+
+func TestOpenProjectPayload(t *testing.T) {
+	t.Run("PullRequest", func(t *testing.T) {
+		p := pullRequestTestPayload()
+		data, err := p.JSONPayload()
+		require.NoError(t, err)
+
+		// adapted from https://github.com/opf/openproject/blob/4c5c45fe995da0060902bc8dd5f1bf704d0b8737/modules/github_integration/lib/open_project/github_integration/services/upsert_pull_request.rb#L56
+		j := jsoniter.Get(data, "pull_request")
+
+		assert.Equal(t, 12, j.Get("id").MustBeValid().ToInt())
+		assert.Equal(t, "user1", j.Get("user", "login").MustBeValid().ToString())
+		assert.Equal(t, 12, j.Get("number").MustBeValid().ToInt())
+		assert.Equal(t, "http://localhost:3000/test/repo/pulls/12", j.Get("html_url").MustBeValid().ToString())
+		assert.Equal(t, jsoniter.NilValue, j.Get("updated_at").ValueType())
+		assert.Equal(t, "", j.Get("state").MustBeValid().ToString())
+		assert.Equal(t, "Fix bug", j.Get("title").MustBeValid().ToString())
+		assert.Equal(t, "fixes bug #2", j.Get("body").MustBeValid().ToString())
+
+		assert.Equal(t, "test/repo", j.Get("base", "repo", "full_name").MustBeValid().ToString())
+		assert.Equal(t, "http://localhost:3000/test/repo", j.Get("base", "repo", "html_url").MustBeValid().ToString())
+
+		assert.Equal(t, false, j.Get("draft").MustBeValid().ToBool())
+		assert.Equal(t, jsoniter.NilValue, j.Get("merge_commit_sha").ValueType())
+		assert.Equal(t, false, j.Get("merged").MustBeValid().ToBool())
+		assert.Equal(t, jsoniter.NilValue, j.Get("merged_by").ValueType())
+		assert.Equal(t, jsoniter.NilValue, j.Get("merged_at").ValueType())
+		assert.Equal(t, 0, j.Get("comments").MustBeValid().ToInt())
+		assert.Equal(t, 0, j.Get("review_comments").MustBeValid().ToInt())
+		assert.Equal(t, 0, j.Get("additions").MustBeValid().ToInt())
+		assert.Equal(t, 0, j.Get("deletions").MustBeValid().ToInt())
+		assert.Equal(t, 0, j.Get("changed_files").MustBeValid().ToInt())
+		// assert.Equal(t,"labels:", j.Get("labels").map { |values| extract_label_values(values) )
 	})
 }

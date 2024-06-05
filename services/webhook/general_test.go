@@ -281,6 +281,17 @@ func pullRequestTestPayload() *api.PullRequestPayload {
 				Title:       "Milestone Title",
 				Description: "Milestone Description",
 			},
+			Base: &api.PRBranchInfo{
+				Name:   "branch1",
+				Ref:    "refs/pull/2/head",
+				Sha:    "4a357436d925b5c974181ff12a994538ddc5a269",
+				RepoID: 1,
+				Repository: &api.Repository{
+					HTMLURL:  "http://localhost:3000/test/repo",
+					Name:     "repo",
+					FullName: "test/repo",
+				},
+			},
 		},
 		Review: &api.ReviewPayload{
 			Content: "good job",
