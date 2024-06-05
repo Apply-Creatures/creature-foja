@@ -170,7 +170,7 @@ func initAvatars() (err error) {
 
 func initAttachments() (err error) {
 	if !setting.Attachment.Enabled {
-		Attachments = discardStorage("Attachment isn't enabled")
+		Attachments = DiscardStorage("Attachment isn't enabled")
 		return nil
 	}
 	log.Info("Initialising Attachment storage with type: %s", setting.Attachment.Storage.Type)
@@ -180,7 +180,7 @@ func initAttachments() (err error) {
 
 func initLFS() (err error) {
 	if !setting.LFS.StartServer {
-		LFS = discardStorage("LFS isn't enabled")
+		LFS = DiscardStorage("LFS isn't enabled")
 		return nil
 	}
 	log.Info("Initialising LFS storage with type: %s", setting.LFS.Storage.Type)
@@ -202,7 +202,7 @@ func initRepoArchives() (err error) {
 
 func initPackages() (err error) {
 	if !setting.Packages.Enabled {
-		Packages = discardStorage("Packages isn't enabled")
+		Packages = DiscardStorage("Packages isn't enabled")
 		return nil
 	}
 	log.Info("Initialising Packages storage with type: %s", setting.Packages.Storage.Type)
@@ -212,8 +212,8 @@ func initPackages() (err error) {
 
 func initActions() (err error) {
 	if !setting.Actions.Enabled {
-		Actions = discardStorage("Actions isn't enabled")
-		ActionsArtifacts = discardStorage("ActionsArtifacts isn't enabled")
+		Actions = DiscardStorage("Actions isn't enabled")
+		ActionsArtifacts = DiscardStorage("ActionsArtifacts isn't enabled")
 		return nil
 	}
 	log.Info("Initialising Actions storage with type: %s", setting.Actions.LogStorage.Type)
