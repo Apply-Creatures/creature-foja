@@ -1,5 +1,6 @@
 // Copyright 2014 The Gogs Authors. All rights reserved.
 // Copyright 2020 The Gitea Authors. All rights reserved.
+// Copyright 2024 The Forgejo Authors. All rights reserved.
 // SPDX-License-Identifier: MIT
 
 package repo
@@ -332,7 +333,7 @@ func ActionWatch(watch bool) func(ctx *context.Context) {
 
 func ActionStar(star bool) func(ctx *context.Context) {
 	return func(ctx *context.Context) {
-		err := repo_model.StarRepo(ctx, ctx.Doer.ID, ctx.Repo.Repository.ID, star)
+		err := repo_service.StarRepoAndSendLikeActivities(ctx, *ctx.Doer, ctx.Repo.Repository.ID, star)
 		if err != nil {
 			ctx.ServerError(fmt.Sprintf("Action (star, %t)", star), err)
 			return

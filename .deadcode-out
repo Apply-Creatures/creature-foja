@@ -137,9 +137,6 @@ package "code.gitea.io/gitea/models/user"
 	func GetUserEmailsByNames
 	func GetUserNamesByIDs
 
-package "code.gitea.io/gitea/modules/activitypub"
-	func (*Client).Post
-
 package "code.gitea.io/gitea/modules/assetfs"
 	func Bindata
 
@@ -168,7 +165,6 @@ package "code.gitea.io/gitea/modules/eventsource"
 	func (*Event).String
 
 package "code.gitea.io/gitea/modules/forgefed"
-	func NewForgeLike
 	func GetItemByType
 	func JSONUnmarshalerFn
 	func NotEmpty

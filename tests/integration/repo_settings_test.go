@@ -5,8 +5,10 @@ package integration
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"code.gitea.io/gitea/models/db"
@@ -16,8 +18,10 @@ import (
 	unit_model "code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/models/unittest"
 	user_model "code.gitea.io/gitea/models/user"
+	fm "code.gitea.io/gitea/modules/forgefed"
 	"code.gitea.io/gitea/modules/optional"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/validation"
 	gitea_context "code.gitea.io/gitea/services/context"
 	repo_service "code.gitea.io/gitea/services/repository"
 	user_service "code.gitea.io/gitea/services/user"
@@ -291,6 +295,36 @@ func TestRepoFollowing(t *testing.T) {
 				`"openRegistrations":true,"usage":{"users":{"total":14,"activeHalfyear":2}},"metadata":{}}`)
 			fmt.Fprint(res, responseBody)
 		})
+	repo1InboxReceivedLike := false
+	federatedRoutes.HandleFunc("/api/v1/activitypub/repository-id/1/inbox/",
+		func(res http.ResponseWriter, req *http.Request) {
+			if req.Method != "POST" {
+				t.Errorf("Unhandled request: %q", req.URL.EscapedPath())
+			}
+			buf := new(strings.Builder)
+			_, err := io.Copy(buf, req.Body)
+			if err != nil {
+				t.Errorf("Error reading body: %q", err)
+			}
+			like := fm.ForgeLike{}
+			err = like.UnmarshalJSON([]byte(buf.String()))
+			if err != nil {
+				t.Errorf("Error unmarshalling ForgeLike: %q", err)
+			}
+			if isValid, err := validation.IsValid(like); !isValid {
+				t.Errorf("ForgeLike is not valid: %q", err)
+			}
+
+			activityType := like.Type
+			object := like.Object.GetLink().String()
+			isLikeType := activityType == "Like"
+			isCorrectObject := strings.HasSuffix(object, "/api/v1/activitypub/repository-id/1")
+			if !isLikeType || !isCorrectObject {
+				t.Errorf("Activity is not a like for this repo")
+			}
+
+			repo1InboxReceivedLike = true
+		})
 	federatedRoutes.HandleFunc("/",
 		func(res http.ResponseWriter, req *http.Request) {
 			t.Errorf("Unhandled request: %q", req.URL.EscapedPath())
@@ -319,5 +353,17 @@ func TestRepoFollowing(t *testing.T) {
 			ExternalID:       "1",
 			FederationHostID: federationHost.ID,
 		})
+	})
+
+	t.Run("Star a repo having a following repo", func(t *testing.T) {
+		defer tests.PrintCurrentTest(t)()
+		repoLink := fmt.Sprintf("/%s", repo.FullName())
+		link := fmt.Sprintf("%s/action/star", repoLink)
+		req := NewRequestWithValues(t, "POST", link, map[string]string{
+			"_csrf": GetCSRF(t, session, repoLink),
+		})
+		assert.False(t, repo1InboxReceivedLike)
+		session.MakeRequest(t, req, http.StatusOK)
+		assert.True(t, repo1InboxReceivedLike)
 	})
 }

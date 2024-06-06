@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"code.gitea.io/gitea/models/forgefed"
 	"code.gitea.io/gitea/models/repo"
@@ -241,4 +242,42 @@ func StoreFollowingRepoList(ctx context.Context, localRepoID int64, followingRep
 
 func DeleteFollowingRepos(ctx context.Context, localRepoID int64) error {
 	return repo.StoreFollowingRepos(ctx, localRepoID, []*repo.FollowingRepo{})
+}
+
+func SendLikeActivities(ctx context.Context, doer user.User, repoID int64) error {
+	followingRepos, err := repo.FindFollowingReposByRepoID(ctx, repoID)
+	log.Info("Federated Repos is: %v", followingRepos)
+	if err != nil {
+		return err
+	}
+
+	likeActivityList := make([]fm.ForgeLike, 0)
+	for _, followingRepo := range followingRepos {
+		log.Info("Found following repo: %v", followingRepo)
+		target := followingRepo.URI
+		likeActivity, err := fm.NewForgeLike(doer.APActorID(), target, time.Now())
+		if err != nil {
+			return err
+		}
+		likeActivityList = append(likeActivityList, likeActivity)
+	}
+
+	apclient, err := activitypub.NewClient(ctx, &doer, doer.APActorID())
+	if err != nil {
+		return err
+	}
+	for i, activity := range likeActivityList {
+		activity.StartTime = activity.StartTime.Add(time.Duration(i) * time.Second)
+		json, err := activity.MarshalJSON()
+		if err != nil {
+			return err
+		}
+
+		_, err = apclient.Post(json, fmt.Sprintf("%v/inbox/", activity.Object))
+		if err != nil {
+			log.Error("error %v while sending activity: %q", err, activity)
+		}
+	}
+
+	return nil
 }
