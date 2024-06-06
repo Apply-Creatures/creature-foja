@@ -82,6 +82,65 @@ func TestAuthorizeShow(t *testing.T) {
 	htmlDoc.GetCSRF()
 }
 
+func TestOAuth_AuthorizeConfidentialTwice(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	// da7da3ba-9a13-4167-856f-3899de0b0138 a confidential client in models/fixtures/oauth2_application.yml
+
+	// request authorization for the first time shows the grant page ...
+	authorizeURL := "/login/oauth/authorize?client_id=da7da3ba-9a13-4167-856f-3899de0b0138&redirect_uri=a&response_type=code&state=thestate"
+	req := NewRequest(t, "GET", authorizeURL)
+	ctx := loginUser(t, "user4")
+	resp := ctx.MakeRequest(t, req, http.StatusOK)
+
+	htmlDoc := NewHTMLParser(t, resp.Body)
+	htmlDoc.AssertElement(t, "#authorize-app", true)
+
+	// ... and the user grants the authorization
+	req = NewRequestWithValues(t, "POST", "/login/oauth/grant", map[string]string{
+		"_csrf":        htmlDoc.GetCSRF(),
+		"client_id":    "da7da3ba-9a13-4167-856f-3899de0b0138",
+		"redirect_uri": "a",
+		"state":        "thestate",
+		"granted":      "true",
+	})
+	resp = ctx.MakeRequest(t, req, http.StatusSeeOther)
+	assert.Contains(t, test.RedirectURL(resp), "code=")
+
+	// request authorization the second time and the grant page is not shown again, redirection happens immediately
+	req = NewRequest(t, "GET", authorizeURL)
+	resp = ctx.MakeRequest(t, req, http.StatusSeeOther)
+	assert.Contains(t, test.RedirectURL(resp), "code=")
+}
+
+func TestOAuth_AuthorizePublicTwice(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	// ce5a1322-42a7-11ed-b878-0242ac120002 is a public client in models/fixtures/oauth2_application.yml
+	authorizeURL := "/login/oauth/authorize?client_id=ce5a1322-42a7-11ed-b878-0242ac120002&redirect_uri=b&response_type=code&code_challenge_method=plain&code_challenge=CODE&state=thestate"
+	ctx := loginUser(t, "user4")
+	// a public client must be authorized every time
+	for _, name := range []string{"First", "Second"} {
+		t.Run(name, func(t *testing.T) {
+			req := NewRequest(t, "GET", authorizeURL)
+			resp := ctx.MakeRequest(t, req, http.StatusOK)
+
+			htmlDoc := NewHTMLParser(t, resp.Body)
+			htmlDoc.AssertElement(t, "#authorize-app", true)
+
+			req = NewRequestWithValues(t, "POST", "/login/oauth/grant", map[string]string{
+				"_csrf":        htmlDoc.GetCSRF(),
+				"client_id":    "ce5a1322-42a7-11ed-b878-0242ac120002",
+				"redirect_uri": "b",
+				"state":        "thestate",
+				"granted":      "true",
+			})
+			resp = ctx.MakeRequest(t, req, http.StatusSeeOther)
+			assert.Contains(t, test.RedirectURL(resp), "code=")
+		})
+	}
+}
+
 func TestAuthorizeRedirectWithExistingGrant(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
 	req := NewRequest(t, "GET", "/login/oauth/authorize?client_id=da7da3ba-9a13-4167-856f-3899de0b0138&redirect_uri=https%3A%2F%2Fexample.com%2Fxyzzy&response_type=code&state=thestate")
@@ -534,7 +593,7 @@ func TestSignInOAuthCallbackRedirectToEscaping(t *testing.T) {
 	gitlab := addAuthSource(t, authSourcePayloadGitLabCustom(gitlabName))
 
 	//
-	// Create a user as if it had been previously been created by the GitLab
+	// Create a user as if it had been previously created by the GitLab
 	// authentication source.
 	//
 	userGitLabUserID := "5678"
