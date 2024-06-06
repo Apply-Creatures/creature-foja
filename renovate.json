@@ -97,11 +97,17 @@
       "description": "Update renovate with higher prio to come through rate limit",
       "matchDatasources": ["docker"],
       "matchDepNames": ["ghcr.io/visualon/renovate"],
+      "extends": ["schedule:weekly"],
       "prPriority": 10
     },
     {
       "description": "Update go patch with higher prio to come through rate limit",
-      "matchDepNames": ["go", "golang", "docker.io/golang", "docker.io/library/golang"],
+      "matchDepNames": [
+        "go",
+        "golang",
+        "docker.io/golang",
+        "docker.io/library/golang"
+      ],
       "matchUpdateTypes": ["patch"],
       "prPriority": 10,
       "schedule": ["at any time"]
