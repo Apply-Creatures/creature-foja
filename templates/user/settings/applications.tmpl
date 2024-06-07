@@ -75,7 +75,7 @@
 						{{ctx.Locale.Tr "settings.select_permissions"}}
 					</summary>
 					<p class="activity meta">
-						<p>{{ctx.Locale.Tr "settings.access_token_desc" (`href="/api/swagger" target="_blank"`|SafeHTML) (`href="https://forgejo.org/docs/latest/user/token-scope/" target="_blank"`|SafeHTML)}}</p>
+						<p>{{ctx.Locale.Tr "settings.access_token_desc" (HTMLFormat `href="%s/api/swagger" target="_blank"` AppSubUrl) (`href="https://forgejo.org/docs/latest/user/token-scope/" target="_blank"`|SafeHTML)}}</p>
 					</p>
 					<div class="scoped-access-token-mount">
 						<scoped-access-token-selector
