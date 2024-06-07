@@ -25,9 +25,6 @@
 .page-content.install form.ui.form details.optional.field[open] {
   padding-bottom: 10px;
 }
-.page-content.install form.ui.form details.optional.field[open]:not(:last-child) {
-  border-bottom: 1px dashed var(--color-secondary);
-}
 .page-content.install form.ui.form details.optional.field[open] summary {
   margin-bottom: 10px;
 }
@@ -52,4 +49,14 @@
   width: 70%;
   text-align: left;
   margin: 10px auto;
+}
+
+.page-content.install details.collapsible {
+  border: 1px solid var(--color-light-border);
+  border-radius: 0.28571429rem;
+}
+.page-content.install .collapsible summary {
+  background: transparent;
+  margin: auto;
+  text-align: center;
 }

@@ -171,8 +171,8 @@
 					<h4 class="ui dividing header">{{ctx.Locale.Tr "install.optional_title"}}</h4>
 
 					<!-- Email -->
-					<details class="optional field">
-						<summary class="right-content tw-py-2{{if .Err_SMTP}} text red{{end}}">
+					<details class="collapsible optional field">
+						<summary class="tw-py-2{{if .Err_SMTP}} text red{{end}}">
 							{{ctx.Locale.Tr "install.email_title"}}
 						</summary>
 						<div class="inline field">
@@ -211,8 +211,8 @@
 					</details>
 
 					<!-- Server and other services -->
-					<details class="optional field">
-						<summary class="right-content tw-py-2{{if .Err_Services}} text red{{end}}">
+					<details class="collapsible optional field">
+						<summary class="tw-py-2{{if .Err_Services}} text red{{end}}">
 							{{ctx.Locale.Tr "install.server_service_title"}}
 						</summary>
 						<div class="inline field">
@@ -314,8 +314,8 @@
 					</details>
 
 					<!-- Admin -->
-					<details class="optional field">
-						<summary class="right-content tw-py-2{{if .Err_Admin}} text red{{end}}">
+					<details class="collapsible optional field">
+						<summary class="tw-py-2{{if .Err_Admin}} text red{{end}}">
 							{{ctx.Locale.Tr "install.admin_title"}}
 						</summary>
 						<p class="center">{{ctx.Locale.Tr "install.admin_setting.description"}}</p>
@@ -352,10 +352,8 @@
 					</div>
 					{{end}}
 
+					<p>{{ctx.Locale.Tr "install.config_location_hint"}} {{.CustomConfFile}}</p>
 					<div class="inline field">
-						<div class="right-content">
-							{{ctx.Locale.Tr "install.config_location_hint"}} {{.CustomConfFile}}
-						</div>
 						<div class="tw-mt-4 tw-mb-2 tw-text-center">
 							<button class="ui primary button">{{ctx.Locale.Tr "install.install_btn_confirm"}}</button>
 						</div>
