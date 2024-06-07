@@ -893,7 +893,7 @@ node_modules: package-lock.json
 	@touch node_modules
 
 .venv: poetry.lock
-	poetry install --no-root
+	poetry install
 	@touch .venv
 
 .PHONY: fomantic
