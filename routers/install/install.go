@@ -115,7 +115,8 @@ func Install(ctx *context.Context) {
 	ctx.Data["CurDbType"] = curDBType
 
 	// Application general settings
-	form.AppName = setting.AppName
+	form.AppName = "Forgejo"
+	form.AppSlogan = "Beyond coding. We Forge."
 	form.RepoRootPath = setting.RepoRootPath
 	form.LFSRootPath = setting.LFS.Storage.Path
 
@@ -383,6 +384,7 @@ func SubmitInstall(ctx *context.Context) {
 	}
 
 	cfg.Section("").Key("APP_NAME").SetValue(form.AppName)
+	cfg.Section("").Key("APP_SLOGAN").SetValue(form.AppSlogan)
 	cfg.Section("").Key("RUN_USER").SetValue(form.RunUser)
 	cfg.Section("").Key("WORK_PATH").SetValue(setting.AppWorkPath)
 	cfg.Section("").Key("RUN_MODE").SetValue("prod")

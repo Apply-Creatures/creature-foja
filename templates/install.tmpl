@@ -107,6 +107,11 @@
 						<input id="app_name" name="app_name" value="{{.app_name}}" required>
 						<span class="help">{{ctx.Locale.Tr "install.app_name_helper"}}</span>
 					</div>
+					<div class="inline field">
+						<label for="app_slogan">{{ctx.Locale.Tr "install.app_slogan"}}</label>
+						<input id="app_slogan" name="app_slogan" value="{{.app_slogan}}">
+						<span class="help">{{ctx.Locale.Tr "install.app_slogan_helper"}}</span>
+					</div>
 					<div class="inline required field {{if .Err_RepoRootPath}}error{{end}}">
 						<label for="repo_root_path">{{ctx.Locale.Tr "install.repo_path"}}</label>
 						<input id="repo_root_path" name="repo_root_path" value="{{.repo_root_path}}" required>

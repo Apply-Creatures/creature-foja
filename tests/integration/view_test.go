@@ -185,3 +185,28 @@ func TestInHistoryButton(t *testing.T) {
 		})
 	})
 }
+
+func TestTitleDisplayName(t *testing.T) {
+	session := emptyTestSession(t)
+	title := GetHTMLTitle(t, session, "/")
+	assert.Equal(t, "Gitea: Git with a cup of tea", title)
+}
+
+func TestHomeDisplayName(t *testing.T) {
+	session := emptyTestSession(t)
+	req := NewRequest(t, "GET", "/")
+	resp := session.MakeRequest(t, req, http.StatusOK)
+	htmlDoc := NewHTMLParser(t, resp.Body)
+	assert.Equal(t, "Gitea: Git with a cup of tea", strings.TrimSpace(htmlDoc.Find("h1.title").Text()))
+}
+
+func TestOpenGraphDisplayName(t *testing.T) {
+	session := emptyTestSession(t)
+	req := NewRequest(t, "GET", "/")
+	resp := session.MakeRequest(t, req, http.StatusOK)
+	htmlDoc := NewHTMLParser(t, resp.Body)
+	ogTitle, _ := htmlDoc.Find("meta[property='og:title']").Attr("content")
+	assert.Equal(t, "Gitea: Git with a cup of tea", ogTitle)
+	ogSiteName, _ := htmlDoc.Find("meta[property='og:site_name']").Attr("content")
+	assert.Equal(t, "Gitea: Git with a cup of tea", ogSiteName)
+}

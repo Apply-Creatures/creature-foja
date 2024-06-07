@@ -31,6 +31,7 @@ type InstallForm struct {
 	DbSchema string
 
 	AppName      string `binding:"Required" locale:"install.app_name"`
+	AppSlogan    string
 	RepoRootPath string `binding:"Required"`
 	LFSRootPath  string
 	RunUser      string `binding:"Required"`
