@@ -20,6 +20,7 @@
   "prConcurrentLimit": 5,
   "internalChecksFilter": "strict",
   "osvVulnerabilityAlerts": true,
+  "labels": ["dependency-upgrade"],
   "packageRules": [
     {
       "description": "Require approval for go and python minor version",
