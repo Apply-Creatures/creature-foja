@@ -217,13 +217,13 @@ func TestRepoHTMLTitle(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
 			htmlTitle := GetHTMLTitle(t, nil, "/user2/repo1")
-			assert.EqualValues(t, "user2/repo1 - Gitea: Git with a cup of tea", htmlTitle)
+			assert.EqualValues(t, "user2/repo1 - Forgejo: Beyond coding. We Forge.", htmlTitle)
 		})
 		t.Run("With description", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
 			htmlTitle := GetHTMLTitle(t, nil, "/user27/repo49")
-			assert.EqualValues(t, "user27/repo49: A wonderful repository with more than just a README.md - Gitea: Git with a cup of tea", htmlTitle)
+			assert.EqualValues(t, "user27/repo49: A wonderful repository with more than just a README.md - Forgejo: Beyond coding. We Forge.", htmlTitle)
 		})
 	})
 
@@ -233,25 +233,25 @@ func TestRepoHTMLTitle(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
 
 				htmlTitle := GetHTMLTitle(t, nil, "/user2/repo59/src/branch/master/deep/nesting")
-				assert.EqualValues(t, "repo59/deep/nesting at master - user2/repo59 - Gitea: Git with a cup of tea", htmlTitle)
+				assert.EqualValues(t, "repo59/deep/nesting at master - user2/repo59 - Forgejo: Beyond coding. We Forge.", htmlTitle)
 			})
 			t.Run("Non-default branch", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
 
 				htmlTitle := GetHTMLTitle(t, nil, "/user2/repo59/src/branch/cake-recipe/deep/nesting")
-				assert.EqualValues(t, "repo59/deep/nesting at cake-recipe - user2/repo59 - Gitea: Git with a cup of tea", htmlTitle)
+				assert.EqualValues(t, "repo59/deep/nesting at cake-recipe - user2/repo59 - Forgejo: Beyond coding. We Forge.", htmlTitle)
 			})
 			t.Run("Commit", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
 
 				htmlTitle := GetHTMLTitle(t, nil, "/user2/repo59/src/commit/d8f53dfb33f6ccf4169c34970b5e747511c18beb/deep/nesting/")
-				assert.EqualValues(t, "repo59/deep/nesting at d8f53dfb33f6ccf4169c34970b5e747511c18beb - user2/repo59 - Gitea: Git with a cup of tea", htmlTitle)
+				assert.EqualValues(t, "repo59/deep/nesting at d8f53dfb33f6ccf4169c34970b5e747511c18beb - user2/repo59 - Forgejo: Beyond coding. We Forge.", htmlTitle)
 			})
 			t.Run("Tag", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
 
 				htmlTitle := GetHTMLTitle(t, nil, "/user2/repo59/src/tag/v1.0/deep/nesting/")
-				assert.EqualValues(t, "repo59/deep/nesting at v1.0 - user2/repo59 - Gitea: Git with a cup of tea", htmlTitle)
+				assert.EqualValues(t, "repo59/deep/nesting at v1.0 - user2/repo59 - Forgejo: Beyond coding. We Forge.", htmlTitle)
 			})
 		})
 		t.Run("File", func(t *testing.T) {
@@ -259,25 +259,25 @@ func TestRepoHTMLTitle(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
 
 				htmlTitle := GetHTMLTitle(t, nil, "/user2/repo59/src/branch/master/deep/nesting/folder/secret_sauce_recipe.txt")
-				assert.EqualValues(t, "repo59/deep/nesting/folder/secret_sauce_recipe.txt at master - user2/repo59 - Gitea: Git with a cup of tea", htmlTitle)
+				assert.EqualValues(t, "repo59/deep/nesting/folder/secret_sauce_recipe.txt at master - user2/repo59 - Forgejo: Beyond coding. We Forge.", htmlTitle)
 			})
 			t.Run("Non-default branch", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
 
 				htmlTitle := GetHTMLTitle(t, nil, "/user2/repo59/src/branch/cake-recipe/deep/nesting/folder/secret_sauce_recipe.txt")
-				assert.EqualValues(t, "repo59/deep/nesting/folder/secret_sauce_recipe.txt at cake-recipe - user2/repo59 - Gitea: Git with a cup of tea", htmlTitle)
+				assert.EqualValues(t, "repo59/deep/nesting/folder/secret_sauce_recipe.txt at cake-recipe - user2/repo59 - Forgejo: Beyond coding. We Forge.", htmlTitle)
 			})
 			t.Run("Commit", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
 
 				htmlTitle := GetHTMLTitle(t, nil, "/user2/repo59/src/commit/d8f53dfb33f6ccf4169c34970b5e747511c18beb/deep/nesting/folder/secret_sauce_recipe.txt")
-				assert.EqualValues(t, "repo59/deep/nesting/folder/secret_sauce_recipe.txt at d8f53dfb33f6ccf4169c34970b5e747511c18beb - user2/repo59 - Gitea: Git with a cup of tea", htmlTitle)
+				assert.EqualValues(t, "repo59/deep/nesting/folder/secret_sauce_recipe.txt at d8f53dfb33f6ccf4169c34970b5e747511c18beb - user2/repo59 - Forgejo: Beyond coding. We Forge.", htmlTitle)
 			})
 			t.Run("Tag", func(t *testing.T) {
 				defer tests.PrintCurrentTest(t)()
 
 				htmlTitle := GetHTMLTitle(t, nil, "/user2/repo59/src/tag/v1.0/deep/nesting/folder/secret_sauce_recipe.txt")
-				assert.EqualValues(t, "repo59/deep/nesting/folder/secret_sauce_recipe.txt at v1.0 - user2/repo59 - Gitea: Git with a cup of tea", htmlTitle)
+				assert.EqualValues(t, "repo59/deep/nesting/folder/secret_sauce_recipe.txt at v1.0 - user2/repo59 - Forgejo: Beyond coding. We Forge.", htmlTitle)
 			})
 		})
 	})
@@ -287,13 +287,13 @@ func TestRepoHTMLTitle(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
 			htmlTitle := GetHTMLTitle(t, nil, "/user2/repo1/issues")
-			assert.EqualValues(t, "Issues - user2/repo1 - Gitea: Git with a cup of tea", htmlTitle)
+			assert.EqualValues(t, "Issues - user2/repo1 - Forgejo: Beyond coding. We Forge.", htmlTitle)
 		})
 		t.Run("View issue page", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
 			htmlTitle := GetHTMLTitle(t, nil, "/user2/repo1/issues/1")
-			assert.EqualValues(t, "#1 - issue1 - user2/repo1 - Gitea: Git with a cup of tea", htmlTitle)
+			assert.EqualValues(t, "#1 - issue1 - user2/repo1 - Forgejo: Beyond coding. We Forge.", htmlTitle)
 		})
 	})
 
@@ -302,13 +302,13 @@ func TestRepoHTMLTitle(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
 			htmlTitle := GetHTMLTitle(t, nil, "/user2/repo1/pulls")
-			assert.EqualValues(t, "Pull requests - user2/repo1 - Gitea: Git with a cup of tea", htmlTitle)
+			assert.EqualValues(t, "Pull requests - user2/repo1 - Forgejo: Beyond coding. We Forge.", htmlTitle)
 		})
 		t.Run("View pull request", func(t *testing.T) {
 			defer tests.PrintCurrentTest(t)()
 
 			htmlTitle := GetHTMLTitle(t, nil, "/user2/repo1/pulls/2")
-			assert.EqualValues(t, "#2 - issue2 - user2/repo1 - Gitea: Git with a cup of tea", htmlTitle)
+			assert.EqualValues(t, "#2 - issue2 - user2/repo1 - Forgejo: Beyond coding. We Forge.", htmlTitle)
 		})
 	})
 }
