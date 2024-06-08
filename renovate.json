@@ -46,7 +46,10 @@
     },
     {
       "description": "Schedule some deps less frequently",
-      "matchDepNames": ["github.com/google/pprof"],
+      "matchDepNames": [
+        "github.com/google/pprof",
+        "github.com/golangci/misspell/cmd/misspell"
+      ],
       "extends": ["schedule:quarterly"]
     },
     {
