@@ -442,17 +442,19 @@ lint-spell: lint-codespell
 lint-spell-fix: lint-codespell-fix
 	@go run $(MISSPELL_PACKAGE) -w $(SPELLCHECK_FILES)
 
+RUN_DEADCODE = $(GO) run $(DEADCODE_PACKAGE) -generated=false -f='{{println .Path}}{{range .Funcs}}{{printf "\t%s\n" .Name}}{{end}}{{println}}' -test code.gitea.io/gitea
+
 .PHONY: lint-go
 lint-go:
 	$(GO) run $(GOLANGCI_LINT_PACKAGE) run $(GOLANGCI_LINT_ARGS)
-	$(GO) run $(DEADCODE_PACKAGE) -generated=false -test code.gitea.io/gitea > .cur-deadcode-out
+	$(RUN_DEADCODE) > .cur-deadcode-out
 	@$(DIFF) .deadcode-out .cur-deadcode-out \
 	|| (code=$$?; echo "Please run 'make lint-go-fix' and commit the result"; exit $${code})
 
 .PHONY: lint-go-fix
 lint-go-fix:
 	$(GO) run $(GOLANGCI_LINT_PACKAGE) run $(GOLANGCI_LINT_ARGS) --fix
-	$(GO) run $(DEADCODE_PACKAGE) -generated=false -test code.gitea.io/gitea > .deadcode-out
+	$(RUN_DEADCODE) > .deadcode-out
 
 # workaround step for the lint-go-windows CI task because 'go run' can not
 # have distinct GOOS/GOARCH for its build and run steps
