@@ -1,222 +1,352 @@
-cmd/web_graceful.go:28:6: unreachable func: NoMainListener
-cmd/forgejo/forgejo.go:43:6: unreachable func: ContextSetNoInit
-cmd/forgejo/forgejo.go:52:6: unreachable func: ContextSetNoExit
-cmd/forgejo/forgejo.go:61:6: unreachable func: ContextSetStderr
-cmd/forgejo/forgejo.go:65:6: unreachable func: ContextGetStderr
-cmd/forgejo/forgejo.go:73:6: unreachable func: ContextSetStdout
-cmd/forgejo/forgejo.go:85:6: unreachable func: ContextSetStdin
-models/error.go:160:6: unreachable func: IsErrUpdateTaskNotExist
-models/error.go:165:34: unreachable func: ErrUpdateTaskNotExist.Error
-models/error.go:169:34: unreachable func: ErrUpdateTaskNotExist.Unwrap
-models/error.go:397:6: unreachable func: IsErrSHANotFound
-models/error.go:504:6: unreachable func: IsErrMergeDivergingFastForwardOnly
-models/fixture_generation.go:18:6: unreachable func: GetYamlFixturesAccess
-models/actions/schedule_list.go:20:31: unreachable func: ScheduleList.GetUserIDs
-models/actions/schedule_list.go:26:31: unreachable func: ScheduleList.GetRepoIDs
-models/actions/schedule_list.go:32:31: unreachable func: ScheduleList.LoadTriggerUser
-models/actions/schedule_list.go:51:31: unreachable func: ScheduleList.LoadRepos
-models/asymkey/error.go:208:34: unreachable func: ErrGPGKeyAccessDenied.Error
-models/asymkey/error.go:213:34: unreachable func: ErrGPGKeyAccessDenied.Unwrap
-models/asymkey/ssh_key_deploy.go:109:6: unreachable func: HasDeployKey
-models/auth/source.go:302:6: unreachable func: GetSourceByName
-models/auth/webauthn.go:133:6: unreachable func: GetWebAuthnCredentialByID
-models/auth/webauthn.go:185:6: unreachable func: WebAuthnCredentials
-models/db/context.go:288:6: unreachable func: TruncateBeans
-models/db/context.go:309:6: unreachable func: InTransaction
-models/db/engine.go:78:6: unreachable func: DumpTables
-models/dbfs/dbfile.go:312:16: unreachable func: file.renameTo
-models/dbfs/dbfs.go:85:6: unreachable func: Create
-models/dbfs/dbfs.go:89:6: unreachable func: Rename
-models/forgefed/federationhost_repository.go:19:6: unreachable func: GetFederationHost
-models/forgejo/semver/semver.go:23:6: unreachable func: GetVersion
-models/forgejo/semver/semver.go:51:6: unreachable func: SetVersionString
-models/forgejo/semver/semver.go:63:6: unreachable func: SetVersion
-models/git/branch.go:256:6: unreachable func: RemoveDeletedBranchByID
-models/issues/dependency.go:93:6: unreachable func: IsErrUnknownDependencyType
-models/issues/issue.go:77:30: unreachable func: ErrNewIssueInsert.Error
-models/issues/issue.go:88:6: unreachable func: IsErrIssueWasClosed
-models/issues/milestone.go:255:6: unreachable func: ChangeMilestoneStatus
-models/migrations/base/db.go:446:6: unreachable func: removeAllWithRetry
-models/migrations/base/db.go:458:6: unreachable func: newXORMEngine
-models/migrations/base/db.go:466:6: unreachable func: deleteDB
-models/migrations/base/tests.go:33:6: unreachable func: PrepareTestEnv
-models/migrations/base/tests.go:114:6: unreachable func: MainTest
-models/organization/team.go:251:6: unreachable func: GetTeamNamesByID
-models/organization/team_unit.go:33:6: unreachable func: UpdateTeamUnits
-models/organization/team_user.go:47:34: unreachable func: SearchMembersOptions.ToConds
-models/organization/team_user.go:81:6: unreachable func: UsersInTeamsCount
-models/perm/access/repo_permission.go:426:6: unreachable func: GetRepoWriters
-models/project/column.go:309:6: unreachable func: UpdateColumnSorting
-models/project/project.go:353:6: unreachable func: ChangeProjectStatus
-models/repo/attachment.go:200:6: unreachable func: DeleteAttachmentsByIssue
-models/repo/release.go:420:26: unreachable func: releaseSorter.Len
-models/repo/release.go:424:26: unreachable func: releaseSorter.Less
-models/repo/release.go:432:26: unreachable func: releaseSorter.Swap
-models/repo/release.go:437:6: unreachable func: SortReleases
-models/repo/repo_list.go:25:6: unreachable func: FindReposMapByIDs
-models/repo/repo_list.go:211:24: unreachable func: SearchOrderBy.String
-models/repo/topic.go:48:6: unreachable func: IsErrTopicNotExist
-models/repo/topic.go:54:29: unreachable func: ErrTopicNotExist.Error
-models/repo/topic.go:58:29: unreachable func: ErrTopicNotExist.Unwrap
-models/repo/topic.go:95:6: unreachable func: GetTopicByName
-models/repo/watch.go:108:6: unreachable func: WatchRepoMode
-models/unittest/consistency.go:27:6: unreachable func: CheckConsistencyFor
-models/unittest/consistency.go:45:6: unreachable func: checkForConsistency
-models/unittest/fixtures.go:25:6: unreachable func: GetXORMEngine
-models/unittest/fixtures.go:32:6: unreachable func: OverrideFixtures
-models/unittest/fixtures.go:43:6: unreachable func: InitFixtures
-models/unittest/fixtures.go:95:6: unreachable func: LoadFixtures
-models/unittest/fscopy.go:17:6: unreachable func: Copy
-models/unittest/fscopy.go:64:6: unreachable func: CopyDir
-models/unittest/mock_http.go:29:6: unreachable func: NewMockWebServer
-models/unittest/mock_http.go:107:6: unreachable func: NormalizedFullPath
-models/unittest/testdb.go:37:6: unreachable func: FixturesDir
-models/unittest/testdb.go:41:6: unreachable func: fatalTestError
-models/unittest/testdb.go:47:6: unreachable func: InitSettings
-models/unittest/testdb.go:73:6: unreachable func: MainTest
-models/unittest/testdb.go:216:6: unreachable func: CreateTestEngine
-models/unittest/testdb.go:239:6: unreachable func: PrepareTestDatabase
-models/unittest/testdb.go:245:6: unreachable func: PrepareTestEnv
-models/unittest/unit_tests.go:29:6: unreachable func: Cond
-models/unittest/unit_tests.go:34:6: unreachable func: OrderBy
-models/unittest/unit_tests.go:54:6: unreachable func: LoadBeanIfExists
-models/unittest/unit_tests.go:60:6: unreachable func: BeanExists
-models/unittest/unit_tests.go:67:6: unreachable func: AssertExistsAndLoadBean
-models/unittest/unit_tests.go:97:6: unreachable func: GetCount
-models/unittest/unit_tests.go:113:6: unreachable func: AssertNotExistsBean
-models/unittest/unit_tests.go:121:6: unreachable func: AssertExistsIf
-models/unittest/unit_tests.go:128:6: unreachable func: AssertSuccessfulInsert
-models/unittest/unit_tests.go:134:6: unreachable func: AssertCount
-models/unittest/unit_tests.go:139:6: unreachable func: AssertInt64InRange
-models/user/email_address.go:112:6: unreachable func: IsErrPrimaryEmailCannotDelete
-models/user/error.go:86:28: unreachable func: ErrUserInactive.Error
-models/user/error.go:91:28: unreachable func: ErrUserInactive.Unwrap
-models/user/external_login_user.go:25:6: unreachable func: IsErrExternalLoginUserAlreadyExist
-models/user/external_login_user.go:45:6: unreachable func: IsErrExternalLoginUserNotExist
-models/user/federated_user.go:17:6: unreachable func: NewFederatedUser
-models/user/setting.go:51:6: unreachable func: IsErrUserSettingIsNotExist
-models/user/setting.go:101:6: unreachable func: GetUserAllSettings
-models/user/setting.go:146:6: unreachable func: DeleteUserSetting
-models/user/user.go:959:6: unreachable func: GetUserEmailsByNames
-models/user/user.go:1000:6: unreachable func: GetUserNamesByIDs
-modules/assetfs/layered.go:55:6: unreachable func: Bindata
-modules/auth/password/hash/dummy.go:17:28: unreachable func: DummyHasher.HashWithSaltBytes
-modules/auth/password/hash/dummy.go:31:6: unreachable func: NewDummyHasher
-modules/auth/password/pwn/pwn.go:49:6: unreachable func: WithHTTP
-modules/base/tool.go:194:6: unreachable func: SetupGiteaRoot
-modules/cache/cache.go:76:6: unreachable func: GetInt
-modules/cache/context.go:118:6: unreachable func: WithNoCacheContext
-modules/cache/context.go:155:6: unreachable func: RemoveContextData
-modules/charset/breakwriter.go:17:23: unreachable func: BreakWriter.Write
-modules/emoji/emoji.go:121:6: unreachable func: ReplaceCodes
-modules/eventsource/event.go:114:17: unreachable func: Event.String
-modules/forgefed/forgefed.go:15:6: unreachable func: GetItemByType
-modules/forgefed/forgefed.go:25:6: unreachable func: JSONUnmarshalerFn
-modules/forgefed/forgefed.go:36:6: unreachable func: NotEmpty
-modules/forgefed/repository.go:79:6: unreachable func: ToRepository
-modules/forgefed/repository.go:102:6: unreachable func: OnRepository
-modules/git/command.go:448:6: unreachable func: AllowLFSFiltersArgs
-modules/git/commit.go:83:6: unreachable func: AddChanges
-modules/git/commit.go:88:6: unreachable func: AddChangesWithArgs
-modules/git/commit.go:107:6: unreachable func: CommitChanges
-modules/git/commit.go:115:6: unreachable func: CommitChangesWithArgs
-modules/git/error.go:20:6: unreachable func: IsErrExecTimeout
-modules/git/error.go:25:27: unreachable func: ErrExecTimeout.Error
-modules/git/error.go:76:34: unreachable func: ErrUnsupportedVersion.Error
-modules/git/hook.go:126:6: unreachable func: SetUpdateHook
-modules/git/repo_base_nogogit.go:47:6: unreachable func: openRepositoryWithDefaultContext
-modules/git/repo_tag.go:21:6: unreachable func: IsTagExist
-modules/git/tree_entry_mode.go:32:6: unreachable func: ToEntryMode
-modules/git/utils.go:116:31: unreachable func: LimitedReaderCloser.Read
-modules/git/utils.go:130:31: unreachable func: LimitedReaderCloser.Close
-modules/gitgraph/parser.go:29:23: unreachable func: Parser.Reset
-modules/gitrepo/branch.go:24:6: unreachable func: GetBranchCommitID
-modules/gitrepo/branch.go:47:6: unreachable func: GetWikiDefaultBranch
-modules/graceful/context.go:34:19: unreachable func: Manager.TerminateContext
-modules/graceful/manager.go:248:19: unreachable func: Manager.Err
-modules/graceful/manager.go:253:19: unreachable func: Manager.Value
-modules/graceful/manager.go:258:19: unreachable func: Manager.Deadline
-modules/hcaptcha/hcaptcha.go:37:6: unreachable func: WithHTTP
-modules/json/json.go:47:16: unreachable func: StdJSON.Marshal
-modules/json/json.go:52:16: unreachable func: StdJSON.Unmarshal
-modules/json/json.go:57:16: unreachable func: StdJSON.NewEncoder
-modules/json/json.go:62:16: unreachable func: StdJSON.NewDecoder
-modules/json/json.go:67:16: unreachable func: StdJSON.Indent
-modules/markup/html.go:147:6: unreachable func: IsSameDomain
-modules/markup/renderer.go:208:6: unreachable func: GetRendererByType
-modules/markup/renderer.go:237:6: unreachable func: RenderString
-modules/markup/renderer.go:381:6: unreachable func: IsMarkupFile
-modules/markup/console/console.go:72:6: unreachable func: Render
-modules/markup/console/console.go:80:6: unreachable func: RenderString
-modules/markup/markdown/ast.go:39:6: unreachable func: IsDetails
-modules/markup/markdown/ast.go:71:6: unreachable func: IsSummary
-modules/markup/markdown/ast.go:108:6: unreachable func: IsTaskCheckBoxListItem
-modules/markup/markdown/ast.go:144:6: unreachable func: IsIcon
-modules/markup/markdown/markdown.go:299:6: unreachable func: RenderRawString
-modules/markup/markdown/math/math.go:43:6: unreachable func: WithInlineDollarParser
-modules/markup/markdown/math/math.go:54:6: unreachable func: WithBlockDollarParser
-modules/markup/mdstripper/mdstripper.go:138:25: unreachable func: stripRenderer.AddOptions
-modules/markup/mdstripper/mdstripper.go:144:6: unreachable func: StripMarkdown
-modules/markup/orgmode/orgmode.go:117:6: unreachable func: RenderString
-modules/private/forgejo_actions.go:19:6: unreachable func: ActionsRunnerRegister
-modules/process/manager_exec.go:20:20: unreachable func: Manager.ExecTimeout
-modules/queue/base_channel.go:35:6: unreachable func: newBaseChannelSimple
-modules/queue/base_channel.go:39:6: unreachable func: newBaseChannelUnique
-modules/queue/base_redis.go:67:6: unreachable func: newBaseRedisSimple
-modules/queue/base_redis.go:71:6: unreachable func: newBaseRedisUnique
-modules/queue/testhelper.go:28:29: unreachable func: testStateRecorder.Records
-modules/queue/testhelper.go:36:29: unreachable func: testStateRecorder.Reset
-modules/queue/workerqueue.go:216:6: unreachable func: newWorkerPoolQueueForTest
-modules/queue/lqinternal/lqinternal.go:14:6: unreachable func: QueueItemIDBytes
-modules/queue/lqinternal/lqinternal.go:20:6: unreachable func: QueueItemKeyBytes
-modules/queue/lqinternal/lqinternal.go:41:6: unreachable func: ListLevelQueueKeys
-modules/setting/config_provider.go:186:6: unreachable func: NewConfigProviderFromData
-modules/setting/git.go:80:25: unreachable func: GitConfigType.GetOption
-modules/setting/log.go:184:6: unreachable func: InitLoggersForTest
-modules/storage/storage.go:27:36: unreachable func: ErrInvalidConfiguration.Error
-modules/storage/storage.go:35:6: unreachable func: IsErrInvalidConfiguration
-modules/structs/hook.go:145:6: unreachable func: ParseCreateHook
-modules/structs/hook.go:295:6: unreachable func: ParsePushHook
-modules/sync/status_pool.go:38:23: unreachable func: StatusTable.Start
-modules/sync/status_pool.go:52:23: unreachable func: StatusTable.IsRunning
-modules/testlogger/testlogger.go:38:34: unreachable func: testLoggerWriterCloser.pushT
-modules/testlogger/testlogger.go:45:34: unreachable func: testLoggerWriterCloser.Log
-modules/testlogger/testlogger.go:365:34: unreachable func: testLoggerWriterCloser.recordError
-modules/testlogger/testlogger.go:394:34: unreachable func: testLoggerWriterCloser.printMsg
-modules/testlogger/testlogger.go:410:34: unreachable func: testLoggerWriterCloser.popT
-modules/testlogger/testlogger.go:423:34: unreachable func: testLoggerWriterCloser.Reset
-modules/testlogger/testlogger.go:443:6: unreachable func: PrintCurrentTest
-modules/testlogger/testlogger.go:496:6: unreachable func: Printf
-modules/testlogger/testlogger.go:506:6: unreachable func: NewTestLoggerWriter
-modules/testlogger/testlogger.go:520:30: unreachable func: TestLogEventWriter.Base
-modules/testlogger/testlogger.go:525:30: unreachable func: TestLogEventWriter.GetLevel
-modules/testlogger/testlogger.go:530:30: unreachable func: TestLogEventWriter.GetWriterName
-modules/testlogger/testlogger.go:535:30: unreachable func: TestLogEventWriter.GetWriterType
-modules/testlogger/testlogger.go:540:30: unreachable func: TestLogEventWriter.Run
-modules/timeutil/executable.go:21:6: unreachable func: GetExecutableModTime
-modules/timeutil/timestamp.go:24:6: unreachable func: MockSet
-modules/timeutil/timestamp.go:29:6: unreachable func: MockUnset
-modules/translation/mock.go:18:21: unreachable func: MockLocale.Language
-modules/translation/mock.go:22:21: unreachable func: MockLocale.TrString
-modules/translation/mock.go:26:21: unreachable func: MockLocale.Tr
-modules/translation/mock.go:30:21: unreachable func: MockLocale.TrN
-modules/translation/mock.go:34:21: unreachable func: MockLocale.TrSize
-modules/translation/mock.go:38:21: unreachable func: MockLocale.PrettyNumber
-modules/util/filebuffer/file_backed_buffer.go:49:6: unreachable func: CreateFromReader
-modules/validation/validatable.go:26:6: unreachable func: IsErrNotValid
-modules/web/routemock.go:49:6: unreachable func: RouteMock
-modules/web/routemock.go:57:6: unreachable func: RouteMockReset
-modules/web/middleware/locale.go:57:6: unreachable func: DeleteLocaleCookie
-routers/web/home.go:114:6: unreachable func: NotFound
-routers/web/org/projects.go:35:6: unreachable func: MustEnableProjects
-services/context/private.go:59:6: unreachable func: GetPrivateContext
-services/convert/secret.go:12:6: unreachable func: ToSecret
-services/forms/repo_form.go:734:24: unreachable func: DeadlineForm.Validate
-services/pull/commit_status.go:75:6: unreachable func: IsCommitStatusContextSuccess
-services/repository/fork.go:33:6: unreachable func: IsErrForkAlreadyExist
-services/repository/archiver/archiver.go:290:6: unreachable func: ArchiveRepository
-services/repository/files/content.go:38:24: unreachable func: ContentType.String
-services/repository/files/file.go:37:6: unreachable func: GetFileResponseFromCommit
-services/repository/files/temp_repo.go:216:37: unreachable func: TemporaryUploadRepository.GetLastCommit
-services/repository/files/temp_repo.go:221:37: unreachable func: TemporaryUploadRepository.GetLastCommitByRef
-services/webhook/notifier.go:36:6: unreachable func: NewNotifier
+code.gitea.io/gitea/cmd
+	NoMainListener
+
+code.gitea.io/gitea/cmd/forgejo
+	ContextSetNoInit
+	ContextSetNoExit
+	ContextSetStderr
+	ContextGetStderr
+	ContextSetStdout
+	ContextSetStdin
+
+code.gitea.io/gitea/models
+	IsErrUpdateTaskNotExist
+	ErrUpdateTaskNotExist.Error
+	ErrUpdateTaskNotExist.Unwrap
+	IsErrSHANotFound
+	IsErrMergeDivergingFastForwardOnly
+	GetYamlFixturesAccess
+
+code.gitea.io/gitea/models/actions
+	ScheduleList.GetUserIDs
+	ScheduleList.GetRepoIDs
+	ScheduleList.LoadTriggerUser
+	ScheduleList.LoadRepos
+
+code.gitea.io/gitea/models/asymkey
+	ErrGPGKeyAccessDenied.Error
+	ErrGPGKeyAccessDenied.Unwrap
+	HasDeployKey
+
+code.gitea.io/gitea/models/auth
+	GetSourceByName
+	GetWebAuthnCredentialByID
+	WebAuthnCredentials
+
+code.gitea.io/gitea/models/db
+	TruncateBeans
+	InTransaction
+	DumpTables
+
+code.gitea.io/gitea/models/dbfs
+	file.renameTo
+	Create
+	Rename
+
+code.gitea.io/gitea/models/forgefed
+	GetFederationHost
+
+code.gitea.io/gitea/models/forgejo/semver
+	GetVersion
+	SetVersionString
+	SetVersion
+
+code.gitea.io/gitea/models/git
+	RemoveDeletedBranchByID
+
+code.gitea.io/gitea/models/issues
+	IsErrUnknownDependencyType
+	ErrNewIssueInsert.Error
+	IsErrIssueWasClosed
+	ChangeMilestoneStatus
+
+code.gitea.io/gitea/models/migrations/base
+	removeAllWithRetry
+	newXORMEngine
+	deleteDB
+	PrepareTestEnv
+	MainTest
+
+code.gitea.io/gitea/models/organization
+	GetTeamNamesByID
+	UpdateTeamUnits
+	SearchMembersOptions.ToConds
+	UsersInTeamsCount
+
+code.gitea.io/gitea/models/perm/access
+	GetRepoWriters
+
+code.gitea.io/gitea/models/project
+	UpdateColumnSorting
+	ChangeProjectStatus
+
+code.gitea.io/gitea/models/repo
+	DeleteAttachmentsByIssue
+	releaseSorter.Len
+	releaseSorter.Less
+	releaseSorter.Swap
+	SortReleases
+	FindReposMapByIDs
+	SearchOrderBy.String
+	IsErrTopicNotExist
+	ErrTopicNotExist.Error
+	ErrTopicNotExist.Unwrap
+	GetTopicByName
+	WatchRepoMode
+
+code.gitea.io/gitea/models/unittest
+	CheckConsistencyFor
+	checkForConsistency
+	GetXORMEngine
+	OverrideFixtures
+	InitFixtures
+	LoadFixtures
+	Copy
+	CopyDir
+	NewMockWebServer
+	NormalizedFullPath
+	FixturesDir
+	fatalTestError
+	InitSettings
+	MainTest
+	CreateTestEngine
+	PrepareTestDatabase
+	PrepareTestEnv
+	Cond
+	OrderBy
+	LoadBeanIfExists
+	BeanExists
+	AssertExistsAndLoadBean
+	GetCount
+	AssertNotExistsBean
+	AssertExistsIf
+	AssertSuccessfulInsert
+	AssertCount
+	AssertInt64InRange
+
+code.gitea.io/gitea/models/user
+	IsErrPrimaryEmailCannotDelete
+	ErrUserInactive.Error
+	ErrUserInactive.Unwrap
+	IsErrExternalLoginUserAlreadyExist
+	IsErrExternalLoginUserNotExist
+	NewFederatedUser
+	IsErrUserSettingIsNotExist
+	GetUserAllSettings
+	DeleteUserSetting
+	GetUserEmailsByNames
+	GetUserNamesByIDs
+
+code.gitea.io/gitea/modules/assetfs
+	Bindata
+
+code.gitea.io/gitea/modules/auth/password/hash
+	DummyHasher.HashWithSaltBytes
+	NewDummyHasher
+
+code.gitea.io/gitea/modules/auth/password/pwn
+	WithHTTP
+
+code.gitea.io/gitea/modules/base
+	SetupGiteaRoot
+
+code.gitea.io/gitea/modules/cache
+	GetInt
+	WithNoCacheContext
+	RemoveContextData
+
+code.gitea.io/gitea/modules/charset
+	BreakWriter.Write
+
+code.gitea.io/gitea/modules/emoji
+	ReplaceCodes
+
+code.gitea.io/gitea/modules/eventsource
+	Event.String
+
+code.gitea.io/gitea/modules/forgefed
+	GetItemByType
+	JSONUnmarshalerFn
+	NotEmpty
+	ToRepository
+	OnRepository
+
+code.gitea.io/gitea/modules/git
+	AllowLFSFiltersArgs
+	AddChanges
+	AddChangesWithArgs
+	CommitChanges
+	CommitChangesWithArgs
+	IsErrExecTimeout
+	ErrExecTimeout.Error
+	ErrUnsupportedVersion.Error
+	SetUpdateHook
+	openRepositoryWithDefaultContext
+	IsTagExist
+	ToEntryMode
+	LimitedReaderCloser.Read
+	LimitedReaderCloser.Close
+
+code.gitea.io/gitea/modules/gitgraph
+	Parser.Reset
+
+code.gitea.io/gitea/modules/gitrepo
+	GetBranchCommitID
+	GetWikiDefaultBranch
+
+code.gitea.io/gitea/modules/graceful
+	Manager.TerminateContext
+	Manager.Err
+	Manager.Value
+	Manager.Deadline
+
+code.gitea.io/gitea/modules/hcaptcha
+	WithHTTP
+
+code.gitea.io/gitea/modules/json
+	StdJSON.Marshal
+	StdJSON.Unmarshal
+	StdJSON.NewEncoder
+	StdJSON.NewDecoder
+	StdJSON.Indent
+
+code.gitea.io/gitea/modules/markup
+	IsSameDomain
+	GetRendererByType
+	RenderString
+	IsMarkupFile
+
+code.gitea.io/gitea/modules/markup/console
+	Render
+	RenderString
+
+code.gitea.io/gitea/modules/markup/markdown
+	IsDetails
+	IsSummary
+	IsTaskCheckBoxListItem
+	IsIcon
+	RenderRawString
+
+code.gitea.io/gitea/modules/markup/markdown/math
+	WithInlineDollarParser
+	WithBlockDollarParser
+
+code.gitea.io/gitea/modules/markup/mdstripper
+	stripRenderer.AddOptions
+	StripMarkdown
+
+code.gitea.io/gitea/modules/markup/orgmode
+	RenderString
+
+code.gitea.io/gitea/modules/private
+	ActionsRunnerRegister
+
+code.gitea.io/gitea/modules/process
+	Manager.ExecTimeout
+
+code.gitea.io/gitea/modules/queue
+	newBaseChannelSimple
+	newBaseChannelUnique
+	newBaseRedisSimple
+	newBaseRedisUnique
+	testStateRecorder.Records
+	testStateRecorder.Reset
+	newWorkerPoolQueueForTest
+
+code.gitea.io/gitea/modules/queue/lqinternal
+	QueueItemIDBytes
+	QueueItemKeyBytes
+	ListLevelQueueKeys
+
+code.gitea.io/gitea/modules/setting
+	NewConfigProviderFromData
+	GitConfigType.GetOption
+	InitLoggersForTest
+
+code.gitea.io/gitea/modules/storage
+	ErrInvalidConfiguration.Error
+	IsErrInvalidConfiguration
+
+code.gitea.io/gitea/modules/structs
+	ParseCreateHook
+	ParsePushHook
+
+code.gitea.io/gitea/modules/sync
+	StatusTable.Start
+	StatusTable.IsRunning
+
+code.gitea.io/gitea/modules/testlogger
+	testLoggerWriterCloser.pushT
+	testLoggerWriterCloser.Log
+	testLoggerWriterCloser.recordError
+	testLoggerWriterCloser.printMsg
+	testLoggerWriterCloser.popT
+	testLoggerWriterCloser.Reset
+	PrintCurrentTest
+	Printf
+	NewTestLoggerWriter
+	TestLogEventWriter.Base
+	TestLogEventWriter.GetLevel
+	TestLogEventWriter.GetWriterName
+	TestLogEventWriter.GetWriterType
+	TestLogEventWriter.Run
+
+code.gitea.io/gitea/modules/timeutil
+	GetExecutableModTime
+	MockSet
+	MockUnset
+
+code.gitea.io/gitea/modules/translation
+	MockLocale.Language
+	MockLocale.TrString
+	MockLocale.Tr
+	MockLocale.TrN
+	MockLocale.TrSize
+	MockLocale.PrettyNumber
+
+code.gitea.io/gitea/modules/util/filebuffer
+	CreateFromReader
+
+code.gitea.io/gitea/modules/validation
+	IsErrNotValid
+
+code.gitea.io/gitea/modules/web
+	RouteMock
+	RouteMockReset
+
+code.gitea.io/gitea/modules/web/middleware
+	DeleteLocaleCookie
+
+code.gitea.io/gitea/routers/web
+	NotFound
+
+code.gitea.io/gitea/routers/web/org
+	MustEnableProjects
+
+code.gitea.io/gitea/services/context
+	GetPrivateContext
+
+code.gitea.io/gitea/services/convert
+	ToSecret
+
+code.gitea.io/gitea/services/forms
+	DeadlineForm.Validate
+
+code.gitea.io/gitea/services/pull
+	IsCommitStatusContextSuccess
+
+code.gitea.io/gitea/services/repository
+	IsErrForkAlreadyExist
+
+code.gitea.io/gitea/services/repository/archiver
+	ArchiveRepository
+
+code.gitea.io/gitea/services/repository/files
+	ContentType.String
+	GetFileResponseFromCommit
+	TemporaryUploadRepository.GetLastCommit
+	TemporaryUploadRepository.GetLastCommitByRef
+
+code.gitea.io/gitea/services/webhook
+	NewNotifier
+
