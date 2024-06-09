@@ -170,8 +170,8 @@ func migrateActionsArtifacts(ctx context.Context, dstStorage storage.ObjectStora
 
 		_, err := storage.Copy(dstStorage, artifact.StoragePath, storage.ActionsArtifacts, artifact.StoragePath)
 		if err != nil {
-			// ignore files that do not exist
 			if errors.Is(err, fs.ErrNotExist) {
+				log.Warn("ignored: actions artifact %s exists in the database but not in storage", artifact.StoragePath)
 				return nil
 			}
 			return err
