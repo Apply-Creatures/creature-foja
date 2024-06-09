@@ -10,17 +10,16 @@ import (
 
 	repo_model "code.gitea.io/gitea/models/repo"
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/test"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestGenerateMessageID(t *testing.T) {
-	mailService := setting.Mailer{
+	defer test.MockVariableValue(&setting.MailService, &setting.Mailer{
 		From: "test@gitea.com",
-	}
-
-	setting.MailService = &mailService
-	setting.Domain = "localhost"
+	})()
+	defer test.MockVariableValue(&setting.Domain, "localhost")()
 
 	date := time.Date(2000, 1, 2, 3, 4, 5, 6, time.UTC)
 	m := NewMessageFrom("", "display-name", "from-address", "subject", "body")
@@ -40,7 +39,7 @@ func TestGenerateMessageID(t *testing.T) {
 }
 
 func TestGenerateMessageIDForRelease(t *testing.T) {
-	setting.Domain = "localhost"
+	defer test.MockVariableValue(&setting.Domain, "localhost")()
 
 	rel := repo_model.Release{
 		ID: 42,
@@ -54,11 +53,10 @@ func TestGenerateMessageIDForRelease(t *testing.T) {
 }
 
 func TestToMessage(t *testing.T) {
-	oldConf := *setting.MailService
-	defer func() {
-		setting.MailService = &oldConf
-	}()
-	setting.MailService.From = "test@gitea.com"
+	defer test.MockVariableValue(&setting.MailService, &setting.Mailer{
+		From: "test@gitea.com",
+	})()
+	defer test.MockVariableValue(&setting.Domain, "localhost")()
 
 	m1 := Message{
 		Info:            "info",
