@@ -5,10 +5,12 @@ package cmd
 
 import (
 	"context"
+	"io"
 	"os"
 	"strings"
 	"testing"
 
+	"code.gitea.io/gitea/models/actions"
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/packages"
 	"code.gitea.io/gitea/models/unittest"
@@ -16,10 +18,27 @@ import (
 	packages_module "code.gitea.io/gitea/modules/packages"
 	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/storage"
+	"code.gitea.io/gitea/modules/test"
 	packages_service "code.gitea.io/gitea/services/packages"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func createLocalStorage(t *testing.T) (storage.ObjectStorage, string) {
+	t.Helper()
+
+	p := t.TempDir()
+
+	storage, err := storage.NewLocalStorage(
+		context.Background(),
+		&setting.Storage{
+			Path: p,
+		})
+	require.NoError(t, err)
+
+	return storage, p
+}
 
 func TestMigratePackages(t *testing.T) {
 	assert.NoError(t, unittest.PrepareTestDatabase())
@@ -55,14 +74,7 @@ func TestMigratePackages(t *testing.T) {
 
 	ctx := context.Background()
 
-	p := t.TempDir()
-
-	dstStorage, err := storage.NewLocalStorage(
-		ctx,
-		&setting.Storage{
-			Path: p,
-		})
-	assert.NoError(t, err)
+	dstStorage, p := createLocalStorage(t)
 
 	err = migratePackages(ctx, dstStorage)
 	assert.NoError(t, err)
@@ -72,4 +84,51 @@ func TestMigratePackages(t *testing.T) {
 	assert.Len(t, entries, 2)
 	assert.EqualValues(t, "01", entries[0].Name())
 	assert.EqualValues(t, "tmp", entries[1].Name())
+}
+
+func TestMigrateActionsArtifacts(t *testing.T) {
+	assert.NoError(t, unittest.PrepareTestDatabase())
+
+	srcStorage, _ := createLocalStorage(t)
+	defer test.MockVariableValue(&storage.ActionsArtifacts, srcStorage)()
+	id := int64(0)
+
+	addArtifact := func(storagePath string, status actions.ArtifactStatus) {
+		id++
+		artifact := &actions.ActionArtifact{
+			ID:           id,
+			ArtifactName: storagePath,
+			StoragePath:  storagePath,
+			Status:       int64(status),
+		}
+		_, err := db.GetEngine(db.DefaultContext).Insert(artifact)
+		require.NoError(t, err)
+		srcStorage.Save(storagePath, strings.NewReader(storagePath), -1)
+	}
+
+	exists := "/exists"
+	addArtifact(exists, actions.ArtifactStatusUploadConfirmed)
+
+	expired := "/expired"
+	addArtifact(expired, actions.ArtifactStatusExpired)
+
+	notFound := "/notfound"
+	addArtifact(notFound, actions.ArtifactStatusUploadConfirmed)
+	srcStorage.Delete(notFound)
+
+	dstStorage, _ := createLocalStorage(t)
+
+	assert.NoError(t, migrateActionsArtifacts(db.DefaultContext, dstStorage))
+
+	object, err := dstStorage.Open(exists)
+	assert.NoError(t, err)
+	buf, err := io.ReadAll(object)
+	require.NoError(t, err)
+	assert.Equal(t, exists, string(buf))
+
+	_, err = dstStorage.Stat(expired)
+	assert.Error(t, err)
+
+	_, err = dstStorage.Stat(notFound)
+	assert.Error(t, err)
 }
