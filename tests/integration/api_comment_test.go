@@ -39,7 +39,7 @@ func TestAPIListRepoComments(t *testing.T) {
 
 	var apiComments []*api.Comment
 	DecodeJSON(t, resp, &apiComments)
-	assert.Len(t, apiComments, 2)
+	assert.Len(t, apiComments, 3)
 	for _, apiComment := range apiComments {
 		c := &issues_model.Comment{ID: apiComment.ID}
 		unittest.AssertExistsAndLoadBean(t, c,
@@ -65,7 +65,7 @@ func TestAPIListRepoComments(t *testing.T) {
 	req = NewRequest(t, "GET", link.String())
 	resp = MakeRequest(t, req, http.StatusOK)
 	DecodeJSON(t, resp, &apiComments)
-	assert.Len(t, apiComments, 1)
+	assert.Len(t, apiComments, 2)
 	assert.EqualValues(t, 3, apiComments[0].ID)
 }
 

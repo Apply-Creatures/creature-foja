@@ -1,5 +1,7 @@
 @import "../chroma/dark.css";
 @import "../codemirror/dark.css";
+@import "../markup/dark.css";
+
 :root {
   --steel-900: #10161d;
   --steel-850: #131a21;

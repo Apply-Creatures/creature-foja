@@ -1,0 +1,13 @@
+.markup [src$="#gh-light-mode-only"],
+.markup [src$="#light-mode-only"],
+.markup [href$="#gh-light-mode-only"],
+.markup [href$="#light-mode-only"] {
+  display: none;
+}
+
+.markup [src$="#gh-dark-mode-only"],
+.markup [src$="#dark-mode-only"],
+.markup [href$="#gh-dark-mode-only"],
+.markup [href$="#dark-mode-only"] {
+  display: unset;
+}

@@ -1,5 +1,6 @@
 @import "../chroma/dark.css";
 @import "../codemirror/dark.css";
+@import "../markup/dark.css";
 
 :root {
   --is-dark-theme: true;
