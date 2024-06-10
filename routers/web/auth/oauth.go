@@ -44,6 +44,9 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/markbates/goth"
 	"github.com/markbates/goth/gothic"
+	"github.com/markbates/goth/providers/fitbit"
+	"github.com/markbates/goth/providers/openidConnect"
+	"github.com/markbates/goth/providers/zoom"
 	go_oauth2 "golang.org/x/oauth2"
 )
 
@@ -888,7 +891,7 @@ func SignInOAuth(ctx *context.Context) {
 		return
 	}
 
-	codeChallenge, err := generateCodeChallenge(ctx)
+	codeChallenge, err := generateCodeChallenge(ctx, provider)
 	if err != nil {
 		ctx.ServerError("SignIn", fmt.Errorf("could not generate code_challenge: %w", err))
 		return
@@ -1238,7 +1241,21 @@ func handleOAuth2SignIn(ctx *context.Context, source *auth.Source, u *user_model
 }
 
 // generateCodeChallenge stores a code verifier in the session and returns a S256 code challenge for PKCE
-func generateCodeChallenge(ctx *context.Context) (codeChallenge string, err error) {
+func generateCodeChallenge(ctx *context.Context, provider string) (codeChallenge string, err error) {
+	// the `code_verifier` is only forwarded by specific providers
+	// https://codeberg.org/forgejo/forgejo/issues/4033
+	p, ok := goth.GetProviders()[provider]
+	if !ok {
+		return "", nil
+	}
+	switch p.(type) {
+	default:
+		return "", nil
+	case *openidConnect.Provider, *fitbit.Provider, *zoom.Provider:
+		// those providers forward the `code_verifier`
+		// a code_challenge can be generated
+	}
+
 	codeVerifier, err := util.CryptoRandomString(43) // 256/log2(62) = 256 bits of entropy (each char having log2(62) of randomness)
 	if err != nil {
 		return "", err
