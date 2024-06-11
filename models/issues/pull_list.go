@@ -28,7 +28,7 @@ type PullRequestsOptions struct {
 	MilestoneID int64
 }
 
-func listPullRequestStatement(ctx context.Context, baseRepoID int64, opts *PullRequestsOptions) (*xorm.Session, error) {
+func listPullRequestStatement(ctx context.Context, baseRepoID int64, opts *PullRequestsOptions) *xorm.Session {
 	sess := db.GetEngine(ctx).Where("pull_request.base_repo_id=?", baseRepoID)
 
 	sess.Join("INNER", "issue", "pull_request.issue_id = issue.id")
@@ -46,7 +46,7 @@ func listPullRequestStatement(ctx context.Context, baseRepoID int64, opts *PullR
 		sess.And("issue.milestone_id=?", opts.MilestoneID)
 	}
 
-	return sess, nil
+	return sess
 }
 
 func GetUnmergedPullRequestsByHeadInfoMax(ctx context.Context, repoID, olderThan int64, branch string) ([]*PullRequest, error) {
@@ -136,23 +136,15 @@ func PullRequests(ctx context.Context, baseRepoID int64, opts *PullRequestsOptio
 		opts.Page = 1
 	}
 
-	countSession, err := listPullRequestStatement(ctx, baseRepoID, opts)
-	if err != nil {
-		log.Error("listPullRequestStatement: %v", err)
-		return nil, 0, err
-	}
+	countSession := listPullRequestStatement(ctx, baseRepoID, opts)
 	maxResults, err := countSession.Count(new(PullRequest))
 	if err != nil {
 		log.Error("Count PRs: %v", err)
 		return nil, maxResults, err
 	}
 
-	findSession, err := listPullRequestStatement(ctx, baseRepoID, opts)
+	findSession := listPullRequestStatement(ctx, baseRepoID, opts)
 	applySorts(findSession, opts.SortType, 0)
-	if err != nil {
-		log.Error("listPullRequestStatement: %v", err)
-		return nil, maxResults, err
-	}
 	findSession = db.SetSessionPagination(findSession, opts)
 	prs := make([]*PullRequest, 0, opts.PageSize)
 	return prs, maxResults, findSession.Find(&prs)

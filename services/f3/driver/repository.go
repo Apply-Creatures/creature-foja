@@ -92,7 +92,7 @@ func (o *repository) GetRepositoryPushURL() string {
 	return o.getURL()
 }
 
-func newRepository(ctx context.Context) generic.NodeDriverInterface {
+func newRepository(_ context.Context) generic.NodeDriverInterface {
 	r := &repository{
 		f: &f3.Repository{},
 	}
