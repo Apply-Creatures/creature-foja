@@ -154,7 +154,7 @@
 					</div>
 					<div class="inline field">
 						<div class="ui checkbox" id="disable-registration">
-							<label>{{ctx.Locale.Tr "install.disable_registration"}}</label>
+							<label class="{{if .Err_DisabledRegistration}}text red{{end}}">{{ctx.Locale.Tr "install.disable_registration"}}</label>
 							<input name="disable_registration" type="checkbox" {{if .disable_registration}}checked{{end}}>
 						</div>
 						<span class="help">{{ctx.Locale.Tr "install.disable_registration.description"}}</span>
@@ -212,7 +212,7 @@
 
 					<!-- Server and other services -->
 					<details class="collapsible optional field">
-						<summary class="tw-py-2{{if .Err_Services}} text red{{end}}">
+						<summary class="tw-py-2">
 							{{ctx.Locale.Tr "install.server_service_title"}}
 						</summary>
 						<div class="inline field">

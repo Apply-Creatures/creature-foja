@@ -319,7 +319,7 @@ func SubmitInstall(ctx *context.Context) {
 
 	// Check logic loophole between disable self-registration and no admin account.
 	if form.DisableRegistration && len(form.AdminName) == 0 {
-		ctx.Data["Err_Services"] = true
+		ctx.Data["Err_DisabledRegistration"] = true
 		ctx.Data["Err_Admin"] = true
 		ctx.RenderWithErr(ctx.Tr("install.no_admin_and_disable_registration"), tplInstall, form)
 		return
