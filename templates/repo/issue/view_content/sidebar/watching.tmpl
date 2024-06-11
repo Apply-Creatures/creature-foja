@@ -1,6 +1,13 @@
-<form hx-boost="true" hx-sync="this:replace" hx-target="this" method="post" action="{{.Issue.Link}}/watch">
+<form hx-boost="true" hx-sync="this:replace" hx-target="this" method="post" action="{{.Issue.Link}}/watch"
+	{{if not $.IsSigned}}
+		{{if $.Issue.IsPull}}
+			data-tooltip-content="{{ctx.Locale.Tr "repo.subscribe.pull.guest.tooltip"}}"
+		{{else}}
+			data-tooltip-content="{{ctx.Locale.Tr "repo.subscribe.issue.guest.tooltip"}}"
+		{{end}}
+	{{end}}>
 	<input type="hidden" name="watch" value="{{if $.IssueWatch.IsWatching}}0{{else}}1{{end}}">
-	<button class="fluid ui button">
+	<button class="fluid ui button {{if not $.IsSigned}}disabled{{end}}">
 		{{if $.IssueWatch.IsWatching}}
 			{{svg "octicon-mute" 16 "tw-mr-2"}}
 			{{ctx.Locale.Tr "repo.issues.unsubscribe"}}
