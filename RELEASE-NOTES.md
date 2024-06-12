@@ -1,12 +1,44 @@
 # Release Notes
 
-A minor or major Forgejo release is published every [three months](https://forgejo.org/docs/latest/user/versions/), with more patch releases in between depending on the severity of the bug and security fixes it contains.
+A minor or major Forgejo release is published every [three months](https://forgejo.org/docs/latest/developer/release/#release-cycle), with more patch releases in between depending on the severity of the bug and security fixes it contains.
 
 A [patch or minor release](https://semver.org/spec/v2.0.0.html) (e.g. upgrading from v7.0.0 to v7.0.1 or v7.1.0) does not require manual intervention. But [major releases](https://semver.org/spec/v2.0.0.html#spec-item-8) where the first version number changes (e.g. upgrading from v1.21 to v7.0) contain breaking changes and the release notes explain how to deal with them.
 
 ## Upcoming releases (not available yet)
 
 - [8.0.0](release-notes/8.0.0/)
+
+## 7.0.4
+
+This is a security release. See the documentation for more information on the [upgrade procedure](https://forgejo.org/docs/v7.0/admin/upgrade/).
+
+In addition to the following notable bug fixes, you can browse the [full list of commits](https://codeberg.org/forgejo/forgejo/compare/v7.0.3...v7.0.4) included in this release.
+
+* **Security:**
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/4054). Fixed: [CVE-2024-24789](https://pkg.go.dev/vuln/GO-2024-2888): the archive/zip package's handling of certain types of invalid zip files differs from the behavior of most zip implementations. This misalignment could be exploited to create an zip file with contents that vary depending on the implementation reading the file.
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/3639) - ([fix](https://codeberg.org/forgejo/forgejo/commit/1b088fade6c69e63843d1bdf402454c363b22ce2) & [test](https://codeberg.org/forgejo/forgejo/pulls/4032)). Fixed: the OAuth2 implementation does not always require authentication for public clients, a requirement of [RFC 6749 Section 10.2](https://datatracker.ietf.org/doc/html/rfc6749#section-10.2). A malicious client can impersonate another client and obtain access to protected resources if the impersonated client fails to, or is unable to, keep its client credentials confidential.
+
+* **Bug fixes:**
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/4086) - [PR](https://codeberg.org/forgejo/forgejo/pulls/4085). Fixed: `forgejo migrate-storage --type actions-artifacts` always fails because it picks the wrong path.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/4017) - [PR](https://codeberg.org/forgejo/forgejo/pulls/4015). Fixed: avatar files can be found in storage while they do not exist in the database.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/3997) - [PR](https://codeberg.org/forgejo/forgejo/pulls/3976). Fixed: repository admins are always denied the right to force merge and instance admins are subject to restrictions to merge that must only apply to repository admins.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/3946) - [PR](https://codeberg.org/forgejo/forgejo/pulls/3615). Fixed: non conformance with the [Nix tarball fetcher immutable link protocol](https://github.com/nixos/nix/blob/56763ff918eb308db23080e560ed2ea3e00c80a7/doc/manual/src/protocols/tarball-fetcher.md).
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/3936) - [PR](https://codeberg.org/forgejo/forgejo/pulls/3935). Fixed: migrated activities (such as reviews) are mapped to the user who initiated the migration rather than the Ghost user, if the external user cannot be mapped to a local one. This mapping mismatch leads to internal server errors in some cases.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/3906) - [PR](https://codeberg.org/forgejo/forgejo/pulls/3904). Fixed: a v7.0.0 regression causes `[admin].SEND_NOTIFICATION_EMAIL_ON_NEW_USER=true` to always be ignored.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/3888) - [PR](https://codeberg.org/forgejo/forgejo/pulls/3865). Fixed: using a subquery for user deletion is a performance bottleneck when using mariadb 10 because only mariadb 11 takes advantage of the available index.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/3887) - [PR](https://codeberg.org/forgejo/forgejo/pulls/3885). Fixed: a v7.0.3 regression causes the expanding diffs in pull requests to fail with a 404 error.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/3881) - [PR](https://codeberg.org/forgejo/forgejo/pulls/3864). Fixed: SourceHut Builds webhook fail when the `triggers` field is used.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/3877) - [PR](https://codeberg.org/forgejo/forgejo/pulls/3242). Fixed: the label list rendering in the issue and pull request timeline is displayed on multiple lines instead of a single one.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/4084) - [PR](https://codeberg.org/forgejo/forgejo/pulls/4083) - [commit](https://codeberg.org/forgejo/forgejo/commit/c6e04c3c9eddfa6c4bec541f681c8d300b157cdb). Fixed: NuGet Package fails `choco info pkgname` when `pkgname` is also a substring of another package Id.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/4004) - [PR](https://codeberg.org/forgejo/forgejo/pulls/3989) - [commit](https://codeberg.org/forgejo/forgejo/commit/62448bfb931882859388b2fd472cb89428c25323). Fixed: "Git hooks of this repository seem to be broken." warning when pushing more than one branch at a time.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/3942) - [PR](https://codeberg.org/forgejo/forgejo/pulls/3917) - [commit](https://codeberg.org/forgejo/forgejo/commit/7d7ea45465d6cd1ea0ec549a71f67b4a8ff930cf). Fixed: automerge does not happen when the approval count reaches the required threshold.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/3942) - [PR](https://codeberg.org/forgejo/forgejo/pulls/3917) - [commit](https://codeberg.org/forgejo/forgejo/commit/a649610d6175d1994b838f5672261400df9fdb92). Fixed: the `FORCE_PRIVATE=true` setting is not consistently enforced.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/3859) - [PR](https://codeberg.org/forgejo/forgejo/pulls/3838) - [commit](https://codeberg.org/forgejo/forgejo/commit/193ac67176afc72e9d108bc1730c354bfbf9a442). Fixed: CSRF validation errors when OAuth is not enabled.
+  * [backport](https://codeberg.org/forgejo/forgejo/pulls/4107) - [PR](https://codeberg.org/forgejo/forgejo/pulls/4076). Fixed: headlines in rendered org-mode do not have a margin on the top
+
+* **Localization:**
+  * Improvements to English locale: [[1]](https://codeberg.org/forgejo/forgejo/pulls/3914), [[2]](https://codeberg.org/forgejo/forgejo/pulls/4114).
+  * Translation updates: [[1]](https://codeberg.org/forgejo/forgejo/pulls/3907), [[2]](https://codeberg.org/forgejo/forgejo/pulls/3990), [[3]](https://codeberg.org/forgejo/forgejo/pulls/4099).
 
 ## 7.0.3
 
