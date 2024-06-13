@@ -576,6 +576,28 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
   * [Align ISSUE_TEMPLATE with the new label system](https://codeberg.org/forgejo/forgejo/commit/248b7ee850ecdb538b22ddcfbe80b6f91be32b70).
   * [Improve the list header in milestone page](https://codeberg.org/forgejo/forgejo/commit/8abc1aae4ab5b03be0bcbdd390bb903b54ccd21a).
 
+## 1.21.11-2
+
+[The complete list of new commits included in the Forgejo v1.21.11-2 release can be reviewed here](https://codeberg.org/forgejo/forgejo/compare/v1.21.11-1...v1.21.11-2), or from the command line with:
+
+```shell
+$ git clone https://codeberg.org/forgejo/forgejo
+$ git -C forgejo log --oneline --no-merges v1.21.11-1..v1.21.11-2
+```
+
+This stable release contains a **security fix**.
+
+* Recommended Action
+
+  We recommend that all Forgejo installations are [upgraded](https://forgejo.org/docs/v1.21/admin/upgrade/) to the latest version as soon as possible.
+
+* [Forgejo Semantic Version](https://forgejo.org/docs/v1.21/user/semver/)
+
+  The semantic version was updated to `6.0.13+0-gitea-1.21.10`
+
+* Security fix
+  * [PR](https://codeberg.org/forgejo/forgejo/pulls/4047). Fixed: the OAuth2 implementation does not always require authentication for public clients, a requirement of [RFC 6749 Section 10.2](https://datatracker.ietf.org/doc/html/rfc6749#section-10.2). A malicious client can impersonate another client and obtain access to protected resources if the impersonated client fails to, or is unable to, keep its client credentials confidential.
+
 ## 1.21.11-1
 
 This stable release contains a single bug fix for a regression introduced in v1.21.11-0 by which creating a tag via the API would fail with error 500 on a repository a where Forgejo Actions workflow triggered by tags exists.
