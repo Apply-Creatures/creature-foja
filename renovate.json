@@ -54,6 +54,13 @@
       "extends": ["schedule:quarterly"]
     },
     {
+      "description": "elasticsearch CI images are published about once a month and do not use semantic versioning or short tags",
+      "matchDepNames": [
+        "elasticsearch",
+      ],
+      "extends": ["schedule:quarterly"]
+    },
+    {
       "description": "Group golang packages",
       "matchDepNames": [
         "go",
