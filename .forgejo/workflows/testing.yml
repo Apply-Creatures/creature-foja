@@ -46,7 +46,7 @@ jobs:
       image: 'docker.io/node:20-bookworm'
     services:
       elasticsearch:
-        image: elasticsearch:7.17.21
+        image: elasticsearch:7.17.22
         env:
           discovery.type: single-node
       minio:
