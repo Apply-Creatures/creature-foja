@@ -31,10 +31,8 @@ const (
 	httpsigExpirationTime      = 60
 )
 
-// Gets the current time as an RFC 2616 formatted string
-// RFC 2616 requires RFC 1123 dates but with GMT instead of UTC
 func CurrentTime() string {
-	return strings.ReplaceAll(time.Now().UTC().Format(time.RFC1123), "UTC", "GMT")
+	return time.Now().UTC().Format(http.TimeFormat)
 }
 
 func containsRequiredHTTPHeaders(method string, headers []string) error {

@@ -11,6 +11,7 @@ import (
 	"net/http/httptest"
 	"regexp"
 	"testing"
+	"time"
 
 	"code.gitea.io/gitea/models/db"
 	"code.gitea.io/gitea/models/unittest"
@@ -22,6 +23,13 @@ import (
 
 	_ "github.com/mattn/go-sqlite3"
 )
+
+func TestCurrentTime(t *testing.T) {
+	date := CurrentTime()
+	_, err := time.Parse(http.TimeFormat, date)
+	assert.NoError(t, err)
+	assert.Equal(t, date[len(date)-3:], "GMT")
+}
 
 /* ToDo: Set Up tests for http get requests
 
