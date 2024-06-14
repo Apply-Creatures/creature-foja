@@ -185,6 +185,12 @@ type swaggerParameterBodies struct {
 	CreateTagOption api.CreateTagOption
 
 	// in:body
+	CreateTagProtectionOption api.CreateTagProtectionOption
+
+	// in:body
+	EditTagProtectionOption api.EditTagProtectionOption
+
+	// in:body
 	CreateAccessTokenOption api.CreateAccessTokenOption
 
 	// in:body
