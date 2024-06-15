@@ -44,8 +44,6 @@ export default {
     'backdrop-filter',
     // we use double-class tw-hidden defined in web_src/css/helpers.css for increased specificity
     'hidden',
-    // unneeded classes
-    '[-a-zA-Z:0-9_.]',
   ],
   theme: {
     colors: {
@@ -100,6 +98,22 @@ export default {
     },
   },
   plugins: [
+    plugin(({addUtilities}) => {
+      // base veriables required for tranform utilities
+      // added as utilities since base is not imported
+      // note: required when using tailwind's transform classes
+      addUtilities({
+        '.transform-reset': {
+          '--tw-translate-x': 0,
+          '--tw-translate-y': 0,
+          '--tw-rotate': 0,
+          '--tw-skew-x': 0,
+          '--tw-skew-y': 0,
+          '--tw-scale-x': '1',
+          '--tw-scale-y': '1',
+        },
+      });
+    }),
     plugin(({addUtilities}) => {
       addUtilities({
         // tw-hidden must win all other "display: xxx !important" classes to get the chance to "hide" an element.

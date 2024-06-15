@@ -20,7 +20,7 @@ import (
 )
 
 func resultFilenames(t testing.TB, doc *HTMLDoc) []string {
-	filenameSelections := doc.Find(".repository.search").Find(".repo-search-result").Find(".header").Find("span.file")
+	filenameSelections := doc.Find(".repository.search").Find("details.repo-search-result").Find(".header").Find("span.file")
 	result := make([]string, filenameSelections.Length())
 	filenameSelections.Each(func(i int, selection *goquery.Selection) {
 		result[i] = selection.Text()
