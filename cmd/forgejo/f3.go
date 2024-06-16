@@ -6,10 +6,12 @@ package forgejo
 
 import (
 	"context"
+	"errors"
 
 	"code.gitea.io/gitea/models"
 	"code.gitea.io/gitea/modules/git"
 	"code.gitea.io/gitea/modules/log"
+	"code.gitea.io/gitea/modules/setting"
 	"code.gitea.io/gitea/modules/storage"
 	"code.gitea.io/gitea/services/f3/util"
 
@@ -41,6 +43,11 @@ func SubcmdF3Mirror(ctx context.Context) *cli.Command {
 }
 
 func runMirror(ctx context.Context, c *cli.Context, action cli.ActionFunc) error {
+	setting.LoadF3Setting()
+	if !setting.F3.Enabled {
+		return errors.New("F3 is disabled, it is not ready to be used and is only present for development purposes")
+	}
+
 	var cancel context.CancelFunc
 	if !ContextGetNoInit(ctx) {
 		ctx, cancel = installSignals(ctx)

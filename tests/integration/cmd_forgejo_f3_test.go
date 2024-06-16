@@ -10,6 +10,8 @@ import (
 	"testing"
 
 	"code.gitea.io/gitea/cmd/forgejo"
+	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/test"
 	"code.gitea.io/gitea/services/f3/driver/options"
 	"code.gitea.io/gitea/tests"
 
@@ -56,6 +58,7 @@ func runApp(ctx context.Context, args ...string) (string, error) {
 
 func TestF3_CmdMirror_LocalForgejo(t *testing.T) {
 	defer tests.PrepareTestEnv(t)()
+	defer test.MockVariableValue(&setting.F3.Enabled, true)()
 
 	ctx := context.Background()
 
