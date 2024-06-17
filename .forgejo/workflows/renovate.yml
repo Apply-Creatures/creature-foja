@@ -22,7 +22,7 @@ jobs:
 
     runs-on: docker
     container:
-      image: ghcr.io/visualon/renovate:37.399.10
+      image: ghcr.io/visualon/renovate:37.409.1
 
     steps:
       - name: Load renovate repo cache
