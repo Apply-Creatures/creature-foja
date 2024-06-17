@@ -143,20 +143,6 @@ func CustomLinkURLSchemes(schemes []string) {
 	common.LinkRegex, _ = xurls.StrictMatchingScheme(strings.Join(withAuth, "|"))
 }
 
-// IsSameDomain checks if given url string has the same hostname as current Gitea instance
-func IsSameDomain(s string) bool {
-	if strings.HasPrefix(s, "/") {
-		return true
-	}
-	if uapp, err := url.Parse(setting.AppURL); err == nil {
-		if u, err := url.Parse(s); err == nil {
-			return u.Host == uapp.Host
-		}
-		return false
-	}
-	return false
-}
-
 type postProcessError struct {
 	context string
 	err     error
@@ -393,7 +379,7 @@ func visitNode(ctx *RenderContext, procs []processor, node *html.Node) {
 	// We ignore code and pre.
 	switch node.Type {
 	case html.TextNode:
-		textNode(ctx, procs, node)
+		processTextNodes(ctx, procs, node)
 	case html.ElementNode:
 		if node.Data == "img" {
 			for i, attr := range node.Attr {
@@ -436,15 +422,16 @@ func visitNode(ctx *RenderContext, procs []processor, node *html.Node) {
 		for n := node.FirstChild; n != nil; n = n.NextSibling {
 			visitNode(ctx, procs, n)
 		}
+	default:
 	}
 	// ignore everything else
 }
 
-// textNode runs the passed node through various processors, in order to handle
+// processTextNodes runs the passed node through various processors, in order to handle
 // all kinds of special links handled by the post-processing.
-func textNode(ctx *RenderContext, procs []processor, node *html.Node) {
-	for _, processor := range procs {
-		processor(ctx, node)
+func processTextNodes(ctx *RenderContext, procs []processor, node *html.Node) {
+	for _, p := range procs {
+		p(ctx, node)
 	}
 }
 
