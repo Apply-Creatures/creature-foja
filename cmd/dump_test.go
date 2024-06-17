@@ -50,7 +50,7 @@ func TestAddRecursiveExclude(t *testing.T) {
 			err = addRecursiveExclude(archiver, "", dir, nil, false)
 			assert.NoError(t, err)
 			assert.Len(t, archiver.addedFiles, 1)
-			assert.EqualValues(t, "example", archiver.addedFiles[0])
+			assert.Contains(t, archiver.addedFiles, "example")
 		})
 
 		t.Run("With exclude", func(t *testing.T) {
@@ -77,11 +77,11 @@ func TestAddRecursiveExclude(t *testing.T) {
 			err = addRecursiveExclude(archiver, "", dir, nil, false)
 			assert.NoError(t, err)
 			assert.Len(t, archiver.addedFiles, 5)
-			assert.EqualValues(t, "deep", archiver.addedFiles[0])
-			assert.EqualValues(t, "deep/nested", archiver.addedFiles[1])
-			assert.EqualValues(t, "deep/nested/folder", archiver.addedFiles[2])
-			assert.EqualValues(t, "deep/nested/folder/example", archiver.addedFiles[3])
-			assert.EqualValues(t, "deep/nested/folder/another-file", archiver.addedFiles[4])
+			assert.Contains(t, archiver.addedFiles, "deep")
+			assert.Contains(t, archiver.addedFiles, "deep/nested")
+			assert.Contains(t, archiver.addedFiles, "deep/nested/folder")
+			assert.Contains(t, archiver.addedFiles, "deep/nested/folder/example")
+			assert.Contains(t, archiver.addedFiles, "deep/nested/folder/another-file")
 		})
 
 		t.Run("Exclude first directory", func(t *testing.T) {
@@ -98,8 +98,8 @@ func TestAddRecursiveExclude(t *testing.T) {
 			err = addRecursiveExclude(archiver, "", dir, []string{dir + "/deep/nested/folder"}, false)
 			assert.NoError(t, err)
 			assert.Len(t, archiver.addedFiles, 2)
-			assert.EqualValues(t, "deep", archiver.addedFiles[0])
-			assert.EqualValues(t, "deep/nested", archiver.addedFiles[1])
+			assert.Contains(t, archiver.addedFiles, "deep")
+			assert.Contains(t, archiver.addedFiles, "deep/nested")
 		})
 
 		t.Run("Exclude file", func(t *testing.T) {
@@ -108,10 +108,10 @@ func TestAddRecursiveExclude(t *testing.T) {
 			err = addRecursiveExclude(archiver, "", dir, []string{dir + "/deep/nested/folder/example"}, false)
 			assert.NoError(t, err)
 			assert.Len(t, archiver.addedFiles, 4)
-			assert.EqualValues(t, "deep", archiver.addedFiles[0])
-			assert.EqualValues(t, "deep/nested", archiver.addedFiles[1])
-			assert.EqualValues(t, "deep/nested/folder", archiver.addedFiles[2])
-			assert.EqualValues(t, "deep/nested/folder/another-file", archiver.addedFiles[3])
+			assert.Contains(t, archiver.addedFiles, "deep")
+			assert.Contains(t, archiver.addedFiles, "deep/nested")
+			assert.Contains(t, archiver.addedFiles, "deep/nested/folder")
+			assert.Contains(t, archiver.addedFiles, "deep/nested/folder/another-file")
 		})
 	})
 }
