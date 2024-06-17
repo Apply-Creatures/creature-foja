@@ -75,13 +75,16 @@ export function initAdminCommon() {
         }
         showElem('.open_id_connect_auto_discovery_url');
         break;
-      default:
-        if (document.getElementById(`#${provider}_customURLSettings`)?.getAttribute('data-required')) {
+      default: {
+        const customURLSettings = document.getElementById(`${provider}_customURLSettings`);
+        if (!customURLSettings) break;
+        if (customURLSettings.getAttribute('data-required')) {
           document.getElementById('oauth2_use_custom_url')?.setAttribute('checked', 'checked');
         }
-        if (document.getElementById(`#${provider}_customURLSettings`)?.getAttribute('data-available')) {
+        if (customURLSettings.getAttribute('data-available')) {
           showElem('.oauth2_use_custom_url');
         }
+      }
     }
     onOAuth2UseCustomURLChange(applyDefaultValues);
   }
@@ -95,11 +98,12 @@ export function initAdminCommon() {
 
     if (document.getElementById('oauth2_use_custom_url')?.checked) {
       for (const custom of ['token_url', 'auth_url', 'profile_url', 'email_url', 'tenant']) {
-        if (applyDefaultValues) {
-          document.getElementById(`oauth2_${custom}`).value = document.getElementById(`${provider}_${custom}`).value;
-        }
         const customInput = document.getElementById(`${provider}_${custom}`);
-        if (customInput && customInput.getAttribute('data-available')) {
+        if (!customInput) continue;
+        if (applyDefaultValues) {
+          document.getElementById(`oauth2_${custom}`).value = customInput.value;
+        }
+        if (customInput.getAttribute('data-available')) {
           for (const input of document.querySelectorAll(`.oauth2_${custom} input`)) {
             input.setAttribute('required', 'required');
           }
