@@ -40,6 +40,37 @@ func Init() error {
 	return err
 }
 
+const (
+	testCacheKey       = "DefaultCache.TestKey"
+	SlowCacheThreshold = 100 * time.Microsecond
+)
+
+func Test() (time.Duration, error) {
+	if defaultCache == nil {
+		return 0, fmt.Errorf("default cache not initialized")
+	}
+
+	testData := fmt.Sprintf("%x", make([]byte, 500))
+
+	start := time.Now()
+
+	if err := defaultCache.Delete(testCacheKey); err != nil {
+		return 0, fmt.Errorf("expect cache to delete data based on key if exist but got: %w", err)
+	}
+	if err := defaultCache.Put(testCacheKey, testData, 10); err != nil {
+		return 0, fmt.Errorf("expect cache to store data but got: %w", err)
+	}
+	testVal, hit := defaultCache.Get(testCacheKey)
+	if !hit {
+		return 0, fmt.Errorf("expect cache hit but got none")
+	}
+	if testVal != testData {
+		return 0, fmt.Errorf("expect cache to return same value as stored but got other")
+	}
+
+	return time.Since(start), nil
+}
+
 // GetCache returns the currently configured cache
 func GetCache() mc.Cache {
 	return conn
