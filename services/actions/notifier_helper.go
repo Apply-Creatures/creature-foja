@@ -474,7 +474,7 @@ func handleSchedules(
 	detectedWorkflows []*actions_module.DetectedWorkflow,
 	commit *git.Commit,
 	input *notifyInput,
-	ref string,
+	_ string,
 ) error {
 	branch, err := commit.GetBranchName()
 	if err != nil {

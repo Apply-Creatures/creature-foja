@@ -87,7 +87,6 @@ code.gitea.io/gitea/models/repo
 	releaseSorter.Swap
 	SortReleases
 	FindReposMapByIDs
-	SearchOrderBy.String
 	IsErrTopicNotExist
 	ErrTopicNotExist.Error
 	ErrTopicNotExist.Unwrap

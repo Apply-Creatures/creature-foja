@@ -14,7 +14,7 @@ import (
 	"code.forgejo.org/f3/gof3/v3/options"
 )
 
-func newTestOptions(t *testing.T) options.Interface {
+func newTestOptions(_ *testing.T) options.Interface {
 	o := options.GetFactory(driver_options.Name)().(*driver_options.Options)
 	o.SetLogger(util.NewF3Logger(nil, forgejo_log.GetLogger(forgejo_log.DEFAULT)))
 	return o

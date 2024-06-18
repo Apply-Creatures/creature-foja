@@ -42,20 +42,19 @@ var (
 )
 
 // loadGitVersion returns current Git version from shell. Internal usage only.
-func loadGitVersion() (*version.Version, error) {
+func loadGitVersion() error {
 	// doesn't need RWMutex because it's executed by Init()
 	if gitVersion != nil {
-		return gitVersion, nil
+		return nil
 	}
-
 	stdout, _, runErr := NewCommand(DefaultContext, "version").RunStdString(nil)
 	if runErr != nil {
-		return nil, runErr
+		return runErr
 	}
 
 	fields := strings.Fields(stdout)
 	if len(fields) < 3 {
-		return nil, fmt.Errorf("invalid git version output: %s", stdout)
+		return fmt.Errorf("invalid git version output: %s", stdout)
 	}
 
 	var versionString string
@@ -70,7 +69,7 @@ func loadGitVersion() (*version.Version, error) {
 
 	var err error
 	gitVersion, err = version.NewVersion(versionString)
-	return gitVersion, err
+	return err
 }
 
 // SetExecutablePath changes the path of git executable and checks the file permission and version.
@@ -85,7 +84,7 @@ func SetExecutablePath(path string) error {
 	}
 	GitExecutable = absPath
 
-	_, err = loadGitVersion()
+	err = loadGitVersion()
 	if err != nil {
 		return fmt.Errorf("unable to load git version: %w", err)
 	}
@@ -312,7 +311,7 @@ func syncGitConfig() (err error) {
 
 // CheckGitVersionAtLeast check git version is at least the constraint version
 func CheckGitVersionAtLeast(atLeast string) error {
-	if _, err := loadGitVersion(); err != nil {
+	if err := loadGitVersion(); err != nil {
 		return err
 	}
 	atLeastVersion, err := version.NewVersion(atLeast)
@@ -327,7 +326,7 @@ func CheckGitVersionAtLeast(atLeast string) error {
 
 // CheckGitVersionEqual checks if the git version is equal to the constraint version.
 func CheckGitVersionEqual(equal string) error {
-	if _, err := loadGitVersion(); err != nil {
+	if err := loadGitVersion(); err != nil {
 		return err
 	}
 	atLeastVersion, err := version.NewVersion(equal)
