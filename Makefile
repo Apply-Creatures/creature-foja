@@ -39,6 +39,7 @@ GOVULNCHECK_PACKAGE ?= golang.org/x/vuln/cmd/govulncheck@v1 # renovate: datasour
 DEADCODE_PACKAGE ?= golang.org/x/tools/cmd/deadcode@v0.22.0 # renovate: datasource=go
 GOMOCK_PACKAGE ?= go.uber.org/mock/mockgen@v0.4.0 # renovate: datasource=go
 GOPLS_PACKAGE ?= golang.org/x/tools/gopls@v0.15.3 # renovate: datasource=go
+RENOVATE_NPM_PACKAGE ?= renovate@37.411.0 # renovate: datasource=npm
 
 DOCKER_IMAGE ?= gitea/gitea
 DOCKER_TAG ?= latest
@@ -239,6 +240,7 @@ help:
 	@echo " - lint-md                          lint markdown files"
 	@echo " - lint-swagger                     lint swagger files"
 	@echo " - lint-templates                   lint template files"
+	@echo " - lint-renovate                    lint renovate files"
 	@echo " - lint-yaml                        lint yaml files"
 	@echo " - lint-spell                       lint spelling"
 	@echo " - lint-spell-fix                   lint spelling and fix issues"
@@ -398,7 +400,7 @@ lint-frontend: lint-js lint-css
 lint-frontend-fix: lint-js-fix lint-css-fix
 
 .PHONY: lint-backend
-lint-backend: lint-go lint-go-vet lint-editorconfig
+lint-backend: lint-go lint-go-vet lint-editorconfig lint-renovate
 
 .PHONY: lint-backend-fix
 lint-backend-fix: lint-go-fix lint-go-vet lint-editorconfig
@@ -434,6 +436,12 @@ lint-css-fix: node_modules
 .PHONY: lint-swagger
 lint-swagger: node_modules
 	npx spectral lint -q -F hint $(SWAGGER_SPEC)
+
+.PHONY: lint-renovate
+lint-renovate: node_modules
+	npx --yes --package $(RENOVATE_NPM_PACKAGE) -- renovate-config-validator --strict > .lint-renovate 2>&1 || true
+	@if grep --quiet --extended-regexp -e '^( WARN:|ERROR:)' .lint-renovate ; then cat .lint-renovate ; rm .lint-renovate ; exit 1 ; fi
+	@rm .lint-renovate
 
 .PHONY: lint-md
 lint-md: node_modules
