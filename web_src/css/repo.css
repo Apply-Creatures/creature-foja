@@ -2106,7 +2106,7 @@ td .commit-summary {
   padding: 0;
   display: flex;
   flex-wrap: wrap;
-  margin-bottom: 10px;
+  margin: 10px 0;
 }
 
 .user-cards .list .item {
