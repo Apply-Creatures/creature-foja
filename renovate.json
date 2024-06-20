@@ -61,6 +61,16 @@
       "extends": ["schedule:quarterly"]
     },
     {
+      "description": "devcontainer is an optional tool used by some Forgejo contributors when working on the codebase",
+      "matchPackagePrefixes": [
+        "ghcr.io/devcontainers/features/",
+        "ghcr.io/devcontainers-contrib/features/"
+      ],
+      "groupName": "devcontainer packages",
+      "extends": ["schedule:quarterly"],
+      "automerge": true
+    },
+    {
       "description": "Group golang packages",
       "matchDepNames": [
         "go",
@@ -147,8 +157,6 @@
         "@playwright/",
         "@stoplight/spectral-cli",
         "@stylistic/",
-        "ghcr.io/devcontainers/features/",
-        "ghcr.io/devcontainers-contrib/features/",
         "mcr.microsoft.com/devcontainers/"
       ],
       "automerge": true
