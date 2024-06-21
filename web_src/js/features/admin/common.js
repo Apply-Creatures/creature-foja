@@ -78,10 +78,9 @@ export function initAdminCommon() {
       default: {
         const customURLSettings = document.getElementById(`${provider}_customURLSettings`);
         if (!customURLSettings) break;
-        if (customURLSettings.getAttribute('data-required')) {
-          document.getElementById('oauth2_use_custom_url')?.setAttribute('checked', 'checked');
-        }
-        if (customURLSettings.getAttribute('data-available')) {
+        const customURLRequired = (customURLSettings.getAttribute('data-required') === 'true');
+        document.getElementById('oauth2_use_custom_url').checked = customURLRequired;
+        if (customURLRequired || customURLSettings.getAttribute('data-available') === 'true') {
           showElem('.oauth2_use_custom_url');
         }
       }
@@ -103,7 +102,7 @@ export function initAdminCommon() {
         if (applyDefaultValues) {
           document.getElementById(`oauth2_${custom}`).value = customInput.value;
         }
-        if (customInput.getAttribute('data-available')) {
+        if (customInput.getAttribute('data-available') === 'true') {
           for (const input of document.querySelectorAll(`.oauth2_${custom} input`)) {
             input.setAttribute('required', 'required');
           }
