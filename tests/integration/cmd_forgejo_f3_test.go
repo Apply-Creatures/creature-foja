@@ -69,7 +69,7 @@ func TestF3_CmdMirror_LocalForgejo(t *testing.T) {
 	fixtureTree := f3_generic.GetFactory("f3")(ctx, fixtureOptions)
 
 	log := fixtureTree.GetLogger()
-	creator := f3_tests.NewCreator(t, log)
+	creator := f3_tests.NewCreator(t, "CmdMirrorLocalForgejo", log)
 
 	log.Trace("======= build fixture")
 
