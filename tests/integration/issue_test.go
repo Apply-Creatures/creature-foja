@@ -18,6 +18,7 @@ import (
 	auth_model "code.gitea.io/gitea/models/auth"
 	"code.gitea.io/gitea/models/db"
 	issues_model "code.gitea.io/gitea/models/issues"
+	project_model "code.gitea.io/gitea/models/project"
 	repo_model "code.gitea.io/gitea/models/repo"
 	unit_model "code.gitea.io/gitea/models/unit"
 	"code.gitea.io/gitea/models/unittest"
@@ -141,6 +142,57 @@ func TestViewIssuesKeyword(t *testing.T) {
 		assert.False(t, issue.IsClosed)
 		assert.False(t, issue.IsPull)
 		assertMatch(t, issue, keyword)
+	})
+}
+
+func TestViewIssuesSearchOptions(t *testing.T) {
+	defer tests.PrepareTestEnv(t)()
+
+	repo := unittest.AssertExistsAndLoadBean(t, &repo_model.Repository{ID: 1})
+
+	// there are two issues in repo1, both bound to a project. Add one
+	// that is not bound to any project.
+	_, issueNoProject := testIssueWithBean(t, "user2", 1, "Title", "Description")
+
+	t.Run("All issues", func(t *testing.T) {
+		req := NewRequestf(t, "GET", "%s/issues?state=all", repo.Link())
+		resp := MakeRequest(t, req, http.StatusOK)
+		htmlDoc := NewHTMLParser(t, resp.Body)
+		issuesSelection := getIssuesSelection(t, htmlDoc)
+		assert.EqualValues(t, 3, issuesSelection.Length())
+	})
+
+	t.Run("Issues with no project", func(t *testing.T) {
+		req := NewRequestf(t, "GET", "%s/issues?state=all&project=-1", repo.Link())
+		resp := MakeRequest(t, req, http.StatusOK)
+		htmlDoc := NewHTMLParser(t, resp.Body)
+		issuesSelection := getIssuesSelection(t, htmlDoc)
+		assert.EqualValues(t, 1, issuesSelection.Length())
+		issuesSelection.Each(func(_ int, selection *goquery.Selection) {
+			issue := getIssue(t, repo.ID, selection)
+			assert.Equal(t, issueNoProject.ID, issue.ID)
+		})
+	})
+
+	t.Run("Issues with a specific project", func(t *testing.T) {
+		project := unittest.AssertExistsAndLoadBean(t, &project_model.Project{ID: 1})
+
+		req := NewRequestf(t, "GET", "%s/issues?state=all&project=%d", repo.Link(), project.ID)
+		resp := MakeRequest(t, req, http.StatusOK)
+		htmlDoc := NewHTMLParser(t, resp.Body)
+		issuesSelection := getIssuesSelection(t, htmlDoc)
+		assert.EqualValues(t, 2, issuesSelection.Length())
+		found := map[int64]bool{
+			1: false,
+			5: false,
+		}
+		issuesSelection.Each(func(_ int, selection *goquery.Selection) {
+			issue := getIssue(t, repo.ID, selection)
+			found[issue.ID] = true
+		})
+		assert.EqualValues(t, 2, len(found))
+		assert.True(t, found[1])
+		assert.True(t, found[5])
 	})
 }
 
