@@ -17,7 +17,7 @@
   "semanticCommits": "disabled",
   "automergeStrategy": "merge-commit",
   "postUpdateOptions": ["gomodTidy", "gomodUpdateImportPaths", "npmDedupe"],
-  "prConcurrentLimit": 5,
+  "prConcurrentLimit": 10,
   "internalChecksFilter": "strict",
   "osvVulnerabilityAlerts": true,
   "labels": ["dependency-upgrade"],
