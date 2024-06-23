@@ -6,6 +6,7 @@ package cache
 import (
 	"fmt"
 	"strconv"
+	"time"
 
 	"code.gitea.io/gitea/modules/setting"
 
@@ -46,7 +47,7 @@ const (
 )
 
 func Test() (time.Duration, error) {
-	if defaultCache == nil {
+	if conn == nil {
 		return 0, fmt.Errorf("default cache not initialized")
 	}
 
@@ -54,14 +55,14 @@ func Test() (time.Duration, error) {
 
 	start := time.Now()
 
-	if err := defaultCache.Delete(testCacheKey); err != nil {
+	if err := conn.Delete(testCacheKey); err != nil {
 		return 0, fmt.Errorf("expect cache to delete data based on key if exist but got: %w", err)
 	}
-	if err := defaultCache.Put(testCacheKey, testData, 10); err != nil {
+	if err := conn.Put(testCacheKey, testData, 10); err != nil {
 		return 0, fmt.Errorf("expect cache to store data but got: %w", err)
 	}
-	testVal, hit := defaultCache.Get(testCacheKey)
-	if !hit {
+	testVal := conn.Get(testCacheKey)
+	if testVal == nil {
 		return 0, fmt.Errorf("expect cache hit but got none")
 	}
 	if testVal != testData {

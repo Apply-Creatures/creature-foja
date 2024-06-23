@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/test"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -35,7 +36,7 @@ func TestNewContext(t *testing.T) {
 }
 
 func TestTest(t *testing.T) {
-	defaultCache = nil
+	defer test.MockVariableValue(&conn, nil)()
 	_, err := Test()
 	assert.Error(t, err)
 
