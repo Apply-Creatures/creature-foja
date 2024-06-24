@@ -27,15 +27,6 @@
   align-items: center;
 }
 
-#git-graph-container #flow-select-refs-dropdown .ui.label .truncate {
-  display: inline-block;
-  max-width: 140px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  vertical-align: top;
-  white-space: nowrap;
-}
-
 #git-graph-container #flow-select-refs-dropdown .default.text {
   padding-top: 4px;
   padding-bottom: 4px;
