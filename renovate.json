@@ -92,7 +92,8 @@
       "matchDatasources": ["docker"],
       "matchPackageNames": ["ghcr.io/visualon/renovate"],
       "matchUpdateTypes": ["minor", "patch", "digest"],
-      "automerge": true
+      "automerge": true,
+      "groupName": "renovate"
     },
     {
       "description": "Split minor and patch updates",
