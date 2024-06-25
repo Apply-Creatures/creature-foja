@@ -210,7 +210,6 @@ code.gitea.io/gitea/modules/json
 	StdJSON.Indent
 
 code.gitea.io/gitea/modules/markup
-	IsSameDomain
 	GetRendererByType
 	RenderString
 	IsMarkupFile

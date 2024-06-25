@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"code.gitea.io/gitea/modules/setting"
+	"code.gitea.io/gitea/modules/test"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -32,6 +33,18 @@ func TestNewContext(t *testing.T) {
 	})
 	assert.Error(t, err)
 	assert.Nil(t, con)
+}
+
+func TestTest(t *testing.T) {
+	defer test.MockVariableValue(&conn, nil)()
+	_, err := Test()
+	assert.Error(t, err)
+
+	createTestCache()
+	elapsed, err := Test()
+	assert.NoError(t, err)
+	// mem cache should take from 300ns up to 1ms on modern hardware ...
+	assert.Less(t, elapsed, SlowCacheThreshold)
 }
 
 func TestGetCache(t *testing.T) {
