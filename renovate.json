@@ -7,7 +7,8 @@
     "group:postcss",
     "group:linters",
     "schedule:daily",
-    "schedule:automergeDaily"
+    "schedule:automergeDaily",
+    "local>forgejo-contrib/forgejo-renovate//go.json"
   ],
   "ignorePresets": [
     ":semanticPrefixFixDepsChoreOthers",
