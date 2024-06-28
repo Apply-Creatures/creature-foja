@@ -21,10 +21,12 @@ var (
 		EndlessTaskTimeout    time.Duration     `ini:"ENDLESS_TASK_TIMEOUT"`
 		AbandonedJobTimeout   time.Duration     `ini:"ABANDONED_JOB_TIMEOUT"`
 		SkipWorkflowStrings   []string          `ìni:"SKIP_WORKFLOW_STRINGS"`
+		LimitDispatchInputs   int64             `ini:"LIMIT_DISPATCH_INPUTS"`
 	}{
 		Enabled:             true,
 		DefaultActionsURL:   defaultActionsURLForgejo,
 		SkipWorkflowStrings: []string{"[skip ci]", "[ci skip]", "[no ci]", "[skip actions]", "[actions skip]"},
+		LimitDispatchInputs: 10,
 	}
 )
 

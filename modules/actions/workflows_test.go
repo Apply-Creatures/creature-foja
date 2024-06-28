@@ -125,6 +125,13 @@ func TestDetectMatched(t *testing.T) {
 			yamlOn:       "on: schedule",
 			expected:     true,
 		},
+		{
+			desc:         "HookEventWorkflowDispatch(workflow_dispatch) matches GithubEventWorkflowDispatch(workflow_dispatch)",
+			triggedEvent: webhook_module.HookEventWorkflowDispatch,
+			payload:      nil,
+			yamlOn:       "on: workflow_dispatch",
+			expected:     true,
+		},
 	}
 
 	for _, tc := range testCases {

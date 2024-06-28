@@ -583,3 +583,73 @@ func ListActionTasks(ctx *context.APIContext) {
 
 	ctx.JSON(http.StatusOK, &res)
 }
+
+// DispatchWorkflow dispatches a workflow
+func DispatchWorkflow(ctx *context.APIContext) {
+	// swagger:operation POST /repos/{owner}/{repo}/actions/workflows/{workflowname}/dispatches repository DispatchWorkflow
+	// ---
+	// summary: Dispatches a workflow
+	// consumes:
+	// - application/json
+	// parameters:
+	// - name: owner
+	//   in: path
+	//   description: owner of the repo
+	//   type: string
+	//   required: true
+	// - name: repo
+	//   in: path
+	//   description: name of the repo
+	//   type: string
+	//   required: true
+	// - name: workflowname
+	//   in: path
+	//   description: name of the workflow
+	//   type: string
+	//   required: true
+	// - name: body
+	//   in: body
+	//   schema:
+	//     "$ref": "#/definitions/DispatchWorkflowOption"
+	// responses:
+	//   "204":
+	//     "$ref": "#/responses/empty"
+	//   "404":
+	//     "$ref": "#/responses/notFound"
+
+	opt := web.GetForm(ctx).(*api.DispatchWorkflowOption)
+	name := ctx.Params("workflowname")
+
+	if len(opt.Ref) == 0 {
+		ctx.Error(http.StatusBadRequest, "ref", nil)
+		return
+	} else if len(name) == 0 {
+		ctx.Error(http.StatusBadRequest, "workflowname", nil)
+		return
+	}
+
+	workflow, err := actions_service.GetWorkflowFromCommit(ctx.Repo.GitRepo, opt.Ref, name)
+	if err != nil {
+		if errors.Is(err, util.ErrNotExist) {
+			ctx.Error(http.StatusNotFound, "GetWorkflowFromCommit", err)
+		} else {
+			ctx.Error(http.StatusInternalServerError, "GetWorkflowFromCommit", err)
+		}
+		return
+	}
+
+	inputGetter := func(key string) string {
+		return opt.Inputs[key]
+	}
+
+	if err := workflow.Dispatch(ctx, inputGetter, ctx.Repo.Repository, ctx.Doer); err != nil {
+		if actions_service.IsInputRequiredErr(err) {
+			ctx.Error(http.StatusBadRequest, "workflow.Dispatch", err)
+		} else {
+			ctx.Error(http.StatusInternalServerError, "workflow.Dispatch", err)
+		}
+		return
+	}
+
+	ctx.JSON(http.StatusNoContent, nil)
+}

@@ -4239,6 +4239,56 @@
         }
       }
     },
+    "/repos/{owner}/{repo}/actions/workflows/{workflowname}/dispatches": {
+      "post": {
+        "consumes": [
+          "application/json"
+        ],
+        "tags": [
+          "repository"
+        ],
+        "summary": "Dispatches a workflow",
+        "operationId": "DispatchWorkflow",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "owner of the repo",
+            "name": "owner",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the repo",
+            "name": "repo",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "description": "name of the workflow",
+            "name": "workflowname",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "schema": {
+              "$ref": "#/definitions/DispatchWorkflowOption"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "$ref": "#/responses/empty"
+          },
+          "404": {
+            "$ref": "#/responses/notFound"
+          }
+        }
+      }
+    },
     "/repos/{owner}/{repo}/activities/feeds": {
       "get": {
         "produces": [
@@ -20902,6 +20952,29 @@
       },
       "x-go-package": "code.gitea.io/gitea/modules/structs"
     },
+    "DispatchWorkflowOption": {
+      "description": "DispatchWorkflowOption options when dispatching a workflow",
+      "type": "object",
+      "required": [
+        "ref"
+      ],
+      "properties": {
+        "inputs": {
+          "description": "Input keys and values configured in the workflow file.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "x-go-name": "Inputs"
+        },
+        "ref": {
+          "description": "Git reference for the workflow",
+          "type": "string",
+          "x-go-name": "Ref"
+        }
+      },
+      "x-go-package": "code.gitea.io/gitea/modules/structs"
+    },
     "EditAttachmentOptions": {
       "description": "EditAttachmentOptions options for editing attachments",
       "type": "object",
@@ -26627,7 +26700,7 @@
     "parameterBodies": {
       "description": "parameterBodies",
       "schema": {
-        "$ref": "#/definitions/UpdateVariableOption"
+        "$ref": "#/definitions/DispatchWorkflowOption"
       }
     },
     "redirect": {

@@ -416,6 +416,14 @@ type SchedulePayload struct {
 	Action HookScheduleAction `json:"action"`
 }
 
+type WorkflowDispatchPayload struct {
+	Inputs     map[string]string `json:"inputs"`
+	Ref        string            `json:"ref"`
+	Repository *Repository       `json:"repository"`
+	Sender     *User             `json:"sender"`
+	Workflow   string            `json:"workflow"`
+}
+
 // ReviewPayload FIXME
 type ReviewPayload struct {
 	Type    string `json:"type"`
