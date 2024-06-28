@@ -145,11 +145,15 @@
       "description": "Automerge some packages when CI succeeds",
       "extends": ["packages:linters", "packages:test"],
       "matchDepNames": [
+        "github.com/editorconfig-checker/editorconfig-checker/v2/cmd/editorconfig-checker",
         "github.com/golangci/golangci-lint/cmd/golangci-lint",
         "github.com/go-testfixtures/testfixtures",
         "github.com/PuerkitoBio/goquery",
+        "golang.org/x/tools/cmd/deadcode",
+        "golang.org/x/tools/gopls",
         "happy-dom",
         "markdownlint-cli",
+        "mvdan.cc/gofumpt",
         "updates",
         "vite-string-plugin",
         "@vue/test-utils"
