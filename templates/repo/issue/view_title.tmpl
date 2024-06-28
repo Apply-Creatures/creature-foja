@@ -10,7 +10,7 @@
 			{{RenderIssueTitle $.Context .Issue.Title ($.Repository.ComposeMetas ctx) | RenderCodeBlock}}
 			<span class="index">#{{.Issue.Index}}</span>
 		</h1>
-		<div class="top-right-buttons">
+		<div class="button-row">
 			{{if $canEditIssueTitle}}
 			<button id="issue-title-edit-show" class="ui small basic button">{{ctx.Locale.Tr "repo.issues.edit"}}</button>
 			{{end}}
@@ -24,7 +24,7 @@
 		<div class="ui input tw-flex-1">
 			<input value="{{.Issue.Title}}" data-old-title="{{.Issue.Title}}" maxlength="255" autocomplete="off" class="js-quick-submit">
 		</div>
-		<div class="top-right-buttons">
+		<div class="button-row">
 			<button class="ui small basic cancel button">{{ctx.Locale.Tr "repo.issues.cancel"}}</button>
 			<button class="ui small primary button"
 					data-update-url="{{$.RepoLink}}/issues/{{.Issue.Index}}/title">
