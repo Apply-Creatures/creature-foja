@@ -193,6 +193,19 @@ func TestIssues(t *testing.T) {
 		},
 		{
 			issues_model.IssuesOptions{
+				LabelIDs: []int64{-1, 2},
+			},
+			[]int64{5}, // issue without label 1 but with label 2.
+		},
+		{
+			issues_model.IssuesOptions{
+				RepoCond: builder.In("repo_id", 1),
+				LabelIDs: []int64{0},
+			},
+			[]int64{11, 3}, // issues without any label (ordered by creation date desc.)(note: 11 is a pull request)
+		},
+		{
+			issues_model.IssuesOptions{
 				MilestoneIDs: []int64{1},
 			},
 			[]int64{2},
