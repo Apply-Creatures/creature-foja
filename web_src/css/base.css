@@ -246,11 +246,11 @@ h1.error-code {
   user-select: none;
 }
 
-.top-right-buttons {
+.button-row {
   gap: 0.5rem;
 }
 
-.top-right-buttons .ui.button {
+.button-row .ui.button {
   margin-right: 0;
 }
 

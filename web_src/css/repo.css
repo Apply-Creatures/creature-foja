@@ -601,7 +601,8 @@ td .commit-summary {
   align-items: center;
 }
 
-.repository.view.issue .top-right-buttons {
+.repository.view.issue .button-row,
+.repository.releases .button-row {
   display: flex;
 }
 
@@ -609,7 +610,7 @@ td .commit-summary {
   .repository.view.issue .issue-title {
     flex-direction: column;
   }
-  .repository.view.issue .top-right-buttons {
+  .repository.view.issue .button-row {
     width: 100%;
     margin-top: .5rem;
     justify-content: space-between;
