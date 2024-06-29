@@ -94,8 +94,13 @@ func testSearch(t *testing.T, url string, expected []string, indexer bool) {
 	resp := MakeRequest(t, req, http.StatusOK)
 
 	doc := NewHTMLParser(t, resp.Body)
-	msg := doc.Find(".repository").Find(".ui.container").Find(".ui.message[data-test-tag=grep]")
-	assert.EqualValues(t, indexer, len(msg.Nodes) == 0)
+	container := doc.Find(".repository").Find(".ui.container")
+
+	grepMsg := container.Find(".ui.message[data-test-tag=grep]")
+	assert.EqualValues(t, indexer, len(grepMsg.Nodes) == 0)
+
+	branchDropdown := container.Find(".js-branch-tag-selector")
+	assert.EqualValues(t, indexer, len(branchDropdown.Nodes) == 0)
 
 	filenames := resultFilenames(t, doc)
 	assert.EqualValues(t, expected, filenames)
