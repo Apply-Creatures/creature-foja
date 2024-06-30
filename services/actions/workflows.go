@@ -141,6 +141,11 @@ func (entry *Workflow) Dispatch(ctx context.Context, inputGetter InputValueGette
 }
 
 func GetWorkflowFromCommit(gitRepo *git.Repository, ref, workflowID string) (*Workflow, error) {
+	ref, err := gitRepo.ExpandRef(ref)
+	if err != nil {
+		return nil, err
+	}
+
 	commit, err := gitRepo.GetCommit(ref)
 	if err != nil {
 		return nil, err

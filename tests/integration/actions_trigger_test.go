@@ -426,8 +426,10 @@ func TestWorkflowDispatchEvent(t *testing.T) {
 		assert.NoError(t, err)
 		defer gitRepo.Close()
 
-		workflow, err := actions_service.GetWorkflowFromCommit(gitRepo, sha, "dispatch.yml")
+		workflow, err := actions_service.GetWorkflowFromCommit(gitRepo, "main", "dispatch.yml")
 		assert.NoError(t, err)
+		assert.Equal(t, "refs/heads/main", workflow.Ref)
+		assert.Equal(t, sha, workflow.Commit.ID.String())
 
 		inputGetter := func(key string) string {
 			return ""

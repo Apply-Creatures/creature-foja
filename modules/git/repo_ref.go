@@ -5,6 +5,7 @@ package git
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"code.gitea.io/gitea/modules/util"
@@ -60,4 +61,20 @@ func parseTags(refs []string) []string {
 		}
 	}
 	return results
+}
+
+// ExpandRef expands any partial reference to its full form
+func (repo *Repository) ExpandRef(ref string) (string, error) {
+	if strings.HasPrefix(ref, "refs/") {
+		return ref, nil
+	} else if strings.HasPrefix(ref, "tags/") || strings.HasPrefix(ref, "heads/") {
+		return "refs/" + ref, nil
+	} else if repo.IsTagExist(ref) {
+		return TagPrefix + ref, nil
+	} else if repo.IsBranchExist(ref) {
+		return BranchPrefix + ref, nil
+	} else if repo.IsCommitExist(ref) {
+		return ref, nil
+	}
+	return "", fmt.Errorf("could not expand reference '%s'", ref)
 }
