@@ -17,66 +17,65 @@ test('Test markdown indentation', async ({browser}, workerInfo) => {
 
   const textarea = page.locator('textarea[name=content]');
   const tab = '    ';
+  const indent = page.locator('button[data-md-action="indent"]');
+  const unindent = page.locator('button[data-md-action="unindent"]');
   await textarea.fill(initText);
   await textarea.click(); // Tab handling is disabled until pointer event or input.
 
   // Indent, then unindent first line
+  await textarea.focus();
   await textarea.evaluate((it) => it.setSelectionRange(0, 0));
-  await textarea.press('Tab');
+  await indent.click();
   await expect(textarea).toHaveValue(`${tab}* first\n* second\n* third\n* last`);
-  await textarea.press('Shift+Tab');
+  await unindent.click();
   await expect(textarea).toHaveValue(initText);
 
   // Indent second line while somewhere inside of it
+  await textarea.focus();
   await textarea.press('ArrowDown');
   await textarea.press('ArrowRight');
   await textarea.press('ArrowRight');
-  await textarea.press('Tab');
+  await indent.click();
   await expect(textarea).toHaveValue(`* first\n${tab}* second\n* third\n* last`);
 
   // Subsequently, select a chunk of 2nd and 3rd line and indent both, preserving the cursor position in relation to text
+  await textarea.focus();
   await textarea.evaluate((it) => it.setSelectionRange(it.value.indexOf('cond'), it.value.indexOf('hird')));
-  await textarea.press('Tab');
+  await indent.click();
   const lines23 = `* first\n${tab}${tab}* second\n${tab}* third\n* last`;
   await expect(textarea).toHaveValue(lines23);
   await expect(textarea).toHaveJSProperty('selectionStart', lines23.indexOf('cond'));
   await expect(textarea).toHaveJSProperty('selectionEnd', lines23.indexOf('hird'));
 
   // Then unindent twice, erasing all indents.
-  await textarea.press('Shift+Tab');
+  await unindent.click();
   await expect(textarea).toHaveValue(`* first\n${tab}* second\n* third\n* last`);
-  await textarea.press('Shift+Tab');
+  await unindent.click();
   await expect(textarea).toHaveValue(initText);
 
   // Indent and unindent with cursor at the end of the line
+  await textarea.focus();
   await textarea.evaluate((it) => it.setSelectionRange(it.value.indexOf('cond'), it.value.indexOf('cond')));
   await textarea.press('End');
-  await textarea.press('Tab');
+  await indent.click();
   await expect(textarea).toHaveValue(`* first\n${tab}* second\n* third\n* last`);
-  await textarea.press('Shift+Tab');
+  await unindent.click();
   await expect(textarea).toHaveValue(initText);
-
-  // Ensure textarea is blurred on Esc, and does not intercept Tab before input
-  await textarea.press('Escape');
-  await expect(textarea).not.toBeFocused();
-  await textarea.focus();
-  await textarea.press('Tab');
-  await expect(textarea).toHaveValue(initText);
-  await expect(textarea).not.toBeFocused(); // because tab worked as normal
 
   // Check that Tab does work after input
   await textarea.focus();
   await textarea.evaluate((it) => it.setSelectionRange(it.value.length, it.value.length));
   await textarea.press('Shift+Enter'); // Avoid triggering the prefix continuation feature
   await textarea.pressSequentially('* least');
-  await textarea.press('Tab');
+  await indent.click();
   await expect(textarea).toHaveValue(`* first\n* second\n* third\n* last\n${tab}* least`);
 
   // Check that partial indents are cleared
+  await textarea.focus();
   await textarea.fill(initText);
   await textarea.evaluate((it) => it.setSelectionRange(it.value.indexOf('* second'), it.value.indexOf('* second')));
   await textarea.pressSequentially('  ');
-  await textarea.press('Shift+Tab');
+  await unindent.click();
   await expect(textarea).toHaveValue(initText);
 });
 
@@ -91,6 +90,7 @@ test('Test markdown list continuation', async ({browser}, workerInfo) => {
 
   const textarea = page.locator('textarea[name=content]');
   const tab = '    ';
+  const indent = page.locator('button[data-md-action="indent"]');
   await textarea.fill(initText);
 
   // Test continuation of '* ' prefix
@@ -101,7 +101,7 @@ test('Test markdown list continuation', async ({browser}, workerInfo) => {
   await expect(textarea).toHaveValue(`* first\n* second\n* middle\n* third\n* last`);
 
   // Test continuation of '    * ' prefix
-  await textarea.press('Tab');
+  await indent.click();
   await textarea.press('Enter');
   await textarea.pressSequentially('muddle');
   await expect(textarea).toHaveValue(`* first\n* second\n${tab}* middle\n${tab}* muddle\n* third\n* last`);

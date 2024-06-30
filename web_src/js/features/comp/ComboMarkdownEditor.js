@@ -83,36 +83,21 @@ class ComboMarkdownEditor {
       // the editor usually is in a form, so the buttons should have "type=button", avoiding conflicting with the form's submit.
       if (el.nodeName === 'BUTTON' && !el.getAttribute('type')) el.setAttribute('type', 'button');
     }
+    this.textareaMarkdownToolbar.querySelector('button[data-md-action="indent"]')?.addEventListener('click', () => {
+      this.indentSelection(false);
+    });
+    this.textareaMarkdownToolbar.querySelector('button[data-md-action="unindent"]')?.addEventListener('click', () => {
+      this.indentSelection(true);
+    });
 
-    // Track whether any actual input or pointer action was made after focusing, and only intercept Tab presses after that.
-    this.interceptTab = false;
-    this.textarea.addEventListener('focus', () => {
-      this.interceptTab = false;
-    });
-    this.textarea.addEventListener('pointerup', () => {
-      // Assume if a pointer is used then Tab handling is a bit less of an issue.
-      this.interceptTab = true;
-    });
     this.textarea.addEventListener('keydown', (e) => {
       if (e.shiftKey) {
         e.target._shiftDown = true;
       }
-      const unmodified = !e.shiftKey && !e.ctrlKey && !e.altKey;
-      if (e.key === 'Escape') {
-        // Explicitly lose focus and reenable tab navigation.
-        e.target.blur();
-        this.interceptTab = false;
-      } else if (e.key === 'Tab' && this.interceptTab && !e.altKey && !e.ctrlKey) {
-        this.indentSelection(e.shiftKey);
+      if (e.key === 'Enter' && !e.shiftKey && !e.ctrlKey && !e.altKey) {
+        if (!this.breakLine()) return; // Nothing changed, let the default handler work.
         this.options?.onContentChanged?.(this, e);
         e.preventDefault();
-      } else if (e.key === 'Enter' && unmodified) {
-        if (this.breakLine()) {
-          this.options?.onContentChanged?.(this, e);
-          e.preventDefault();
-        }
-      } else {
-        this.interceptTab ||= unmodified;
       }
     });
     this.textarea.addEventListener('keyup', (e) => {
@@ -355,6 +340,7 @@ class ComboMarkdownEditor {
 
     // Update changed lines whole.
     const text = changedLines.join('\n');
+    this.textarea.focus();
     this.textarea.setSelectionRange(editStart, editEnd);
     if (!document.execCommand('insertText', false, text)) {
       // execCommand is deprecated, but setRangeText (and any other direct value modifications) erases the native undo history.
