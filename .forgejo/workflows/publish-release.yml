@@ -59,6 +59,16 @@ jobs:
           gpg-passphrase: ${{ secrets.GPG_PASSPHRASE }}
           verbose: ${{ vars.VERBOSE }}
 
+      - name: upgrade v*.next.forgejo.org
+        run: |
+          export DEBIAN_FRONTEND=noninteractive
+          apt-get update -qq
+          apt-get -q install -y -qq curl
+          version="${{ github.ref_name }}"
+          version=${version##*v}
+          major=$(echo $version | sed -E -e 's/^([0-9]+).*/\1/')
+          # https://forgejo.org/docs/next/developer/infrastructure
+          curl -o /dev/null -sS https://v$major.next.forgejo.org/.well-known/wakeup-on-logs/forgejo-v$major
 
       - name: set up go for the DNS update below
         if: vars.ROLE == 'forgejo-experimental' && secrets.OVH_APP_KEY != ''
