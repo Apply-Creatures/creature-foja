@@ -6,7 +6,11 @@ A [patch or minor release](https://semver.org/spec/v2.0.0.html) (e.g. upgrading 
 
 ## Upcoming releases (not available yet)
 
-- [8.0.0](release-notes/8.0.0/)
+- [9.0.0](release-notes/9.0.0/)
+
+## 8.0.0
+
+TBD
 
 ## 7.0.4
 
@@ -143,7 +147,7 @@ $ git -C forgejo log --oneline --no-merges origin/v1.21/forgejo..origin/v7.0/for
     * `process-description` to `processDescription`
     This allows for those endpoints to be scraped by services requiring prometheus style labels such as [grafana-agent](https://grafana.com/docs/agent/latest/).
   * The repository description [imposes additional restrictions on what it contains](https://codeberg.org/forgejo/forgejo/commit/1075ff74b5050f671c5f9824ae39390230b3c85d) to prevent abuse. You may use [the v7.0 test instance](https://v7.next.forgejo.org/) to check how it will be modified.
-  * The [Gitea themes were renamed](https://codeberg.org/forgejo/forgejo/commit/023e937141dd891bce3370c869d4db2c60f971ed) and the `[ui].THEMES` setting must be changed as follows: 
+  * The [Gitea themes were renamed](https://codeberg.org/forgejo/forgejo/commit/023e937141dd891bce3370c869d4db2c60f971ed) and the `[ui].THEMES` setting must be changed as follows:
     * `gitea` is replaced by `gitea-light`
     * `arc-green` is replaced by `gitea-dark`
     * `auto` is replaced by `gitea-auto`
