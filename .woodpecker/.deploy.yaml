@@ -2,7 +2,7 @@ steps:
   - name: deploy
     image: /bin/bash
     commands:
-      - /root/bin/fly deploy --remote-only
+      - fly deploy --remote-only
     when:
       - branch: main
         event: push
