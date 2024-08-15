@@ -1,11 +1,11 @@
 FROM --platform=$BUILDPLATFORM docker.io/tonistiigi/xx AS xx
 
-FROM --platform=$BUILDPLATFORM code.forgejo.org/oci/golang:1.22-alpine3.20 as build-env
+FROM --platform=$BUILDPLATFORM code.forgejo.org/oci/golang:1.22-alpine3.20 AS build-env
 
 ARG GOPROXY
 ENV GOPROXY=${GOPROXY:-direct}
 
-ARG RELEASE_VERSION
+ENV RELEASE_VERSION=8.0.0
 ARG TAGS="sqlite sqlite_unlock_notify"
 ENV TAGS="bindata timetzdata $TAGS"
 ARG CGO_EXTRA_CFLAGS
@@ -15,8 +15,8 @@ ARG CGO_EXTRA_CFLAGS
 #
 COPY --from=xx / /
 ARG TARGETPLATFORM
-RUN apk --no-cache add clang lld
-RUN xx-apk --no-cache add gcc musl-dev
+RUN apk --no-cache add clang lld  --no-interactive
+RUN xx-apk --no-cache add gcc musl-dev  --no-interactive
 ENV CGO_ENABLED=1
 RUN xx-go --wrap
 #
@@ -28,7 +28,7 @@ RUN xx-go --wrap
 #
 RUN cp /*-alpine-linux-musl*/lib/ld-musl-*.so.1 /lib || true
 
-RUN apk --no-cache add build-base git nodejs npm
+RUN apk --no-cache add build-base git nodejs npm  --no-interactive
 
 COPY . ${GOPATH}/src/code.gitea.io/gitea
 WORKDIR ${GOPATH}/src/code.gitea.io/gitea
@@ -43,26 +43,26 @@ COPY docker/root /tmp/local
 
 # Set permissions
 RUN chmod 755 /tmp/local/usr/bin/entrypoint \
-              /tmp/local/usr/local/bin/gitea \
-              /tmp/local/etc/s6/gitea/* \
-              /tmp/local/etc/s6/openssh/* \
-              /tmp/local/etc/s6/.s6-svscan/* \
-              /go/src/code.gitea.io/gitea/gitea \
-              /go/src/code.gitea.io/gitea/environment-to-ini
+    /tmp/local/usr/local/bin/gitea \
+    /tmp/local/etc/s6/gitea/* \
+    /tmp/local/etc/s6/openssh/* \
+    /tmp/local/etc/s6/.s6-svscan/* \
+    /go/src/code.gitea.io/gitea/gitea \
+    /go/src/code.gitea.io/gitea/environment-to-ini
 RUN chmod 644 /go/src/code.gitea.io/gitea/contrib/autocompletion/bash_autocomplete
 
 FROM code.forgejo.org/oci/golang:1.22-alpine3.20
 ARG RELEASE_VERSION
 LABEL maintainer="contact@forgejo.org" \
-      org.opencontainers.image.authors="Forgejo" \
-      org.opencontainers.image.url="https://forgejo.org" \
-      org.opencontainers.image.documentation="https://forgejo.org/download/#container-image" \
-      org.opencontainers.image.source="https://codeberg.org/forgejo/forgejo" \
-      org.opencontainers.image.version="${RELEASE_VERSION}" \
-      org.opencontainers.image.vendor="Forgejo" \
-      org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.title="Forgejo. Beyond coding. We forge." \
-      org.opencontainers.image.description="Forgejo is a self-hosted lightweight software forge. Easy to install and low maintenance, it just does the job."
+    org.opencontainers.image.authors="Forgejo" \
+    org.opencontainers.image.url="https://forgejo.org" \
+    org.opencontainers.image.documentation="https://forgejo.org/download/#container-image" \
+    org.opencontainers.image.source="https://codeberg.org/forgejo/forgejo" \
+    org.opencontainers.image.version="${RELEASE_VERSION}" \
+    org.opencontainers.image.vendor="Forgejo" \
+    org.opencontainers.image.licenses="MIT" \
+    org.opencontainers.image.title="Forgejo. Beyond coding. We forge." \
+    org.opencontainers.image.description="Forgejo is a self-hosted lightweight software forge. Easy to install and low maintenance, it just does the job."
 
 EXPOSE 22 3000
 
@@ -77,23 +77,25 @@ RUN apk --no-cache add \
     s6 \
     sqlite \
     su-exec \
-    gnupg \
+    gnupg --no-interactive  \
     && rm -rf /var/cache/apk/*
 
 RUN addgroup \
     -S -g 1000 \
     git && \
-  adduser \
+    adduser \
     -S -H -D \
     -h /data/git \
     -s /bin/bash \
     -u 1000 \
     -G git \
     git && \
-  echo "git:*" | chpasswd -e
+    echo "git:*" | chpasswd -e
 
 ENV USER=git
 ENV GITEA_CUSTOM=/data/gitea
+
+COPY app.ini /etc/templates/app.ini
 
 VOLUME ["/data"]
 
