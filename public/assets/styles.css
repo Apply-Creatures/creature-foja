@@ -6,7 +6,7 @@
 
 html,
 body {
-    font-family: "Helvetica Neue", "Helvetica", "Arial", "sans-serif";
+    font-family: monospace;
     font-weight: 400;
     font-size: 1em;
     color: #ddd;

@@ -134,7 +134,7 @@ func MakeManifestData(appName, appURL, absoluteAssetURL string) []byte {
 		StartURL:  appURL,
 		Icons: []manifestIcon{
 			{
-				Src:   absoluteAssetURL + "/assets/img/logo.png",
+				Src:   absoluteAssetURL + "/assets/img/applycreatures.png",
 				Type:  "image/png",
 				Sizes: "512x512",
 			},

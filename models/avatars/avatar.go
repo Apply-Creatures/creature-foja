@@ -57,7 +57,7 @@ func loadAvatarSetting() (*avatarSettingStruct, error) {
 			return nil, fmt.Errorf("unable to parse AppSubURL: %w", err)
 		}
 
-		u.Path = path.Join(u.Path, "/assets/img/avatar_default.png")
+		u.Path = path.Join(u.Path, "/assets/img/applycreatures.png")
 		s.defaultAvatarLink = u.String()
 
 		s.gravatarSourceURL, err = url.Parse(setting.GravatarSource)
