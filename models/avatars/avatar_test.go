@@ -47,7 +47,7 @@ func TestSizedAvatarLink(t *testing.T) {
 
 	disableGravatar(t)
 	config.GetDynGetter().InvalidateCache()
-	assert.Equal(t, "/testsuburl/assets/img/avatar_default.png",
+	assert.Equal(t, "/testsuburl/assets/img/applycreatures.png",
 		avatars_model.GenerateEmailAvatarFastLink(db.DefaultContext, "gitea@example.com", 100))
 
 	enableGravatar(t)

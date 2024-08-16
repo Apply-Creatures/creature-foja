@@ -1,7 +1,7 @@
 :root {
     /* fonts */
-    --fonts-proportional: -apple-system, "Segoe UI", system-ui, Roboto,
-        "Helvetica Neue", Arial;
+    --fonts-proportional: monospace, -apple-system, "Segoe UI", system-ui,
+        Roboto, "Helvetica Neue", Arial;
     --fonts-monospace: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco,
         Consolas, "Liberation Mono", "Courier New", monospace,
         var(--fonts-emoji);
@@ -1620,7 +1620,7 @@ table th[data-sortt-desc] .svg {
 
 html,
 body {
-    font-family: "Helvetica Neue", "Helvetica", "Arial", "sans-serif";
+    font-family: "monospace", "Helvetica", "Arial", "sans-serif";
     font-weight: 400;
     font-size: 1em;
     color: #ddd;

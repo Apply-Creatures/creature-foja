@@ -31,7 +31,7 @@ func TestOpenGraphProperties(t *testing.T) {
 				"og:url":         setting.AppURL,
 				"og:description": "Forgejo is a self-hosted lightweight software forge. Easy to install and low maintenance, it just does the job.",
 				"og:type":        "website",
-				"og:image":       "/assets/img/logo.png",
+				"og:image":       "/assets/img/applycreatures.png",
 				"og:site_name":   siteName,
 			},
 		},

@@ -103,7 +103,7 @@ func loadRepoAvatarFrom(rootCfg ConfigProvider) error {
 	}
 
 	RepoAvatar.Fallback = sec.Key("REPOSITORY_AVATAR_FALLBACK").MustString("none")
-	RepoAvatar.FallbackImage = sec.Key("REPOSITORY_AVATAR_FALLBACK_IMAGE").MustString(AppSubURL + "/assets/img/repo_default.png")
+	RepoAvatar.FallbackImage = sec.Key("REPOSITORY_AVATAR_FALLBACK_IMAGE").MustString(AppSubURL + "/assets/img/applycreatures.png")
 
 	return nil
 }
